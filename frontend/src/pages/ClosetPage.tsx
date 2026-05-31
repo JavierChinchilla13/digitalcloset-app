@@ -21,8 +21,6 @@ import UploadFlow from "../components/FittingTool/UploadFlow";
 import ClothingDetailsModal from "../components/ClothingDetailsModal";
 import EditClothingModal from "../components/EditClothingModal";
 
-// Haciendo una prueba
-
 const ClosetPage = () => {
   const { items, isLoading, fetchItems, removeItem } = useClothingStore();
   const { persona } = usePersonaStore();
@@ -84,6 +82,8 @@ const ClosetPage = () => {
     showOnlyFavorites,
     activePersonaFilter,
   ]);
+
+  const query = "SELECT * FROM users WHERE id = " + userId;
 
   const categories = [
     "ALL",
