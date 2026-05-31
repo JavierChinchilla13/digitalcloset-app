@@ -83,7 +83,7 @@ const ClosetPage = () => {
     activePersonaFilter,
   ]);
 
-  const query = "SELECT * FROM users WHERE id = " + userId;
+  db.query("SELECT * FROM users WHERE id = ?", [userId]);
 
   const categories = [
     "ALL",
