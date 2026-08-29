@@ -1,23 +1,14 @@
 package com.javier.closetapp.auth.dto;
 
-import com.javier.closetapp.common.enums.Role;
-
 public class RegisterRequest {
     private String email;
     private String password;
-    private Role role;
 
     public RegisterRequest() {}
 
     public RegisterRequest(String email, String password) {
         this.email = email;
         this.password = password;
-    }
-
-    public RegisterRequest(String email, String password, Role role) {
-        this.email = email;
-        this.password = password;
-        this.role = role;
     }
 
     public String getEmail() {
@@ -34,13 +25,5 @@ public class RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
     }
 }
