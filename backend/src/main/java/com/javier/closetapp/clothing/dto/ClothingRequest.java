@@ -2,16 +2,33 @@ package com.javier.closetapp.clothing.dto;
 
 import com.javier.closetapp.common.enums.ClothingCategory;
 import com.javier.closetapp.common.enums.AvatarType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
+// Doubles as the update payload (ClothingService.updateItem applies fields only
+// when non-null), so these constraints are only enforced where the controller
+// applies @Valid - i.e. on create, not on update.
 public class ClothingRequest {
+    @NotBlank(message = "Name is required")
     private String name;
+
     private String description;
+
+    @NotNull(message = "Category is required")
     private ClothingCategory category;
+
+    @NotBlank(message = "Image URL is required")
+    @Size(max = 500, message = "Image URL must be at most 500 characters")
     private String imageUrl;
+
     private String side;
     private Boolean isModular;
     private String modularData;
+
+    @NotNull(message = "Persona type is required")
     private AvatarType personaType;
+
     private ClothingTransformDTO transform;
 
     public ClothingRequest() {}

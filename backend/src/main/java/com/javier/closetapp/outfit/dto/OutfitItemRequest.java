@@ -1,6 +1,9 @@
 package com.javier.closetapp.outfit.dto;
 
+import jakarta.validation.constraints.NotNull;
+
 public class OutfitItemRequest {
+    @NotNull(message = "Item ID is required")
     private Long itemId;
     private String slot;
     private Integer itemOrder;

@@ -3,6 +3,7 @@ package com.javier.closetapp.clothing.controller;
 import com.javier.closetapp.clothing.dto.ClothingRequest;
 import com.javier.closetapp.clothing.dto.ClothingResponse;
 import com.javier.closetapp.clothing.service.ClothingService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class ClothingController {
     }
 
     @PostMapping
-    public ResponseEntity<ClothingResponse> createItem(@RequestBody ClothingRequest request) {
+    public ResponseEntity<ClothingResponse> createItem(@Valid @RequestBody ClothingRequest request) {
         return ResponseEntity.ok(clothingService.createItem(request));
     }
 
@@ -28,6 +29,9 @@ public class ClothingController {
         return ResponseEntity.ok(clothingService.getAllItems());
     }
 
+    // No @Valid here: ClothingService.updateItem() applies fields only when
+    // non-null (partial update), so enforcing "required" constraints on this
+    // same DTO would incorrectly reject legitimate partial payloads.
     @PutMapping("/{id}")
     public ResponseEntity<ClothingResponse> updateItem(@PathVariable Long id, @RequestBody ClothingRequest request) {
         return ResponseEntity.ok(clothingService.updateItem(id, request));
