@@ -1,0 +1,9 @@
+# Template for local development secrets.
+# Copy this file to application-local.properties (gitignored) and fill in real values.
+# The "local" Spring profile is active by default (see application.properties), so this
+# file is picked up automatically once it exists - no extra flags needed to run locally.
+
+DB_PASSWORD=your_local_postgres_password
+
+# Generate with: openssl rand -base64 64
+JWT_SECRET=replace_with_a_real_base64_secret
