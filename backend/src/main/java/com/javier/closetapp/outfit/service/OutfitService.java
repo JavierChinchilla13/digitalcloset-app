@@ -47,7 +47,11 @@ public class OutfitService {
         List<OutfitItem> items = request.getItems().stream().map(itemReq -> {
             ClothingItem clothing = clothingRepository.findById(itemReq.getItemId())
                     .orElseThrow(() -> new RuntimeException("Clothing item not found: " + itemReq.getItemId()));
-            
+
+            if (!clothing.getOwner().getUserId().equals(user.getUserId())) {
+                throw new RuntimeException("Unauthorized to use clothing item: " + itemReq.getItemId());
+            }
+
             OutfitItem item = new OutfitItem();
             item.setOutfit(outfit);
             item.setClothingItem(clothing);
@@ -86,7 +90,11 @@ public class OutfitService {
         List<OutfitItem> items = request.getItems().stream().map(itemReq -> {
             ClothingItem clothing = clothingRepository.findById(itemReq.getItemId())
                     .orElseThrow(() -> new RuntimeException("Clothing item not found: " + itemReq.getItemId()));
-            
+
+            if (!clothing.getOwner().getUserId().equals(user.getUserId())) {
+                throw new RuntimeException("Unauthorized to use clothing item: " + itemReq.getItemId());
+            }
+
             OutfitItem item = new OutfitItem();
             item.setOutfit(outfit);
             item.setClothingItem(clothing);
