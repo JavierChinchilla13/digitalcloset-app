@@ -83,8 +83,6 @@ const ClosetPage = () => {
     activePersonaFilter,
   ]);
 
-  db.query("SELECT * FROM users WHERE id = ?", [userId]);
-
   const categories = [
     "ALL",
     ...Object.values(ClothingCategory).filter(
@@ -275,8 +273,6 @@ const ClosetPage = () => {
         item={selectedItem}
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
       <EditClothingModal

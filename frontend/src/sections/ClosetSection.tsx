@@ -139,12 +139,10 @@ const ClosetSection = () => {
         onClose={() => setIsUploadModalOpen(false)} 
       />
 
-      <ClothingDetailsModal 
+      <ClothingDetailsModal
         item={selectedItem}
         isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
       />
 
       <EditClothingModal 

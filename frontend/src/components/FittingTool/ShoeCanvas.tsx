@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Canvas, Image as FabricImage, Rect, Circle, IText } from 'fabric';
 import { PersonaType, ClothingCategory, type ClothingTransform } from '../../types';
-import { 
-  VIRTUAL_HEIGHT, 
-  ASPECT_RATIO, 
-  toCanvasCoord, 
-  toVirtualCoord, 
-  loadFabricImage, 
+import {
+  VIRTUAL_HEIGHT,
+  ASPECT_RATIO,
+  toCanvasX,
+  toCanvasCoord,
+  toVirtualCoord,
+  loadFabricImage,
   centerObject,
   getVirtualTransform
 } from '../editor/CanvasUtils';
