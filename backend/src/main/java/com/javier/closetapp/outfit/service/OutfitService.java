@@ -2,6 +2,8 @@ package com.javier.closetapp.outfit.service;
 
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
+import com.javier.closetapp.exception.ForbiddenOperationException;
+import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.outfit.dto.*;
 import com.javier.closetapp.outfit.entity.Outfit;
 import com.javier.closetapp.outfit.entity.OutfitItem;
@@ -46,10 +48,10 @@ public class OutfitService {
 
         List<OutfitItem> items = request.getItems().stream().map(itemReq -> {
             ClothingItem clothing = clothingRepository.findById(itemReq.getItemId())
-                    .orElseThrow(() -> new RuntimeException("Clothing item not found: " + itemReq.getItemId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Clothing item not found: " + itemReq.getItemId()));
 
             if (!clothing.getOwner().getUserId().equals(user.getUserId())) {
-                throw new RuntimeException("Unauthorized to use clothing item: " + itemReq.getItemId());
+                throw new ForbiddenOperationException("Unauthorized to use clothing item: " + itemReq.getItemId());
             }
 
             OutfitItem item = new OutfitItem();
@@ -74,10 +76,10 @@ public class OutfitService {
     public OutfitResponse updateOutfit(Long id, OutfitRequest request) {
         User user = getAuthenticatedUser();
         Outfit outfit = outfitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Outfit not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Outfit not found"));
 
         if (!outfit.getOwner().getUserId().equals(user.getUserId())) {
-            throw new RuntimeException("Unauthorized to update this outfit");
+            throw new ForbiddenOperationException("Unauthorized to update this outfit");
         }
 
         outfit.setName(request.getName());
@@ -89,10 +91,10 @@ public class OutfitService {
         
         List<OutfitItem> items = request.getItems().stream().map(itemReq -> {
             ClothingItem clothing = clothingRepository.findById(itemReq.getItemId())
-                    .orElseThrow(() -> new RuntimeException("Clothing item not found: " + itemReq.getItemId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("Clothing item not found: " + itemReq.getItemId()));
 
             if (!clothing.getOwner().getUserId().equals(user.getUserId())) {
-                throw new RuntimeException("Unauthorized to use clothing item: " + itemReq.getItemId());
+                throw new ForbiddenOperationException("Unauthorized to use clothing item: " + itemReq.getItemId());
             }
 
             OutfitItem item = new OutfitItem();
@@ -125,10 +127,10 @@ public class OutfitService {
     public void deleteOutfit(Long id) {
         User user = getAuthenticatedUser();
         Outfit outfit = outfitRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Outfit not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Outfit not found"));
 
         if (!outfit.getOwner().getUserId().equals(user.getUserId())) {
-            throw new RuntimeException("Unauthorized to delete this outfit");
+            throw new ForbiddenOperationException("Unauthorized to delete this outfit");
         }
 
         outfitRepository.delete(outfit);

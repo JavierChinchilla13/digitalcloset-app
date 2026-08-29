@@ -5,6 +5,8 @@ import com.javier.closetapp.clothing.dto.ClothingResponse;
 import com.javier.closetapp.clothing.dto.ClothingTransformDTO;
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
+import com.javier.closetapp.exception.ForbiddenOperationException;
+import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.user.entity.User;
 import com.javier.closetapp.user.repository.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -80,10 +82,10 @@ public class ClothingService {
     public ClothingResponse updateItem(Long id, ClothingRequest request) {
         User user = getAuthenticatedUser();
         ClothingItem item = clothingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
 
         if (!item.getOwner().getUserId().equals(user.getUserId())) {
-            throw new RuntimeException("Unauthorized to update this item");
+            throw new ForbiddenOperationException("Unauthorized to update this item");
         }
 
         if (request.getName() != null) {
@@ -135,10 +137,10 @@ public class ClothingService {
     public void deleteItem(Long id) {
         User user = getAuthenticatedUser();
         ClothingItem item = clothingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Item not found"));
 
         if (!item.getOwner().getUserId().equals(user.getUserId())) {
-            throw new RuntimeException("Unauthorized to delete this item");
+            throw new ForbiddenOperationException("Unauthorized to delete this item");
         }
 
         item.setActive(false);
