@@ -20,9 +20,10 @@ import SectionWrapper from "../components/SectionWrapper";
 import UploadFlow from "../components/FittingTool/UploadFlow";
 import ClothingDetailsModal from "../components/ClothingDetailsModal";
 import EditClothingModal from "../components/EditClothingModal";
+import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 
 const ClosetPage = () => {
-  const { items, isLoading, fetchItems, removeItem } = useClothingStore();
+  const { items, isLoading, fetchItems } = useClothingStore();
   const { persona } = usePersonaStore();
   const navigate = useNavigate();
 
@@ -35,6 +36,7 @@ const ClosetPage = () => {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
 
   useEffect(() => {
@@ -52,7 +54,8 @@ const ClosetPage = () => {
   };
 
   const handleDelete = (item: ClothingItem) => {
-    removeItem(item.itemId);
+    setSelectedItem(item);
+    setIsDeleteModalOpen(true);
   };
 
   const filteredItems = useMemo(() => {
@@ -279,6 +282,13 @@ const ClosetPage = () => {
         item={selectedItem}
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
+      />
+
+      <DeleteConfirmationModal
+        itemId={selectedItem?.itemId ?? null}
+        itemName={selectedItem?.name ?? ""}
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
       />
     </div>
   );
