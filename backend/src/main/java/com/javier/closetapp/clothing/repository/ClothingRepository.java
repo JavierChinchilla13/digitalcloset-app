@@ -12,4 +12,7 @@ import java.util.List;
 public interface ClothingRepository extends JpaRepository<ClothingItem, Long> {
     List<ClothingItem> findByOwner(User owner);
     List<ClothingItem> findByOwnerAndCategory(User owner, ClothingCategory category);
+
+    // Used by soft-delete: excludes items the owner has deactivated via deleteItem().
+    List<ClothingItem> findByOwnerAndIsActiveTrue(User owner);
 }
