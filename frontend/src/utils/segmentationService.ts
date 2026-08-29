@@ -27,36 +27,6 @@ class SegmentationService {
   }
 
   /**
-   * Resilient background removal using the proven Clothing Segmenter.
-   * Note: This is used as a local fallback for the main background removal service.
-   */
-  async removeBackground(imageSource: string | File): Promise<Blob> {
-    await this.initSegmenter();
-    if (!this.segmenter) throw new Error("AI Engine not initialized");
-
-    const source = imageSource instanceof File ? await this.fileToDataURL(imageSource) : imageSource;
-    const output = await this.segmenter(source);
-    
-    const clothingLabels = [
-      'Upper-clothes', 'Coat', 'Dress', 'Left-arm', 'Right-arm', 
-      'Pants', 'Skirt', 'Jumpsuits', 'Socks', 'Gloves', 'Scarf', 'Necklace'
-    ];
-
-    const garmentSegments = output.filter(s => clothingLabels.includes(s.label));
-    const originalImg = await this.loadImage(source);
-    
-    if (garmentSegments.length > 0) {
-      return this.createBlobFromSegments(garmentSegments, originalImg);
-    } else {
-      const canvas = document.createElement('canvas');
-      canvas.width = originalImg.width;
-      canvas.height = originalImg.height;
-      canvas.getContext('2d')!.drawImage(originalImg, 0, 0);
-      return new Promise<Blob>((resolve) => canvas.toBlob(b => resolve(b!), 'image/png'));
-    }
-  }
-
-  /**
    * Modular Jacket Segmentation (Torso + Sleeves).
    * REFACTORED: Now uses a 'Non-Destructive' approach that preserves manual cleanup.
    */
