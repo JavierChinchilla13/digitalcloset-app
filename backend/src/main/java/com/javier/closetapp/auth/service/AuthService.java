@@ -29,12 +29,10 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
-        Role userRole = request.getRole() != null ? request.getRole() : Role.ROLE_USER;
-        
         User user = new User(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
-                userRole
+                Role.ROLE_USER
         );
         
         User savedUser = userRepository.save(user);
