@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shirt, Info, Edit2, Trash2, Star, Check, X } from 'lucide-react';
-import type { ClothingItem } from '../types';
+import type { ClothingItem, PersonaState } from '../types';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 

@@ -135,7 +135,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                       </div>
                       <div>
                         <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[8px]">Upload Date</p>
-                        <p className="text-white font-medium">{formatDate(item.createdAt)}</p>
+                        <p className="text-white font-medium">{formatDate(item.uploadDate)}</p>
                       </div>
                     </div>
 
