@@ -1,19 +1,8 @@
 import api from './axios';
-import type { Outfit } from '../types';
+import type { Outfit, OutfitRequest } from '../types';
 
-export interface OutfitRequest {
-  name: string;
-  description?: string;
-  items: {
-    itemId: number;
-    positionX: number;
-    positionY: number;
-    scaleX: number;
-    scaleY: number;
-    rotation: number;
-    itemOrder: number;
-  }[];
-}
+// OutfitRequest is defined once in ../types (Task 15) - it used to be
+// duplicated here with a slightly different, stricter shape.
 
 export const outfitService = {
   getOutfits: async (): Promise<Outfit[]> => {

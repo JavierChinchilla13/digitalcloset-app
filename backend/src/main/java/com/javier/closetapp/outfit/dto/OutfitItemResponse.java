@@ -1,5 +1,7 @@
 package com.javier.closetapp.outfit.dto;
 
+// Simplified outfit contract (Task 15) - mirrors OutfitItemRequest. See that
+// class for why position/scale/rotation are no longer part of the contract.
 public class OutfitItemResponse {
     private Long outfitItemId;
     private Long itemId;
@@ -7,11 +9,6 @@ public class OutfitItemResponse {
     private String imageUrl;
     private String slot;
     private Integer itemOrder;
-    private Double positionX;
-    private Double positionY;
-    private Double scaleX;
-    private Double scaleY;
-    private Double rotation;
 
     public OutfitItemResponse() {}
 
@@ -32,19 +29,4 @@ public class OutfitItemResponse {
 
     public Integer getItemOrder() { return itemOrder; }
     public void setItemOrder(Integer itemOrder) { this.itemOrder = itemOrder; }
-
-    public Double getPositionX() { return positionX; }
-    public void setPositionX(Double positionX) { this.positionX = positionX; }
-
-    public Double getPositionY() { return positionY; }
-    public void setPositionY(Double positionY) { this.positionY = positionY; }
-
-    public Double getScaleX() { return scaleX; }
-    public void setScaleX(Double scaleX) { this.scaleX = scaleX; }
-
-    public Double getScaleY() { return scaleY; }
-    public void setScaleY(Double scaleY) { this.scaleY = scaleY; }
-
-    public Double getRotation() { return rotation; }
-    public void setRotation(Double rotation) { this.rotation = rotation; }
 }

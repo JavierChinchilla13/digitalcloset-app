@@ -95,17 +95,16 @@ export interface ModularJacketData {
   renderOrder?: string[];
 }
 
+// Simplified outfit contract (Task 15) - matches the backend's
+// OutfitItemResponse. The per-item transform columns still exist in the
+// database as nullable future capability, but aren't part of this contract.
 export interface OutfitItem {
   outfitItemId: number;
   itemId: number;
   itemName?: string;
   imageUrl?: string;
-  positionX: number;
-  positionY: number;
-  scaleX: number;
-  scaleY: number;
-  rotation: number;
-  itemOrder: number;
+  slot?: string;
+  itemOrder?: number;
 }
 
 export interface ShoePair {
@@ -126,20 +125,19 @@ export interface Outfit {
   outfitId: number;
   name: string;
   description?: string;
+  avatarType: PersonaType;
   items: OutfitItem[];
   createdAt: string;
 }
 
+// Simplified outfit contract (Task 15) - matches the backend's OutfitRequest.
 export interface OutfitRequest {
   name: string;
   description?: string;
+  avatarType: PersonaType;
   items: {
     itemId: number;
-    positionX: number;
-    positionY: number;
-    scaleX: number;
-    scaleY: number;
-    rotation: number;
-    itemOrder: number;
+    slot?: string;
+    itemOrder?: number;
   }[];
 }
