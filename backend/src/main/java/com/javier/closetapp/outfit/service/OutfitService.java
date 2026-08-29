@@ -59,11 +59,6 @@ public class OutfitService {
             item.setClothingItem(clothing);
             item.setSlot(itemReq.getSlot());
             item.setItemOrder(itemReq.getItemOrder());
-            item.setPositionX(itemReq.getPositionX());
-            item.setPositionY(itemReq.getPositionY());
-            item.setScaleX(itemReq.getScaleX());
-            item.setScaleY(itemReq.getScaleY());
-            item.setRotation(itemReq.getRotation());
             return item;
         }).collect(Collectors.toList());
 
@@ -102,11 +97,6 @@ public class OutfitService {
             item.setClothingItem(clothing);
             item.setSlot(itemReq.getSlot());
             item.setItemOrder(itemReq.getItemOrder());
-            item.setPositionX(itemReq.getPositionX());
-            item.setPositionY(itemReq.getPositionY());
-            item.setScaleX(itemReq.getScaleX());
-            item.setScaleY(itemReq.getScaleY());
-            item.setRotation(itemReq.getRotation());
             return item;
         }).collect(Collectors.toList());
 
@@ -150,11 +140,6 @@ public class OutfitService {
             itemRes.setImageUrl(item.getClothingItem().getImageUrl());
             itemRes.setSlot(item.getSlot());
             itemRes.setItemOrder(item.getItemOrder());
-            itemRes.setPositionX(item.getPositionX());
-            itemRes.setPositionY(item.getPositionY());
-            itemRes.setScaleX(item.getScaleX());
-            itemRes.setScaleY(item.getScaleY());
-            itemRes.setRotation(item.getRotation());
             return itemRes;
         }).collect(Collectors.toList()));
         return res;

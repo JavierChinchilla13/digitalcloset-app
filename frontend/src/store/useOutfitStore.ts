@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import type { Outfit } from '../types';
+import type { Outfit, OutfitRequest } from '../types';
 import { outfitService } from '../api/outfitService';
-import type { OutfitRequest } from '../api/outfitService';
 
 interface OutfitState {
   outfits: Outfit[];
