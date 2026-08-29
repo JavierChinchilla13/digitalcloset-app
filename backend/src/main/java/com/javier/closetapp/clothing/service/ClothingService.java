@@ -68,9 +68,10 @@ public class ClothingService {
         return mapToResponse(saved);
     }
 
+    // Only returns items the owner hasn't soft-deleted (isActive=true).
     public List<ClothingResponse> getAllItems() {
         User user = getAuthenticatedUser();
-        return clothingRepository.findByOwner(user).stream()
+        return clothingRepository.findByOwnerAndIsActiveTrue(user).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -128,16 +129,20 @@ public class ClothingService {
         return mapToResponse(updated);
     }
 
+    // Soft-delete: marks the item inactive instead of removing the row, so outfits
+    // that still reference it aren't orphaned.
+    @Transactional
     public void deleteItem(Long id) {
         User user = getAuthenticatedUser();
         ClothingItem item = clothingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Item not found"));
-        
+
         if (!item.getOwner().getUserId().equals(user.getUserId())) {
             throw new RuntimeException("Unauthorized to delete this item");
         }
-        
-        clothingRepository.delete(item);
+
+        item.setActive(false);
+        clothingRepository.save(item);
     }
 
     private ClothingResponse mapToResponse(ClothingItem item) {
