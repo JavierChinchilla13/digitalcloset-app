@@ -29,12 +29,20 @@ python server/main.py
 
 The server will start at `http://localhost:8000`.
 
+## Configuration
+
+- **`CORS_ALLOWED_ORIGINS`**: comma-separated list of origins allowed to call this service (default `http://localhost:5173`). Matches the same approach used by the Java backend - not a secret, safe to set directly as an environment variable in any deployed environment.
+
 ## API Endpoints
 
 ### POST `/remove-bg`
 - **Description**: Removes background from an uploaded image.
-- **Input**: `multipart/form-data` with a `file` field.
+- **Input**: `multipart/form-data` with a `file` field. Must have an `image/*` content-type and be under 10MB, or the request is rejected before any processing (`415` for a non-image type, `413` if too large, `400` if empty).
 - **Output**: Transparent `image/png`.
+- **Errors**: on a processing failure, the real error is logged server-side; the response only ever contains a generic message, never raw exception details.
+
+### GET `/health`
+- **Description**: Basic liveness check, returns `{"status": "healthy"}`.
 
 ## Frontend Integration
 

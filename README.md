@@ -18,6 +18,7 @@ DigitalCloset is a premium full-stack web application designed to help users man
 - **Java 21** with **Spring Boot 3.3.0**
 - **Spring Security** & **JWT** for secure authentication
 - **PostgreSQL** for core data persistence
+- **Flyway** for database schema migrations
 - **RESTful API** architecture with feature-based modularity
 
 ### Frontend
@@ -32,8 +33,8 @@ DigitalCloset is a premium full-stack web application designed to help users man
 
 ### Backend Setup
 1. Navigate to the `backend` directory.
-2. Configure your PostgreSQL database in `src/main/resources/application.properties`.
-3. Run `./mvnw spring-boot:run`.
+2. Copy `src/main/resources/application-local.properties.example` to `application-local.properties` and fill in your local `DB_PASSWORD` and a generated `JWT_SECRET` (instructions in the file itself). This file is gitignored and never committed - `application.properties` no longer contains real secret values.
+3. Run `./mvnw spring-boot:run`. Schema is Flyway-managed: a fresh empty database is set up automatically on first run.
 
 ### Frontend Setup
 1. Navigate to the `frontend` directory.
@@ -53,3 +54,4 @@ DigitalCloset is a premium full-stack web application designed to help users man
 - **Phase 8: Multi-Item Architecture**: Completed (Layered Equipping, Array-based item slots, Independent Shoe Pairs).
 - **Phase 9: Modular Fashion AI**: Completed (Transformers.js Segmentation, Mesh Warping/Puppet Warp, Dynamic Center Opening Masks).
 - **Phase 10: Resilient AI & Pro-Cleanup**: Completed (Hugging Face Inference Integration, 100% Local SegFormer Fallback, Manual Magic Pen Cleanup Studio, Standardized Layer Centering).
+- **Phase 12: Stabilization & Security Hardening**: Completed (fixed a build-breaking regression and a TypeScript baseline of real bugs, removed dead code/dependencies, closed a registration privilege-escalation vulnerability and an outfit-ownership IDOR gap, externalized all secrets, moved schema management to Flyway, added soft-delete for clothing items, proper 404/403 exception handling, request validation, explicit CORS configuration, and hardened the Python AI microservice). See `backend/IMPLEMENTATION_SUMMARY.md` and `frontend/FRONTEND_CHANGES.md` for details.

@@ -62,8 +62,8 @@
 - **Service Integration**: Optimized `application.properties` for seamless integration with external AI and Cloudinary services.
 
 ### 2. Robust Error Orchestration
-- **Accurate Exception Handling**: Refined the `GlobalExceptionHandler` to distinguish between client-side errors (400) and server-side/AI failures (500), ensuring clearer frontend debugging.
-- **Dynamic Authorization**: Updated `SecurityConfig` to explicitly manage permissions for AI and other core API utility paths.
+- **Accurate Exception Handling**: Refined the `GlobalExceptionHandler` to distinguish between client-side errors (400) and server-side/AI failures (500), ensuring clearer frontend debugging. *(This described the intent at the time; `GlobalExceptionHandler` actually only returned 500 for everything until Phase 12 below implemented real 404/403/400 handling.)*
+- **Dynamic Authorization**: Updated `SecurityConfig` to explicitly manage permissions for AI and other core API utility paths. *(The `/api/ai/**` rule this refers to never had a controller behind it and was removed as dead config in Phase 12.)*
 
 ---
 
@@ -84,4 +84,28 @@
 - **Non-Destructive Workflows**: Refactored the garment saving logic to preserve manually cleaned assets while maintaining modular segment identifiers.
 - **High-Fidelity Metadata**: Jacket items now store complex synchronized transform data (scale, rotation, offsets) ensuring that modular parts remain "attached" during global ensemble transformations.
 - **Thumbnail Optimization**: Implemented selective visibility during asset initialization to generate clean, mannequin-free thumbnails for the digital closet.
+
+## Phase 12: Stabilization & Security Hardening Completed
+
+### 1. Critical Fixes
+- **Build Repair**: Removed a stray, build-breaking line accidentally committed to the frontend.
+- **Registration Privilege Escalation**: `AuthService.register()` previously trusted a client-supplied `role` field, letting any caller self-assign `ROLE_ADMIN`. The field is now removed from `RegisterRequest` entirely - registration always assigns `ROLE_USER`.
+- **Outfit Ownership (IDOR)**: `OutfitService` now verifies that every `ClothingItem` referenced in an outfit actually belongs to the authenticated user before attaching it, closing a cross-user data-access gap in `saveOutfit`/`updateOutfit`.
+
+### 2. Secrets & Configuration
+- **Externalized Secrets**: `spring.datasource.password` and `app.jwt.secret` no longer live in plaintext in `application.properties` - both resolve from environment variables, with a gitignored `application-local.properties` (see the committed `application-local.properties.example` template) supplying local dev defaults via the `local` Spring profile.
+- **JWT Secret Fix**: The signing secret was previously a hex string decoded as if it were Base64 - it worked by accident, not by design. Replaced with a properly generated random Base64 secret.
+
+### 3. Database
+- **Flyway Migrations**: Schema is now Flyway-managed (`spring.jpa.hibernate.ddl-auto=validate`) instead of Hibernate `ddl-auto=update` plus ad hoc SQL scripts. `V1__baseline.sql` consolidates the full schema - generated directly from the JPA entity mappings via Hibernate's own schema-export, and verified against the live database with zero mismatches.
+- **Soft-Delete**: `ClothingItem.isActive` is now actually honored - `deleteItem()` deactivates rather than hard-deletes, and `getAllItems()` filters to active items only, preventing orphaned references from saved outfits.
+
+### 4. API Correctness
+- **Proper Exception Handling**: Added `ResourceNotFoundException` (→404) and `ForbiddenOperationException` (→403). `GlobalExceptionHandler` no longer leaks raw exception text on unexpected errors - it logs the real exception server-side and returns a generic message to the client instead.
+- **Request Validation**: Added `@NotBlank`/`@Email`/`@Size`/`@NotNull`/`@NotEmpty` to `RegisterRequest`, `LoginRequest`, `ClothingRequest` (create only - update stays partial and unvalidated by design), and `OutfitRequest`/`OutfitItemRequest`, with a dedicated validation-failure handler returning structured 400 responses with per-field messages.
+- **CORS**: Added an explicit, environment-driven `CorsConfigurationSource` - no CORS configuration existed before this; it only worked in dev because of the Vite proxy.
+- **Dead Config Removed**: The `/api/ai/**` security rule referenced a controller that was never implemented - removed.
+
+### 5. Python AI Microservice
+- **Hardened**: Restricted CORS to configured origins (was wide-open `*` + credentials, an invalid combination browsers reject anyway), added image content-type and 10MB size validation before processing, replaced `print()` with proper logging (errors are captured server-side without leaking internals to the client), removed an unused `PIL` import, and pinned all dependency versions in `requirements.txt`.
 

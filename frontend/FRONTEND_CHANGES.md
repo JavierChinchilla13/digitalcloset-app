@@ -83,10 +83,21 @@
 ### 3. Visual Portfolio & Safety
 - **Item-Centric Thumbnails**: Transitioned Saved Outfits from static persona images to dynamic collage-style grids of the actual equipped items.
 - **Interactive "More Info" Toggle**: Added a high-fidelity toggle to Outfit cards, allowing users to flip between the "Garment Collage" and the "Persona Preview" instantly.
-- **In-Card Safety Overlays**: Replaced bulky external modals with professional, blurred rose-toned confirmation overlays for both closet garments and outfits.
+- **In-Card Safety Overlays**: Replaced bulky external modals with professional, blurred rose-toned confirmation overlays for both closet garments and outfits. *(Superseded in Phase 12 below - this in-card overlay drifted out of sync with the standalone `DeleteConfirmationModal` and briefly allowed a regression where deletion had no confirmation at all; deletion is now consolidated back onto the single external modal.)*
 
 ### 4. Navigation & Stability Core
 - **Black Screen Resolution**: Eliminated silent navigation crashes by streamlining route transitions and removing blocking hydration guards in the main layout.
 - **Defensive State Guards**: Implemented optional-chaining and ref-based state management to prevent runtime "undefined" errors during rapid navigation or initial store loading.
 - **Unified Logic Parity**: Applied the Absolute Virtual Engine fixes across all category canvases (Tops, Bottoms, Jackets, Shoes) for system-wide consistency.
+
+## Phase 12: Stabilization & Cleanup Completed
+
+### 1. Critical Fixes
+- **Build Repair**: Removed a stray, build-breaking line (`db.query(...)` referencing undefined identifiers) accidentally committed to `ClosetPage.tsx`.
+- **TypeScript Baseline**: Fixed a real runtime bug in `ShoeCanvas.tsx` (a missing `toCanvasX` import that would have thrown a `ReferenceError` the moment that code path ran), a missing `PersonaState` type import in `ClothingCard.tsx`, and a frontend/backend field-name mismatch (`ClothingDetailsModal` read `item.createdAt`, which doesn't exist on the type - the API actually returns `uploadDate`). Disabled the `erasableSyntaxOnly` TypeScript compiler flag, which was incompatible with the project's enums and provided no benefit (the app is Vite/esbuild-bundled and never run via Node's native TypeScript execution).
+- **Delete Confirmation Restored**: Consolidated clothing deletion onto a single confirmation step via the standalone `DeleteConfirmationModal` (see the Phase 11 note above).
+
+### 2. Dead Code & Dependency Cleanup
+- Removed `HomePage.tsx` (broken import to a non-existent module, never routed anywhere), the abandoned pre-Fabric.js `Canvas.tsx`/`Controls.tsx` editor (fully superseded by the current Fabric.js editor stack), and an unused `removeBackground()` method in `segmentationService.ts` (the live jacket-segmentation pipeline was untouched).
+- Removed unused npm dependencies: `konva`, `react-konva`, `use-image`, `react-moveable`.
 
