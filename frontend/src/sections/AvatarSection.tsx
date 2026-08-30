@@ -3,15 +3,14 @@ import { motion } from "framer-motion";
 import { UserCog, Sparkles, Save, Loader2, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePersonaStore } from "../store/usePersonaStore";
-import { useLocalOutfitStore } from "../store/useLocalOutfitStore";
-import { useClothingStore } from "../store/useClothingStore";
+import { useOutfitStore, outfitItemsFromEquipped } from "../store/useOutfitStore";
+import type { OutfitRequest } from "../types";
 import PersonaRenderer from "../components/PersonaRenderer";
 import PersonaSpotlight from "../components/PersonaSpotlight";
 
 const AvatarSection = () => {
   const { persona } = usePersonaStore();
-  const { saveOutfit } = useLocalOutfitStore();
-  const { items } = useClothingStore();
+  const { saveOutfit } = useOutfitStore();
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -19,30 +18,14 @@ const AvatarSection = () => {
     if (!persona) return;
     setIsSaving(true);
 
-    const previewImage =
-      items.find((i) => persona.topIds?.includes(i.itemId))?.imageUrl ||
-      items.find((i) => persona.bottomIds?.includes(i.itemId))?.imageUrl ||
-      items.find((i) => i.itemId === persona.leftShoeId)?.imageUrl ||
-      "/personas/male-base.png";
-
-    const outfitData = {
+    const outfitData: OutfitRequest = {
       name: `Style ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`,
-      preview: previewImage,
-      personaType: persona.type,
-      items: {
-        topIds: persona.topIds || [],
-        bottomIds: persona.bottomIds || [],
-        leftShoeId: persona.leftShoeId,
-        rightShoeId: persona.rightShoeId,
-        accessoryIds: persona.accessoryIds || [],
-        jacketIds: persona.jacketIds || [],
-        dressIds: persona.dressIds || [],
-      },
+      avatarType: persona.type,
+      items: outfitItemsFromEquipped(persona),
     };
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      saveOutfit(outfitData);
+      await saveOutfit(outfitData);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {

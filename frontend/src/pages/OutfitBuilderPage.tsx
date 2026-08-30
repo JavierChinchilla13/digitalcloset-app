@@ -1,81 +1,66 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  Save, 
-  Loader2, 
-  Sparkles, 
+import {
+  ChevronLeft,
+  Save,
+  Loader2,
+  Sparkles,
   RotateCcw,
   Plus
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
-import { useLocalOutfitStore } from '../store/useLocalOutfitStore';
+import { useOutfitStore, outfitItemsFromEquipped, equippedFromOutfitItems } from '../store/useOutfitStore';
+import type { OutfitRequest } from '../types';
 import { ClothingCategory } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 
 const OutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { items: closetItems, fetchItems, isLoading: loadingCloset } = useClothingStore();
+  const { fetchItems, isLoading: loadingCloset, items: closetItems } = useClothingStore();
   const { persona, updatePersona, setEquippedItem, clearEquipped } = usePersonaStore();
-  const { outfits, saveOutfit, updateOutfit, _hasHydrated } = useLocalOutfitStore();
+  const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
 
   const [outfitName, setOutfitName] = useState('New Style');
   const [activeCategory, setActiveCategory] = useState<ClothingCategory>(ClothingCategory.TOP);
   const [isSaving, setIsSaving] = useState(false);
+  const [outfitsReady, setOutfitsReady] = useState(false);
 
   useEffect(() => {
-    if (!_hasHydrated) return;
-    
     fetchItems();
-    
-    // If editing, load the outfit
-    if (id) {
-      const existing = outfits.find(o => o.id === id);
-      if (existing) {
-        setOutfitName(existing.name);
-        updatePersona(existing.items);
-      }
+    fetchOutfits().finally(() => setOutfitsReady(true));
+  }, [fetchItems, fetchOutfits]);
+
+  // Once outfits have loaded, if editing, load the existing outfit into the
+  // persona so the builder reflects what's actually equipped.
+  useEffect(() => {
+    if (!outfitsReady || !id) return;
+    const existing = outfits.find(o => String(o.outfitId) === id);
+    if (existing) {
+      setOutfitName(existing.name);
+      updatePersona(equippedFromOutfitItems(existing.items));
     }
-  }, [id, fetchItems, outfits, updatePersona, _hasHydrated]);
+  }, [id, outfits, outfitsReady, updatePersona]);
 
   const handleSave = async () => {
     setIsSaving(true);
-    
-    // Find the first equipped image for preview
-    const previewImage = closetItems.find(i => persona.topIds.includes(i.itemId))?.imageUrl || 
-                         closetItems.find(i => persona.bottomIds.includes(i.itemId))?.imageUrl ||
-                         closetItems.find(i => i.itemId === persona.leftShoeId)?.imageUrl ||
-                         "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&h=800&fit=crop";
 
-    const outfitData = {
+    const outfitData: OutfitRequest = {
       name: outfitName,
-      preview: previewImage,
-      personaType: persona.type,
-      items: {
-        topIds: persona.topIds,
-        bottomIds: persona.bottomIds,
-        leftShoeId: persona.leftShoeId,
-        rightShoeId: persona.rightShoeId,
-        accessoryIds: persona.accessoryIds,
-        jacketIds: persona.jacketIds,
-        dressIds: persona.dressIds,
-      }
+      avatarType: persona.type,
+      items: outfitItemsFromEquipped(persona),
     };
 
     try {
       if (id) {
-        updateOutfit(id, outfitData);
+        await updateOutfit(Number(id), outfitData);
       } else {
-        saveOutfit(outfitData);
+        await saveOutfit(outfitData);
       }
-      setTimeout(() => {
-        setIsSaving(false);
-        navigate('/outfits');
-      }, 800);
-    } catch (err) {
+      navigate('/outfits');
+    } finally {
       setIsSaving(false);
     }
   };
@@ -101,7 +86,7 @@ const OutfitBuilderPage = () => {
     setEquippedItem(item);
   };
 
-  if (!_hasHydrated) {
+  if (!outfitsReady) {
     return (
       <div className="min-h-screen bg-background-main flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />

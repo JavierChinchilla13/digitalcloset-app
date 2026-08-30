@@ -2,29 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Sparkles, Shirt, LayoutGrid, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useLocalOutfitStore } from '../store/useLocalOutfitStore';
+import { useOutfitStore } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
-import { PersonaType } from '../types';
 import OutfitCard from '../components/OutfitCard';
 import SectionWrapper from '../components/SectionWrapper';
 
 const SavedOutfitsPage = () => {
-  const { outfits, _hasHydrated } = useLocalOutfitStore();
+  const { outfits, fetchOutfits } = useOutfitStore();
   const { persona } = usePersonaStore();
   const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
 
-  const filteredOutfits = outfits.filter(o => {
-    const outfitType = o.personaType || PersonaType.MALE;
-    return outfitType === persona.type;
-  });
+  const filteredOutfits = outfits.filter(o => o.avatarType === persona.type);
 
-  // Robust content visibility trigger
+  // Robust content visibility trigger - fetch once, only gate the loader on
+  // the first fetch (not on isLoading, which also flips during save/delete).
   useEffect(() => {
-    if (_hasHydrated) {
-      setShowContent(true);
-    }
-  }, [_hasHydrated]);
+    fetchOutfits().finally(() => setShowContent(true));
+  }, [fetchOutfits]);
 
   return (
     <div className="relative min-h-screen pb-20">
@@ -112,7 +107,7 @@ const SavedOutfitsPage = () => {
               </motion.button>
 
               {filteredOutfits.map((outfit) => (
-                <OutfitCard key={outfit.id} outfit={outfit} />
+                <OutfitCard key={outfit.outfitId} outfit={outfit} />
               ))}
             </motion.div>
           )}
