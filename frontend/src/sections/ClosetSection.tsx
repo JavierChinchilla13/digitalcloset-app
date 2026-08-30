@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Plus, LayoutPanelTop } from 'lucide-react';
-import { ClothingCategory, type ClothingItem } from '../types';
+import type { ClothingItem } from '../types';
 import SectionWrapper from '../components/SectionWrapper';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
@@ -62,8 +62,8 @@ const ClosetSection = () => {
     return acc;
   }, {} as Record<string, ClothingItem[]>);
 
-  const categories = Object.keys(groupedItems).length > 0 
-    ? Object.entries(groupedItems).filter(([category]) => category !== ClothingCategory.ACCESSORY) 
+  const categories = Object.keys(groupedItems).length > 0
+    ? Object.entries(groupedItems)
     : [];
 
   return (
