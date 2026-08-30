@@ -1,18 +1,19 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { Canvas, Image as FabricImage, Rect, Object as FabricObject, Group } from 'fabric';
 import { PersonaType, ClothingCategory, type ClothingTransform, type ModularJacketData } from '../../types';
-import { 
-  VIRTUAL_HEIGHT, 
-  ASPECT_RATIO, 
-  toCanvasCoord, 
-  toVirtualCoord, 
+import {
+  VIRTUAL_HEIGHT,
+  ASPECT_RATIO,
+  toCanvasCoord,
+  toVirtualCoord,
   toCanvasX,
   toVirtualX,
-  loadFabricImage, 
+  loadFabricImage,
   centerObject,
   getVirtualTransform
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
+import { useFabricCanvas } from '../../hooks/useFabricCanvas';
 
 // Conditionally import FabricWarpvas
 let FabricWarpvas: any;
@@ -43,11 +44,11 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   isWarpMode = false,
   isGroupMode = false
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<Canvas | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
-  
+  const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
+    aspectRatio: ASPECT_RATIO,
+    resizeThreshold: 5,
+  });
+
   const isUpdatingRef = useRef(false);
   const isInteractingRef = useRef(false);
   const modularDataRef = useRef(modularData);
@@ -411,32 +412,6 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
       canvas.off('selection:cleared', handleSelectionCleared);
     };
   }, [activePart, isGroupMode, onSelectPart]);
-
-  // Handle Responsiveness
-  useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const { offsetWidth, offsetHeight } = containerRef.current;
-        let width = offsetWidth;
-        let height = offsetWidth / ASPECT_RATIO;
-        if (height > offsetHeight) {
-          height = offsetHeight;
-          width = height * ASPECT_RATIO;
-        }
-        if (Math.abs(canvasSize.width - width) > 5 || Math.abs(canvasSize.height - height) > 5) {
-          setCanvasSize({ width, height });
-        }
-      }
-    };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    const obs = new ResizeObserver(updateSize);
-    if (containerRef.current) obs.observe(containerRef.current);
-    return () => {
-      window.removeEventListener('resize', updateSize);
-      obs.disconnect();
-    };
-  }, [canvasSize]);
 
   return (
     <div ref={containerRef} className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-black/40 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-inner">

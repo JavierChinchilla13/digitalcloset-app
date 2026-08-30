@@ -1,18 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Canvas, Image as FabricImage, Rect } from 'fabric';
 import { PersonaType, ClothingCategory, type ClothingTransform } from '../../types';
-import { 
-  VIRTUAL_HEIGHT, 
-  ASPECT_RATIO, 
-  toCanvasCoord, 
-  toVirtualCoord, 
+import {
+  VIRTUAL_HEIGHT,
+  ASPECT_RATIO,
+  toCanvasCoord,
+  toVirtualCoord,
   toCanvasX,
   toVirtualX,
-  loadFabricImage, 
+  loadFabricImage,
   centerObject,
   getVirtualTransform
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
+import { useFabricCanvas } from '../../hooks/useFabricCanvas';
 
 interface ClothingCanvasProps {
   imageUrl: string;
@@ -32,10 +33,13 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   onCanvasReady,
   activeTool = 'select'
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<Canvas | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
+    aspectRatio: ASPECT_RATIO,
+    onResize: (size, canvas) => {
+      canvas?.setDimensions(size);
+      canvas?.requestRenderAll();
+    },
+  });
   const isUpdatingRef = useRef(false);
 
   const mannequinUrl = personaType === PersonaType.MALE 
@@ -149,39 +153,6 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
     
     canvas.requestRenderAll();
   }, [activeTool]);
-
-  // Handle Responsiveness
-  useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        const { offsetWidth, offsetHeight } = containerRef.current;
-        let width = offsetWidth;
-        let height = offsetWidth / ASPECT_RATIO;
-
-        if (height > offsetHeight) {
-          height = offsetHeight;
-          width = height * ASPECT_RATIO;
-        }
-
-        setCanvasSize({ width, height });
-        
-        if (fabricCanvasRef.current) {
-          fabricCanvasRef.current.setDimensions({ width, height });
-          fabricCanvasRef.current.requestRenderAll();
-        }
-      }
-    };
-
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    const observer = new ResizeObserver(updateSize);
-    if (containerRef.current) observer.observe(containerRef.current);
-
-    return () => {
-      window.removeEventListener('resize', updateSize);
-      observer.disconnect();
-    };
-  }, []);
 
   // Load Mannequin and Garment
   useEffect(() => {

@@ -18,6 +18,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Canvas, Image as FabricImage, PencilBrush, Point } from 'fabric';
+import { useFabricCanvas, measureContainerWithRetry } from '../../hooks/useFabricCanvas';
 
 interface GarmentCleanupProps {
   imageUrl: string;
@@ -29,10 +30,11 @@ interface GarmentCleanupProps {
 type ToolMode = 'erase' | 'restore' | 'pan';
 
 const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, onSkip, onBack }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<Canvas | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  
+  // No aspectRatio passed - this editor sizes its canvas once at creation
+  // (see measureContainerWithRetry below) and never resizes it afterward,
+  // unlike the other editors, so it doesn't use the hook's resize-fitting.
+  const { canvasRef, fabricCanvasRef, containerRef } = useFabricCanvas();
+
   const [mode, setMode] = useState<ToolMode>('erase');
   const [brushSize, setBrushSize] = useState(30);
   const [zoom, setZoom] = useState(1);
@@ -112,21 +114,13 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
     let isDisposed = false;
 
     const init = async () => {
-      let dimensions = { w: 0, h: 0 };
-      for (let i = 0; i < 20; i++) {
-        dimensions = { 
-          w: containerRef.current?.offsetWidth || 0, 
-          h: containerRef.current?.offsetHeight || 0 
-        };
-        if (dimensions.w > 0) break;
-        await new Promise(r => setTimeout(r, 50));
-      }
+      const dimensions = await measureContainerWithRetry(containerRef.current);
 
-      if (isDisposed || dimensions.w === 0) return;
+      if (isDisposed || dimensions.width === 0) return;
 
       canvas = new Canvas(canvasRef.current!, {
-        width: dimensions.w,
-        height: dimensions.h,
+        width: dimensions.width,
+        height: dimensions.height,
         backgroundColor: 'transparent',
         isDrawingMode: true,
         enableRetinaScaling: true
