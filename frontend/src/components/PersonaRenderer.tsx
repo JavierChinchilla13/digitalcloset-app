@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { PersonaType, type PersonaState, type ModularJacketData } from '../types';
-import PersonaLayer from './PersonaLayer';
+import PersonaLayer, { type PersonaLayerProps } from './PersonaLayer';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 
@@ -59,7 +59,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   const jackets = getItems(persona.jacketIds);
   const accessories = getItems(persona.accessoryIds);
 
-  const layers: any[] = [
+  const layers: PersonaLayerProps[] = [
     { id: 'base', imageUrl: baseImage, zIndex: 0, alt: 'Mannequin' },
   ];
 

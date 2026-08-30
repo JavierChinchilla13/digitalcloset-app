@@ -17,10 +17,6 @@ export const usePersonaStore = create<PersonaStore>()(
     (set) => ({
       persona: {
         type: PersonaType.MALE,
-        skinTone: 'default',
-        bodyType: 'standard',
-        height: 180,
-        hairId: 'default',
         topIds: [],
         bottomIds: [],
         leftShoeId: null,

@@ -10,10 +10,6 @@ export enum PersonaType {
 
 export interface PersonaState {
   type: PersonaType;
-  skinTone?: string;
-  bodyType?: string;
-  height?: number;
-  hairId?: string;
   topIds: number[];
   bottomIds: number[];
   leftShoeId: number | null;
@@ -65,6 +61,7 @@ export interface ClothingTransform {
   maskLeft?: number;
   maskWidth?: number;
   maskHeight?: number;
+  openness?: number; // 0 to 1, jacket center-opening width (modular jackets only)
 }
 
 export interface ClothingItem {
