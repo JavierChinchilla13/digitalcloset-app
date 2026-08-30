@@ -15,7 +15,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   persona: customPersona,
   className = "h-[600px] md:h-[800px]"
 }) => {
-  const { items, isLoading, fetchItems } = useClothingStore();
+  const { items, fetchItems } = useClothingStore();
   const { persona: storePersona } = usePersonaStore();
 
   const persona = customPersona || storePersona;
@@ -24,10 +24,8 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   const baseImage = isMale ? '/personas/male-base.png' : '/personas/female-base.png';
 
   useEffect(() => {
-    if (items.length === 0 && !isLoading) {
-      fetchItems();
-    }
-  }, [fetchItems, items.length, isLoading]);
+    fetchItems();
+  }, [fetchItems]);
 
   if (!persona) {
     return (
