@@ -86,12 +86,7 @@ const ClosetPage = () => {
     activePersonaFilter,
   ]);
 
-  const categories = [
-    "ALL",
-    ...Object.values(ClothingCategory).filter(
-      (cat) => cat !== ClothingCategory.ACCESSORY,
-    ),
-  ];
+  const categories = ["ALL", ...Object.values(ClothingCategory)];
   const personaFilters = ["ALL", ...Object.values(PersonaType)];
 
   return (

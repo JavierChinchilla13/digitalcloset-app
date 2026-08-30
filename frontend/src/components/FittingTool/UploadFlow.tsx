@@ -438,7 +438,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                       <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Garment Category</label>
                     </div>
                     <div className="flex flex-wrap justify-center gap-3">
-                      {Object.values(ClothingCategory).filter(cat => cat !== ClothingCategory.ACCESSORY).map((cat) => {
+                      {Object.values(ClothingCategory).map((cat) => {
                         const Icon = CATEGORY_ICONS[cat];
                         return (
                           <button key={cat} onClick={() => setCategory(cat)} className={`flex flex-col items-center gap-3 p-4 w-24 rounded-2xl border transition-all ${category === cat ? 'bg-accent/10 border-accent text-white' : 'bg-white/[0.02] border-white/5 text-text-secondary hover:border-white/20'}`}>

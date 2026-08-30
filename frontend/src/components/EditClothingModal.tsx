@@ -169,7 +169,6 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     </div>
                     <div className="flex flex-wrap justify-center gap-3">
                       {Object.values(ClothingCategory)
-                        .filter(cat => cat !== ClothingCategory.ACCESSORY)
                         .map((cat) => {
                         const Icon = CATEGORY_ICONS[cat];
                         const isSelected = category === cat;
