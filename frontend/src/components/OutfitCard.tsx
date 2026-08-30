@@ -1,28 +1,30 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit2, Trash2, Copy, Play, Calendar, Check, X, Info, Maximize2 } from 'lucide-react';
-import type { LocalOutfit } from '../store/useLocalOutfitStore';
-import { useLocalOutfitStore } from '../store/useLocalOutfitStore';
+import type { Outfit } from '../types';
+import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
-import { PersonaType } from '../types';
 
 interface OutfitCardProps {
-  outfit: LocalOutfit;
+  outfit: Outfit;
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPersona, setShowPersona] = useState(false);
-  const { deleteOutfit, duplicateOutfit } = useLocalOutfitStore();
+  const { removeOutfit, duplicateOutfit } = useOutfitStore();
   const { items: closetItems } = useClothingStore();
   const { updatePersona } = usePersonaStore();
   const navigate = useNavigate();
 
+  // Backend items[] -> the category-id-list shape the persona/renderer expect.
+  const equippedIds = useMemo(() => equippedFromOutfitItems(outfit.items), [outfit.items]);
+
   const handleApply = () => {
-    updatePersona(outfit.items);
+    updatePersona(equippedIds);
     // Auto-scroll to persona section to see the full look
     const personaEl = document.getElementById('persona');
     if (personaEl) {
@@ -41,21 +43,21 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   // Find actual item objects to get images
   const equippedItems = useMemo(() => {
     const ids = [
-      ...(outfit.items.topIds || []),
-      ...(outfit.items.bottomIds || []),
-      ...(outfit.items.jacketIds || []),
-      ...(outfit.items.accessoryIds || []),
-      ...(outfit.items.dressIds || []),
-      outfit.items.leftShoeId,
-      outfit.items.rightShoeId
+      ...equippedIds.topIds,
+      ...equippedIds.bottomIds,
+      ...equippedIds.jacketIds,
+      ...equippedIds.accessoryIds,
+      ...equippedIds.dressIds,
+      equippedIds.leftShoeId,
+      equippedIds.rightShoeId
     ].filter(Boolean);
-    
+
     return closetItems.filter(item => ids.includes(item.itemId));
-  }, [outfit.items, closetItems]);
+  }, [equippedIds, closetItems]);
 
   const outfitPersona = {
-    type: outfit.personaType || PersonaType.MALE,
-    ...outfit.items
+    type: outfit.avatarType,
+    ...equippedIds
   };
 
   return (
@@ -120,15 +122,15 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             >
               <Info size={14} />
             </button>
-            <button 
-              onClick={() => duplicateOutfit(outfit.id)}
+            <button
+              onClick={() => duplicateOutfit(outfit)}
               className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-colors border border-white/5"
               title="Duplicate"
             >
               <Copy size={14} />
             </button>
-            <button 
-              onClick={() => navigate(`/outfits/edit/${outfit.id}`)}
+            <button
+              onClick={() => navigate(`/outfits/edit/${outfit.outfitId}`)}
               className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-colors border border-white/5"
               title="Edit"
             >
@@ -171,8 +173,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                 This action is permanent and cannot be undone.
               </p>
               <div className="flex gap-4 w-full">
-                <button 
-                  onClick={() => deleteOutfit(outfit.id)}
+                <button
+                  onClick={() => removeOutfit(outfit.outfitId)}
                   className="flex-grow py-3 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   DELETE

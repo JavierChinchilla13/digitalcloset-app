@@ -2,23 +2,24 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Plus } from 'lucide-react';
 import SectionWrapper from '../components/SectionWrapper';
-import { useLocalOutfitStore } from '../store/useLocalOutfitStore';
+import { useOutfitStore } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useNavigate } from 'react-router-dom';
-import { PersonaType } from '../types';
 import OutfitCard from '../components/OutfitCard';
 
 const OutfitsSection = () => {
-  const { outfits, _hasHydrated } = useLocalOutfitStore();
+  const { outfits, fetchOutfits } = useOutfitStore();
   const { persona } = usePersonaStore();
   const navigate = useNavigate();
+  const [ready, setReady] = React.useState(false);
 
-  const filteredOutfits = outfits.filter(o => {
-    const outfitType = o.personaType || PersonaType.MALE;
-    return outfitType === persona.type;
-  });
+  const filteredOutfits = outfits.filter(o => o.avatarType === persona.type);
 
-  if (!_hasHydrated) {
+  React.useEffect(() => {
+    fetchOutfits().finally(() => setReady(true));
+  }, [fetchOutfits]);
+
+  if (!ready) {
     return (
       <SectionWrapper className="py-16">
         <div className="flex flex-col items-center justify-center py-24 gap-4 opacity-30">
@@ -52,7 +53,7 @@ const OutfitsSection = () => {
       ) : (
         <div className="flex gap-6 overflow-x-auto pb-8 no-scrollbar scroll-smooth px-2">
           {filteredOutfits.map((outfit) => (
-            <div key={outfit.id} className="flex-shrink-0 w-64 md:w-72">
+            <div key={outfit.outfitId} className="flex-shrink-0 w-64 md:w-72">
               <OutfitCard outfit={outfit} />
             </div>
           ))}
