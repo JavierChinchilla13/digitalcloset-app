@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { type ClothingTransform, ClothingCategory, PersonaType } from '../types';
 import { DEFAULT_TRANSFORMS, SHOE_PAIR_PRESETS } from './FittingTool/Presets';
 
-interface PersonaLayerProps {
+export interface PersonaLayerProps {
   id: string;
   imageUrl?: string;
   zIndex: number;
@@ -99,8 +99,8 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
 
     // Center Opening Mask (for Jackets)
     let maskImage = 'none';
-    if (category === ClothingCategory.JACKET && (finalTransform as any).openness) {
-       const openness = (finalTransform as any).openness;
+    if (category === ClothingCategory.JACKET && finalTransform.openness) {
+       const openness = finalTransform.openness;
        const holeStart = (50 - (openness * 100) / 2);
        const holeEnd = (50 + (openness * 100) / 2);
        maskImage = `linear-gradient(to right, black 0%, black ${holeStart}%, transparent ${holeStart}%, transparent ${holeEnd}%, black ${holeEnd}%, black 100%)`;
