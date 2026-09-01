@@ -1,11 +1,7 @@
-import React from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const MainLayout = () => {
-  const location = useLocation();
-
   return (
     <div className="min-h-screen bg-background-main flex flex-col">
       <Navbar />

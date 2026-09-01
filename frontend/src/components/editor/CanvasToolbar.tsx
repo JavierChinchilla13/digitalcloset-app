@@ -1,12 +1,8 @@
 import React from 'react';
-import { 
-  MousePointer2, 
-  Crop, 
-  Eraser, 
-  Undo, 
-  Redo, 
-  Download,
-  Scissors
+import {
+  MousePointer2,
+  Crop,
+  Download
 } from 'lucide-react';
 
 interface CanvasToolbarProps {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Plus,
   Search,
@@ -7,8 +7,6 @@ import {
   Shirt,
   ChevronLeft,
   Users,
-  User,
-  UserCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useClothingStore } from "../store/useClothingStore";

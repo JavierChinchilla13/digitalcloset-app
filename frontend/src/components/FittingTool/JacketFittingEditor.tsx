@@ -1,20 +1,15 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { 
-  ChevronLeft, 
-  Save, 
-  Type, 
-  AlignLeft, 
-  Sparkles,
+import React, { useState, useRef } from 'react';
+import {
+  ChevronLeft,
+  Save,
+  Type,
+  AlignLeft,
   Layers,
-  Wand2,
-  MousePointer2,
   Info,
-  CheckCircle2,
-  Maximize2,
   Scissors
 } from 'lucide-react';
 import { Canvas } from 'fabric';
-import { PersonaType, ClothingCategory, type ClothingTransform, type ModularJacketData } from '../../types';
+import { PersonaType, type ClothingTransform, type ModularJacketData } from '../../types';
 import JacketCanvas from '../editor/JacketCanvas';
 import TransformPanel from '../editor/TransformPanel';
 import { exportCanvasToImage } from '../editor/CanvasUtils';
@@ -35,7 +30,6 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [activePart, setActivePart] = useState<string>('torso');
-  const [isWarpMode, setIsWarpMode] = useState(false);
   const [isGroupMode, setIsGroupMode] = useState(true);
   
   const [modularData, setModularData] = useState<ModularJacketData>(() => {
@@ -173,10 +167,9 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               {Object.keys(segments).map(name => (
                 <button
                   key={name}
-                  onClick={() => { 
-                    setActivePart(name); 
+                  onClick={() => {
+                    setActivePart(name);
                     setIsGroupMode(false);
-                    setIsWarpMode(false);
                   }}
                   className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
                     activePart === name && !isGroupMode 
@@ -188,9 +181,8 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                 </button>
               ))}
               <button
-                onClick={() => { 
-                  setIsGroupMode(true); 
-                  setIsWarpMode(false);
+                onClick={() => {
+                  setIsGroupMode(true);
                 }}
                 className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
                   isGroupMode 
@@ -260,7 +252,6 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                 onDataChange={handleDataChange}
                 onCanvasReady={(canvas) => { fabricCanvasRef.current = canvas; }}
                 activePart={activePart}
-                isWarpMode={isWarpMode}
                 isGroupMode={isGroupMode}
                 onSelectPart={(part) => {
                   if (part) {

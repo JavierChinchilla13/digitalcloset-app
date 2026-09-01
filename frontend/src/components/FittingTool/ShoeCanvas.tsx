@@ -1,12 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Canvas, Image as FabricImage, Rect, Circle, IText } from 'fabric';
-import { PersonaType, ClothingCategory, type ClothingTransform } from '../../types';
+import { Canvas, Rect } from 'fabric';
+import { PersonaType, type ClothingTransform } from '../../types';
 import {
-  VIRTUAL_HEIGHT,
   ASPECT_RATIO,
   toCanvasX,
   toCanvasCoord,
-  toVirtualCoord,
   loadFabricImage,
   centerObject,
   getVirtualTransform
@@ -136,7 +134,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
 
         // 2. Setup Foot Indicators
         const indicatorColor = 'rgba(91, 140, 255, 0.4)';
-        const createFootIndicator = (x: number, y: number, label: string) => {
+        const createFootIndicator = (x: number, y: number, _label: string) => {
           const group = new Rect({
             left: toCanvasX(x, canvasWidth, canvasHeight),
             top: toCanvasCoord(y, canvasHeight),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Tag, Layers } from 'lucide-react';
+import { X, Calendar, Layers } from 'lucide-react';
 import type { ClothingItem } from '../types';
 
 interface ClothingDetailsModalProps {

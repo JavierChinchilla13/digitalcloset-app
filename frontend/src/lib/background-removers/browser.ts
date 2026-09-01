@@ -6,7 +6,7 @@ export class BrowserBgRemover implements IBgRemover {
     console.log('Using Browser Background Remover (@imgly)');
     
     const config: any = {
-      progress: (key: string, current: number, total: number) => {
+      progress: (_key: string, current: number, total: number) => {
         const percentage = Math.round((current / total) * 100);
         const status = `Removing background (Browser): ${percentage}%`;
         if (options?.onProgress) options.onProgress(status);

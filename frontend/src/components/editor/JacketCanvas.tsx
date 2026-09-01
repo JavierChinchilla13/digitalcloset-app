@@ -1,25 +1,16 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { Canvas, Image as FabricImage, Rect, Object as FabricObject, Group } from 'fabric';
-import { PersonaType, ClothingCategory, type ClothingTransform, type ModularJacketData } from '../../types';
+import React, { useEffect, useRef } from 'react';
+import { Canvas, Rect, Group } from 'fabric';
+import { PersonaType, type ModularJacketData } from '../../types';
 import {
-  VIRTUAL_HEIGHT,
   ASPECT_RATIO,
   toCanvasCoord,
-  toVirtualCoord,
   toCanvasX,
-  toVirtualX,
   loadFabricImage,
   centerObject,
   getVirtualTransform
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
-
-// Conditionally import FabricWarpvas
-let FabricWarpvas: any;
-import('fabric-warpvas').then(m => {
-  FabricWarpvas = m.FabricWarpvas;
-}).catch(err => console.error("Failed to load fabric-warpvas:", err));
 
 interface JacketCanvasProps {
   segments: Record<string, string>;
@@ -29,19 +20,17 @@ interface JacketCanvasProps {
   onCanvasReady?: (canvas: Canvas) => void;
   onSelectPart?: (part: string | null) => void;
   activePart?: string;
-  isWarpMode?: boolean;
   isGroupMode?: boolean;
 }
 
-const JacketCanvas: React.FC<JacketCanvasProps> = ({ 
-  segments, 
-  personaType, 
+const JacketCanvas: React.FC<JacketCanvasProps> = ({
+  segments,
+  personaType,
   modularData,
   onDataChange,
   onCanvasReady,
   onSelectPart,
   activePart = 'torso',
-  isWarpMode = false,
   isGroupMode = false
 }) => {
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
@@ -54,7 +43,6 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   const modularDataRef = useRef(modularData);
   const isGroupModeRef = useRef(isGroupMode);
   const activePartRef = useRef(activePart);
-  const warpvasInstances = useRef<Map<string, any>>(new Map());
 
   // Keep refs up to date for event handlers
   useEffect(() => {
