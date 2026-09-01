@@ -1,6 +1,7 @@
 package com.javier.closetapp.clothing.entity;
 
 import com.javier.closetapp.common.enums.ClothingCategory;
+import com.javier.closetapp.common.enums.PersonaStatus;
 import com.javier.closetapp.user.entity.User;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -95,6 +96,13 @@ public class ClothingItem {
     @Column(name = "is_active")
     private Boolean isActive = true;
 
+    // Whether this item can be shown on the persona (Task 29). Every item
+    // created before this field existed went through mandatory fitting, so
+    // FITTED is the correct default/backfill value.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "persona_status", nullable = false)
+    private PersonaStatus personaStatus = PersonaStatus.FITTED;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -179,6 +187,14 @@ public class ClothingItem {
 
     public void setActive(Boolean active) {
         isActive = active;
+    }
+
+    public PersonaStatus getPersonaStatus() {
+        return personaStatus;
+    }
+
+    public void setPersonaStatus(PersonaStatus personaStatus) {
+        this.personaStatus = personaStatus;
     }
 
     public com.javier.closetapp.common.enums.AvatarType getPersonaType() {
