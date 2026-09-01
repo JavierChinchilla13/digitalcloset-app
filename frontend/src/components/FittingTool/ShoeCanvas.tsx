@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Canvas, Rect } from 'fabric';
+import { Canvas, Rect, Image as FabricImage } from 'fabric';
 import { PersonaType, type ClothingTransform } from '../../types';
 import {
   ASPECT_RATIO,
@@ -234,7 +234,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
         flipX: leftTransform.flipX ?? false,
         flipY: leftTransform.flipY ?? false,
       });
-      if (leftTransform.width && leftTransform.height) {
+      if (leftTransform.width && leftTransform.height && leftObj instanceof FabricImage) {
         const baseSize = leftObj.getOriginalSize();
         leftObj.set({
           scaleX: toCanvasCoord(leftTransform.width, canvasHeight) / baseSize.width,
@@ -253,7 +253,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
         flipX: rightTransform.flipX ?? false,
         flipY: rightTransform.flipY ?? false,
       });
-      if (rightTransform.width && rightTransform.height) {
+      if (rightTransform.width && rightTransform.height && rightObj instanceof FabricImage) {
         const baseSize = rightObj.getOriginalSize();
         rightObj.set({
           scaleX: toCanvasCoord(rightTransform.width, canvasHeight) / baseSize.width,

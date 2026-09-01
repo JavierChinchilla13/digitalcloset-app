@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Canvas, Rect } from 'fabric';
+import { Canvas, Rect, Image as FabricImage } from 'fabric';
 import { PersonaType, ClothingCategory, type ClothingTransform } from '../../types';
 import {
   ASPECT_RATIO,
@@ -256,15 +256,19 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         flipY: transform.flipY ?? false,
       });
 
-      if (transform.width && transform.height) {
+      // getOriginalSize() only exists on FabricImage, not the generic
+      // FabricObject canvas.getObjects().find(...) returns - the garment is
+      // always a FabricImage in practice (loaded via loadFabricImage), but
+      // the guard makes that provably safe instead of assumed.
+      if (transform.width && transform.height && garment instanceof FabricImage) {
         const targetWidth = toCanvasCoord(transform.width, canvasHeight);
         const targetHeight = toCanvasCoord(transform.height, canvasHeight);
-        
+
         // Calculate required scales based on base image dimensions
         // fabric image scaleX = targetWidth / baseWidth
         const baseWidth = garment.getOriginalSize().width;
         const baseHeight = garment.getOriginalSize().height;
-        
+
         garment.set({
           scaleX: targetWidth / baseWidth,
           scaleY: targetHeight / baseHeight
