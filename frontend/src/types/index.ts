@@ -36,6 +36,14 @@ export interface AuthResponse {
   role: Role;
 }
 
+// Whether an item can be shown on the persona (Task 29-31, Phase 7 pivot).
+// Mirrors the backend's PersonaStatus enum exactly.
+export enum PersonaStatus {
+  FITTED = 'FITTED',
+  NOT_FITTED = 'NOT_FITTED',
+  INELIGIBLE_NO_CUTOUT = 'INELIGIBLE_NO_CUTOUT'
+}
+
 export enum ClothingCategory {
   TOP = 'TOP',
   BOTTOM = 'BOTTOM',
@@ -78,6 +86,8 @@ export interface ClothingItem {
   active?: boolean;
   uploadDate?: string;
   isFavorite?: boolean;
+  // Optional: omitted on create defaults to FITTED server-side (Task 30).
+  personaStatus?: PersonaStatus;
 }
 
 export interface ModularJacketData {

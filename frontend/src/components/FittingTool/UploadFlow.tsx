@@ -13,11 +13,12 @@ import {
   AlertCircle,
   X
 } from 'lucide-react';
-import { ClothingCategory, PersonaType, type ClothingTransform } from '../../types';
+import { ClothingCategory, PersonaType, PersonaStatus, type ClothingTransform } from '../../types';
 import { useClothingStore } from '../../store/useClothingStore';
 import { cloudinaryService } from '../../api/cloudinaryService';
 import { bgRemovalService, optimizeImage } from '../../lib/background-removers';
 import { segmentationService } from '../../utils/segmentationService';
+import { DEFAULT_TRANSFORMS } from './Presets';
 import FittingEditor from './FittingEditor';
 
 import ShoeSymmetryCheck from './ShoeSymmetryCheck';
@@ -31,7 +32,7 @@ interface UploadFlowProps {
   onClose: () => void;
 }
 
-type Step = 'UPLOAD' | 'CONFIG' | 'PROCESSING' | 'PREVIEW' | 'FITTING' | 'SHOE_SYMMETRY' | 'SHOE_UPLOAD_RIGHT' | 'SHOE_FITTING' | 'JACKET_SEGMENTATION' | 'JACKET_FITTING' | 'GARMENT_CLEANUP';
+type Step = 'UPLOAD' | 'CONFIG' | 'PROCESSING' | 'PREVIEW' | 'FITTING' | 'SHOE_SYMMETRY' | 'SHOE_UPLOAD_RIGHT' | 'SHOE_FITTING' | 'JACKET_SEGMENTATION' | 'JACKET_FITTING' | 'GARMENT_CLEANUP' | 'SKIP_PERSONA';
 
 const CATEGORY_ICONS: Record<ClothingCategory, React.ElementType> = {
   [ClothingCategory.TOP]: Shirt,
@@ -66,6 +67,17 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   const [originalPreviewUrl, setOriginalPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Skip Persona State (Task 31/32) - name/description for an item saved
+  // without going through Fabric.js fitting, since that's normally where
+  // this info is entered (in FittingEditor's own "Garment Identity" panel).
+  // skipPersonaStatus distinguishes the two ways to reach this shared step:
+  // NOT_FITTED (Task 31, from PREVIEW - has a clean cutout, just unfitted)
+  // vs INELIGIBLE_NO_CUTOUT (Task 32, from CONFIG - no removal attempted,
+  // so there's no cutout to ever fit).
+  const [skipName, setSkipName] = useState('');
+  const [skipDescription, setSkipDescription] = useState('');
+  const [skipPersonaStatus, setSkipPersonaStatus] = useState<PersonaStatus>(PersonaStatus.NOT_FITTED);
+
   const { addItem } = useClothingStore();
 
   const resetFlow = () => {
@@ -82,6 +94,9 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     setProcessedImageUrl(null);
     setOriginalPreviewUrl(null);
     setError(null);
+    setSkipName('');
+    setSkipDescription('');
+    setSkipPersonaStatus(PersonaStatus.NOT_FITTED);
   };
 
   const handleClose = () => {
@@ -248,6 +263,60 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     } catch (err) {
       setError('Failed to process image.');
     }
+  };
+
+  // Saves the item without persona fitting, skipping FITTING/JACKET_FITTING
+  // entirely. Shared by two entry points that set skipPersonaStatus before
+  // navigating here:
+  //  - NOT_FITTED (Task 31, from PREVIEW): has a clean AI cutout
+  //    (backgroundRemovedUrl), just never fitted.
+  //  - INELIGIBLE_NO_CUTOUT (Task 32, from CONFIG): no removal was
+  //    attempted at all, so the raw original File is uploaded as-is.
+  // Uses the same default transform FittingEditor would have seeded as a
+  // starting point, so a later "promote to fitted" flow has sensible
+  // coordinates to start from instead of none at all.
+  const handleSkipSave = async () => {
+    setError(null);
+    try {
+      setStep('PROCESSING');
+      setProcessingStatus('Saving to closet...');
+
+      let finalUrl: string;
+      if (skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT) {
+        if (!file) return;
+        const optimizedFile = await optimizeImage(file);
+        finalUrl = await cloudinaryService.uploadImage(optimizedFile);
+      } else {
+        if (!backgroundRemovedUrl) return;
+        const response = await fetch(backgroundRemovedUrl);
+        const blob = await response.blob();
+        finalUrl = await cloudinaryService.uploadImage(blob);
+      }
+
+      await addItem({
+        name: skipName || 'Untitled Garment',
+        description: skipDescription,
+        category,
+        personaType,
+        imageUrl: finalUrl,
+        personaStatus: skipPersonaStatus,
+        transform: DEFAULT_TRANSFORMS[personaType][category]
+      });
+      handleClose();
+    } catch (err: unknown) {
+      setError('Failed to save garment.');
+      setStep('SKIP_PERSONA');
+    }
+  };
+
+  // Entry point for Task 32: skips background removal entirely, before it
+  // ever runs, to avoid the wait for a user who already knows they want the
+  // original image. Distinct from continueWithOriginal, which still routes
+  // through GARMENT_CLEANUP -> FITTING (manual cutout, persona-eligible) -
+  // this path attempts no cutout at all and is explicitly persona-ineligible.
+  const handleSkipBackgroundRemoval = () => {
+    setSkipPersonaStatus(PersonaStatus.INELIGIBLE_NO_CUTOUT);
+    setStep('SKIP_PERSONA');
   };
 
   const startProcessingStandard = async () => {
@@ -467,6 +536,14 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <Sparkles size={18} />
                   <span>Next Step</span>
                 </button>
+                {category !== ClothingCategory.SHOES && (
+                  <button
+                    onClick={handleSkipBackgroundRemoval}
+                    className="w-full py-4 bg-white/[0.02] hover:bg-white/5 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                  >
+                    Skip Background Removal — Keep Original, No Persona
+                  </button>
+                )}
               </motion.div>
             )}
 
@@ -577,7 +654,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  <button 
+                  <button
                     onClick={() => setStep('GARMENT_CLEANUP')}
                     className="w-full py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3"
                   >
@@ -585,20 +662,83 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     <span>Confirm & Continue</span>
                   </button>
 
+                  <button
+                    onClick={() => { setSkipPersonaStatus(PersonaStatus.NOT_FITTED); setStep('SKIP_PERSONA'); }}
+                    className="w-full py-4 bg-white/[0.02] hover:bg-white/5 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                  >
+                    Skip Persona Fitting — Save for Flat Builder Only
+                  </button>
+
                   <div className="grid grid-cols-2 gap-4">
-                    <button 
+                    <button
                       onClick={startProcessing}
                       className="py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
                     >
                       Retry Removal
                     </button>
-                    <button 
+                    <button
                       onClick={continueWithOriginal}
                       className="py-4 bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
                     >
                       Skip AI Results
                     </button>
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 'SKIP_PERSONA' && (
+              <motion.div key="skip-persona" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
+                <div className="text-center space-y-2">
+                  <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">
+                    {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'Save Original As-Is' : 'Save Without Fitting'}
+                  </h2>
+                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">
+                    {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT
+                      ? "No background was removed, so this item can't be shown on the persona"
+                      : "This item won't appear on the persona until fitted later"}
+                  </p>
+                </div>
+
+                <div className="rounded-[2rem] border border-white/5 bg-white/[0.02] overflow-hidden flex items-center justify-center p-6 h-[30vh]">
+                  <img
+                    src={(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? originalPreviewUrl : backgroundRemovedUrl) ?? undefined}
+                    alt="Preview"
+                    className="max-w-full max-h-full object-contain"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={skipName}
+                    onChange={(e) => setSkipName(e.target.value)}
+                    placeholder="Garment name"
+                    className="w-full px-5 py-4 bg-white/[0.02] border border-white/5 rounded-2xl text-white placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
+                  />
+                  <input
+                    type="text"
+                    value={skipDescription}
+                    onChange={(e) => setSkipDescription(e.target.value)}
+                    placeholder="Description (optional)"
+                    className="w-full px-5 py-4 bg-white/[0.02] border border-white/5 rounded-2xl text-white placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <button
+                    onClick={handleSkipSave}
+                    className="w-full py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3"
+                  >
+                    <Sparkles size={18} />
+                    <span>Save to Closet</span>
+                  </button>
+                  <button
+                    onClick={() => setStep(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'CONFIG' : 'PREVIEW')}
+                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                  >
+                    Back
+                  </button>
                 </div>
               </motion.div>
             )}
