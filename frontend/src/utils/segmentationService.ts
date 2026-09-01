@@ -12,17 +12,18 @@ class SegmentationService {
     if (this.segmenter) return;
     try {
       console.log('Initializing Modular Engine...');
-      // @ts-expect-error - image_processor_only avoids tokenizer 404s
-      this.segmenter = await pipeline('image-segmentation', this.segmenterModel, { 
+      // image_processor_only was a workaround for an older transformers.js
+      // version that unconditionally tried (and 404'd) fetching a tokenizer
+      // for every pipeline. v4 now probes expected_files for tokenizer.json
+      // before requesting it, so the flag is obsolete - it was never a real
+      // pipeline() option and had no runtime effect (silently dropped by
+      // destructuring), just a type error.
+      this.segmenter = await pipeline('image-segmentation', this.segmenterModel, {
         device: 'webgpu',
-        image_processor_only: true 
       }) as ImageSegmentationPipeline;
     } catch (err) {
       console.warn("WebGPU not available for segmenter, falling back to WASM/CPU");
-      // @ts-expect-error
-      this.segmenter = await pipeline('image-segmentation', this.segmenterModel, {
-        image_processor_only: true
-      }) as ImageSegmentationPipeline;
+      this.segmenter = await pipeline('image-segmentation', this.segmenterModel, {}) as ImageSegmentationPipeline;
     }
   }
 
@@ -72,8 +73,12 @@ class SegmentationService {
     const h = originalImg.height;
 
     // 1. Identify Sleeve Segments
-    const leftSleeveSegments = output.filter(s => labelMap[s.label] === 'leftSleeve');
-    const rightSleeveSegments = output.filter(s => labelMap[s.label] === 'rightSleeve');
+    // s.label is string | null (the model can emit a label-less segment) -
+    // excluding null preserves current behavior (labelMap[null] already
+    // coerced to labelMap['null'] -> undefined, i.e. "not a sleeve") while
+    // making the lookup type-safe instead of relying on that coercion.
+    const leftSleeveSegments = output.filter(s => s.label != null && labelMap[s.label] === 'leftSleeve');
+    const rightSleeveSegments = output.filter(s => s.label != null && labelMap[s.label] === 'rightSleeve');
 
     const hasAISleeves = leftSleeveSegments.length > 0 || rightSleeveSegments.length > 0;
 
