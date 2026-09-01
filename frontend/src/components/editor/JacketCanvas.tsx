@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Canvas, Rect, Group } from 'fabric';
+import { Canvas, Rect, Group, Object as FabricObject } from 'fabric';
 import { PersonaType, type ModularJacketData } from '../../types';
 import {
   ASPECT_RATIO,
@@ -43,6 +43,14 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   const modularDataRef = useRef(modularData);
   const isGroupModeRef = useRef(isGroupMode);
   const activePartRef = useRef(activePart);
+  // Per-object drag/scale/rotate delta tracking for group-mode sync (was
+  // previously stashed directly on each FabricObject as _lastLeft/_lastTop/
+  // _lastScaleX/_lastScaleY/_lastAngle - a WeakMap keyed by object achieves
+  // the same per-object tracking without custom properties on Fabric's own
+  // types, and objects are naturally released when the canvas is disposed.
+  const lastTransformRef = useRef(
+    new WeakMap<FabricObject, { left: number; top: number; scaleX: number; scaleY: number; angle: number }>()
+  );
 
   // Keep refs up to date for event handlers
   useEffect(() => {
@@ -81,9 +89,11 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
         // action can be from transform or direct action property
         const action = e.transform?.action || e.action;
         
+        const lastTransform = lastTransformRef.current.get(target);
+
         if (action === 'drag' || action === 'drag-all') {
-          const dx = target.left - (target._lastLeft ?? target.left);
-          const dy = target.top - (target._lastTop ?? target.top);
+          const dx = target.left - (lastTransform?.left ?? target.left);
+          const dy = target.top - (lastTransform?.top ?? target.top);
 
           canvas.getObjects().forEach(obj => {
             if (obj.name && obj.name !== 'mannequin' && obj !== target) {
@@ -96,8 +106,8 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
           });
         } else if (action && (action.includes('scale') || action.includes('resize'))) {
           // Calculate scale ratio relative to last known state
-          const dsX = target.scaleX / (target._lastScaleX || target.scaleX);
-          const dsY = target.scaleY / (target._lastScaleY || target.scaleY);
+          const dsX = target.scaleX / (lastTransform?.scaleX || target.scaleX);
+          const dsY = target.scaleY / (lastTransform?.scaleY || target.scaleY);
 
           if (Math.abs(dsX - 1) > 0.0001 || Math.abs(dsY - 1) > 0.0001) {
             canvas.getObjects().forEach(obj => {
@@ -115,7 +125,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
             });
           }
         } else if (action === 'rotate') {
-          const da = target.angle - (target._lastAngle ?? target.angle);
+          const da = target.angle - (lastTransform?.angle ?? target.angle);
 
           if (Math.abs(da) > 0.0001) {
             canvas.getObjects().forEach(obj => {
@@ -139,12 +149,14 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
         }
         
         // Update tracking state for next frame
-        target._lastLeft = target.left;
-        target._lastTop = target.top;
-        target._lastScaleX = target.scaleX;
-        target._lastScaleY = target.scaleY;
-        target._lastAngle = target.angle;
-        
+        lastTransformRef.current.set(target, {
+          left: target.left,
+          top: target.top,
+          scaleX: target.scaleX,
+          scaleY: target.scaleY,
+          angle: target.angle,
+        });
+
         canvas.requestRenderAll();
         return;
       }
@@ -172,15 +184,17 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
     };
 
     // Track interaction
-    canvas.on('mouse:down', (e) => { 
-      isInteractingRef.current = true; 
+    canvas.on('mouse:down', (e) => {
+      isInteractingRef.current = true;
       const target = e.target;
       if (target) {
-        target._lastLeft = target.left;
-        target._lastTop = target.top;
-        target._lastScaleX = target.scaleX;
-        target._lastScaleY = target.scaleY;
-        target._lastAngle = target.angle;
+        lastTransformRef.current.set(target, {
+          left: target.left,
+          top: target.top,
+          scaleX: target.scaleX,
+          scaleY: target.scaleY,
+          angle: target.angle,
+        });
       }
     });
 

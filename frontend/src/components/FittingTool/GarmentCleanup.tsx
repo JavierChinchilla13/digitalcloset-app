@@ -206,7 +206,12 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
 
       let isPanning = false;
       canvas.on('mouse:down', (opt) => {
-        if (!canvas.isDrawingMode || opt.e.altKey) {
+        // TPointerEvent is MouseEvent | TouchEvent | PointerEvent - only the
+        // first and third carry clientX/clientY directly. Panning is
+        // mouse/pointer-only (this canvas has no touch-drag support), so a
+        // TouchEvent here just skips starting a pan rather than corrupting
+        // the viewport transform with NaN as it silently did before.
+        if ((!canvas.isDrawingMode || opt.e.altKey) && 'clientX' in opt.e) {
           isPanning = true;
           canvas.selection = false;
           canvas.lastPosX = opt.e.clientX;
@@ -214,7 +219,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
         }
       });
       canvas.on('mouse:move', (opt) => {
-        if (isPanning) {
+        if (isPanning && 'clientX' in opt.e) {
           const e = opt.e;
           const vpt = canvas.viewportTransform!;
           vpt[4] += e.clientX - canvas.lastPosX;
