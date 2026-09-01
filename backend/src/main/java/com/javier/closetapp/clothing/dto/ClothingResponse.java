@@ -3,6 +3,7 @@ package com.javier.closetapp.clothing.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.javier.closetapp.common.enums.ClothingCategory;
 import com.javier.closetapp.common.enums.AvatarType;
+import com.javier.closetapp.common.enums.PersonaStatus;
 
 public class ClothingResponse {
     private Long itemId;
@@ -17,15 +18,17 @@ public class ClothingResponse {
     private ClothingTransformDTO transform;
     private Boolean active;
     private String uploadDate;
+    private PersonaStatus personaStatus;
 
     public ClothingResponse() {}
 
-    public ClothingResponse(Long itemId, String name, String description, 
+    public ClothingResponse(Long itemId, String name, String description,
                             ClothingCategory category, String imageUrl, String side,
                             Boolean isModular, String modularData,
                             AvatarType personaType,
                             ClothingTransformDTO transform,
-                            Boolean active, String uploadDate) {
+                            Boolean active, String uploadDate,
+                            PersonaStatus personaStatus) {
         this.itemId = itemId;
         this.name = name;
         this.description = description;
@@ -38,6 +41,7 @@ public class ClothingResponse {
         this.transform = transform;
         this.active = active;
         this.uploadDate = uploadDate;
+        this.personaStatus = personaStatus;
     }
 
     public Long getItemId() { return itemId; }
@@ -75,4 +79,7 @@ public class ClothingResponse {
 
     public String getUploadDate() { return uploadDate; }
     public void setUploadDate(String uploadDate) { this.uploadDate = uploadDate; }
+
+    public PersonaStatus getPersonaStatus() { return personaStatus; }
+    public void setPersonaStatus(PersonaStatus personaStatus) { this.personaStatus = personaStatus; }
 }
