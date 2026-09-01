@@ -1,5 +1,3 @@
-import React from 'react';
-
 const PersonaSpotlight = () => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

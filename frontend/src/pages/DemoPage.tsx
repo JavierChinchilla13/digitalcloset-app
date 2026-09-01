@@ -1,8 +1,6 @@
-import React from 'react';
 import AvatarSection from '../sections/AvatarSection';
 import ClosetSection from '../sections/ClosetSection';
 import OutfitsSection from '../sections/OutfitsSection';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 

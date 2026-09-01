@@ -1,18 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  ChevronLeft, 
-  Save, 
-  Type, 
-  AlignLeft, 
+import {
+  ChevronLeft,
+  Type,
+  AlignLeft,
   Sparkles,
   Info,
   Footprints,
-  Trash2,
   Undo2,
-  CheckCircle2,
   Trash
 } from 'lucide-react';
-import { ClothingCategory, PersonaType, type ClothingTransform } from '../../types';
+import { PersonaType, type ClothingTransform } from '../../types';
 import ShoeCanvas from './ShoeCanvas';
 import TransformPanel from '../editor/TransformPanel';
 import { SHOE_PAIR_PRESETS } from './Presets';

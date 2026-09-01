@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Trash2, Copy, Play, Calendar, Check, X, Info, Maximize2 } from 'lucide-react';
+import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2 } from 'lucide-react';
 import type { Outfit } from '../types';
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';

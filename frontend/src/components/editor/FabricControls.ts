@@ -1,4 +1,4 @@
-import { Object as FabricObject, Control, util } from 'fabric';
+import { Object as FabricObject } from 'fabric';
 
 /**
  * Customizes Fabric.js selection controls to match the app's aesthetic.

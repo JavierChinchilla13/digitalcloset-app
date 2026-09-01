@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Loader2, Plus, LayoutPanelTop } from 'lucide-react';
 import type { ClothingItem } from '../types';
@@ -6,7 +6,6 @@ import SectionWrapper from '../components/SectionWrapper';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useNavigate } from 'react-router-dom';
-import { PersonaType } from '../types';
 import UploadFlow from '../components/FittingTool/UploadFlow';
 import ClothingCard from '../components/ClothingCard';
 import ClothingDetailsModal from '../components/ClothingDetailsModal';

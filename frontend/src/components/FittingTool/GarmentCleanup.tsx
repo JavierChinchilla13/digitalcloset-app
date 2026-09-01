@@ -1,19 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { 
-  Eraser, 
-  Undo2, 
-  Redo2, 
-  RotateCcw, 
-  ZoomIn, 
-  ZoomOut, 
-  Maximize2,
+import {
+  Eraser,
+  Undo2,
+  Redo2,
+  RotateCcw,
+  ZoomIn,
+  ZoomOut,
   Brush,
-  SkipForward,
   Save,
-  MousePointer2,
   Hand,
   Sparkles,
-  ChevronRight,
   Info,
   Loader2
 } from 'lucide-react';

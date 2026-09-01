@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  RotateCw, 
-  Maximize, 
-  Layers, 
-  Type, 
-  FlipHorizontal, 
+import {
+  RotateCw,
+  Layers,
+  FlipHorizontal,
   FlipVertical,
   Undo2,
-  Trash2,
-  Crop,
   Lock,
   Unlock,
   ArrowUpDown,

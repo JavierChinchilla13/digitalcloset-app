@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
@@ -8,7 +8,6 @@ import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle } from 'lucide-re
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
   const location = useLocation();
-  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('');
 
   const navLinks = [

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import AvatarSection from '../sections/AvatarSection';
 import ClosetSection from '../sections/ClosetSection';
 import OutfitsSection from '../sections/OutfitsSection';

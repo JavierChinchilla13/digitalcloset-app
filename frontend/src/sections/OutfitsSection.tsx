@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Loader2, Plus } from 'lucide-react';
 import SectionWrapper from '../components/SectionWrapper';
 import { useOutfitStore } from '../store/useOutfitStore';

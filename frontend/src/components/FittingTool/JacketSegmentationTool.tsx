@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Check, RefreshCw, Layers, Scissors, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Sparkles, Check, RefreshCw, Scissors, CheckCircle2 } from 'lucide-react';
 import { segmentationService } from '../../utils/segmentationService';
 import { cloudinaryService } from '../../api/cloudinaryService';
 
