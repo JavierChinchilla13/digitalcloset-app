@@ -5,6 +5,7 @@ import com.javier.closetapp.clothing.dto.ClothingResponse;
 import com.javier.closetapp.clothing.dto.ClothingTransformDTO;
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
+import com.javier.closetapp.common.enums.PersonaStatus;
 import com.javier.closetapp.exception.ForbiddenOperationException;
 import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.user.entity.User;
@@ -45,6 +46,7 @@ public class ClothingService {
         item.setIsModular(request.getIsModular() != null ? request.getIsModular() : false);
         item.setModularData(request.getModularData());
         item.setPersonaType(request.getPersonaType());
+        item.setPersonaStatus(request.getPersonaStatus() != null ? request.getPersonaStatus() : PersonaStatus.FITTED);
         
         if (request.getTransform() != null) {
             item.setTransformX(request.getTransform().getX());
@@ -108,6 +110,9 @@ public class ClothingService {
         }
         if (request.getModularData() != null) {
             item.setModularData(request.getModularData());
+        }
+        if (request.getPersonaStatus() != null) {
+            item.setPersonaStatus(request.getPersonaStatus());
         }
         if (request.getTransform() != null) {
             item.setTransformX(request.getTransform().getX());
@@ -185,7 +190,8 @@ public class ClothingService {
                 item.getPersonaType(),
                 transform,
                 item.getActive(),
-                formattedDate
+                formattedDate,
+                item.getPersonaStatus()
         );
     }
 }

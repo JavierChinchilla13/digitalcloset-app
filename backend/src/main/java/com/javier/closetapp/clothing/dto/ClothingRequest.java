@@ -2,6 +2,7 @@ package com.javier.closetapp.clothing.dto;
 
 import com.javier.closetapp.common.enums.ClothingCategory;
 import com.javier.closetapp.common.enums.AvatarType;
+import com.javier.closetapp.common.enums.PersonaStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -31,6 +32,11 @@ public class ClothingRequest {
 
     private ClothingTransformDTO transform;
 
+    // Optional: omitted on create defaults to FITTED (current mandatory-
+    // fitting behavior), matching every item created before this field
+    // existed. Not @NotNull - existing upload flows don't send it yet.
+    private PersonaStatus personaStatus;
+
     public ClothingRequest() {}
 
     public String getName() { return name; }
@@ -59,4 +65,7 @@ public class ClothingRequest {
 
     public ClothingTransformDTO getTransform() { return transform; }
     public void setTransform(ClothingTransformDTO transform) { this.transform = transform; }
+
+    public PersonaStatus getPersonaStatus() { return personaStatus; }
+    public void setPersonaStatus(PersonaStatus personaStatus) { this.personaStatus = personaStatus; }
 }
