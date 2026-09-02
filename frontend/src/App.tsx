@@ -11,6 +11,7 @@ import DemoPage from './pages/DemoPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import OutfitBuilderPage from './pages/OutfitBuilderPage';
+import FlatOutfitBuilderPage from './pages/FlatOutfitBuilderPage';
 import SavedOutfitsPage from './pages/SavedOutfitsPage';
 import ClosetPage from './pages/ClosetPage';
 import PersonaPage from './pages/PersonaPage';
@@ -46,6 +47,10 @@ function App() {
           <Route path="/outfits" element={<ProtectedRoute><SavedOutfitsPage /></ProtectedRoute>} />
           <Route path="/outfits/new" element={<ProtectedRoute><OutfitBuilderPage /></ProtectedRoute>} />
           <Route path="/outfits/edit/:id" element={<ProtectedRoute><OutfitBuilderPage /></ProtectedRoute>} />
+          {/* Item-first builder (Task 36, Phase 8 pivot) - additive, doesn't
+              replace the persona-based /outfits/new above yet. Re-routing
+              the post-login landing here is Task 39, not this task. */}
+          <Route path="/outfits/flat/new" element={<ProtectedRoute><FlatOutfitBuilderPage /></ProtectedRoute>} />
           <Route path="/persona" element={<ProtectedRoute><PersonaPage /></ProtectedRoute>} />
         </Route>
       </Routes>
