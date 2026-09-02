@@ -1,15 +1,16 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save } from 'lucide-react';
+import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
-import { useOutfitStore } from '../store/useOutfitStore';
+import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
-import { ClothingCategory } from '../types';
-import type { OutfitRequest } from '../types';
+import { ClothingCategory, PersonaStatus } from '../types';
+import type { OutfitRequest, OutfitItem, PersonaState } from '../types';
+import PersonaRenderer from '../components/PersonaRenderer';
 
-// Item-first outfit builder (Task 36/37, Phase 8 pivot): browse the closet
+// Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
 // useOutfitDraftStore's flat selectedItemIds, then save/update it as a
 // backend outfit via outfitItemsFromDraft.
@@ -20,8 +21,11 @@ import type { OutfitRequest } from '../types';
 // outfit should be assemblable from any of the user's items). Each card
 // shows its persona type as a small badge instead, so mixed selections stay
 // legible. This makes a call on open question #7 (mixed-persona outfits)
-// for the *selection* UI specifically; the persona *preview* (Task 38) can
-// still filter to a matching, eligible subset independently.
+// for the *selection* UI specifically. The optional persona preview
+// (Task 38) is where that tradeoff becomes visible: it can only ever show
+// FITTED items matching one persona type (reusing PersonaRenderer/
+// equippedFromOutfitItems unchanged), so anything else in the selection is
+// called out by count rather than silently dropped.
 const FlatOutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -95,6 +99,53 @@ const FlatOutfitBuilderPage = () => {
       .filter((item): item is NonNullable<typeof item> => !!item),
     [selectedItemIds, items]
   );
+
+  const [showPersonaPreview, setShowPersonaPreview] = useState(false);
+
+  // Persona preview (Task 38): filters the flat selection down to what
+  // PersonaRenderer can actually show - FITTED items (a NOT_FITTED/
+  // INELIGIBLE_NO_CUTOUT item has no fitted transform to render) matching
+  // the preview persona's type (PersonaRenderer's own getItem already drops
+  // a type mismatch silently; both exclusion reasons are counted here so
+  // the UI can say so instead of just quietly showing fewer items than were
+  // selected - the concrete, visible form of open question #7's tradeoff).
+  // Reuses equippedFromOutfitItems (Task 16) and PersonaRenderer unchanged -
+  // no rendering logic is touched by this task.
+  const { previewPersona, excludedIneligibleCount, excludedWrongPersonaCount } = useMemo(() => {
+    const ineligible = selectedItems.filter(
+      (item) => item.personaStatus != null && item.personaStatus !== PersonaStatus.FITTED
+    );
+    const wrongPersona = selectedItems.filter(
+      (item) => (item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED)
+        && item.personaType !== persona.type
+    );
+    const eligibleIds = selectedItems
+      .filter((item) => (item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED)
+        && item.personaType === persona.type)
+      .map((item) => item.itemId);
+
+    // outfitItemsFromDraft's output has no outfitItemId (OutfitRequest's
+    // create-payload shape); equippedFromOutfitItems expects OutfitItem
+    // (the response shape, which does). outfitItemId is never read by
+    // equippedFromOutfitItems, so itemId is a safe, harmless placeholder.
+    const eligibleOutfitItems: OutfitItem[] = outfitItemsFromDraft(eligibleIds, items).map((oi) => ({
+      outfitItemId: oi.itemId,
+      itemId: oi.itemId,
+      slot: oi.slot,
+      itemOrder: oi.itemOrder,
+    }));
+
+    const preview: PersonaState = {
+      type: persona.type,
+      ...equippedFromOutfitItems(eligibleOutfitItems),
+    };
+
+    return {
+      previewPersona: preview,
+      excludedIneligibleCount: ineligible.length,
+      excludedWrongPersonaCount: wrongPersona.length,
+    };
+  }, [selectedItems, items, persona.type]);
 
   if (!outfitsReady) {
     return (
@@ -245,9 +296,19 @@ const FlatOutfitBuilderPage = () => {
           />
 
           <div className="relative">
-            <h3 className="text-[10px] font-black text-white tracking-[0.3em] uppercase opacity-50 mb-8">
-              Your Selection
-            </h3>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[10px] font-black text-white tracking-[0.3em] uppercase opacity-50">
+                {showPersonaPreview ? 'Persona Preview' : 'Your Selection'}
+              </h3>
+              <button
+                onClick={() => setShowPersonaPreview((v) => !v)}
+                disabled={selectedItems.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-white/5 bg-white/[0.02] text-text-secondary hover:text-white hover:border-white/20 disabled:opacity-20 disabled:pointer-events-none"
+              >
+                {showPersonaPreview ? <LayoutGrid size={12} /> : <User size={12} />}
+                {showPersonaPreview ? 'List View' : 'Preview On Persona'}
+              </button>
+            </div>
 
             {selectedItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
@@ -255,6 +316,22 @@ const FlatOutfitBuilderPage = () => {
                 <p className="text-[9px] font-black uppercase tracking-widest">
                   Select pieces from the left to build an outfit
                 </p>
+              </div>
+            ) : showPersonaPreview ? (
+              <div className="space-y-6">
+                {(excludedIneligibleCount > 0 || excludedWrongPersonaCount > 0) && (
+                  <div className="px-5 py-4 rounded-2xl bg-white/[0.02] border border-white/5 text-[9px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
+                    {excludedIneligibleCount > 0 && (
+                      <p>{excludedIneligibleCount} {excludedIneligibleCount === 1 ? 'item' : 'items'} hidden — not persona-fitted yet.</p>
+                    )}
+                    {excludedWrongPersonaCount > 0 && (
+                      <p>{excludedWrongPersonaCount} {excludedWrongPersonaCount === 1 ? 'item' : 'items'} hidden — for the other persona ({persona.type === 'MALE' ? 'FEMALE' : 'MALE'}).</p>
+                    )}
+                  </div>
+                )}
+                <div className="w-full h-[50vh]">
+                  <PersonaRenderer persona={previewPersona} />
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-3 md:grid-cols-4 gap-6">
