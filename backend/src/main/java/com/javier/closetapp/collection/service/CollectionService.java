@@ -2,6 +2,9 @@ package com.javier.closetapp.collection.service;
 
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
+import com.javier.closetapp.collection.dto.CollectionItemResponse;
+import com.javier.closetapp.collection.dto.CollectionOutfitResponse;
+import com.javier.closetapp.collection.dto.CollectionResponse;
 import com.javier.closetapp.collection.entity.Collection;
 import com.javier.closetapp.collection.entity.CollectionItem;
 import com.javier.closetapp.collection.entity.CollectionOutfit;
@@ -16,12 +19,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
-// Business logic + ownership enforcement for Collections (Task 33). DTOs
-// and the REST controller are Task 34 - this layer returns plain entities,
-// following the same shape ClothingService/OutfitService had before their
-// own DTOs existed.
+// Business logic + ownership enforcement for Collections (Task 33/34).
 @Service
 public class CollectionService {
 
@@ -57,25 +60,27 @@ public class CollectionService {
     }
 
     @Transactional
-    public Collection createCollection(String name) {
+    public CollectionResponse createCollection(String name) {
         User user = getAuthenticatedUser();
         Collection collection = new Collection();
         collection.setName(name);
         collection.setOwner(user);
-        return collectionRepository.save(collection);
+        return mapToResponse(collectionRepository.save(collection));
     }
 
-    public List<Collection> getAllCollections() {
+    public List<CollectionResponse> getAllCollections() {
         User user = getAuthenticatedUser();
-        return collectionRepository.findByOwner(user);
+        return collectionRepository.findByOwner(user).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
     }
 
     @Transactional
-    public Collection renameCollection(Long collectionId, String newName) {
+    public CollectionResponse renameCollection(Long collectionId, String newName) {
         User user = getAuthenticatedUser();
         Collection collection = getOwnedCollection(collectionId, user);
         collection.setName(newName);
-        return collectionRepository.save(collection);
+        return mapToResponse(collectionRepository.save(collection));
     }
 
     // Deletes the collection itself. Membership join rows (CollectionItem/
@@ -90,7 +95,7 @@ public class CollectionService {
     }
 
     @Transactional
-    public Collection addItemToCollection(Long collectionId, Long itemId) {
+    public CollectionResponse addItemToCollection(Long collectionId, Long itemId) {
         User user = getAuthenticatedUser();
         Collection collection = getOwnedCollection(collectionId, user);
 
@@ -110,20 +115,20 @@ public class CollectionService {
             collectionRepository.save(collection);
         }
 
-        return collection;
+        return mapToResponse(collection);
     }
 
     @Transactional
-    public Collection removeItemFromCollection(Long collectionId, Long itemId) {
+    public CollectionResponse removeItemFromCollection(Long collectionId, Long itemId) {
         User user = getAuthenticatedUser();
         Collection collection = getOwnedCollection(collectionId, user);
 
         collection.getItems().removeIf(ci -> ci.getClothingItem().getItemId().equals(itemId));
-        return collectionRepository.save(collection);
+        return mapToResponse(collectionRepository.save(collection));
     }
 
     @Transactional
-    public Collection addOutfitToCollection(Long collectionId, Long outfitId) {
+    public CollectionResponse addOutfitToCollection(Long collectionId, Long outfitId) {
         User user = getAuthenticatedUser();
         Collection collection = getOwnedCollection(collectionId, user);
 
@@ -143,15 +148,45 @@ public class CollectionService {
             collectionRepository.save(collection);
         }
 
-        return collection;
+        return mapToResponse(collection);
     }
 
     @Transactional
-    public Collection removeOutfitFromCollection(Long collectionId, Long outfitId) {
+    public CollectionResponse removeOutfitFromCollection(Long collectionId, Long outfitId) {
         User user = getAuthenticatedUser();
         Collection collection = getOwnedCollection(collectionId, user);
 
         collection.getOutfits().removeIf(co -> co.getOutfit().getOutfitId().equals(outfitId));
-        return collectionRepository.save(collection);
+        return mapToResponse(collectionRepository.save(collection));
+    }
+
+    private CollectionResponse mapToResponse(Collection collection) {
+        CollectionResponse res = new CollectionResponse();
+        res.setCollectionId(collection.getCollectionId());
+        res.setName(collection.getName());
+
+        LocalDateTime createdAt = collection.getCreatedAt();
+        if (createdAt != null) {
+            res.setCreatedAt(createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        }
+
+        res.setItems(collection.getItems().stream().map(ci -> {
+            CollectionItemResponse itemRes = new CollectionItemResponse();
+            itemRes.setCollectionItemId(ci.getCollectionItemId());
+            itemRes.setItemId(ci.getClothingItem().getItemId());
+            itemRes.setItemName(ci.getClothingItem().getName());
+            itemRes.setImageUrl(ci.getClothingItem().getImageUrl());
+            return itemRes;
+        }).collect(Collectors.toList()));
+
+        res.setOutfits(collection.getOutfits().stream().map(co -> {
+            CollectionOutfitResponse outfitRes = new CollectionOutfitResponse();
+            outfitRes.setCollectionOutfitId(co.getCollectionOutfitId());
+            outfitRes.setOutfitId(co.getOutfit().getOutfitId());
+            outfitRes.setOutfitName(co.getOutfit().getName());
+            return outfitRes;
+        }).collect(Collectors.toList()));
+
+        return res;
     }
 }
