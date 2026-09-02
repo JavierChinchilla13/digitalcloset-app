@@ -1,17 +1,18 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
-import { useOutfitDraftStore } from '../store/useOutfitDraftStore';
+import { usePersonaStore } from '../store/usePersonaStore';
+import { useOutfitStore } from '../store/useOutfitStore';
+import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { ClothingCategory } from '../types';
+import type { OutfitRequest } from '../types';
 
-// Item-first outfit builder (Task 36, Phase 8 pivot): browse the closet and
-// multi-select items with zero fitting or persona involvement, using
-// useOutfitDraftStore's flat selectedItemIds. Deliberately no save button
-// yet - persisting the draft as a backend outfit is Task 37, matching the
-// same narrow-task pattern used for Collection (entity/service before
-// controller) and PersonaStatus (entity before DTOs) earlier in this phase.
+// Item-first outfit builder (Task 36/37, Phase 8 pivot): browse the closet
+// and multi-select items with zero fitting or persona involvement, using
+// useOutfitDraftStore's flat selectedItemIds, then save/update it as a
+// backend outfit via outfitItemsFromDraft.
 //
 // Deliberately does NOT filter the browse grid by persona type the way
 // ClosetPage/OutfitBuilderPage do - restricting selection to one persona
@@ -22,16 +23,61 @@ import { ClothingCategory } from '../types';
 // for the *selection* UI specifically; the persona *preview* (Task 38) can
 // still filter to a matching, eligible subset independently.
 const FlatOutfitBuilderPage = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
   const { items, isLoading, fetchItems } = useClothingStore();
-  const { selectedItemIds, toggleItem, removeItem, clearDraft } = useOutfitDraftStore();
+  // Read-only: only used as the outfit's avatarType default (open question
+  // #6's recommendation - the backend's Outfit.avatarType is NOT NULL and
+  // this page has no single persona type of its own to draw from). Never
+  // mutated here - the persona equip semantics stay untouched.
+  const { persona } = usePersonaStore();
+  const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
+  const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
+  const [outfitName, setOutfitName] = useState('New Style');
+  const [isSaving, setIsSaving] = useState(false);
+  const [outfitsReady, setOutfitsReady] = useState(false);
 
   useEffect(() => {
     fetchItems();
-  }, [fetchItems]);
+    fetchOutfits().finally(() => setOutfitsReady(true));
+  }, [fetchItems, fetchOutfits]);
+
+  // Editing an existing outfit: load its saved selection into the draft
+  // store once outfits have loaded. Mirrors OutfitBuilderPage's equivalent
+  // effect, using draftFromOutfitItems instead of equippedFromOutfitItems.
+  useEffect(() => {
+    if (!outfitsReady || !id) return;
+    const existing = outfits.find((o) => String(o.outfitId) === id);
+    if (existing) {
+      setOutfitName(existing.name);
+      setDraft(draftFromOutfitItems(existing.items));
+    }
+  }, [id, outfits, outfitsReady, setDraft]);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+
+    const outfitData: OutfitRequest = {
+      name: outfitName,
+      avatarType: persona.type,
+      items: outfitItemsFromDraft(selectedItemIds, items),
+    };
+
+    try {
+      if (id) {
+        await updateOutfit(Number(id), outfitData);
+      } else {
+        await saveOutfit(outfitData);
+      }
+      clearDraft();
+      navigate('/outfits');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const categories = ['ALL', ...Object.values(ClothingCategory)];
 
@@ -45,10 +91,18 @@ const FlatOutfitBuilderPage = () => {
 
   const selectedItems = useMemo(
     () => selectedItemIds
-      .map((id) => items.find((item) => item.itemId === id))
+      .map((itemId) => items.find((item) => item.itemId === itemId))
       .filter((item): item is NonNullable<typeof item> => !!item),
     [selectedItemIds, items]
   );
+
+  if (!outfitsReady) {
+    return (
+      <div className="min-h-screen bg-background-main flex items-center justify-center">
+        <Loader2 className="animate-spin text-accent" size={40} />
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-background-main flex flex-col overflow-hidden pt-16">
@@ -61,21 +115,36 @@ const FlatOutfitBuilderPage = () => {
             <ChevronLeft size={20} />
           </button>
           <div className="space-y-1">
-            <h1 className="text-xl font-light text-white tracking-widest uppercase">Build an Outfit</h1>
+            <input
+              value={outfitName}
+              onChange={(e) => setOutfitName(e.target.value)}
+              className="bg-transparent text-xl font-light text-white tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
+              placeholder="ENTER STYLE NAME"
+            />
             <p className="text-[8px] font-black text-accent tracking-[0.4em] uppercase">
               {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
             </p>
           </div>
         </div>
 
-        <button
-          onClick={clearDraft}
-          disabled={selectedItemIds.length === 0}
-          className="p-3 hover:bg-white/5 rounded-xl text-text-secondary hover:text-white transition-colors border border-white/5 disabled:opacity-20 disabled:pointer-events-none"
-          title="Clear Selection"
-        >
-          <RotateCcw size={18} />
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={clearDraft}
+            disabled={selectedItemIds.length === 0}
+            className="p-3 hover:bg-white/5 rounded-xl text-text-secondary hover:text-white transition-colors border border-white/5 disabled:opacity-20 disabled:pointer-events-none"
+            title="Clear Selection"
+          >
+            <RotateCcw size={18} />
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={isSaving || selectedItemIds.length === 0}
+            className="px-8 py-3 bg-white text-background-main font-black text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
+          >
+            {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {id ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
+          </button>
+        </div>
       </header>
 
       <div className="flex-grow flex overflow-hidden">
