@@ -15,7 +15,7 @@ import {
   Layers,
   Sparkles
 } from 'lucide-react';
-import { ClothingCategory, PersonaType, type ClothingTransform } from '../types';
+import { ClothingCategory, PersonaStatus, PersonaType, type ClothingTransform } from '../types';
 import type { ClothingItem } from '../types';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
@@ -25,6 +25,12 @@ interface EditClothingModalProps {
   item: ClothingItem | null;
   isOpen: boolean;
   onClose: () => void;
+  // Task 45: opt-in, additive-only. When true, a successful save also
+  // promotes the item to PersonaStatus.FITTED - used by the flat builder's
+  // "Adjust & Fit" entry point (Task 45/46) for NOT_FITTED items. Omitted
+  // (the default), this prop changes nothing - ClosetPage's existing edit
+  // flow must stay byte-for-byte unaffected.
+  promoteToFittedOnSave?: boolean;
 }
 
 const CATEGORY_ICONS: Record<ClothingCategory, any> = {
@@ -45,7 +51,7 @@ const CATEGORY_LABELS: Record<ClothingCategory, string> = {
   [ClothingCategory.DRESS]: 'Dress',
 };
 
-const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onClose }) => {
+const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onClose, promoteToFittedOnSave }) => {
   const [status, setStatus] = useState<'idle' | 'updating' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const { showToast } = useToast();
@@ -89,7 +95,8 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
         description: finalDescription,
         category,
         imageUrl: item.imageUrl,
-        transform: finalTransform
+        transform: finalTransform,
+        personaStatus: promoteToFittedOnSave ? PersonaStatus.FITTED : undefined
       });
 
       setStatus('success');
