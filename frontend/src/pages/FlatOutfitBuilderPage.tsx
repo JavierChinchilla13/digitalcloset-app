@@ -10,6 +10,7 @@ import { groupSelectedItemsForDisplay, pairShoesForDisplay } from '../utils/sele
 import { ClothingCategory, PersonaStatus } from '../types';
 import type { OutfitRequest, OutfitItem, PersonaState, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
+import EditClothingModal from '../components/EditClothingModal';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -163,6 +164,18 @@ const FlatOutfitBuilderPage = () => {
   );
 
   const [showPersonaPreview, setShowPersonaPreview] = useState(false);
+
+  // Task 45: "Adjust & Fit" entry point - opens EditClothingModal's Fabric
+  // Studio for a specific excluded item, with promoteToFittedOnSave so a
+  // saved adjustment also flips it to FITTED. Only NOT_FITTED items get
+  // this (INELIGIBLE_NO_CUTOUT has no cutout to fit - open question #14,
+  // still open); Task 46 groups this alongside "Mark as Fitted" and adds
+  // the ineligible-reason toast this note doesn't have yet.
+  const [fitModalItem, setFitModalItem] = useState<ClothingItem | null>(null);
+  const notFittedExcluded = useMemo(
+    () => selectedItems.filter((item) => item.personaStatus === PersonaStatus.NOT_FITTED),
+    [selectedItems]
+  );
 
   // Persona preview (Task 38): filters the flat selection down to what
   // PersonaRenderer can actually show - FITTED items (a NOT_FITTED/
@@ -386,6 +399,20 @@ const FlatOutfitBuilderPage = () => {
                     {excludedIneligibleCount > 0 && (
                       <p>{excludedIneligibleCount} {excludedIneligibleCount === 1 ? 'item' : 'items'} hidden — not persona-fitted yet.</p>
                     )}
+                    {notFittedExcluded.length > 0 && (
+                      <div className="flex flex-wrap gap-2 pt-1">
+                        {notFittedExcluded.map((item) => (
+                          <button
+                            key={item.itemId}
+                            onClick={() => setFitModalItem(item)}
+                            className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black transition-colors"
+                          >
+                            <span className="uppercase tracking-widest">Adjust &amp; Fit</span>{' '}
+                            <span className="normal-case tracking-normal opacity-70">{item.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     {excludedWrongPersonaCount > 0 && (
                       <p>{excludedWrongPersonaCount} {excludedWrongPersonaCount === 1 ? 'item' : 'items'} hidden — for the other persona ({persona.type === 'MALE' ? 'FEMALE' : 'MALE'}).</p>
                     )}
@@ -431,6 +458,13 @@ const FlatOutfitBuilderPage = () => {
           </div>
         </main>
       </div>
+
+      <EditClothingModal
+        item={fitModalItem}
+        isOpen={!!fitModalItem}
+        onClose={() => setFitModalItem(null)}
+        promoteToFittedOnSave
+      />
     </div>
   );
 };
