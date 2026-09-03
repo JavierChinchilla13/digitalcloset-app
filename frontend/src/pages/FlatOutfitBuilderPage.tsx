@@ -6,8 +6,9 @@ import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
+import { groupSelectedItemsForDisplay, pairShoesForDisplay } from '../utils/selectionDisplay';
 import { ClothingCategory, PersonaStatus } from '../types';
-import type { OutfitRequest, OutfitItem, PersonaState } from '../types';
+import type { OutfitRequest, OutfitItem, PersonaState, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
@@ -26,6 +27,58 @@ import PersonaRenderer from '../components/PersonaRenderer';
 // FITTED items matching one persona type (reusing PersonaRenderer/
 // equippedFromOutfitItems unchanged), so anything else in the selection is
 // called out by count rather than silently dropped.
+function formatCategoryLabel(category: ClothingCategory): string {
+  return category.charAt(0) + category.slice(1).toLowerCase();
+}
+
+// Denser card for the "Your Selection" panel (Task 43) - smaller than the
+// browse grid's cards, same hover-to-reveal remove affordance as before.
+const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (itemId: number) => void }) => (
+  <motion.div
+    initial={{ opacity: 0, scale: 0.9 }}
+    animate={{ opacity: 1, scale: 1 }}
+    className="relative aspect-[4/5] rounded-xl overflow-hidden border border-accent/30 group"
+  >
+    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+    <button
+      onClick={() => onRemove(item.itemId)}
+      className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+      title="Remove"
+    >
+      <X size={10} />
+    </button>
+    <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
+      <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+    </div>
+  </motion.div>
+);
+
+// Shoes get their own 2-up sub-row (left/right paired via
+// pairShoesForDisplay) instead of the generic grid; any unpaired items (no
+// recorded side, or an extra pair) fall back to the same denser grid used
+// elsewhere, in a secondary row underneath - mirrors the simplification
+// documented on pairShoesForDisplay itself.
+const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (itemId: number) => void }) => {
+  const { left, right, unpaired } = pairShoesForDisplay(items);
+  return (
+    <div className="space-y-3">
+      {(left || right) && (
+        <div className="grid grid-cols-2 gap-4 max-w-[220px]">
+          {left && <SelectionCard item={left} onRemove={onRemove} />}
+          {right && <SelectionCard item={right} onRemove={onRemove} />}
+        </div>
+      )}
+      {unpaired.length > 0 && (
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+          {unpaired.map((item) => (
+            <SelectionCard key={item.itemId} item={item} onRemove={onRemove} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const FlatOutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -98,6 +151,15 @@ const FlatOutfitBuilderPage = () => {
       .map((itemId) => items.find((item) => item.itemId === itemId))
       .filter((item): item is NonNullable<typeof item> => !!item),
     [selectedItemIds, items]
+  );
+
+  // Selection panel grouping (Task 43): buckets selectedItems into
+  // SELECTION_DISPLAY_ORDER sub-groups, accessories separated out
+  // entirely - reuses Task 42's pure helpers, no grouping logic of its own.
+  const groupedSelection = useMemo(() => groupSelectedItemsForDisplay(selectedItems), [selectedItems]);
+  const accessoryItems = useMemo(
+    () => selectedItems.filter((item) => item.category === ClothingCategory.ACCESSORY),
+    [selectedItems]
   );
 
   const [showPersonaPreview, setShowPersonaPreview] = useState(false);
@@ -334,27 +396,36 @@ const FlatOutfitBuilderPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-6">
-                {selectedItems.map((item) => (
-                  <motion.div
-                    key={item.itemId}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-accent/30 group"
-                  >
-                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => removeItem(item.itemId)}
-                      className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Remove"
-                    >
-                      <X size={12} />
-                    </button>
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                      <p className="text-[7px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
-                    </div>
-                  </motion.div>
+              <div className="space-y-8">
+                {groupedSelection.map((group) => (
+                  <div key={group.category} className="space-y-3">
+                    <p className="text-[8px] font-black text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                      {formatCategoryLabel(group.category)}
+                    </p>
+                    {group.category === ClothingCategory.SHOES ? (
+                      <ShoeSubRow items={group.items} onRemove={removeItem} />
+                    ) : (
+                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                        {group.items.map((item) => (
+                          <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ))}
+
+                {accessoryItems.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-[8px] font-black text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                      Accessories
+                    </p>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                      {accessoryItems.map((item) => (
+                        <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
