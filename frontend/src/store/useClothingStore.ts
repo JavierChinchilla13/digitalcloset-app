@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ClothingCategory } from '../types';
+import { ClothingCategory, PersonaStatus } from '../types';
 import type { ClothingItem } from '../types';
 import { clothingService } from '../api/clothingService';
 
@@ -16,6 +16,7 @@ interface ClothingState {
   updateItem: (itemId: number, data: Partial<ClothingItem>) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
   toggleFavorite: (itemId: number) => void;
+  markItemAsFitted: (itemId: number) => Promise<void>;
 }
 
 export const useClothingStore = create<ClothingState>()(
@@ -94,10 +95,17 @@ export const useClothingStore = create<ClothingState>()(
         
         set({
           favorites: newFavorites,
-          items: items.map(item => 
+          items: items.map(item =>
             item.itemId === itemId ? { ...item, isFavorite: !isFavorite } : item
           )
         });
+      },
+
+      // Task 44: named "promote to fitted" wrapper around updateItem, for
+      // the flat builder's excluded-item quick actions - a NOT_FITTED item
+      // just gets its default preset transform, not a custom fit.
+      markItemAsFitted: async (itemId) => {
+        await get().updateItem(itemId, { personaStatus: PersonaStatus.FITTED });
       },
     }),
     {
