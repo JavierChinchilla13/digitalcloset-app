@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, 
@@ -13,8 +13,10 @@ import {
   AlertCircle,
   X
 } from 'lucide-react';
-import { ClothingCategory, PersonaType, PersonaStatus, type ClothingTransform } from '../../types';
+import { ClothingCategory, PersonaType, PersonaStatus, type ClothingTransform, type ClothingItem } from '../../types';
 import { useClothingStore } from '../../store/useClothingStore';
+import { useCollectionStore } from '../../store/useCollectionStore';
+import CategoryPicker from '../CategoryPicker';
 import { cloudinaryService } from '../../api/cloudinaryService';
 import { bgRemovalService, optimizeImage } from '../../lib/background-removers';
 import { segmentationService } from '../../utils/segmentationService';
@@ -80,6 +82,42 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
 
   const { addItem } = useClothingStore();
 
+  // Task 50: which category (if any) every item created this flow should
+  // also be added to - a single choice on CONFIG (the one step every save
+  // path passes through, per Task 31/32's own step-machine notes) rather
+  // than repeating the picker per save path.
+  const { collections, fetchCollections, createCollection } = useCollectionStore();
+  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  const [isCreatingCollection, setIsCreatingCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+
+  useEffect(() => {
+    fetchCollections();
+  }, [fetchCollections]);
+
+  const handleCreateCollectionInline = async () => {
+    const name = newCollectionName.trim();
+    if (!name) return;
+    const created = await createCollection(name);
+    setSelectedCollectionId(created.collectionId);
+    setNewCollectionName('');
+    setIsCreatingCollection(false);
+  };
+
+  // Every addItem call in this file funnels through here instead - a shoe
+  // pair creates two items (handleShoeSave), both get added to the same
+  // selected category, without duplicating this logic at each of
+  // UploadFlow's five distinct save paths.
+  const createItemAndMaybeAddToCollection = async (
+    data: Parameters<typeof addItem>[0]
+  ): Promise<ClothingItem> => {
+    const newItem = await addItem(data);
+    if (selectedCollectionId != null) {
+      await useCollectionStore.getState().addItem(selectedCollectionId, newItem.itemId);
+    }
+    return newItem;
+  };
+
   const resetFlow = () => {
     setStep('UPLOAD');
     setFile(null);
@@ -97,6 +135,9 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     setSkipName('');
     setSkipDescription('');
     setSkipPersonaStatus(PersonaStatus.NOT_FITTED);
+    setSelectedCollectionId(null);
+    setIsCreatingCollection(false);
+    setNewCollectionName('');
   };
 
   const handleClose = () => {
@@ -293,7 +334,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         finalUrl = await cloudinaryService.uploadImage(blob);
       }
 
-      await addItem({
+      await createItemAndMaybeAddToCollection({
         name: skipName || 'Untitled Garment',
         description: skipDescription,
         category,
@@ -344,7 +385,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   const handleSave = async (data: { name: string; description: string; transform: ClothingTransform }) => {
     if (!processedImageUrl) return;
     try {
-      await addItem({
+      await createItemAndMaybeAddToCollection({
         name: data.name,
         description: data.description,
         category,
@@ -368,7 +409,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   }) => {
     try {
       if (!data.skipLeft && leftProcessedUrl) {
-        await addItem({
+        await createItemAndMaybeAddToCollection({
           name: `${data.name} (Left)`,
           description: data.description,
           category: ClothingCategory.SHOES,
@@ -379,7 +420,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         });
       }
       if (!data.skipRight && rightProcessedUrl) {
-        await addItem({
+        await createItemAndMaybeAddToCollection({
           name: `${data.name} (Right)`,
           description: data.description,
           category: ClothingCategory.SHOES,
@@ -418,7 +459,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
 
       if (!thumbnailImageUrl) throw new Error('Missing thumbnail image source.');
 
-      await addItem({
+      await createItemAndMaybeAddToCollection({
         name: data.name,
         description: data.description,
         category: ClothingCategory.JACKET,
@@ -530,6 +571,23 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                         </button>
                       ))}
                     </div>
+                  </div>
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2 px-1">
+                      <Layers size={14} className="text-accent" />
+                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Category (Optional)</label>
+                    </div>
+                    <CategoryPicker
+                      collections={collections}
+                      selectedId={selectedCollectionId}
+                      onSelect={setSelectedCollectionId}
+                      isCreating={isCreatingCollection}
+                      onStartCreating={() => setIsCreatingCollection(true)}
+                      newName={newCollectionName}
+                      onNewNameChange={setNewCollectionName}
+                      onConfirmCreate={handleCreateCollectionInline}
+                      onCancelCreate={() => { setIsCreatingCollection(false); setNewCollectionName(''); }}
+                    />
                   </div>
                 </div>
                 <button onClick={handleNextAfterConfig} className="w-full py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 active:scale-[0.98] flex items-center justify-center gap-3">

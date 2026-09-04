@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
-import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle } from 'lucide-react';
+import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle, Tag } from 'lucide-react';
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -88,6 +88,17 @@ const Navbar = () => {
                 title="Persona"
               >
                 <UserCircle size={16} />
+              </Link>
+              {/* Task 49: categories management entry point - a secondary
+                  icon-button here, same reasoning as the persona icon above
+                  (Task 47's own comment) - keeps Attire/Closet/Outfits as
+                  the only primary center links rather than adding a 4th. */}
+              <Link
+                to="/categories"
+                className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-all"
+                title="Categories"
+              >
+                <Tag size={16} />
               </Link>
               <button
                 onClick={logout}

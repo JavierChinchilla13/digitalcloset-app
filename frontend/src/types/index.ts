@@ -148,3 +148,29 @@ export interface OutfitRequest {
     itemOrder?: number;
   }[];
 }
+
+// Categories experience (Task 48, Phase 9). Matches the backend's
+// CollectionItemResponse/CollectionOutfitResponse/CollectionResponse
+// (Tasks 33-34) exactly - named Collection in code, same as the backend
+// entity, to avoid colliding with ClothingCategory; UI copy still says
+// "Categories".
+export interface CollectionItem {
+  collectionItemId: number;
+  itemId: number;
+  itemName: string;
+  imageUrl: string;
+}
+
+export interface CollectionOutfit {
+  collectionOutfitId: number;
+  outfitId: number;
+  outfitName: string;
+}
+
+export interface Collection {
+  collectionId: number;
+  name: string;
+  createdAt: string;
+  items: CollectionItem[];
+  outfits: CollectionOutfit[];
+}

@@ -7,7 +7,7 @@ interface OutfitState {
   isLoading: boolean;
   error: string | null;
   fetchOutfits: () => Promise<void>;
-  saveOutfit: (data: OutfitRequest) => Promise<void>;
+  saveOutfit: (data: OutfitRequest) => Promise<Outfit>;
   updateOutfit: (outfitId: number, data: OutfitRequest) => Promise<void>;
   removeOutfit: (outfitId: number) => Promise<void>;
   duplicateOutfit: (outfit: Outfit) => Promise<void>;
@@ -33,8 +33,10 @@ export const useOutfitStore = create<OutfitState>((set) => ({
     try {
       const newOutfit = await outfitService.createOutfit(data);
       set((state) => ({ outfits: [...state.outfits, newOutfit], isLoading: false }));
+      return newOutfit;
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 

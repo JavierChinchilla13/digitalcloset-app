@@ -6,11 +6,13 @@ import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
+import { useCollectionStore } from '../store/useCollectionStore';
 import { groupSelectedItemsForDisplay, pairShoesForDisplay } from '../utils/selectionDisplay';
 import { ClothingCategory, PersonaStatus } from '../types';
 import type { OutfitRequest, OutfitItem, PersonaState, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 import EditClothingModal from '../components/EditClothingModal';
+import CategoryPicker from '../components/CategoryPicker';
 import { useToast } from '../components/Toast';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
@@ -99,6 +101,7 @@ const FlatOutfitBuilderPage = () => {
   const { persona } = usePersonaStore();
   const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
   const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
+  const { collections, fetchCollections, createCollection } = useCollectionStore();
   const { showToast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,10 +110,27 @@ const FlatOutfitBuilderPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [outfitsReady, setOutfitsReady] = useState(false);
 
+  // Task 51: which category (if any) the outfit being SAVED should also be
+  // added to. Only meaningful for new outfits (id is unset) - editing an
+  // existing outfit's category membership isn't this task's scope.
+  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  const [isCreatingCollection, setIsCreatingCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+
   useEffect(() => {
     fetchItems();
     fetchOutfits().finally(() => setOutfitsReady(true));
-  }, [fetchItems, fetchOutfits]);
+    fetchCollections();
+  }, [fetchItems, fetchOutfits, fetchCollections]);
+
+  const handleCreateCollectionInline = async () => {
+    const name = newCollectionName.trim();
+    if (!name) return;
+    const created = await createCollection(name);
+    setSelectedCollectionId(created.collectionId);
+    setNewCollectionName('');
+    setIsCreatingCollection(false);
+  };
 
   // Editing an existing outfit: load its saved selection into the draft
   // store once outfits have loaded. Mirrors OutfitBuilderPage's equivalent
@@ -137,10 +157,21 @@ const FlatOutfitBuilderPage = () => {
       if (id) {
         await updateOutfit(Number(id), outfitData);
       } else {
-        await saveOutfit(outfitData);
+        const newOutfit = await saveOutfit(outfitData);
+        // Task 51: saveOutfit now returns the created outfit (previously
+        // void) specifically so it can be linked to a category here.
+        if (selectedCollectionId != null) {
+          await useCollectionStore.getState().addOutfit(selectedCollectionId, newOutfit.outfitId);
+        }
       }
       clearDraft();
       navigate('/outfits');
+    } catch (err: any) {
+      // saveOutfit/updateOutfit used to swallow their own errors (store
+      // just recorded them), so this catch never used to fire - now that
+      // they throw, without this the draft would silently clear and
+      // navigate away even on a failed save.
+      showToast(err.message || 'Failed to save outfit', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -287,6 +318,19 @@ const FlatOutfitBuilderPage = () => {
         </div>
 
         <div className="flex items-center gap-4">
+          {!id && (
+            <CategoryPicker
+              collections={collections}
+              selectedId={selectedCollectionId}
+              onSelect={setSelectedCollectionId}
+              isCreating={isCreatingCollection}
+              onStartCreating={() => setIsCreatingCollection(true)}
+              newName={newCollectionName}
+              onNewNameChange={setNewCollectionName}
+              onConfirmCreate={handleCreateCollectionInline}
+              onCancelCreate={() => { setIsCreatingCollection(false); setNewCollectionName(''); }}
+            />
+          )}
           <button
             onClick={clearDraft}
             disabled={selectedItemIds.length === 0}
