@@ -11,6 +11,7 @@ import { ClothingCategory, PersonaStatus } from '../types';
 import type { OutfitRequest, OutfitItem, PersonaState, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 import EditClothingModal from '../components/EditClothingModal';
+import { useToast } from '../components/Toast';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -83,7 +84,7 @@ const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (ite
 const FlatOutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { items, isLoading, fetchItems } = useClothingStore();
+  const { items, isLoading, fetchItems, markItemAsFitted } = useClothingStore();
   // Read-only: only used as the outfit's avatarType default (open question
   // #6's recommendation - the backend's Outfit.avatarType is NOT NULL and
   // this page has no single persona type of its own to draw from). Never
@@ -91,6 +92,7 @@ const FlatOutfitBuilderPage = () => {
   const { persona } = usePersonaStore();
   const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
   const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
+  const { showToast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
@@ -167,13 +169,20 @@ const FlatOutfitBuilderPage = () => {
 
   // Task 45: "Adjust & Fit" entry point - opens EditClothingModal's Fabric
   // Studio for a specific excluded item, with promoteToFittedOnSave so a
-  // saved adjustment also flips it to FITTED. Only NOT_FITTED items get
-  // this (INELIGIBLE_NO_CUTOUT has no cutout to fit - open question #14,
-  // still open); Task 46 groups this alongside "Mark as Fitted" and adds
-  // the ineligible-reason toast this note doesn't have yet.
+  // saved adjustment also flips it to FITTED.
   const [fitModalItem, setFitModalItem] = useState<ClothingItem | null>(null);
+
+  // Task 46: the exclusion note's per-item actions split by reason - the
+  // "ineligible" bucket below (Task 38) counts both together, but only
+  // NOT_FITTED items can be fitted (Mark as Fitted / Adjust & Fit);
+  // INELIGIBLE_NO_CUTOUT items have no cutout to fit at all (open question
+  // #14, still open) and only offer removing them from the selection.
   const notFittedExcluded = useMemo(
     () => selectedItems.filter((item) => item.personaStatus === PersonaStatus.NOT_FITTED),
+    [selectedItems]
+  );
+  const noCutoutExcluded = useMemo(
+    () => selectedItems.filter((item) => item.personaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT),
     [selectedItems]
   );
 
@@ -221,6 +230,21 @@ const FlatOutfitBuilderPage = () => {
       excludedWrongPersonaCount: wrongPersona.length,
     };
   }, [selectedItems, items, persona.type]);
+
+  // Task 46: fires a toast every time preview is switched on while
+  // exclusions exist (open question #19 - no dismissal/seen-it state to
+  // track, so toggling off and back on re-fires it). Intentionally keyed
+  // only on showPersonaPreview, not the counts - this is a "just turned on"
+  // notification, not a live-updating one; the persistent inline note below
+  // is what stays accurate as the selection changes while already open.
+  useEffect(() => {
+    if (!showPersonaPreview) return;
+    const totalExcluded = excludedIneligibleCount + excludedWrongPersonaCount;
+    if (totalExcluded > 0) {
+      showToast(`${totalExcluded} ${totalExcluded === 1 ? 'item' : 'items'} can't be shown on persona`, 'info');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPersonaPreview]);
 
   if (!outfitsReady) {
     return (
@@ -400,16 +424,38 @@ const FlatOutfitBuilderPage = () => {
                       <p>{excludedIneligibleCount} {excludedIneligibleCount === 1 ? 'item' : 'items'} hidden — not persona-fitted yet.</p>
                     )}
                     {notFittedExcluded.length > 0 && (
-                      <div className="flex flex-wrap gap-2 pt-1">
+                      <div className="space-y-2 pt-1">
                         {notFittedExcluded.map((item) => (
-                          <button
-                            key={item.itemId}
-                            onClick={() => setFitModalItem(item)}
-                            className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black transition-colors"
-                          >
-                            <span className="uppercase tracking-widest">Adjust &amp; Fit</span>{' '}
-                            <span className="normal-case tracking-normal opacity-70">{item.name}</span>
-                          </button>
+                          <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
+                            <span className="normal-case tracking-normal text-white/60">{item.name}</span>
+                            <button
+                              onClick={() => markItemAsFitted(item.itemId)}
+                              className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black uppercase tracking-widest transition-colors"
+                            >
+                              Mark as Fitted
+                            </button>
+                            <button
+                              onClick={() => setFitModalItem(item)}
+                              className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black uppercase tracking-widest transition-colors"
+                            >
+                              Adjust &amp; Fit
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {noCutoutExcluded.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        {noCutoutExcluded.map((item) => (
+                          <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
+                            <span className="normal-case tracking-normal text-white/60">{item.name}</span>
+                            <button
+                              onClick={() => removeItem(item.itemId)}
+                              className="px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-widest transition-colors"
+                            >
+                              Remove From Outfit
+                            </button>
+                          </div>
                         ))}
                       </div>
                     )}
