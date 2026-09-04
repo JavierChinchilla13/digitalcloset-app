@@ -15,6 +15,8 @@ import FlatOutfitBuilderPage from './pages/FlatOutfitBuilderPage';
 import SavedOutfitsPage from './pages/SavedOutfitsPage';
 import ClosetPage from './pages/ClosetPage';
 import PersonaPage from './pages/PersonaPage';
+import CategoriesPage from './pages/CategoriesPage';
+import CategoryDetailPage from './pages/CategoryDetailPage';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
@@ -59,6 +61,9 @@ function App() {
           <Route path="/outfits/flat/new" element={<ProtectedRoute><FlatOutfitBuilderPage /></ProtectedRoute>} />
           <Route path="/outfits/flat/edit/:id" element={<ProtectedRoute><FlatOutfitBuilderPage /></ProtectedRoute>} />
           <Route path="/persona" element={<ProtectedRoute><PersonaPage /></ProtectedRoute>} />
+          {/* Categories experience (Task 48-51, Phase 9) */}
+          <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
+          <Route path="/categories/:id" element={<ProtectedRoute><CategoryDetailPage /></ProtectedRoute>} />
         </Route>
       </Routes>
     </Router>

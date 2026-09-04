@@ -12,7 +12,7 @@ interface ClothingState {
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
   fetchItems: (category?: ClothingCategory) => Promise<void>;
-  addItem: (data: Omit<ClothingItem, 'itemId'>) => Promise<void>;
+  addItem: (data: Omit<ClothingItem, 'itemId'>) => Promise<ClothingItem>;
   updateItem: (itemId: number, data: Partial<ClothingItem>) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
   toggleFavorite: (itemId: number) => void;
@@ -51,8 +51,10 @@ export const useClothingStore = create<ClothingState>()(
           const newItem = await clothingService.createClothingItem(data);
           const currentItems = get().items;
           set({ items: [...currentItems, newItem], isLoading: false });
+          return newItem;
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
+          throw err;
         }
       },
 
