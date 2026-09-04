@@ -40,7 +40,7 @@ const SavedOutfitsPage = () => {
           </div>
 
           <button 
-            onClick={() => navigate('/outfits/new')}
+            onClick={() => navigate('/outfits/flat/new')}
             className="group px-10 py-5 bg-white text-background-main font-black rounded-[2rem] flex items-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/5"
           >
             <Plus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
@@ -76,7 +76,7 @@ const SavedOutfitsPage = () => {
                 Start orchestrating your first digital style set for this persona
               </p>
               <button 
-                onClick={() => navigate('/outfits/new')}
+                onClick={() => navigate('/outfits/flat/new')}
                 className="px-10 py-5 border border-white/10 hover:border-white/30 text-white font-black rounded-full flex items-center gap-3 transition-all backdrop-blur-md"
               >
                 <LayoutGrid size={18} className="text-text-secondary" />
@@ -93,7 +93,7 @@ const SavedOutfitsPage = () => {
               {/* Inline Add Card */}
               <motion.button
                 whileHover={{ y: -8, scale: 0.98 }}
-                onClick={() => navigate('/outfits/new')}
+                onClick={() => navigate('/outfits/flat/new')}
                 className="aspect-[3/4] rounded-[2rem] border-2 border-dashed border-white/5 flex flex-col items-center justify-center gap-6 group hover:border-accent/40 hover:bg-accent/5 transition-all"
               >
                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-accent group-hover:text-white transition-all shadow-xl">

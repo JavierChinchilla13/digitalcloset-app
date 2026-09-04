@@ -34,7 +34,7 @@ const PersonaPage = () => {
             className="flex items-center gap-2 text-text-secondary hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
           >
             <ChevronLeft size={14} />
-            Back to Dashboard
+            Back to Attire
           </button>
           <div className="flex items-center gap-3">
             <Sparkles size={20} className="text-accent" />

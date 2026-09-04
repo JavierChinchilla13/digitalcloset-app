@@ -130,7 +130,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <Copy size={14} />
             </button>
             <button
-              onClick={() => navigate(`/outfits/edit/${outfit.outfitId}`)}
+              onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
               className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-colors border border-white/5"
               title="Edit"
             >
