@@ -110,10 +110,12 @@ const FlatOutfitBuilderPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [outfitsReady, setOutfitsReady] = useState(false);
 
-  // Task 51: which category (if any) the outfit being SAVED should also be
-  // added to. Only meaningful for new outfits (id is unset) - editing an
+  // Task 51: which categories (if any) the outfit being SAVED should also
+  // be added to. Only meaningful for new outfits (id is unset) - editing an
   // existing outfit's category membership isn't this task's scope.
-  const [selectedCollectionId, setSelectedCollectionId] = useState<number | null>(null);
+  // Multi-select (user feedback, 2026-09-03) - an outfit can belong to
+  // several categories at once, so the picker isn't limited to one.
+  const [selectedCollectionIds, setSelectedCollectionIds] = useState<number[]>([]);
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState('');
 
@@ -123,11 +125,17 @@ const FlatOutfitBuilderPage = () => {
     fetchCollections();
   }, [fetchItems, fetchOutfits, fetchCollections]);
 
+  const toggleSelectedCollection = (id: number) => {
+    setSelectedCollectionIds((prev) => (
+      prev.includes(id) ? prev.filter((cid) => cid !== id) : [...prev, id]
+    ));
+  };
+
   const handleCreateCollectionInline = async () => {
     const name = newCollectionName.trim();
     if (!name) return;
     const created = await createCollection(name);
-    setSelectedCollectionId(created.collectionId);
+    setSelectedCollectionIds((prev) => [...prev, created.collectionId]);
     setNewCollectionName('');
     setIsCreatingCollection(false);
   };
@@ -159,9 +167,9 @@ const FlatOutfitBuilderPage = () => {
       } else {
         const newOutfit = await saveOutfit(outfitData);
         // Task 51: saveOutfit now returns the created outfit (previously
-        // void) specifically so it can be linked to a category here.
-        if (selectedCollectionId != null) {
-          await useCollectionStore.getState().addOutfit(selectedCollectionId, newOutfit.outfitId);
+        // void) specifically so it can be linked to categories here.
+        for (const collectionId of selectedCollectionIds) {
+          await useCollectionStore.getState().addOutfit(collectionId, newOutfit.outfitId);
         }
       }
       clearDraft();
@@ -321,8 +329,8 @@ const FlatOutfitBuilderPage = () => {
           {!id && (
             <CategoryPicker
               collections={collections}
-              selectedId={selectedCollectionId}
-              onSelect={setSelectedCollectionId}
+              selectedIds={selectedCollectionIds}
+              onToggle={toggleSelectedCollection}
               isCreating={isCreatingCollection}
               onStartCreating={() => setIsCreatingCollection(true)}
               newName={newCollectionName}
