@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
@@ -84,6 +84,13 @@ const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (ite
 const FlatOutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  // Task 41: this page also renders at "/" itself (Task 39's post-login
+  // landing) - a back button there would point "back" to a page that isn't
+  // where the user came from, so it's hidden specifically on that route.
+  // On /outfits/flat/new and /outfits/flat/edit/:id, "back to outfits" is
+  // still the correct affordance.
+  const { pathname } = useLocation();
+  const isLandingRoute = pathname === '/';
   const { items, isLoading, fetchItems, markItemAsFitted } = useClothingStore();
   // Read-only: only used as the outfit's avatarType default (open question
   // #6's recommendation - the backend's Outfit.avatarType is NOT NULL and
@@ -258,12 +265,14 @@ const FlatOutfitBuilderPage = () => {
     <div className="h-screen bg-background-main flex flex-col overflow-hidden pt-16">
       <header className="px-8 py-6 border-b border-white/5 bg-background-secondary/20 flex items-center justify-between z-20">
         <div className="flex items-center gap-6">
-          <button
-            onClick={() => navigate('/outfits')}
-            className="p-3 hover:bg-white/5 rounded-xl text-text-secondary transition-colors border border-white/5"
-          >
-            <ChevronLeft size={20} />
-          </button>
+          {!isLandingRoute && (
+            <button
+              onClick={() => navigate('/outfits')}
+              className="p-3 hover:bg-white/5 rounded-xl text-text-secondary transition-colors border border-white/5"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
           <div className="space-y-1">
             <input
               value={outfitName}

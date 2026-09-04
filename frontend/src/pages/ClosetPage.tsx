@@ -98,7 +98,7 @@ const ClosetPage = () => {
               className="flex items-center gap-2 text-text-secondary hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
-              Back to Dashboard
+              Back to Attire
             </button>
             <h1 className="text-6xl font-light tracking-tighter text-white uppercase leading-none">
               DIGITAL <br /> <span className="text-accent">CLOSET</span>
