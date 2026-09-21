@@ -5,6 +5,7 @@ import type { ClothingItem, Outfit } from '../types';
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
+import { useOutfitDraftStore, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
 import { computePersonaEligibility } from '../utils/personaEligibility';
@@ -19,19 +20,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const { removeOutfit, duplicateOutfit } = useOutfitStore();
   const { items: closetItems } = useClothingStore();
   const { updatePersona } = usePersonaStore();
+  const { setDraft } = useOutfitDraftStore();
   const navigate = useNavigate();
 
   // Backend items[] -> the category-id-list shape the persona/renderer expect.
   const equippedIds = useMemo(() => equippedFromOutfitItems(outfit.items), [outfit.items]);
-
-  const handleApply = () => {
-    updatePersona(equippedIds);
-    // Auto-scroll to persona section to see the full look
-    const personaEl = document.getElementById('persona');
-    if (personaEl) {
-      personaEl.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -89,6 +82,27 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
       ...equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
     };
   }, [eligibility, outfit.items, outfit.avatarType]);
+
+  // "Wear Style" (Task 63, Phase 9.5). This used to write the older
+  // equip-id lists and then scroll to #persona - an element that only
+  // exists on the orphaned /dashboard, so from /outfits it silently did
+  // nothing visible. Now it takes the user to Attire ("/", the flat builder)
+  // with the outfit loaded and the persona preview already on
+  // (open question #22).
+  //  - The outfit's items go into the flat builder's draft (its only source
+  //    of selection - it never reads the equip lists), whole outfit rather
+  //    than just the eligible items, so anything that can't be shown on
+  //    the persona is visible there and fixable through the builder's own
+  //    Mark as Fitted / Adjust & Fit note.
+  //  - The equip lists are still written, eligible items only, because
+  //    /closet's "Equipped" highlight (ClothingCard) still reads them.
+  //    outfitPersona also carries the outfit's avatarType, so the active
+  //    persona switches to it and the preview isn't for the wrong persona.
+  const handleApply = () => {
+    updatePersona(outfitPersona);
+    setDraft(draftFromOutfitItems(outfit.items));
+    navigate('/', { state: { showPersonaPreview: true } });
+  };
 
   return (
     <motion.div

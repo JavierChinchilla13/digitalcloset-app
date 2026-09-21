@@ -11,14 +11,23 @@ interface ClothingCardProps {
   onEdit: (item: ClothingItem) => void;
   onDelete: (item: ClothingItem) => void;
   showManagement?: boolean;
+  // Task 65 (Phase 9.5): by default the card keeps its fixed width
+  // (w-40 md:w-48), which is what it was written for - a horizontal-scroll
+  // flex row (the orphaned /dashboard's ClosetSection still renders it that
+  // way). Inside a CSS grid that fixed width is wider than the grid column
+  // at some breakpoints (measured 192px card in a 182.8px column at 1280px)
+  // and squeezes the gap between cards; `fluid` lets the card fill its grid
+  // cell instead.
+  fluid?: boolean;
 }
 
-const ClothingCard: React.FC<ClothingCardProps> = ({ 
-  item, 
+const ClothingCard: React.FC<ClothingCardProps> = ({
+  item,
   onViewDetails,
   onEdit,
   onDelete,
-  showManagement = false
+  showManagement = false,
+  fluid = false
 }) => {
   const { setEquippedItem, persona } = usePersonaStore();
   const { toggleFavorite } = useClothingStore();
@@ -45,15 +54,11 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
 
   const handleEquip = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Toggles this item on the persona's equip lists (drives the
+    // "Equipped" badge below). Task 63 removed a trailing scroll to
+    // #persona here - that element only exists on the orphaned /dashboard,
+    // so on /closet it was a silent no-op.
     setEquippedItem(item);
-    
-    if (!isEquipped) {
-      // Auto-scroll to persona section to see the change
-      const personaEl = document.getElementById('persona');
-      if (personaEl) {
-        personaEl.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
   };
 
   const handleFavorite = (e: React.MouseEvent) => {
@@ -64,7 +69,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
   return (
     <motion.div
       whileHover={{ y: -4, scale: 1.02 }}
-      className="flex-shrink-0 w-40 md:w-48 group cursor-pointer"
+      className={`${fluid ? '' : 'flex-shrink-0 w-40 md:w-48'} group cursor-pointer`}
       onClick={handleEquip}
     >
       <div className={`
