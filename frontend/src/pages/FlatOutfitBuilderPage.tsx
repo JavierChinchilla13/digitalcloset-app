@@ -4,12 +4,13 @@ import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGr
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
-import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
+import { useOutfitStore } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useCollectionStore } from '../store/useCollectionStore';
 import { groupSelectedItemsForDisplay, pairShoesForDisplay } from '../utils/selectionDisplay';
-import { ClothingCategory, PersonaStatus } from '../types';
-import type { OutfitRequest, OutfitItem, PersonaState, ClothingItem } from '../types';
+import { computePersonaEligibility } from '../utils/personaEligibility';
+import { ClothingCategory } from '../types';
+import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 import EditClothingModal from '../components/EditClothingModal';
 import CategoryPicker from '../components/CategoryPicker';
@@ -218,64 +219,19 @@ const FlatOutfitBuilderPage = () => {
   // saved adjustment also flips it to FITTED.
   const [fitModalItem, setFitModalItem] = useState<ClothingItem | null>(null);
 
-  // Task 46: the exclusion note's per-item actions split by reason - the
-  // "ineligible" bucket below (Task 38) counts both together, but only
-  // NOT_FITTED items can be fitted (Mark as Fitted / Adjust & Fit);
-  // INELIGIBLE_NO_CUTOUT items have no cutout to fit at all (open question
-  // #14, still open) and only offer removing them from the selection.
-  const notFittedExcluded = useMemo(
-    () => selectedItems.filter((item) => item.personaStatus === PersonaStatus.NOT_FITTED),
-    [selectedItems]
+  // Persona preview (Task 38) + per-reason exclusion split (Task 46): the
+  // filtering itself now lives in utils/personaEligibility (Task 61) so
+  // OutfitCard can share it - see that file for the rules. Reuses
+  // equippedFromOutfitItems (Task 16) and PersonaRenderer unchanged.
+  const eligibility = useMemo(
+    () => computePersonaEligibility(selectedItems, items, persona.type),
+    [selectedItems, items, persona.type]
   );
-  const noCutoutExcluded = useMemo(
-    () => selectedItems.filter((item) => item.personaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT),
-    [selectedItems]
-  );
-
-  // Persona preview (Task 38): filters the flat selection down to what
-  // PersonaRenderer can actually show - FITTED items (a NOT_FITTED/
-  // INELIGIBLE_NO_CUTOUT item has no fitted transform to render) matching
-  // the preview persona's type (PersonaRenderer's own getItem already drops
-  // a type mismatch silently; both exclusion reasons are counted here so
-  // the UI can say so instead of just quietly showing fewer items than were
-  // selected - the concrete, visible form of open question #7's tradeoff).
-  // Reuses equippedFromOutfitItems (Task 16) and PersonaRenderer unchanged -
-  // no rendering logic is touched by this task.
-  const { previewPersona, excludedIneligibleCount, excludedWrongPersonaCount } = useMemo(() => {
-    const ineligible = selectedItems.filter(
-      (item) => item.personaStatus != null && item.personaStatus !== PersonaStatus.FITTED
-    );
-    const wrongPersona = selectedItems.filter(
-      (item) => (item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED)
-        && item.personaType !== persona.type
-    );
-    const eligibleIds = selectedItems
-      .filter((item) => (item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED)
-        && item.personaType === persona.type)
-      .map((item) => item.itemId);
-
-    // outfitItemsFromDraft's output has no outfitItemId (OutfitRequest's
-    // create-payload shape); equippedFromOutfitItems expects OutfitItem
-    // (the response shape, which does). outfitItemId is never read by
-    // equippedFromOutfitItems, so itemId is a safe, harmless placeholder.
-    const eligibleOutfitItems: OutfitItem[] = outfitItemsFromDraft(eligibleIds, items).map((oi) => ({
-      outfitItemId: oi.itemId,
-      itemId: oi.itemId,
-      slot: oi.slot,
-      itemOrder: oi.itemOrder,
-    }));
-
-    const preview: PersonaState = {
-      type: persona.type,
-      ...equippedFromOutfitItems(eligibleOutfitItems),
-    };
-
-    return {
-      previewPersona: preview,
-      excludedIneligibleCount: ineligible.length,
-      excludedWrongPersonaCount: wrongPersona.length,
-    };
-  }, [selectedItems, items, persona.type]);
+  const { previewPersona } = eligibility;
+  const notFittedExcluded = eligibility.notFittedItems;
+  const noCutoutExcluded = eligibility.noCutoutItems;
+  const excludedIneligibleCount = eligibility.ineligibleItems.length;
+  const excludedWrongPersonaCount = eligibility.wrongPersonaItems.length;
 
   // Task 46: fires a toast every time preview is switched on while
   // exclusions exist (open question #19 - no dismissal/seen-it state to
