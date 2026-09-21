@@ -1,26 +1,49 @@
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, User, Sparkles, Check } from 'lucide-react';
+import { ChevronLeft, User, Sparkles, Check, X, Pencil } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePersonaStore } from '../store/usePersonaStore';
+import { usePersonaSettingsStore } from '../store/usePersonaSettingsStore';
 import { PersonaType } from '../types';
 import SectionWrapper from '../components/SectionWrapper';
 
 const PersonaPage = () => {
   const navigate = useNavigate();
   const { persona, setPersonaType } = usePersonaStore();
+  // Task 60, Phase 9.5: display names are a separate, backend-synced
+  // overlay on top of the fixed PersonaType enum (Open Question #21) -
+  // getDisplayName falls back to "M Persona"/"F Persona" for anything not
+  // yet customized, replacing what used to be the hardcoded
+  // "Masculine"/"Feminine" card titles below.
+  const { fetchDisplayNames, getDisplayName, setDisplayName } = usePersonaSettingsStore();
+  const [renamingType, setRenamingType] = useState<PersonaType | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  useEffect(() => {
+    fetchDisplayNames();
+  }, [fetchDisplayNames]);
+
+  const startRename = (type: PersonaType) => {
+    setRenamingType(type);
+    setRenameValue(getDisplayName(type));
+  };
+
+  const confirmRename = async () => {
+    if (renamingType == null) return;
+    await setDisplayName(renamingType, renameValue);
+    setRenamingType(null);
+  };
 
   const types = [
-    { 
-      id: PersonaType.MALE, 
-      label: 'Masculine', 
+    {
+      id: PersonaType.MALE,
       description: 'Defined silhouette with classic tailoring metrics.',
-      icon: '/personas/male-base.png' 
+      icon: '/personas/male-base.png'
     },
-    { 
-      id: PersonaType.FEMALE, 
-      label: 'Feminine', 
+    {
+      id: PersonaType.FEMALE,
       description: 'Elegant silhouette optimized for fluid layering.',
-      icon: '/personas/female-base.png' 
+      icon: '/personas/female-base.png'
     }
   ];
 
@@ -70,8 +93,8 @@ const PersonaPage = () => {
                 >
                   <div className="relative aspect-[4/5] rounded-[2.8rem] overflow-hidden bg-background-secondary/40 mb-8">
                     <img 
-                      src={type.icon} 
-                      alt={type.label}
+                      src={type.icon}
+                      alt={getDisplayName(type.id)}
                       className={`
                         w-full h-full object-contain transition-all duration-700 p-8
                         ${isActive ? 'scale-110' : 'opacity-40 grayscale group-hover:grayscale-0 group-hover:opacity-60'}
@@ -90,9 +113,36 @@ const PersonaPage = () => {
                   </div>
 
                   <div className="px-10 pb-10 space-y-3">
-                    <h3 className={`text-2xl font-light tracking-widest uppercase transition-colors ${isActive ? 'text-white' : 'text-text-secondary group-hover:text-white'}`}>
-                      {type.label}
-                    </h3>
+                    {renamingType === type.id ? (
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && confirmRename()}
+                          className="min-w-0 flex-grow bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-white text-lg font-light tracking-widest uppercase focus:outline-none focus:border-accent/50"
+                        />
+                        <button onClick={confirmRename} className="p-2 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors flex-shrink-0">
+                          <Check size={16} />
+                        </button>
+                        <button onClick={() => setRenamingType(null)} className="p-2 rounded-lg hover:bg-white/5 text-text-secondary transition-colors flex-shrink-0">
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <h3 className={`text-2xl font-light tracking-widest uppercase transition-colors ${isActive ? 'text-white' : 'text-text-secondary group-hover:text-white'}`}>
+                          {getDisplayName(type.id)}
+                        </h3>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startRename(type.id); }}
+                          className="p-1.5 rounded-lg hover:bg-white/5 text-text-secondary hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+                          title="Rename"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </div>
+                    )}
                     <p className="text-[10px] text-text-secondary font-medium uppercase tracking-widest leading-relaxed opacity-40">
                       {type.description}
                     </p>

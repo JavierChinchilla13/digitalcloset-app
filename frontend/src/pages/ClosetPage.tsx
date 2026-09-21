@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useClothingStore } from "../store/useClothingStore";
 import { usePersonaStore } from "../store/usePersonaStore";
+import { usePersonaSettingsStore } from "../store/usePersonaSettingsStore";
 import { ClothingCategory, PersonaType } from "../types";
 import type { ClothingItem } from "../types";
 import ClothingCard from "../components/ClothingCard";
@@ -23,7 +24,15 @@ import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 const ClosetPage = () => {
   const { items, isLoading, fetchItems } = useClothingStore();
   const { persona } = usePersonaStore();
+  // Task 60, Phase 9.5: the "Active Persona" indicator shows the user's
+  // custom name instead of the raw MALE/FEMALE enum value, if they've set
+  // one - falls back to "M Persona"/"F Persona" via getDisplayName.
+  const { fetchDisplayNames, getDisplayName } = usePersonaSettingsStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchDisplayNames();
+  }, [fetchDisplayNames]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
@@ -113,7 +122,7 @@ const ClosetPage = () => {
                   className={`w-1.5 h-1.5 rounded-full ${persona.type === PersonaType.MALE ? "bg-blue-400" : "bg-rose-400"} animate-pulse`}
                 />
                 <span className="text-[8px] font-black uppercase tracking-widest text-accent">
-                  Active Persona: {persona.type}
+                  Active Persona: {getDisplayName(persona.type)}
                 </span>
               </div>
             </div>
