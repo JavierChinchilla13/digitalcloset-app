@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2 } from 'lucide-react';
-import type { Outfit } from '../types';
+import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle } from 'lucide-react';
+import type { ClothingItem, Outfit } from '../types';
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
+import { computePersonaEligibility } from '../utils/personaEligibility';
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -55,10 +56,39 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
     return closetItems.filter(item => ids.includes(item.itemId));
   }, [equippedIds, closetItems]);
 
-  const outfitPersona = {
-    type: outfit.avatarType,
-    ...equippedIds
-  };
+  // Task 62 (Phase 9.5): the persona preview used to hand every item in the
+  // outfit straight to PersonaRenderer, which only drops a persona-type
+  // mismatch - it knows nothing about personaStatus, so a NOT_FITTED or
+  // INELIGIBLE_NO_CUTOUT item rendered anyway (badly) with no warning. Now
+  // the same eligibility rules the flat builder uses (Task 61) decide what
+  // is shown, and the rest is reported via the note under the card.
+  // The preview persona is the outfit's own avatarType, as before.
+  const eligibility = useMemo(() => {
+    const byId = new Map(closetItems.map((item) => [item.itemId, item]));
+    const outfitClothing = [...outfit.items]
+      .sort((a, b) => (a.itemOrder ?? 0) - (b.itemOrder ?? 0))
+      .map((oi) => byId.get(oi.itemId))
+      .filter((item): item is ClothingItem => !!item);
+    return computePersonaEligibility(outfitClothing, closetItems, outfit.avatarType);
+  }, [outfit.items, outfit.avatarType, closetItems]);
+
+  const hiddenCount = eligibility.ineligibleItems.length + eligibility.wrongPersonaItems.length;
+  const hiddenReasons = [
+    eligibility.ineligibleItems.length > 0 && `${eligibility.ineligibleItems.length} not fitted`,
+    eligibility.wrongPersonaItems.length > 0 && `${eligibility.wrongPersonaItems.length} for the other persona`,
+  ].filter(Boolean).join(', ');
+
+  // Built from the outfit's own saved slots (filtered to the eligible
+  // items) rather than eligibility.previewPersona, which re-derives slots
+  // from category/side - an older outfit's shoe with no recorded side
+  // would lose its saved leftShoe/rightShoe slot that way.
+  const outfitPersona = useMemo(() => {
+    const eligibleIds = new Set(eligibility.eligibleItems.map((item) => item.itemId));
+    return {
+      type: outfit.avatarType,
+      ...equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
+    };
+  }, [eligibility, outfit.items, outfit.avatarType]);
 
   return (
     <motion.div
@@ -201,6 +231,22 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             {formatDate(outfit.createdAt)}
           </span>
         </div>
+        {/* Task 62: kept minimal on purpose (open question #23) - the full
+            Mark-as-Fitted / Adjust & Fit actions live in the flat builder
+            (Tasks 44-46), so this just says something is hidden and links
+            there instead of duplicating them into every card. Lives here,
+            not inside the image, because the hover overlay covers the
+            whole image and would swallow the click. */}
+        {showPersona && hiddenCount > 0 && (
+          <button
+            onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
+            title={`${hiddenReasons} - open in the editor to fix`}
+            className="flex items-center gap-1.5 pt-1 text-[8px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors"
+          >
+            <AlertTriangle size={10} />
+            {hiddenCount} {hiddenCount === 1 ? 'item' : 'items'} hidden · Fix
+          </button>
+        )}
       </div>
     </motion.div>
   );

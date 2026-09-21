@@ -17,6 +17,11 @@ import { outfitItemsFromDraft } from '../store/useOutfitDraftStore';
 export interface PersonaEligibility {
   // Ready to hand straight to PersonaRenderer - eligible items only.
   previewPersona: PersonaState;
+  // The items previewPersona was built from (FITTED + matching persona
+  // type). Exposed so a caller that already has its own saved slots for
+  // these items (OutfitCard) can build its preview from those instead of
+  // the slots outfitItemsFromDraft re-derives from category/side.
+  eligibleItems: ClothingItem[];
   // Every non-FITTED item (NOT_FITTED + INELIGIBLE_NO_CUTOUT together),
   // regardless of persona type - Task 38's original "ineligible" bucket.
   ineligibleItems: ClothingItem[];
@@ -51,9 +56,10 @@ export function computePersonaEligibility(
   const wrongPersonaItems = selectedItems.filter(
     (item) => isFittedStatus(item) && item.personaType !== targetPersonaType
   );
-  const eligibleIds = selectedItems
-    .filter((item) => isFittedStatus(item) && item.personaType === targetPersonaType)
-    .map((item) => item.itemId);
+  const eligibleItems = selectedItems.filter(
+    (item) => isFittedStatus(item) && item.personaType === targetPersonaType
+  );
+  const eligibleIds = eligibleItems.map((item) => item.itemId);
 
   // outfitItemsFromDraft's output has no outfitItemId (OutfitRequest's
   // create-payload shape); equippedFromOutfitItems expects OutfitItem
@@ -71,5 +77,5 @@ export function computePersonaEligibility(
     ...equippedFromOutfitItems(eligibleOutfitItems),
   };
 
-  return { previewPersona, ineligibleItems, notFittedItems, noCutoutItems, wrongPersonaItems };
+  return { previewPersona, eligibleItems, ineligibleItems, notFittedItems, noCutoutItems, wrongPersonaItems };
 }
