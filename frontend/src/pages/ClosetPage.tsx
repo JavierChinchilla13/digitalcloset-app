@@ -256,6 +256,7 @@ const ClosetPage = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 showManagement={true}
+                fluid
               />
             ))}
           </div>

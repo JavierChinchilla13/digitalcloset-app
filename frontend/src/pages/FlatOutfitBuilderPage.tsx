@@ -92,7 +92,7 @@ const FlatOutfitBuilderPage = () => {
   // where the user came from, so it's hidden specifically on that route.
   // On /outfits/flat/new and /outfits/flat/edit/:id, "back to outfits" is
   // still the correct affordance.
-  const { pathname } = useLocation();
+  const { pathname, state: navState } = useLocation();
   const isLandingRoute = pathname === '/';
   const { items, isLoading, fetchItems, markItemAsFitted } = useClothingStore();
   // Read-only: only used as the outfit's avatarType default (open question
@@ -212,7 +212,13 @@ const FlatOutfitBuilderPage = () => {
     [selectedItems]
   );
 
-  const [showPersonaPreview, setShowPersonaPreview] = useState(false);
+  // Opens with the preview already on when arriving from OutfitCard's
+  // "Wear Style" (Task 63), which navigates here with this hint in the
+  // router state; every other way of reaching this page starts in the
+  // selection view as before.
+  const [showPersonaPreview, setShowPersonaPreview] = useState<boolean>(
+    Boolean((navState as { showPersonaPreview?: boolean } | null)?.showPersonaPreview)
+  );
 
   // Task 45: "Adjust & Fit" entry point - opens EditClothingModal's Fabric
   // Studio for a specific excluded item, with promoteToFittedOnSave so a
