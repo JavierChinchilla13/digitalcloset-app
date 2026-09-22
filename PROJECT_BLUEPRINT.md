@@ -1138,7 +1138,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **73** Fix shoe-save losing its image (blob URL never uploaded to Cloudinary)
 - [x] **74** Process the real logo (favicon + Landing hero + asset for Task 75)
 - [x] **75** New Outfit Showcase page (majestic carousel, reachable via the logo)
-- [ ] **76** Redesign the Attire browse panel (3 sections, category dropdown,
+- [x] **76** Redesign the Attire browse panel (3 sections, category dropdown,
       fix the selection-shrink bug)
 
 ### Phase 10 — Persona fitting repair & deformation
@@ -4250,3 +4250,80 @@ reported.
   an item is selected, next to the browse panel's own larger
   `aspect-[3/4]` 2-column cards - reads as "everything shrank"; brought
   closer in size and reordered to match the new section structure.
+
+### Task 76 — Redesign the Attire browse panel
+
+**Files:** `frontend/src/pages/FlatOutfitBuilderPage.tsx`; new
+`frontend/src/components/ClothingCategoryFilter.tsx`.
+
+- Removed the `w-20` vertical category-icon sidebar entirely. In its
+  place, directly under the search input, a new `ClothingCategoryFilter`
+  component - a single-select dropdown modeled on `CategoryPicker.tsx`'s
+  toggle-button + absolute-panel-below structure and look, but a
+  different data/selection model (the fixed `ClothingCategory` enum
+  values plus "All", single-select with a reset, vs. `CategoryPicker`'s
+  multi-select of arbitrary user-created Collections) - reusing the
+  pattern, not the component, since the selection model genuinely
+  differs.
+- Browse grid reorganized from one flat, unordered grid into fixed
+  sections via a new `browseSections` memo: **Top** (Dress items first,
+  then Tops, then Jackets, all in one flowing grid - a Dress doesn't
+  replace anything here, unlike the Outfit Showcase's rows, it just sorts
+  first), **Bottom**, **Shoes**, **Accessories** last. A section with
+  nothing in it (including when the new category filter narrows to just
+  one category) is skipped rather than rendered empty.
+- New scroll-hint affordance on the browse column: a bottom gradient
+  fade + a bouncing chevron (framer-motion), shown only while the
+  scrollable container has more content below the current scroll
+  position (`scrollHeight - scrollTop - clientHeight` past a small
+  threshold), hidden once actually scrolled to the bottom. Re-checked
+  whenever the visible section list changes (a filter or search
+  narrowing/widening it can change whether there's more below, even
+  though the scroll position itself hasn't moved). No existing
+  scroll-hint pattern anywhere in the codebase to reuse - built directly
+  off the scroll container's own metrics.
+- **The "everything goes small" bug - real root cause found live,
+  deeper than the original investigation assumed:** the pre-task
+  investigation (see the Phase 9.7 plan) attributed this entirely to the
+  "Your Selection" panel's cards being smaller/denser than the browse
+  panel's own cards (`aspect-[4/5]` at up to 6 columns vs. browse's
+  `aspect-[3/4]` at 2 columns) - true, and fixed (`SelectionCard` now
+  matches browse's `aspect-[3/4]`; its grids dropped from
+  4/5/6 columns to 3/4/5). But live testing turned up a second, larger
+  effect stacked on top of it: the selection panel (`flex-grow`, no
+  `shrink-0`) had no `min-width` override, so as an ordinary flex item
+  its `flex-shrink: 1` default was live - empty, its content was narrow
+  enough that no shrinking occurred (the browse panel measured its
+  correct 384px), but the moment the selection panel had ANY grid
+  content at all, its flex-basis grew and the browser proportionally
+  shrank **both** flex children to fit, squeezing the browse panel down
+  to ~148px (measured live, toggling `flex-shrink` on it directly in the
+  browser confirmed 148px without vs. 384px with `flex-shrink: 0`) - not
+  just the selection panel's own cards reading smaller than browse's,
+  the entire browse column and ITS cards visibly shrinking too, every
+  time anything was selected. Fixed by adding `shrink-0` to the browse
+  panel (`<aside className="w-96 shrink-0 ...">`), pinning it to its
+  intended width regardless of what the selection panel's content
+  demands. This is very plausibly the more complete explanation for what
+  was originally reported as "everything goes small," not just the two
+  panels' differing card density.
+- **Verified live:** created 18 real test items (3 per category) and
+  confirmed section order (Top flowing Dress→Top→Jacket, then Bottom,
+  Shoes, Accessories); opened the category dropdown, selected "Shoes",
+  confirmed the grid narrowed to just that section, then reset via "All"
+  and confirmed it returned to all four sections; confirmed the
+  scroll-hint chevron shows when the browse column has more below the
+  fold and disappears once scrolled to the bottom (measured
+  `scrollHeight`/`scrollTop`/`clientHeight` directly, not just visually);
+  selected 3 items across categories and confirmed both panels held
+  their correct widths (384px / 881px) throughout, with browse and
+  selection cards at comparable, no-longer-jarring sizes (160x213 vs.
+  136x181, same aspect ratio) - visually confirmed with an actual
+  rendered screenshot this round (the screenshot tool worked this time,
+  unlike the last several tasks). `tsc -b --force` + `vite build` clean.
+  Spot-checked dark mode by inspecting the new component's source for
+  any hardcoded colors (none - every class is one of the app's existing
+  theme tokens, same convention as the rest of the app) rather than a
+  full visual pass, since the screenshot tool went back to its unreliable
+  tiny-scale rendering for that specific check. All 18 test items deleted
+  after, confirmed empty on re-fetch.

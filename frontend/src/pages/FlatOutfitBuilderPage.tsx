@@ -1,6 +1,6 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
@@ -14,6 +14,7 @@ import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 import EditClothingModal from '../components/EditClothingModal';
 import CategoryPicker from '../components/CategoryPicker';
+import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import { useToast } from '../components/Toast';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
@@ -36,13 +37,19 @@ function formatCategoryLabel(category: ClothingCategory): string {
   return category.charAt(0) + category.slice(1).toLowerCase();
 }
 
-// Denser card for the "Your Selection" panel (Task 43) - smaller than the
-// browse grid's cards, same hover-to-reveal remove affordance as before.
+// Selection panel card (Task 43). Task 76 follow-up: this used to be
+// noticeably smaller/denser than the browse grid's own cards (a 4/5/6-
+// column grid of aspect-[4/5] tiles vs. browse's 2-column aspect-[3/4]),
+// so the instant an item was selected, the right panel visibly "shrank"
+// next to the left one - confirmed as a real, reported bug, not just a
+// style preference. Matched to browse's own aspect-[3/4] here; the grid
+// itself (see below) also dropped to fewer max columns so cards actually
+// render close to browse-card size instead of just sharing a ratio.
 const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (itemId: number) => void }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="relative aspect-[4/5] rounded-xl overflow-hidden border border-accent/30 group"
+    className="relative aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
   >
     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
     <button
@@ -74,7 +81,7 @@ const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (ite
         </div>
       )}
       {unpaired.length > 0 && (
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
           {unpaired.map((item) => (
             <SelectionCard key={item.itemId} item={item} onRemove={onRemove} />
           ))}
@@ -186,8 +193,6 @@ const FlatOutfitBuilderPage = () => {
     }
   };
 
-  const categories = ['ALL', ...Object.values(ClothingCategory)];
-
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -195,6 +200,51 @@ const FlatOutfitBuilderPage = () => {
       return matchesSearch && matchesCategory;
     });
   }, [items, searchQuery, activeCategory]);
+
+  // Task 76: the browse grid used to be one flat, unordered grid of
+  // whatever matched the search/category filter. Reorganized into fixed
+  // sections - Top (a Dress replaces neither Jacket nor Top, it just
+  // comes first in the same flowing grid, followed by Tops then Jackets),
+  // Bottom, Shoes, Accessories last - so scrolling down the column always
+  // moves through the same predictable order regardless of what's in the
+  // closet. A section with nothing in it (e.g. filtered to one category,
+  // or the closet just has none of that type yet) is skipped rather than
+  // shown empty.
+  const BROWSE_TOP_ORDER = useMemo(() => [ClothingCategory.DRESS, ClothingCategory.TOP, ClothingCategory.JACKET], []);
+  const browseSections = useMemo(() => {
+    const byCategories = (cats: ClothingCategory[]) =>
+      filteredItems
+        .filter((item) => cats.includes(item.category))
+        .sort((a, b) => cats.indexOf(a.category) - cats.indexOf(b.category));
+    return [
+      { label: 'Top', items: byCategories(BROWSE_TOP_ORDER) },
+      { label: 'Bottom', items: byCategories([ClothingCategory.BOTTOM]) },
+      { label: 'Shoes', items: byCategories([ClothingCategory.SHOES]) },
+      { label: 'Accessories', items: byCategories([ClothingCategory.ACCESSORY]) },
+    ].filter((section) => section.items.length > 0);
+  }, [filteredItems, BROWSE_TOP_ORDER]);
+
+  // Scroll-hint affordance (Task 76) - the browse column is narrow enough
+  // that Accessories (and often Shoes) sit below the fold once there's a
+  // few sections worth of content above them; a subtle bottom fade + a
+  // bouncing chevron signals there's more without needing to scroll first
+  // to discover it, and both disappear once actually scrolled to the
+  // bottom. No existing pattern for this anywhere in the codebase to
+  // reuse - built directly off the scroll container's own metrics.
+  const browseScrollRef = useRef<HTMLDivElement>(null);
+  const [hasMoreBelow, setHasMoreBelow] = useState(false);
+  const checkScrollHint = useCallback(() => {
+    const el = browseScrollRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 8;
+    setHasMoreBelow(el.scrollHeight > el.clientHeight && !atBottom);
+  }, []);
+  // Re-check whenever the visible content changes (new items loaded, a
+  // filter/search narrows or widens the list) - the scroll position
+  // itself doesn't move, but whether there's now more below it can.
+  useEffect(() => {
+    checkScrollHint();
+  }, [browseSections, checkScrollHint]);
 
   const selectedItems = useMemo(
     () => selectedItemIds
@@ -321,29 +371,28 @@ const FlatOutfitBuilderPage = () => {
       </header>
 
       <div className="flex-grow flex overflow-hidden">
-        {/* Left Panel: Category Selector */}
-        <aside className="w-20 border-r border-ink/5 flex flex-col items-center py-8 gap-8 bg-ink/5">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`
-                relative w-12 h-12 rounded-xl flex items-center justify-center transition-all
-                ${activeCategory === cat ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary hover:bg-ink/5'}
-              `}
-            >
-              <div className="text-[10px] font-medium rotate-[-90deg] whitespace-nowrap tracking-widest uppercase">
-                {cat}
-              </div>
-              {activeCategory === cat && (
-                <motion.div layoutId="activeFlatTab" className="absolute -right-[1px] w-[2px] h-8 bg-accent" />
-              )}
-            </button>
-          ))}
-        </aside>
-
-        {/* Center Panel: Browsable Wardrobe Grid */}
-        <aside className="w-96 border-r border-ink/5 flex flex-col bg-background-secondary/5">
+        {/* Browsable Wardrobe Panel. Task 76: the old separate `w-20`
+            category-icon sidebar is gone - the category filter now lives
+            directly under the search bar as a single dropdown
+            (ClothingCategoryFilter), and the grid below it is grouped into
+            fixed Top/Bottom/Shoes/Accessories sections instead of one flat
+            unordered grid.
+            Real root cause of the reported "everything goes small" bug,
+            found while verifying the card-size fix below: this panel had
+            an explicit `w-96` but no `shrink-0`, so it was a normal flex
+            item with the default `flex-shrink: 1`. Empty, the selection
+            panel's content was narrow enough that no shrinking occurred
+            (384px rendered as expected) - but the instant it had any grid
+            content at all, its flex-basis auto-sizing grew, and the
+            browser proportionally shrank BOTH flex children to fit,
+            squeezing this panel down to ~148px (measured live) - not just
+            the selection panel's own cards being smaller, the entire
+            browse column and its cards visibly shrinking too. `shrink-0`
+            pins this panel to its intended 384px regardless of what the
+            selection panel's content demands - confirmed live by toggling
+            it directly in the browser: without it, populated width was
+            148px; with it, back to the correct 384px. */}
+        <aside className="w-96 shrink-0 border-r border-ink/5 flex flex-col bg-background-secondary/5">
           <div className="p-6 border-b border-ink/5 space-y-4">
             <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
               Available Pieces
@@ -358,51 +407,81 @@ const FlatOutfitBuilderPage = () => {
                 className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
               />
             </div>
+            <ClothingCategoryFilter value={activeCategory} onChange={setActiveCategory} />
           </div>
-          <div className="flex-grow overflow-y-auto no-scrollbar p-6">
-            {isLoading && items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20">
-                <Loader2 className="animate-spin text-accent" size={24} />
-                <p className="text-[10px] font-medium uppercase tracking-widest">Syncing Wardrobe...</p>
-              </div>
-            ) : filteredItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
-                <Shirt size={32} className="text-text-secondary" />
-                <p className="text-[10px] font-medium uppercase tracking-widest">No pieces found</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {filteredItems.map((item) => {
-                  const active = selectedItemIds.includes(item.itemId);
-                  return (
-                    <motion.div
-                      key={item.itemId}
-                      whileHover={{ y: -4 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleItem(item.itemId)}
-                      className={`
-                        relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
-                        ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
-                      `}
-                    >
-                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
-                      <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                        <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
-                      </div>
-                      <div className={`
-                        absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
-                        ${active ? 'opacity-100' : 'opacity-0'}
-                      `}>
-                        <div className="bg-ink text-accent p-2 rounded-full shadow-md">
-                          <X size={16} className="rotate-45" />
-                        </div>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                        <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
-                      </div>
-                    </motion.div>
-                  );
-                })}
+          <div className="relative flex-grow overflow-hidden">
+            <div
+              ref={browseScrollRef}
+              onScroll={checkScrollHint}
+              className="h-full overflow-y-auto no-scrollbar p-6 space-y-8"
+            >
+              {isLoading && items.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20">
+                  <Loader2 className="animate-spin text-accent" size={24} />
+                  <p className="text-[10px] font-medium uppercase tracking-widest">Syncing Wardrobe...</p>
+                </div>
+              ) : browseSections.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
+                  <Shirt size={32} className="text-text-secondary" />
+                  <p className="text-[10px] font-medium uppercase tracking-widest">No pieces found</p>
+                </div>
+              ) : (
+                browseSections.map((section) => (
+                  <div key={section.label} className="space-y-3">
+                    <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                      {section.label}
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      {section.items.map((item) => {
+                        const active = selectedItemIds.includes(item.itemId);
+                        return (
+                          <motion.div
+                            key={item.itemId}
+                            whileHover={{ y: -4 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => toggleItem(item.itemId)}
+                            className={`
+                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
+                              ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
+                            `}
+                          >
+                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                            <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
+                              <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
+                            </div>
+                            <div className={`
+                              absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
+                              ${active ? 'opacity-100' : 'opacity-0'}
+                            `}>
+                              <div className="bg-ink text-accent p-2 rounded-full shadow-md">
+                                <X size={16} className="rotate-45" />
+                              </div>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
+                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Scroll-hint affordance (Task 76) - a bottom fade + bouncing
+                chevron, shown only while there's more content below the
+                fold, so Accessories (and often Shoes) don't go unnoticed
+                just because they start below the visible area. */}
+            {hasMoreBelow && (
+              <div className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none flex items-end justify-center pb-2 bg-gradient-to-t from-background-secondary/90 to-transparent">
+                <motion.div
+                  animate={{ y: [0, 4, 0] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-text-secondary opacity-60"
+                >
+                  <ChevronDown size={16} />
+                </motion.div>
               </div>
             )}
           </div>
@@ -501,7 +580,7 @@ const FlatOutfitBuilderPage = () => {
                     {group.category === ClothingCategory.SHOES ? (
                       <ShoeSubRow items={group.items} onRemove={removeItem} />
                     ) : (
-                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                         {group.items.map((item) => (
                           <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
                         ))}
@@ -515,7 +594,7 @@ const FlatOutfitBuilderPage = () => {
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
                       Accessories
                     </p>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                       {accessoryItems.map((item) => (
                         <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
                       ))}
