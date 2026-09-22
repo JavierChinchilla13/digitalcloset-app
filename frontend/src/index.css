@@ -44,6 +44,20 @@
   --vy-line: #DAD8D3;
 }
 
+/* Task 71 - the Fabric.js editing canvases (ClothingCanvas, JacketCanvas,
+   ShoeCanvas, GarmentCleanup) are a deliberately dark "photography
+   backdrop" in BOTH site themes: they need to contrast against
+   transparent-background garment cutouts and light-colored fabrics, the
+   same reasoning that keeps photo labels white throughout the rest of
+   the app (Tasks 68-70). Defined once, outside the light/dark blocks
+   above, so it never changes with data-theme - unlike --vy-accent, which
+   does. utils/themeColors.ts reads --vy-stage-accent for Fabric's own
+   drawn colors (selection handles etc.), which can't be styled with CSS. */
+:root {
+  --vy-stage: #0B0B0C;
+  --vy-stage-accent: #C7CBD1;
+}
+
 /* No-JS fallback: follow the device when the attribute was never set. */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
@@ -73,6 +87,8 @@
   --color-on-accent: var(--vy-on-accent);
   --color-ink: var(--vy-ink);
   --color-line: var(--vy-line);
+  --color-stage: var(--vy-stage);
+  --color-stage-accent: var(--vy-stage-accent);
 }
 
 @theme {

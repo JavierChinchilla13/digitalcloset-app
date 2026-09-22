@@ -1,14 +1,17 @@
 import { Object as FabricObject } from 'fabric';
+import { getStageAccentHex } from '../../utils/themeColors';
 
 /**
  * Customizes Fabric.js selection controls to match the app's aesthetic.
  */
 export const customizeFabricControls = () => {
-  // Use a modern, clean style for handles
+  // Use a modern, clean style for handles. Task 71: borderColor/
+  // cornerStrokeColor were hard-coded to the app's old blue accent -
+  // now read the stage's own accent (see utils/themeColors.ts).
   const controlConfig = {
-    borderColor: '#5B8CFF', // Accent color
+    borderColor: getStageAccentHex(),
     cornerColor: '#FFFFFF',
-    cornerStrokeColor: '#5B8CFF',
+    cornerStrokeColor: getStageAccentHex(),
     cornerSize: 12,
     transparentCorners: false,
     cornerStyle: 'circle' as const,

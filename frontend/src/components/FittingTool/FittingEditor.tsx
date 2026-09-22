@@ -81,7 +81,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               <Sparkles size={16} className="text-accent" />
               Fabric Studio
             </h2>
-            <p className="text-[8px] font-black text-text-secondary tracking-[0.4em] uppercase opacity-40">Precision Garment Digitization</p>
+            <p className="text-[10px] font-medium text-text-secondary tracking-[0.4em] uppercase opacity-40">Precision Garment Digitization</p>
           </div>
         </div>
 
@@ -97,10 +97,10 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
       <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-hidden">
         {/* Left Sidebar: Advanced Controls */}
         <aside className="w-full md:w-80 flex flex-col gap-8 order-2 md:order-1 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-10">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-8 space-y-10">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
               <div className="w-2 h-2 bg-accent rounded-full" />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Geometric Calibration</h3>
+              <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">Geometric Calibration</h3>
             </div>
             
             <TransformPanel 
@@ -113,7 +113,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
           {/* Quick Info HUD */}
           <div className="mt-auto bg-accent/5 border border-accent/10 rounded-3xl p-6 flex gap-4">
             <Info size={16} className="text-accent shrink-0" />
-            <p className="text-[9px] text-text-secondary leading-relaxed uppercase tracking-widest font-bold opacity-60">
+            <p className="text-[10px] text-text-secondary leading-relaxed uppercase tracking-widest font-bold opacity-60">
               Fabric.js integration enabled. Your transforms are calculated in a virtual 1000px coordinate space for cross-device consistency.
             </p>
           </div>
@@ -135,10 +135,10 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
 
         {/* Right Sidebar: Identity */}
         <aside className="w-full md:w-80 flex flex-col gap-8 order-3 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-8">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-8 space-y-8">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
               <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Garment Identity</h3>
+              <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">Garment Identity</h3>
             </div>
 
             <div className="space-y-8">
@@ -146,7 +146,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <Type size={14} className="text-accent" />
-                  <label className="text-[9px] font-black tracking-[0.3em] text-accent uppercase">Identity Name</label>
+                  <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Identity Name</label>
                 </div>
                 <input 
                   type="text"
@@ -161,7 +161,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <AlignLeft size={14} className="text-accent" />
-                  <label className="text-[9px] font-black tracking-[0.3em] text-accent uppercase">Description</label>
+                  <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Description</label>
                 </div>
                 <textarea 
                   rows={4}
@@ -177,7 +177,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               onClick={() => onSave({ name, description, transform })}
               disabled={!name}
               className={`
-                w-full py-6 rounded-2xl font-black text-[10px] tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl
+                w-full py-6 rounded-2xl font-medium text-[10px] tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-lg
                 ${!name
                   ? 'bg-ink/5 text-text-secondary cursor-not-allowed opacity-20' 
                   : 'bg-ink text-background-main hover:scale-[1.02] active:scale-[0.98]'

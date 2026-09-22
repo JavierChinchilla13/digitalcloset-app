@@ -199,7 +199,11 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
               <h3 className="text-[10px] font-black text-text-primary uppercase tracking-[0.3em]">
                 {activeSide === 'left' ? 'LEFT FOOT' : 'RIGHT FOOT'}
               </h3>
-              <div className={`px-3 py-1 rounded-full text-[7px] font-black uppercase tracking-widest ${activeSide === 'left' ? 'bg-blue-500/10 text-blue-400' : 'bg-emerald-500/10 text-emerald-400'}`}>
+              {/* Task 71: was a blue/emerald badge keyed off which foot is
+                  active - off-palette, and redundant next to the "LEFT
+                  FOOT"/"RIGHT FOOT" heading right above it (same reasoning
+                  as ClosetPage's persona dot, Task 70). */}
+              <div className="px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-widest bg-accent/10 text-accent">
                 Calibrating...
               </div>
            </div>
