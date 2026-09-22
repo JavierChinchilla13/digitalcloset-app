@@ -1137,7 +1137,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 - [x] **73** Fix shoe-save losing its image (blob URL never uploaded to Cloudinary)
 - [x] **74** Process the real logo (favicon + Landing hero + asset for Task 75)
-- [ ] **75** New Outfit Showcase page (majestic carousel, reachable via the logo)
+- [x] **75** New Outfit Showcase page (majestic carousel, reachable via the logo)
 - [ ] **76** Redesign the Attire browse panel (3 sections, category dropdown,
       fix the selection-shrink bug)
 
@@ -3833,18 +3833,410 @@ was needed at all; `public/logo.png` is used as-is.
   task did recover a normal screenshot, confirming the page itself was
   never actually broken.
 - `tsc -b --force` + `vite build` clean.
-- **75** - new `/showcase` route (protected), only reachable by clicking
-  the logo while authenticated (guests keep going to `/` as today, no
-  outfits to show). Active outfit large/centered via `PersonaRenderer`,
-  adjacent outfits smaller and offset to the sides, click to switch (no
-  carousel library or pattern exists anywhere in the repo - confirmed by
-  grep - built fresh with `framer-motion`). Zero-outfit state: the
-  processed logo + tagline + a "Let's Get Started" button into the
-  Attire builder, matching `LandingPage`'s existing visual language
-  rather than inventing a new one. Reuses `OutfitCard.tsx`'s
-  `outfitPersona`-construction logic (`computePersonaEligibility` +
-  `equippedFromOutfitItems` + `applyLegacyShoeFallback`) rather than
-  reimplementing it.
+### Task 75 — New Outfit Showcase page
+
+**✅ COMPLETE 2026-09-21.** New `frontend/src/pages/OutfitShowcasePage.tsx`
+at route `/showcase` (protected). `Navbar.tsx`'s logo link is now
+`to={isAuthenticated ? '/showcase' : '/'}` - guests keep landing on
+`LandingPage` as before (no outfits to show).
+- **Extracted, not duplicated:** `OutfitCard.tsx`'s inline `outfitPersona`
+  construction (eligibility filter + `equippedFromOutfitItems` +
+  `applyLegacyShoeFallback`) moved to a new `buildOutfitPersona(outfit,
+  allItems)` in `utils/personaEligibility.ts`, used by both `OutfitCard`
+  (refactored to call it) and the new page - one implementation, not two.
+- **The carousel mechanic:** three slots (left/active/right), each a
+  `motion.div` sharing a `layoutId` keyed by outfit id. When the active
+  index changes, the *same* outfit's element moves from a side slot to
+  the center slot (or back) and framer-motion's `layout` prop animates
+  that move automatically (the FLIP technique) - no custom slide-direction
+  variants needed, confirming the plan's own finding that no carousel
+  library or existing pattern was needed. A 2-outfit edge case (left and
+  right would otherwise resolve to the same outfit, colliding as
+  React keys) only shows that outfit on the right.
+- Each visible outfit renders on its **own** persona type via
+  `PersonaRenderer` - verified live with a mixed MALE/MALE/FEMALE set of
+  3 outfits, confirming the active slot correctly showed `female-base.png`
+  when that outfit was centered while the MALE side outfits kept
+  `male-base.png`, with no bleed from the app's single global persona
+  selection.
+- Zero-outfit state: the real logo (Task 74) + a line of copy + a
+  "Let's Get Started" button into the Attire builder, matching
+  `LandingPage`'s visual language (eyebrow badge, `rounded-full` accent
+  button) rather than a new style.
+- **Verified live:** logo link resolves to `/showcase`; empty state
+  renders correctly with 0 outfits; created 3 test outfits (2 MALE, 1
+  FEMALE) and confirmed default active index, the "Next" button, and
+  directly clicking a side card all switch the active outfit correctly
+  (checked via the heading text and the persona base image actually
+  rendered, not just component state). `tsc -b --force` + `vite build`
+  clean; test data deleted after.
+- **Tooling note (same as Task 74):** the browser pane's screenshot
+  capture rendered at a small fraction of true size for this entire task
+  regardless of viewport/resize calls - confirmed via one screenshot that
+  did come through recognizably (a correctly-proportioned small/large/
+  small three-mannequin row) that this was a capture-scale issue, not a
+  real layout bug; everything else was verified through DOM state and
+  `get_page_text` instead.
+
+**Follow-up revision, same task, before committing** - user feedback
+after seeing the first version: the active outfit's *default* view
+shouldn't be the persona render at all.
+- New `buildShowcaseRows(items)` in `utils/selectionDisplay.ts` (next to
+  its existing `groupSelectedItemsForDisplay`, a deliberately different
+  set of rules, not a shared codepath - see that function's own comment):
+  fixed rows Jacket, Top, Bottom, Shoes, each collapsed to one
+  representative image + a "+N" badge for anything beyond it, with a
+  Dress replacing the Jacket+Top rows entirely when present rather than
+  sitting alongside them, and Accessories reduced to a trailing count
+  only ("+N Accessories", no row/image - there's no single "first"
+  accessory to picture). Shoes are the one exception to "one image": a
+  matched left/right pair shows both feet as the row's normal content
+  (not one foot + a misleading "+1"), only counting anything beyond the
+  pair as "extra".
+- The active slot now shows this row breakdown by default; persona mode
+  is an explicit "View on Persona" button below the rows (toggle back via
+  "Show Pieces"), reset to the row view whenever the active outfit
+  changes. The button sits after a row list tall enough to often need a
+  scroll to reach, rather than being pinned near the top - matches "only
+  appears if you scroll down" as a natural consequence of row-list
+  height, not a special scroll-triggered reveal.
+- Persona mode gets its own "majestic" treatment per the feedback (an
+  "aura"): a new `PersonaAura` wrapper layers two blurred, softly pulsing
+  `bg-accent` glow circles behind the `PersonaRenderer`, using the theme's
+  own accent token (silver in dark mode, graphite in light) rather than a
+  fixed always-bright color - consistent with the rest of the redesign's
+  theme-driven palette instead of a one-off hard-coded glow.
+- Side slots (the small peek previews) switched from a persona render to
+  a plain item-photo collage (reusing the 2x2-grid-with-overflow-badge
+  idiom `OutfitCard.tsx` already uses for its own non-persona view) -
+  consistent with "not persona mode by default" applying to the whole
+  page, not just the active slot.
+- **Verified live** with 3 new test outfits built specifically to hit
+  each rule: a dress outfit (dress + 2 bottoms + a shoe pair + 2
+  accessories) confirmed the Dress row replacing Jacket/Top, a "+1" badge
+  on the extra bottom, the shoe pair showing both feet with no badge, and
+  "+ 2 Accessories"; a layered outfit (2 jackets + top + bottom + one
+  unsided shoe) confirmed the Jacket row's own "+1" badge with no badge
+  on the single-count rows, and the "View on Persona" toggle (confirmed
+  the persona image actually swaps in, the aura's glow elements mount,
+  and the button's label flips to "Show Pieces"). `tsc -b --force` +
+  `vite build` clean; test data deleted after.
+- **Not yet tuned:** the vertical alignment between the (now much taller)
+  active card and the smaller side-slot thumbnails uses an estimated
+  fixed offset rather than a measured one, since this session's screenshot
+  tooling couldn't reliably confirm the exact visual alignment - flagged
+  for a look once the user can see it live.
+
+**Second follow-up, same task, before committing** - user feedback after
+actually trying it live: "random outfits" were appearing, and the row
+labels needed to go.
+- **Root cause of the "random outfits":** the page never filtered by
+  persona type at all - it showed every saved outfit regardless of
+  `avatarType`. `SavedOutfitsPage.tsx` already established the convention
+  that outfit listings scope to the active persona
+  (`outfits.filter(o => o.avatarType === persona.type)`); this page just
+  hadn't followed it, so an outfit saved for the *other* persona type
+  would show up unprompted - which is exactly what "random" outfits
+  appearing means, and also explains "if there is only one then only
+  one" (once correctly scoped, a single matching outfit no longer had a
+  phantom second one keeping it company). Fixed by adding the same
+  filter, sourced from `usePersonaStore`.
+- **The row labels ("Jacket"/"Top"/etc.):** removed from `CategoryRow` -
+  the photos are shown without a text label now, per feedback (user
+  referred to this page as "the landing page" since it's what you land
+  on from the logo - there's no such labeling on the actual marketing
+  `LandingPage.tsx` to have removed there).
+- **Verified live:** created one MALE and one FEMALE outfit, confirmed
+  the page defaults to showing only the MALE one (pagination dots
+  correctly hidden, since exactly one outfit matches) and switching the
+  active persona to FEMALE (via `usePersonaStore`) correctly swaps to
+  showing only the FEMALE outfit instead; confirmed no `JACKET`/`TOP`/
+  `BOTTOM`/`SHOES`/`DRESS` text appears anywhere on the page. `tsc -b
+  --force` + `vite build` clean; test data deleted, persona reset to
+  MALE after.
+
+**Third follow-up, same task, before committing** - "center the items and
+don't do that weird square", and a real request for drama: "an aura flow
+like dragon ball when they go super saiyan."
+- **Row items:** `CategoryRow` was left-aligned with each image boxed in
+  a bordered/background tile - centered it (`justify-center`) and dropped
+  the box entirely; these are already-cutout garment photos, so a
+  hard-edged square around each one fought the image rather than framing
+  it. They now float directly on the card with just a drop-shadow for
+  definition.
+- **The aura:** replaced the earlier soft pulsing glow with an actual
+  power-up flare - an entry flash that blooms and fades on mount, 8
+  spinning energy rays, 2 expanding shockwave rings, a hot core that never
+  fully settles, and rising sparks - all framer-motion + CSS gradients,
+  no new dependency or image asset. **Deliberate exception to the
+  redesign's own silver/graphite-only rule:** uses a fixed warm gold
+  (`rgba(255,214,130,...)`) rather than the theme accent token, since the
+  ask was specifically for something bright and dramatic in both themes
+  for this one moment, not a blend-in glow - the same kind of considered,
+  called-out exception as the Fabric.js editor stage staying dark
+  regardless of theme (Task 71).
+- **Verified live:** confirmed the row container has `justify-center` and
+  its images no longer sit inside a `<div>` wrapper box; toggled persona
+  mode and confirmed all 18 expected gold-colored elements mount (1 flash
+  + 8 rays + 2 rings + 1 core + 6 sparks - an exact match to the design).
+  `tsc -b --force` + `vite build` clean; test data deleted after.
+
+**Fourth follow-up, same task, before committing** - "I like it" on the
+aura, plus: center the carousel row with the heading above it, remove the
+card box still surrounding the active outfit's content, and extend the
+aura to the default (rows) view, not only persona mode.
+- **The remaining "square":** the per-item image tiles were fixed last
+  round, but the active slot's *content* was still sitting inside its own
+  `rounded-2xl border bg-card shadow-2xl` card. Removed that wrapper
+  entirely - the rows/persona content and its aura now float straight on
+  the page background, no boxed container left anywhere on this page.
+- **Centering:** the carousel row (prev arrow / side slots / active slot
+  / next arrow) had `items-start` with a guessed `mt-24` on the side
+  slots, left over from when the active slot was a much taller card and
+  needed a rough manual offset to line up against the small side
+  thumbnails. With the card gone this hack was no longer needed or
+  correct - switched to a plain `items-center`, matching the heading
+  above it, same axis as everything else on the page.
+- **Aura on both views:** `PersonaAura` renamed `AuraGlow` and moved to
+  wrap the *entire* active slot (both the rows view and the persona view,
+  via one shared `AnimatePresence`) instead of only the persona branch -
+  it now plays its entry flash once when an outfit becomes active and
+  keeps pulsing underneath whichever of the two views is currently shown,
+  reading as "this outfit has the stage" rather than "you're now in
+  persona mode."
+- **Verified live:** confirmed 18 gold aura elements are already mounted
+  on the *default* rows view with no click needed (previously only
+  appeared after pressing "View on Persona"); confirmed zero elements
+  anywhere on the page still combine `bg-card` + `shadow-2xl` (the old
+  card wrapper); confirmed the carousel row's container class is exactly
+  `items-center justify-center`. `tsc -b --force` + `vite build` clean;
+  test data deleted after.
+
+**Fifth follow-up, same task, before committing** - "items appear too
+small and section not center with the page itself."
+- **Item size:** `CategoryRow` images bumped from `w-16 h-16` (64px) to
+  `w-24 h-24 sm:w-28 sm:h-28` (96/112px) - a real "too small" complaint,
+  not a judgment call.
+- **The actual centering bug:** centering a *group* of unevenly-present
+  elements centers the group, not any one element inside it. The carousel
+  row's side slots are conditionally rendered (no left slot below 3 total
+  outfits; either side can be entirely empty at 0-1), so `justify-center`
+  on the row was centering however much content happened to be present -
+  e.g. with only a right slot showing (the common 2-outfit case), the
+  active card sat visibly left-of-center, pulled by the extra width on
+  its right. Fixed by giving both the left and right positions a fixed
+  width (`w-[150px] sm:w-[180px]`, matching the side-slot width)
+  regardless of whether an outfit is currently occupying it, so the row's
+  total width - and therefore its center - stays constant no matter how
+  many side outfits exist.
+- **Verified live, numerically, not just by eye** (screenshot tooling was
+  still unreliable this session): measured the active card's actual
+  `getBoundingClientRect()` center against the viewport's center at
+  1000px wide. With 1 outfit (no side slots): 492.5 vs a true center of
+  500. Added a 2nd outfit (right slot only, the case that was actually
+  broken before this fix): still 492.5 - identical, confirming a
+  present/absent side slot no longer shifts the active card. The
+  remaining 7.5px is the prev/next buttons' own width/gap, not a bug (they
+  sit outside the reserved-width region and are already symmetric).
+  Confirmed the bumped item images measure 112px at this viewport width.
+  `tsc -b --force` + `vite build` clean; test data deleted after.
+
+**Sixth follow-up, same task, before committing** - "items pics still
+look small make them bigger", "aura flow make it way way way slower",
+"change it to silver not gold."
+- **Item size, again:** the 112px bump apparently still read as small -
+  went further this time, to `w-32 h-32 sm:w-40 sm:h-40` (128/160px), and
+  widened the active card itself (`w-[300px]/[400px]` ->
+  `w-[340px]/[460px]`) so two-shoe rows and a "+N" badge still have room
+  at the larger size.
+- **Aura speed:** every looping duration roughly tripled - ray rotation
+  14s -> 48s, ray flicker 1.6s -> 5.5s, shockwave rings 2.5s -> 8s, hot
+  core pulse 2s -> 7s, rising sparks 2.2s -> 7.5s (stagger delays scaled
+  with them). The one-time entry flash only moved slightly, 0.7s -> 1.2s
+  - it is not part of the "flow" that needed slowing, it is a single
+  burst.
+- **Aura color:** every gold `rgba(255,214/236/224,...)` value replaced
+  with silver (`rgba(199,203,209,...)` - the app's own dark-theme accent
+  hex - plus near-white `rgba(226,230,235,...)`/`rgba(240,242,245,...)`
+  for the brighter highlights). Still a fixed color rather than the theme
+  accent token, for the same reason as before (light mode's accent is a
+  dark graphite that would kill the "bright" glow) - it just happens to
+  now be the same hue as the theme's dark-mode accent instead of an
+  unrelated gold.
+- **Verified live:** confirmed item images measure 160px at this
+  viewport's `sm:` breakpoint; dumped every aura element's actual
+  rendered `style` attribute and confirmed zero occurrences of any gold
+  value (`214`, `236,190`, `224,160`) and exclusively the new silver/
+  near-white rgba tuples across all 11 top-level aura elements (the
+  browser normalizes `rgba(199,203,209,...)` to `rgba(199, 203,
+  209,...)` on readback, which is why an earlier same-session substring
+  check without spaces came back with a false "0 found" for both colors -
+  worth remembering for next time). `tsc -b --force` + `vite build`
+  clean; test data deleted after.
+
+**Seventh follow-up, same task, still before committing** - two real
+screenshots this time (not just DOM measurements) showing the aura as a
+tall, stretched oval rather than a circle, and the four category rows
+spaced far enough apart that the full outfit required scrolling to see -
+"look how the clothes look way to separated ... you even need to scroll
+down to see full outfit", plus "make aura flow go 100x slower."
+- **The oval's actual root cause (not just "too tall"):** every aura
+  layer (flash, spinning rays, shockwave rings, hot core) was sized as a
+  *percentage of its own container* (`w-[140%]`, `w-[70%]`, `w-[85%]`,
+  `inset-0`), and that container is the rows content block - 4 stacked
+  128px image rows, portrait by construction (much taller than wide). A
+  percentage of a portrait box is itself a portrait box, so the "circles"
+  were mathematically guaranteed to render as ellipses no matter how
+  tight the row spacing got; the prior rounds' padding/size tweaks could
+  shrink the oval but never round it. Fixed at the source: every circular
+  aura layer now gets a fixed, explicitly square pixel size
+  (`w-[Npx] h-[Npx]`, same value both axes, responsive at `sm:`) and
+  centers itself with `top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2`
+  instead of inheriting the content box's shape. Confirmed live: the
+  rendered shockwave ring and hot core both measured with identical
+  width and height (e.g. 319x319, 337x337) at multiple points during
+  their own looping scale animation - genuinely circular, not
+  coincidentally similar.
+- **Row/page spacing tightened further:** `CategoryRow` padding
+  `py-3` -> `py-0.5`; images `w-32/h-32 sm:w-40/h-40` (128/160px) ->
+  `w-28/h-28 sm:w-32/h-32` (112/128px) - still well above the original
+  64px, per the earlier "still too small" feedback, but no longer the
+  main driver of a tall content block; `AuraGlow`'s own `py-6` -> `py-2`;
+  active card width `w-[340px]/[460px]` -> `w-[300px]/[400px]` to match.
+- **The real scroll cause turned out to be page-level, not the rows:**
+  a full breakdown of the rendered layout (walking every ancestor's
+  `getBoundingClientRect()` from an image up to the page root) found
+  `OutfitShowcasePage`'s own wrapper had `py-24` (96px top **and**
+  bottom), stacked on top of `MainLayout`'s `<main className="pt-24">`,
+  which every other page already relies on alone for navbar clearance
+  (confirmed against `SavedOutfitsPage.tsx`'s topping-padding-free
+  wrapper) - a redundant 96px gap above the outfit before a single row
+  even rendered. Changed to `pb-16` (no top padding, main's `pt-24`
+  covers it) and trimmed the heading's `mb-12` to `mb-8`.
+- **Aura speed, round 2:** every looping duration roughly tripled again
+  on top of the prior round's tripling - ray rotation 48s -> 150s, ray
+  flicker 5.5s -> 16s, shockwave rings 8s -> 22s, hot core pulse 7s ->
+  18s, rising sparks 7.5s -> 16s (stagger delays scaled proportionally).
+  The one-time entry flash is unchanged - still a single burst, not part
+  of the looping "flow."
+- **Verified live:** at a realistic 1280x900 viewport, the active
+  outfit's full row stack *and* its "View on Persona" toggle button now
+  fit entirely above the fold (button bottom measured at 821px, well
+  within the 900px viewport) - the page still scrolls further than that
+  only to reach the site-wide footer every page has, not to see the rest
+  of the outfit. `tsc -b --force` + `vite build` clean; the "Spacing
+  Test" test outfit and its 5 items were deleted after (verified an
+  empty result on re-fetch). Screenshot tooling was unreliable again
+  this round (rendered at the wrong scale regardless of viewport/resize)
+  - verification relied on `getBoundingClientRect()` measurements plus
+  the user's own two screenshots for the qualitative "does this look
+  right" judgment.
+
+**Eighth follow-up, same task, still before committing** - two more real
+screenshots: one of a real 4-row outfit ("size is correct" - the
+Seventh follow-up's fixes were working as intended), and one of a real
+2-row outfit (just a jacket + a shoe pair) reporting "too much space
+between garments" even though the size was right.
+- **Images had actually gotten smaller than approved, not just tight:**
+  the Seventh follow-up's scroll fix had shrunk `CategoryRow`'s images
+  from 160px back to 128px as a side effect (it wasn't the point of that
+  fix, but it rode along). Since the scroll problem's real cause turned
+  out to be the page-level double-padding bug (also fixed that round),
+  there was no longer any reason to keep images smaller than the size
+  already validated live before - restored to `w-32 h-32 sm:w-40 sm:h-40`
+  (128/160px) and widened the active card back to `w-[340px] sm:w-[460px]`
+  to match (both exactly reverting to the pre-Seventh-follow-up values).
+- **The "too much space" was the aura, not the rows:** measured the
+  actual gap between a jacket image's bottom edge and a shoe image's top
+  edge in a real 2-row (jacket + shoes) outfit - 5px, i.e. still packed
+  tight. The visual impression of empty space was the aura: it had one
+  fixed size (380px/480px) picked to look right around a *full 4-row*
+  outfit, so on a sparser 2-row outfit the same circle simply overshoots
+  the actual garments, and an oversized glow around a small cluster of
+  images reads as "space between them" even when the images themselves
+  aren't far apart.
+- **Fix:** `AuraGlow` now takes a `rowCount` prop (`rows.length`, already
+  computed in `ShowcaseSlot`) and picks its flash/ray/ring/core sizes
+  from a small lookup keyed 1-4 rows, diameter scaling roughly with
+  `sqrt(rowCount)` off the already-validated 4-row size (aura is a 2D
+  area, so a linear-with-count scale would shrink too aggressively).
+  Every size in the lookup is still a literal, fully-written Tailwind
+  arbitrary-value class string (`w-[270px] h-[270px] sm:w-[340px]...`)
+  rather than one built from a template at runtime - Tailwind's build-time
+  scanner can only pick up literal class text, confirmed by the CSS
+  bundle growing (71.42kB -> 72.35kB) after adding the new literal
+  entries. The aura's *shape* fix from the Seventh follow-up is untouched
+  - each size is still explicitly square, so it's still always a circle,
+  just a differently-sized one depending on how many rows the outfit has.
+- **Verified live:** a real 2-row test outfit (jacket + shoe pair)
+  measured its glow ring at 238x238px (square) nested inside a ~325px
+  content span, vs. the old fixed ring (445x445px, bigger than the
+  content) - now sized *under* the content instead of dwarfing it. A
+  fresh 4-row outfit still measured the original, already-approved
+  336x336px ring with 160px images, unaffected by the change. `tsc -b
+  --force` + `vite build` clean; all test outfits/items (2-row, 4-row,
+  and a 3rd minimal one used below) deleted after, confirmed empty on
+  re-fetch.
+- **Found in passing while testing the above, then fixed the same round
+  (user asked for it immediately):** clicking "Next" between two test
+  outfits to compare row counts revealed the outfit-switch transition
+  itself getting stuck - the outgoing side-slot thumbnail and the
+  incoming active view stayed simultaneously rendered and overlapping
+  (confirmed via two matching `<img alt="...">` elements at once, one
+  with the collage's classes, one with the active row's classes),
+  reproduced twice. See the Ninth follow-up below for the investigation
+  and fix.
+
+**Ninth follow-up, same task, still before committing** - fixing the
+switching bug found above, at the user's request the same round it was
+reported.
+- **First attempt (shared `layoutId` removed, `AnimatePresence
+  mode="wait"` added):** the original theory was that a `ShowcaseSlot`
+  moving from a side slot to the active slot isn't actually the same
+  React component instance at the same tree position (side slots live
+  inside their own `AnimatePresence`, the active slot is a separate
+  sibling) - only a shared `layoutId` tied them together for framer-
+  motion's FLIP animation, and combined with the same component
+  conditionally rendering totally different markup (collage vs.
+  rows+button) between those two mount points, that looked like it was
+  confusing framer-motion's layout projection. Removed `layout`/
+  `layoutId` entirely and wrapped each slot's conditional render in its
+  own `AnimatePresence mode="wait"` (exit the outgoing outfit fully
+  before mounting the incoming one) instead.
+- **That attempt didn't work either - a different stuck state, not a
+  dev-mode artifact:** re-tested the same click sequence and found the
+  outgoing active outfit's wrapper had genuinely finished its exit
+  animation (`style="opacity: 0"`, confirmed by reading the live inline
+  style) but was never removed from the DOM, and the incoming outfit
+  never mounted into that slot at all - meanwhile the heading (bound
+  directly to `activeOutfit?.name`, no animation involved) had already
+  updated correctly, confirming the *data* was right and only the
+  *animated swap* was stuck. Suspected this might be a React 18
+  `StrictMode` double-invoke artifact (a known category of dev-only
+  `AnimatePresence` desync) - `main.tsx` does have `<StrictMode>` - so
+  verified against an actual `vite build` + `vite preview` (production
+  React, no double-invoke): identical stuck state, ruling that out. This
+  is a genuine limitation of `AnimatePresence mode="wait"` swapping a
+  single child by key in this setup, not a dev artifact.
+- **Actual fix:** removed `AnimatePresence` from all three slots
+  entirely. Each slot now renders `<ShowcaseSlot key={outfit.outfitId}>`
+  directly - on a key change, React unmounts the old instance and mounts
+  the new one synchronously, with no exit animation to wait on and
+  therefore no way to get stuck between two children. `ShowcaseSlot`'s
+  own mount-time `initial`/`animate` opacity fade still plays for
+  whichever outfit newly occupies a slot; the outgoing one now
+  disappears instantly instead of fading out, a smaller visual effect
+  traded for one that cannot fail this way.
+- **Verified live:** reproduced the exact previously-broken sequence
+  (click "Next" between two single-item test outfits) - heading and DOM
+  now agree immediately (the newly active outfit's image carries the
+  active row markup, the demoted one carries the side collage markup),
+  exactly one `<img>` match per item, no duplicates. Repeated with four
+  rapid clicks in a row (next, prev, next, next) - still exactly one
+  match per item afterward, no stuck or doubled state. `tsc -b --force`
+  + `vite build` clean; test outfits/items deleted after, confirmed
+  empty on re-fetch.
+
 - **76** - removes the `w-20` vertical category sidebar; a new
   single-select `ClothingCategory` dropdown (modeled on
   `CategoryPicker.tsx`'s toggle-button + panel-below pattern, different

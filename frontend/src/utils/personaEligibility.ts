@@ -1,5 +1,5 @@
 import { ClothingCategory, PersonaStatus } from '../types';
-import type { ClothingItem, OutfitItem, PersonaState, PersonaType } from '../types';
+import type { ClothingItem, Outfit, OutfitItem, PersonaState, PersonaType } from '../types';
 import { equippedFromOutfitItems } from '../store/useOutfitStore';
 import type { EquippedItemIds } from '../store/useOutfitStore';
 import { outfitItemsFromDraft } from '../store/useOutfitDraftStore';
@@ -112,4 +112,33 @@ export function computePersonaEligibility(
   };
 
   return { previewPersona, eligibleItems, ineligibleItems, notFittedItems, noCutoutItems, wrongPersonaItems };
+}
+
+// Task 75 (Phase 9.7): extracted from OutfitCard.tsx's own `outfitPersona`
+// construction (previously inline there only) so the new Outfit Showcase
+// page can build the same "how does this saved outfit look on its
+// persona" preview without reimplementing the pipeline. Deliberately NOT
+// eligibility.previewPersona - that re-derives slots from category/side via
+// outfitItemsFromDraft, which would drop an older outfit's shoe that has no
+// recorded side; this instead filters the outfit's own saved slots down to
+// the eligible items, preserving whatever slot each item was actually saved
+// with. Needs `allItems` (the full closet) purely to run eligibility
+// filtering against - the persona itself is built from `outfit.items` only.
+export function buildOutfitPersona(outfit: Outfit, allItems: ClothingItem[]): PersonaState {
+  const byId = new Map(allItems.map((item) => [item.itemId, item]));
+  const outfitClothing = [...outfit.items]
+    .sort((a, b) => (a.itemOrder ?? 0) - (b.itemOrder ?? 0))
+    .map((oi) => byId.get(oi.itemId))
+    .filter((item): item is ClothingItem => !!item);
+
+  const eligibility = computePersonaEligibility(outfitClothing, allItems, outfit.avatarType);
+  const eligibleIds = new Set(eligibility.eligibleItems.map((item) => item.itemId));
+
+  return {
+    type: outfit.avatarType,
+    ...applyLegacyShoeFallback(
+      equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
+      eligibility.eligibleItems
+    ),
+  };
 }

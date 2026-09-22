@@ -31,8 +31,10 @@ const Navbar = () => {
         className="glass-panel px-4 sm:px-6 md:px-8 py-3 rounded-full flex items-center gap-3 sm:gap-8 md:gap-12 border border-ink/10 shadow-lg pointer-events-auto"
       >
         {/* Logo - Task 72: VYSVI wordmark (see BrandMark.tsx for why it's
-            still text, not the real logo image). */}
-        <Link to="/" className="hover:opacity-70 transition-opacity">
+            still text, not the real logo image). Task 75: signed-in users
+            go to the new Outfit Showcase instead of "/" - guests keep
+            landing on LandingPage (they have no outfits to showcase). */}
+        <Link to={isAuthenticated ? '/showcase' : '/'} className="hover:opacity-70 transition-opacity">
           <BrandMark />
         </Link>
 
