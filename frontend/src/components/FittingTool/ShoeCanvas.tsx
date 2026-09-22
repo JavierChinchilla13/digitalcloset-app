@@ -11,6 +11,7 @@ import {
 } from '../editor/CanvasUtils';
 import { customizeFabricControls, lockObject } from '../editor/FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
+import { getStageAccentHex, getStageAccentRgba } from '../../utils/themeColors';
 
 interface ShoeCanvasProps {
   leftImageUrl: string;
@@ -133,7 +134,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
         const canvasHeight = canvas.getHeight();
 
         // 2. Setup Foot Indicators
-        const indicatorColor = 'rgba(91, 140, 255, 0.4)';
+        const indicatorColor = getStageAccentRgba(0.4);
         const createFootIndicator = (x: number, y: number, _label: string) => {
           const group = new Rect({
             left: toCanvasX(x, canvasWidth, canvasHeight),
@@ -145,7 +146,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
             ry: 30,
             originX: 'center',
             originY: 'center',
-            stroke: '#5B8CFF',
+            stroke: getStageAccentHex(),
             strokeDashArray: [5, 5],
             strokeWidth: 1,
             selectable: false,
@@ -285,19 +286,21 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-black/40 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-inner"
+      className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
     >
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
-        style={{ 
-          backgroundImage: 'radial-gradient(#5B8CFF 1px, transparent 1px)', 
-          backgroundSize: '30px 30px' 
-        }} 
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`,
+          backgroundSize: '30px 30px'
+        }}
       />
       <canvas ref={canvasRef} />
+      {/* Task 71: fixed light colors, not the theme tokens - see the
+          matching comment in ClothingCanvas.tsx. */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
-          <p className="text-[7px] font-black tracking-[0.4em] text-text-primary uppercase">SHOE STUDIO ENGINE</p>
-          <p className="text-[7px] font-black tracking-[0.4em] text-accent uppercase">DUAL ASSET PIPELINE</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">SHOE STUDIO ENGINE</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">DUAL ASSET PIPELINE</p>
         </div>
       </div>
     </div>

@@ -1130,7 +1130,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **69** Shared components restyle (Navbar, footer, Toast, cards, modals)
 - [x] **70** Page passes in both modes (Landing, Login/Signup, Closet,
       Outfits, Attire, Categories, Category detail, Persona)
-- [ ] **71** Editor / fitting tools (Fabric.js colors from tokens)
+- [x] **71** Editor / fitting tools (Fabric.js colors from tokens)
 - [ ] **72** Branding: VYSVI rename, logo swap-in, favicon, page title
 
 ### Phase 10 — Persona fitting repair & deformation
@@ -3589,6 +3589,78 @@ that would be unreadable on a silver accent.
 - **71 Editor / fitting tools** - Fabric colors via a small
   `utils/themeColors.ts` reading the CSS variables; neutral canvas
   surfaces; check the persona base PNGs on the light background.
+
+  **✅ Task 71 COMPLETE 2026-09-21.**
+  - **Design decision (not in the original plan text, made while
+    implementing it):** the 4 Fabric.js editing stages
+    (`ClothingCanvas`, `JacketCanvas`, `ShoeCanvas`, `GarmentCleanup`)
+    stay a deliberately dark backdrop in **both** site themes, same
+    reasoning as the white captions kept on photo thumbnails throughout
+    Tasks 68-70 - the stage has to contrast against transparent-background
+    garment cutouts and light-colored fabrics, not follow the surrounding
+    chrome. Formalized as two new theme-independent CSS variables in
+    `index.css` (`--vy-stage`, `--vy-stage-accent` - defined once at
+    `:root`, outside the light/dark blocks, so they never change with
+    `data-theme`), exposed as `bg-stage`/`text-stage-accent` Tailwind
+    utilities via `@theme inline`.
+  - **Bug found and fixed while implementing this:** the small watermark
+    captions inside each stage ("Fabric.js v7.4 Core", "Modular Jacket
+    Engine", "SHOE STUDIO ENGINE") used `text-text-primary`/`text-accent`
+    - fine when the app was dark-only, but since those tokens now flip to
+    near-black in light mode while the stage itself stays dark, they
+    would have rendered invisible text on a dark background the first
+    time anyone opened an editor in light mode. Switched to fixed
+    `text-white/80`/`text-stage-accent`.
+  - New `utils/themeColors.ts`: `getStageAccentHex()`/`getStageAccentRgba()`
+    read `--vy-stage-accent` via `getComputedStyle` (Fabric draws directly
+    on `<canvas>`, not the DOM, so it can't use Tailwind classes/CSS vars
+    directly). Documented limitation: read once per call, not live - a
+    canvas already open when the user flips the site theme won't redraw
+    its selection chrome until it re-initializes (e.g. reopening the
+    modal).
+  - Replaced every hard-coded `#5B8CFF` (the app's old blue accent) with
+    the stage accent: `FabricControls.ts`'s selection border/corner-stroke
+    (used by all 3 `editor`/`FittingTool` canvases via
+    `customizeFabricControls()`), `ClothingCanvas`'s crop-box fill/stroke,
+    `JacketCanvas`'s selected-segment outline, `ShoeCanvas`'s foot-indicator
+    fill/stroke, and all 4 stages' decorative dot-grid background
+    (`GarmentCleanup`'s was already a neutral white, unified to match the
+    other 3 for a consistent look).
+  - Normalized the stage wrappers themselves: `bg-black/40`/
+    `bg-[#0a0a0a]` (arbitrary, one file even used a different literal
+    from the other three) -> `bg-stage`; `border-white/5` -> `border-white/10`
+    for a bit more definition against the now-opaque stage;
+    `rounded-[2rem]/[2.5rem]/[3rem]` -> `rounded-xl`/`rounded-2xl`
+    (Task 69/70's bucketing, applied here since these files were untouched
+    until now); `font-black` -> `font-medium`; label floor to `text-[10px]`;
+    `shadow-2xl`/`xl` -> `lg`/`md`. Applied to the 5 files the plan names
+    (`ClothingCanvas`, `JacketCanvas`, `ShoeCanvas`, `GarmentCleanup`,
+    `FittingEditor`).
+  - **Also fixed, as promised in Task 70's note:** `ShoeFittingEditor`'s
+    blue/emerald "Calibrating..." badge (color-coded by which foot is
+    active) was off-palette and redundant next to the "LEFT FOOT"/"RIGHT
+    FOOT" heading right above it - now a single `bg-accent/10 text-accent`
+    badge, same reasoning as `ClosetPage`'s persona-dot fix.
+  - Verified live: opened the Fabric Studio (`ClothingCanvas` via
+    `FittingEditor`) in both themes - the selection handle border/corners
+    are silver in both, confirmed programmatically
+    (`getStageAccentHex() === '--vy-stage-accent' === '#C7CBD1'`); the
+    stage stays a clean dark backdrop with the mannequin/garment clearly
+    visible regardless of the surrounding modal chrome's theme. Persona
+    base PNGs (`public/personas/*-base.png`, grayscale) already confirmed
+    readable on the light page background in Tasks 69/70's screenshots -
+    re-confirmed here in the editor's own dark stage too.
+    `tsc -b --force` + `vite build` clean; `bg-stage`/`text-stage-accent`
+    confirmed present in the built CSS. Test item deleted.
+  - **Deliberately out of scope (not named in the plan's Task 71 text):**
+    `JacketFittingEditor.tsx`, `UploadFlow.tsx`, `JacketSegmentationTool.tsx`,
+    `ShoeSymmetryCheck.tsx`, `CanvasToolbar.tsx`, `TransformPanel.tsx` still
+    carry pre-redesign `font-black`/tiny-label/big-radius styling (their
+    color *tokens* were already migrated in Task 68, just not this
+    editorial pass) - flagging in case full coverage there is wanted as
+    its own follow-up task, since re-scoping to the whole `FittingTool`
+    directory here would have been a substantially bigger change than
+    what was planned and approved for this task.
 - **72 Branding** - `BrandMark` (theme-aware logo; interim tracked-caps
   text wordmark until the user's files land in `frontend/public`),
   rename strings (`Navbar`, `MainLayout` footer,

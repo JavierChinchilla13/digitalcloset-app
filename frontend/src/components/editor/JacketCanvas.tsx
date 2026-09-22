@@ -11,6 +11,7 @@ import {
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
+import { getStageAccentHex } from '../../utils/themeColors';
 
 interface JacketCanvasProps {
   segments: Record<string, string>;
@@ -365,7 +366,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
           hasControls: isSelected,
           selectable: true,
           evented: true,
-          stroke: isSelected ? '#5B8CFF' : undefined,
+          stroke: isSelected ? getStageAccentHex() : undefined,
           strokeWidth: isSelected ? 2 : 0,
           hoverCursor: 'move',
           lockMovementX: false,
@@ -416,13 +417,15 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   }, [activePart, isGroupMode, onSelectPart]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-black/40 rounded-[2.5rem] overflow-hidden border border-white/5 shadow-inner">
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#5B8CFF 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+    <div ref={containerRef} className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner">
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
       <canvas ref={canvasRef} />
+      {/* Task 71: fixed light colors, not the theme tokens - see the
+          matching comment in ClothingCanvas.tsx. */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
-          <p className="text-[7px] font-black tracking-[0.4em] text-text-primary uppercase">Modular Jacket Engine</p>
-          <p className="text-[7px] font-black tracking-[0.4em] text-accent uppercase">Synchronized Layer Orchestration</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">Modular Jacket Engine</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">Synchronized Layer Orchestration</p>
         </div>
       </div>
     </div>
