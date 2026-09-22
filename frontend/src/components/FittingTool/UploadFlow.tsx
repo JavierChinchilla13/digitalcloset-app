@@ -179,16 +179,35 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
          const leftResult = await bgRemovalService.removeBackground(file, {
            onProgress: (status) => setProcessingStatus(status)
          });
-         setLeftProcessedUrl(leftResult.url);
+
+         // Task 73 fix: bgRemovalService always hands back a local blob:
+         // URL (see lib/background-removers/{browser,api}.ts) - every
+         // other save path in this file (handleCleanupComplete /
+         // handleCleanupSkip / handleSkipSave) uploads that blob to
+         // Cloudinary before persisting it; this branch never did, so the
+         // saved shoe's imageUrl was a blob: URL that only lives for the
+         // current tab session - the image "disappeared" the next time it
+         // was loaded (not a race, not a backend issue - just a missing
+         // upload). Same fetch -> blob -> uploadImage pattern used
+         // elsewhere in this file.
+         setProcessingStatus('Uploading left shoe...');
+         const leftBlob = await (await fetch(leftResult.url)).blob();
+         const leftUrl = await cloudinaryService.uploadImage(leftBlob);
+         setLeftProcessedUrl(leftUrl);
 
          if (isAsymmetrical && rightFile) {
             setProcessingStatus('Processing right shoe...');
             const rightResult = await bgRemovalService.removeBackground(rightFile, {
               onProgress: (status) => setProcessingStatus(`Right Shoe: ${status}`)
             });
-            setRightProcessedUrl(rightResult.url);
+            setProcessingStatus('Uploading right shoe...');
+            const rightBlob = await (await fetch(rightResult.url)).blob();
+            const rightUrl = await cloudinaryService.uploadImage(rightBlob);
+            setRightProcessedUrl(rightUrl);
          } else {
-            setRightProcessedUrl(leftResult.url);
+            // Symmetrical pair: reuse the one upload for both, same as the
+            // original code reused one bg-removal result for both.
+            setRightProcessedUrl(leftUrl);
          }
          setStep('SHOE_FITTING');
       } else {

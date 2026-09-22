@@ -1133,6 +1133,14 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **71** Editor / fitting tools (Fabric.js colors from tokens)
 - [x] **72** Branding: VYSVI rename, logo swap-in, favicon, page title
 
+### Phase 9.7 — Shoe-save bug, real logo, Outfit Showcase, Attire redesign *(planned 2026-09-21, before Phase 10)*
+
+- [x] **73** Fix shoe-save losing its image (blob URL never uploaded to Cloudinary)
+- [ ] **74** Process the real logo (favicon + Landing hero + asset for Task 75)
+- [ ] **75** New Outfit Showcase page (majestic carousel, reachable via the logo)
+- [ ] **76** Redesign the Attire browse panel (3 sections, category dropdown,
+      fix the selection-shrink bug)
+
 ### Phase 10 — Persona fitting repair & deformation
 
 *(renumbered 2026-09-01 from 44–48 to 52–56, same reason as Phase 9 above)*
@@ -3721,3 +3729,92 @@ Verification for each: `tsc -b --force`, `vite build`, live in both modes
 changed page, contrast spot-checks, Fabric handles visible in both modes.
 
 **Open dependency:** logo files from the user for Task 72's final swap.
+
+---
+
+# Phase 9.7 — Shoe-save bug, real logo, Outfit Showcase, Attire redesign *(planned 2026-09-21, before Phase 10)*
+
+Four new requests from the user, given together right after Phase 9.6
+shipped: a real bug (shoe images disappearing after save), wiring in the
+real logo file the user placed at `frontend/public/logo.png` (favicon +
+other spots, keeping the navbar's text wordmark as-is), a new "Outfit
+Showcase" page reachable only via the logo, and a redesign of the Attire
+page's browse panel. Planned as `/plan` before starting, per the user's
+own request - full plan at
+`C:\Users\javid\.claude\plans\partitioned-painting-crab.md`. Same
+precedent as 9.5/9.6: lands on `phase-9-categories-experience`, Phase 10
+(crop tool) still waits until this is done too. Tasks numbered onward
+from 72, i.e. 73-76.
+
+### Task 73 — Fix shoe-save losing its image
+
+**✅ COMPLETE 2026-09-21.** Root cause (confirmed by reading every save
+path in `UploadFlow.tsx`): `bgRemovalService` always returns a local
+`URL.createObjectURL(...)` blob URL (`lib/background-removers/{browser,api}.ts`
+- every code path, success or fallback). Every *other* save path in
+`UploadFlow.tsx` (`handleCleanupComplete`, `handleCleanupSkip`,
+`handleSkipSave`) uploads that blob to Cloudinary before persisting the
+URL - the shoe path (`startProcessing`'s `SHOES` branch) never did, so
+the item saved with `imageUrl` = a `blob:` URL that only lives for the
+tab's session. Not a race condition (the save itself correctly awaits
+before closing the modal) and not a backend gap (`ClothingRequest.java`
+only validates non-blank/length, no scheme check - it just stores
+whatever it's handed).
+
+**Fix:** after each `bgRemovalService.removeBackground(...)` call in the
+`SHOES` branch, convert the blob URL to a `Blob` (`fetch` + `.blob()`)
+and upload it via `cloudinaryService.uploadImage(...)` - the exact
+pattern `handleCleanupComplete` already used elsewhere in the same file
+- storing the returned hosted URL instead of the raw blob URL. For a
+symmetrical pair (the common case), uploads once and reuses the URL for
+both shoes, matching the existing "reuse one result" structure; an
+asymmetrical pair uploads both sides separately.
+
+**Verified live:** drove the real upload flow end-to-end in the browser
+(file input -> SHOES category -> "No, Mirror This" -> background removal
+-> Shoe Studio -> Complete Pair), then read the created items back from
+the API: both shoes got the *same* real `https://res.cloudinary.com/...`
+URL (confirming the symmetrical-pair dedup), and that URL resolves to a
+real 95KB PNG (`curl` `200`, `image/png`). Reloaded `/closet` afterward
+and confirmed both `<img>` elements actually loaded (`complete: true`,
+real `naturalWidth`) - the precise repro of "the image disappears" no
+longer reproduces. `tsc -b --force` + `vite build` clean. Test items
+deleted after.
+
+### Tasks 74-76 — real logo, Outfit Showcase page, Attire redesign (planned, not started)
+
+See the plan file for full detail. Summary:
+- **74** - make `logo.png` (286x284, solid light background baked in, no
+  transparent/dark-ink variant) usable: transparency via in-browser
+  canvas chroma-keying (flat background, more reliable than AI
+  segmentation for this kind of asset), an auto-cropped favicon from the
+  ribbon mark, a `filter: invert(1)` experiment for light-mode contrast
+  (the art is close to grayscale) with a stated fallback if it looks
+  wrong. Used for the favicon and `LandingPage`'s hero (confirmed with
+  the user - real image there too, not just text); `Navbar`/`BrandMark`
+  explicitly stay text, per the user's preference.
+- **75** - new `/showcase` route (protected), only reachable by clicking
+  the logo while authenticated (guests keep going to `/` as today, no
+  outfits to show). Active outfit large/centered via `PersonaRenderer`,
+  adjacent outfits smaller and offset to the sides, click to switch (no
+  carousel library or pattern exists anywhere in the repo - confirmed by
+  grep - built fresh with `framer-motion`). Zero-outfit state: the
+  processed logo + tagline + a "Let's Get Started" button into the
+  Attire builder, matching `LandingPage`'s existing visual language
+  rather than inventing a new one. Reuses `OutfitCard.tsx`'s
+  `outfitPersona`-construction logic (`computePersonaEligibility` +
+  `equippedFromOutfitItems` + `applyLegacyShoeFallback`) rather than
+  reimplementing it.
+- **76** - removes the `w-20` vertical category sidebar; a new
+  single-select `ClothingCategory` dropdown (modeled on
+  `CategoryPicker.tsx`'s toggle-button + panel-below pattern, different
+  data/selection model) sits under the search bar instead. Browse grid
+  reorganized into ordered sections - Top (DRESS first if any, then TOP,
+  then JACKET, one flowing grid), Bottom, Shoes, then Accessories last,
+  naturally requiring a scroll once there's enough above it - plus a new
+  scroll-hint affordance (no existing pattern to reuse). Also fixes a
+  real bug: the "Your Selection" panel jumps from an empty placeholder to
+  a much denser card grid (`aspect-[4/5]`, up to 6 columns) the instant
+  an item is selected, next to the browse panel's own larger
+  `aspect-[3/4]` 2-column cards - reads as "everything shrank"; brought
+  closer in size and reordered to match the new section structure.
