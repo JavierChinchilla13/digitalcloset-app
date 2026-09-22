@@ -54,7 +54,7 @@ const PersonaPage = () => {
         <div className="mb-16 space-y-4">
           <button 
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
+            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
           >
             <ChevronLeft size={14} />
             Back to Attire
@@ -65,7 +65,7 @@ const PersonaPage = () => {
               PERSONA <span className="text-accent">STUDIO</span>
             </h1>
           </div>
-          <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest opacity-40">
+          <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
             Configure your digital twin // Core Silhouette & Biometrics
           </p>
         </div>
@@ -74,7 +74,7 @@ const PersonaPage = () => {
         <div className="max-w-4xl">
           <div className="flex items-center gap-4 mb-10">
             <User size={16} className="text-accent" />
-            <span className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Select Silhouette Core</span>
+            <span className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Select Silhouette Core</span>
             <div className="h-[1px] flex-grow bg-ink/5" />
           </div>
 
@@ -87,11 +87,11 @@ const PersonaPage = () => {
                   whileHover={{ y: -8 }}
                   onClick={() => setPersonaType(type.id)}
                   className={`
-                    relative group cursor-pointer rounded-[3rem] p-1 border-2 transition-all duration-500
+                    relative group cursor-pointer rounded-2xl p-1 border-2 transition-all duration-500
                     ${isActive ? 'border-accent bg-accent/5' : 'border-ink/5 bg-ink/[0.02] hover:border-ink/20'}
                   `}
                 >
-                  <div className="relative aspect-[4/5] rounded-[2.8rem] overflow-hidden bg-background-secondary/40 mb-8">
+                  <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-background-secondary/40 mb-8">
                     <img 
                       src={type.icon}
                       alt={getDisplayName(type.id)}
@@ -105,7 +105,7 @@ const PersonaPage = () => {
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.5 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="absolute top-8 right-8 w-12 h-12 bg-accent text-on-accent rounded-full flex items-center justify-center shadow-xl"
+                        className="absolute top-8 right-8 w-12 h-12 bg-accent text-on-accent rounded-full flex items-center justify-center shadow-md"
                       >
                         <Check size={24} strokeWidth={3} />
                       </motion.div>
@@ -143,7 +143,7 @@ const PersonaPage = () => {
                         </button>
                       </div>
                     )}
-                    <p className="text-[10px] text-text-secondary font-medium uppercase tracking-widest leading-relaxed opacity-40">
+                    <p className="text-[10px] text-text-secondary font-medium uppercase tracking-widest leading-relaxed">
                       {type.description}
                     </p>
                   </div>
@@ -162,8 +162,8 @@ const PersonaPage = () => {
         </div>
 
         {/* Footer Note */}
-        <div className="mt-24 p-12 rounded-[3rem] border border-ink/5 bg-ink/[0.01] max-w-4xl text-center">
-          <p className="text-[10px] font-black tracking-[0.5em] text-text-secondary uppercase opacity-20">
+        <div className="mt-24 p-12 rounded-2xl border border-ink/5 bg-ink/[0.01] max-w-4xl text-center">
+          <p className="text-[10px] font-medium tracking-[0.5em] text-text-secondary uppercase">
             Advanced biometric customization (Height, Hair, Skin Tone) coming in next cycle.
           </p>
         </div>
