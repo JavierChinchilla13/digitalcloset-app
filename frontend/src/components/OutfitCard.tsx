@@ -8,7 +8,7 @@ import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitDraftStore, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
-import { computePersonaEligibility, applyLegacyShoeFallback } from '../utils/personaEligibility';
+import { computePersonaEligibility, buildOutfitPersona } from '../utils/personaEligibility';
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -71,22 +71,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
     eligibility.wrongPersonaItems.length > 0 && `${eligibility.wrongPersonaItems.length} for the other persona`,
   ].filter(Boolean).join(', ');
 
-  // Built from the outfit's own saved slots (filtered to the eligible
-  // items) rather than eligibility.previewPersona, which re-derives slots
-  // from category/side - an older outfit's shoe with no recorded side
-  // would lose its saved leftShoe/rightShoe slot that way.
-  // Task 66: shoes with no recorded side/slot get the legacy-pair fallback,
-  // same as the flat builder's preview.
-  const outfitPersona = useMemo(() => {
-    const eligibleIds = new Set(eligibility.eligibleItems.map((item) => item.itemId));
-    return {
-      type: outfit.avatarType,
-      ...applyLegacyShoeFallback(
-        equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
-        eligibility.eligibleItems
-      ),
-    };
-  }, [eligibility, outfit.items, outfit.avatarType]);
+  // Task 75: extracted into utils/personaEligibility.ts's buildOutfitPersona
+  // so the new Outfit Showcase page can build the same preview without
+  // reimplementing it - see that function's own comment for why it's built
+  // from the outfit's own saved slots rather than eligibility.previewPersona.
+  const outfitPersona = useMemo(() => buildOutfitPersona(outfit, closetItems), [outfit, closetItems]);
 
   // "Wear Style" (Task 63, Phase 9.5). This used to write the older
   // equip-id lists and then scroll to #persona - an element that only

@@ -30,6 +30,61 @@ export function groupSelectedItemsForDisplay(items: ClothingItem[]): GroupedSele
   }, []);
 }
 
+// Task 75 follow-up (Phase 9.7): the Outfit Showcase's default (non-persona)
+// display of the active outfit - stacked category rows, one representative
+// image per row plus a "+N" badge for anything beyond it, rather than the
+// full multi-item grid groupSelectedItemsForDisplay above builds for the
+// Attire builder's selection panel. Distinct rules from that function:
+// a Dress REPLACES the Jacket/Top rows entirely (not shown alongside them),
+// and Accessories never get a row/image at all - just a trailing count,
+// handled by the caller since there's no image to show.
+export interface ShowcaseRow {
+  category: ClothingCategory;
+  // The image(s) actually shown for this row. Normally one; SHOES shows up
+  // to two (left+right), since hiding one foot behind a "+1" badge would
+  // misrepresent an ordinary pair as having an extra item.
+  displayItems: ClothingItem[];
+  // Items in this category beyond what's pictured in displayItems.
+  extraCount: number;
+}
+
+export function buildShowcaseRows(items: ClothingItem[]): ShowcaseRow[] {
+  const rows: ShowcaseRow[] = [];
+  const byCategory = (cat: ClothingCategory) => items.filter((item) => item.category === cat);
+
+  const dressItems = byCategory(ClothingCategory.DRESS);
+  if (dressItems.length > 0) {
+    rows.push({ category: ClothingCategory.DRESS, displayItems: [dressItems[0]], extraCount: dressItems.length - 1 });
+  } else {
+    const jacketItems = byCategory(ClothingCategory.JACKET);
+    if (jacketItems.length > 0) {
+      rows.push({ category: ClothingCategory.JACKET, displayItems: [jacketItems[0]], extraCount: jacketItems.length - 1 });
+    }
+    const topItems = byCategory(ClothingCategory.TOP);
+    if (topItems.length > 0) {
+      rows.push({ category: ClothingCategory.TOP, displayItems: [topItems[0]], extraCount: topItems.length - 1 });
+    }
+  }
+
+  const bottomItems = byCategory(ClothingCategory.BOTTOM);
+  if (bottomItems.length > 0) {
+    rows.push({ category: ClothingCategory.BOTTOM, displayItems: [bottomItems[0]], extraCount: bottomItems.length - 1 });
+  }
+
+  const shoeItems = byCategory(ClothingCategory.SHOES);
+  if (shoeItems.length > 0) {
+    const { left, right } = pairShoesForDisplay(shoeItems);
+    const displayItems = [left, right].filter((item): item is ClothingItem => !!item);
+    // Nothing recorded a side at all (legacy single-image pair) - fall
+    // back to showing just the one image, same as PersonaRenderer's own
+    // legacy-pair handling does for this case.
+    if (displayItems.length === 0) displayItems.push(shoeItems[0]);
+    rows.push({ category: ClothingCategory.SHOES, displayItems, extraCount: shoeItems.length - displayItems.length });
+  }
+
+  return rows;
+}
+
 export interface PairedShoes {
   left: ClothingItem | null;
   right: ClothingItem | null;
