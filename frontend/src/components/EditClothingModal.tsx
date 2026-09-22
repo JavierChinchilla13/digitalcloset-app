@@ -127,7 +127,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className={`relative bg-background-secondary border border-white/5 rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-500 ${
+            className={`relative bg-background-secondary border border-ink/5 rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-500 ${
               isStudioOpen ? 'w-full max-w-6xl h-[90vh]' : 'w-full max-w-2xl'
             }`}
             onClick={(e) => e.stopPropagation()}
@@ -135,14 +135,14 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             {!isStudioOpen ? (
               <>
                 {/* Header */}
-                <div className="flex justify-between items-center p-8 border-b border-white/5">
+                <div className="flex justify-between items-center p-8 border-b border-ink/5">
                   <div>
-                    <h2 className="text-2xl font-light tracking-tighter text-white uppercase">Edit Garment</h2>
+                    <h2 className="text-2xl font-light tracking-tighter text-text-primary uppercase">Edit Garment</h2>
                     <p className="text-[10px] text-text-secondary font-black tracking-widest uppercase mt-1 opacity-50">Refining your collection</p>
                   </div>
                   <button 
                     onClick={onClose}
-                    className="p-3 hover:bg-white/5 rounded-full transition-colors text-text-secondary hover:text-white"
+                    className="p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary"
                   >
                     <X size={20} />
                   </button>
@@ -156,13 +156,13 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                         <Sparkles size={20} />
                       </div>
                       <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-white">Fabric Studio</h4>
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-text-primary">Fabric Studio</h4>
                         <p className="text-[8px] text-text-secondary uppercase tracking-widest opacity-60">Resize and reposition garment</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => setIsStudioOpen(true)}
-                      className="px-6 py-3 bg-accent hover:bg-accent-hover text-white text-[8px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-accent/20"
+                      className="px-6 py-3 bg-accent hover:bg-accent-hover text-on-accent text-[8px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg"
                     >
                       Open Studio
                     </button>
@@ -188,8 +188,8 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                             className={`
                               flex flex-col items-center justify-center gap-3 p-4 w-24 rounded-2xl border transition-all
                               ${isSelected 
-                                ? 'bg-accent/10 border-accent text-accent shadow-lg shadow-accent/20' 
-                                : 'bg-white/5 border-white/5 text-text-secondary hover:border-white/10 hover:bg-white/10'
+                                ? 'bg-accent/10 border-accent text-accent shadow-lg' 
+                                : 'bg-ink/5 border-ink/5 text-text-secondary hover:border-ink/10 hover:bg-ink/10'
                               }
                             `}
                           >
@@ -212,7 +212,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Oversized Cashmere Sweater"
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white placeholder:text-white/20 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all"
+                      className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary placeholder:text-ink/20 focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all"
                     />
                   </div>
 
@@ -227,13 +227,13 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Add details about fit, material, or style..."
                       rows={4}
-                      className="w-full bg-white/5 border border-white/5 rounded-2xl px-6 py-4 text-white placeholder:text-white/20 focus:outline-none focus:border-accent/50 focus:bg-white/10 transition-all resize-none"
+                      className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary placeholder:text-ink/20 focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all resize-none"
                     />
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 bg-black/20 border-t border-white/5 flex items-center justify-between">
+                <div className="p-8 bg-ink/5 border-t border-ink/5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     {status === 'updating' && (
                       <div className="flex items-center gap-2 text-accent">
@@ -258,7 +258,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   <div className="flex gap-4">
                     <button 
                       onClick={onClose}
-                      className="px-8 py-4 text-text-secondary hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors"
+                      className="px-8 py-4 text-text-secondary hover:text-text-primary text-[10px] font-black uppercase tracking-widest transition-colors"
                     >
                       Cancel
                     </button>
@@ -268,8 +268,8 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       className={`
                         px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl
                         ${status === 'updating' || !name
-                          ? 'bg-white/5 text-white/20 cursor-not-allowed'
-                          : 'bg-accent hover:bg-accent-hover text-white shadow-accent/20 hover:scale-105 active:scale-95'
+                          ? 'bg-ink/5 text-ink/20 cursor-not-allowed'
+                          : 'bg-accent hover:bg-accent-hover text-on-accent hover:scale-105 active:scale-95'
                         }
                       `}
                     >

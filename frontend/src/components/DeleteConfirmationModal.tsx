@@ -61,9 +61,9 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 <AlertTriangle size={40} />
               </div>
               
-              <h2 className="text-2xl font-light tracking-tight text-white mb-2">Delete Garment?</h2>
+              <h2 className="text-2xl font-light tracking-tight text-text-primary mb-2">Delete Garment?</h2>
               <p className="text-text-secondary text-sm leading-relaxed mb-8">
-                Are you sure you want to remove <span className="text-white font-bold">"{itemName}"</span>? This action is permanent and cannot be undone.
+                Are you sure you want to remove <span className="text-text-primary font-bold">"{itemName}"</span>? This action is permanent and cannot be undone.
               </p>
 
               <div className="flex flex-col gap-3">
@@ -81,7 +81,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 <button
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="w-full py-4 bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white text-xs font-black uppercase tracking-[0.2em] rounded-full transition-all"
+                  className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-black uppercase tracking-[0.2em] rounded-full transition-all"
                 >
                   Cancel
                 </button>
@@ -90,7 +90,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
 
             <button
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 text-text-secondary hover:text-white transition-colors"
+              className="absolute top-4 right-4 p-2 text-text-secondary hover:text-text-primary transition-colors"
             >
               <X size={20} />
             </button>

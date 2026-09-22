@@ -295,7 +295,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       <canvas ref={canvasRef} />
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
-          <p className="text-[7px] font-black tracking-[0.4em] text-white uppercase">Fabric.js v7.4 Core</p>
+          <p className="text-[7px] font-black tracking-[0.4em] text-text-primary uppercase">Fabric.js v7.4 Core</p>
           <p className="text-[7px] font-black tracking-[0.4em] text-accent uppercase">Absolute Virtual Engine</p>
         </div>
       </div>

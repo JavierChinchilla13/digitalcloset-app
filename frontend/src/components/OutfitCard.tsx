@@ -118,7 +118,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
       whileHover={{ y: -8 }}
       className="group relative"
     >
-      <div className="relative aspect-[3/4] rounded-[2rem] overflow-hidden border border-white/5 bg-background-secondary shadow-xl transition-all group-hover:shadow-accent/5">
+      <div className="relative aspect-[3/4] rounded-[2rem] overflow-hidden border border-ink/5 bg-background-secondary shadow-xl transition-all">
         
         {/* Main Content Area */}
         <div className="w-full h-full p-4 flex flex-col items-center justify-center">
@@ -132,7 +132,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                 className="grid grid-cols-2 gap-2 w-full h-full"
               >
                 {equippedItems.slice(0, 4).map((item, idx) => (
-                  <div key={item.itemId} className={`relative rounded-xl overflow-hidden border border-white/5 bg-black/20 ${equippedItems.length === 1 ? 'col-span-2 row-span-2' : ''}`}>
+                  <div key={item.itemId} className={`relative rounded-xl overflow-hidden border border-ink/5 bg-ink/5 ${equippedItems.length === 1 ? 'col-span-2 row-span-2' : ''}`}>
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                     {idx === 3 && equippedItems.length > 4 && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
@@ -143,7 +143,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                 ))}
                 {equippedItems.length === 0 && (
                   <div className="col-span-2 row-span-2 flex items-center justify-center opacity-10">
-                    <Maximize2 size={40} className="text-white" />
+                    <Maximize2 size={40} className="text-text-primary" />
                   </div>
                 )}
               </motion.div>
@@ -166,21 +166,21 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
           <div className="flex justify-end gap-2">
             <button 
               onClick={() => setShowPersona(!showPersona)}
-              className={`p-2.5 rounded-xl transition-all border ${showPersona ? 'bg-accent text-white border-accent' : 'bg-white/5 hover:bg-white/10 text-white border-white/5'}`}
+              className={`p-2.5 rounded-xl transition-all border ${showPersona ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 hover:bg-ink/10 text-text-primary border-ink/5'}`}
               title={showPersona ? "Show Items" : "More Info"}
             >
               <Info size={14} />
             </button>
             <button
               onClick={() => duplicateOutfit(outfit)}
-              className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-colors border border-white/5"
+              className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
               title="Duplicate"
             >
               <Copy size={14} />
             </button>
             <button
               onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
-              className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-white transition-colors border border-white/5"
+              className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
               title="Edit"
             >
               <Edit2 size={14} />
@@ -197,7 +197,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
           <div className="space-y-3">
             <button 
               onClick={handleApply}
-              className="w-full py-3 bg-white text-background-main font-black text-[10px] rounded-xl tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
+              className="w-full py-3 bg-ink text-background-main font-black text-[10px] rounded-xl tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
             >
               <Play size={12} fill="currentColor" />
               WEAR STYLE
@@ -217,8 +217,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <div className="bg-rose-500/20 p-4 rounded-full mb-4">
                 <Trash2 size={24} className="text-rose-500" />
               </div>
-              <p className="text-white text-[12px] font-black uppercase tracking-widest mb-2">Delete Outfit?</p>
-              <p className="text-white/60 text-[8px] uppercase tracking-widest mb-6 leading-relaxed">
+              <p className="text-text-primary text-[12px] font-black uppercase tracking-widest mb-2">Delete Outfit?</p>
+              <p className="text-ink/60 text-[8px] uppercase tracking-widest mb-6 leading-relaxed">
                 This action is permanent and cannot be undone.
               </p>
               <div className="flex gap-4 w-full">
@@ -230,7 +230,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                 </button>
                 <button 
                   onClick={() => setIsDeleting(false)}
-                  className="flex-grow py-3 bg-white/10 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl border border-white/10 active:scale-95 transition-all"
+                  className="flex-grow py-3 bg-ink/10 text-text-primary text-[10px] font-black uppercase tracking-[0.2em] rounded-xl border border-ink/10 active:scale-95 transition-all"
                 >
                   CANCEL
                 </button>
@@ -241,7 +241,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
       </div>
       
       <div className="mt-4 px-2 space-y-1">
-        <h3 className="text-sm font-bold text-white group-hover:text-accent transition-colors line-clamp-1 uppercase tracking-wider">
+        <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors line-clamp-1 uppercase tracking-wider">
           {outfit.name}
         </h3>
         <div className="flex items-center gap-2 opacity-30">

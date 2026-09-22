@@ -22,7 +22,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   ];
 
   return (
-    <div className="flex items-center justify-between bg-background-secondary/40 backdrop-blur-xl border border-white/5 p-2 rounded-2xl">
+    <div className="flex items-center justify-between bg-background-secondary/40 backdrop-blur-xl border border-ink/5 p-2 rounded-2xl">
       <div className="flex items-center gap-1">
         {tools.map((tool) => {
           const Icon = tool.icon;
@@ -34,8 +34,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
               className={`
                 flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all
                 ${isActive 
-                  ? 'bg-accent text-white shadow-lg shadow-accent/20' 
-                  : 'text-text-secondary hover:bg-white/5 hover:text-white'
+                  ? 'bg-accent text-on-accent shadow-lg' 
+                  : 'text-text-secondary hover:bg-ink/5 hover:text-text-primary'
                 }
               `}
               title={tool.label}
@@ -50,10 +50,10 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       </div>
 
       <div className="flex items-center gap-2 pr-2">
-        <div className="h-6 w-[1px] bg-white/5 mx-2" />
+        <div className="h-6 w-[1px] bg-ink/5 mx-2" />
         <button 
           onClick={onExport}
-          className="flex items-center gap-2 px-4 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all border border-white/5"
+          className="flex items-center gap-2 px-4 py-2.5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl transition-all border border-ink/5"
         >
           <Download size={14} className="text-accent" />
           <span className="text-[9px] font-black uppercase tracking-widest">Capture Preview</span>

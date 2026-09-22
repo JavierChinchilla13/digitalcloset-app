@@ -46,7 +46,7 @@ const LoginPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-white">Welcome Back</h1>
+          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">Welcome Back</h1>
           <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">Access your digital sanctuary</p>
         </div>
 
@@ -71,7 +71,7 @@ const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="fashion@example.com"
-                className="w-full bg-background-secondary border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
                 disabled={isLoading}
               />
             </div>
@@ -80,7 +80,7 @@ const LoginPage = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-end px-4">
               <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Password</label>
-              <button type="button" className="text-[10px] font-black tracking-widest text-text-secondary hover:text-white uppercase transition-colors">Forgot?</button>
+              <button type="button" className="text-[10px] font-black tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</button>
             </div>
             <div className="relative group">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
@@ -90,7 +90,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-background-secondary border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
                 disabled={isLoading}
               />
             </div>
@@ -99,7 +99,7 @@ const LoginPage = () => {
           <button 
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-white text-background-main font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-white/5 group disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full py-4 bg-ink text-background-main font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-ink/5 group disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? (
               <Loader2 className="animate-spin" size={18} />
@@ -115,7 +115,7 @@ const LoginPage = () => {
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">
             Don't have an account? {' '}
-            <Link to="/signup" className="text-white font-bold hover:text-accent transition-colors">Create one now</Link>
+            <Link to="/signup" className="text-text-primary font-bold hover:text-accent transition-colors">Create one now</Link>
           </p>
         </div>
       </motion.div>

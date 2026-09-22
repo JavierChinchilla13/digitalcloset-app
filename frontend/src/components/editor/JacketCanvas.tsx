@@ -421,7 +421,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
       <canvas ref={canvasRef} />
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
-          <p className="text-[7px] font-black tracking-[0.4em] text-white uppercase">Modular Jacket Engine</p>
+          <p className="text-[7px] font-black tracking-[0.4em] text-text-primary uppercase">Modular Jacket Engine</p>
           <p className="text-[7px] font-black tracking-[0.4em] text-accent uppercase">Synchronized Layer Orchestration</p>
         </div>
       </div>

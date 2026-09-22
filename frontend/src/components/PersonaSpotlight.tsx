@@ -8,7 +8,7 @@ const PersonaSpotlight = () => {
       <div className="absolute inset-0 bg-gradient-to-tr from-accent/5 via-transparent to-transparent opacity-40" />
       
       {/* Top Ambient Light */}
-      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-white/[0.03] to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-b from-ink/[0.03] to-transparent" />
 
       {/* Modern Vignette */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />

@@ -264,12 +264,12 @@ const FlatOutfitBuilderPage = () => {
 
   return (
     <div className="h-screen bg-background-main flex flex-col overflow-hidden pt-16">
-      <header className="px-8 py-6 border-b border-white/5 bg-background-secondary/20 flex items-center justify-between z-20">
+      <header className="px-8 py-6 border-b border-ink/5 bg-background-secondary/20 flex items-center justify-between z-20">
         <div className="flex items-center gap-6">
           {!isLandingRoute && (
             <button
               onClick={() => navigate('/outfits')}
-              className="p-3 hover:bg-white/5 rounded-xl text-text-secondary transition-colors border border-white/5"
+              className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary transition-colors border border-ink/5"
             >
               <ChevronLeft size={20} />
             </button>
@@ -278,7 +278,7 @@ const FlatOutfitBuilderPage = () => {
             <input
               value={outfitName}
               onChange={(e) => setOutfitName(e.target.value)}
-              className="bg-transparent text-xl font-light text-white tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
+              className="bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"
             />
             <p className="text-[8px] font-black text-accent tracking-[0.4em] uppercase">
@@ -304,7 +304,7 @@ const FlatOutfitBuilderPage = () => {
           <button
             onClick={clearDraft}
             disabled={selectedItemIds.length === 0}
-            className="p-3 hover:bg-white/5 rounded-xl text-text-secondary hover:text-white transition-colors border border-white/5 disabled:opacity-20 disabled:pointer-events-none"
+            className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary hover:text-text-primary transition-colors border border-ink/5 disabled:opacity-20 disabled:pointer-events-none"
             title="Clear Selection"
           >
             <RotateCcw size={18} />
@@ -312,7 +312,7 @@ const FlatOutfitBuilderPage = () => {
           <button
             onClick={handleSave}
             disabled={isSaving || selectedItemIds.length === 0}
-            className="px-8 py-3 bg-white text-background-main font-black text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
+            className="px-8 py-3 bg-ink text-background-main font-black text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {id ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
@@ -322,14 +322,14 @@ const FlatOutfitBuilderPage = () => {
 
       <div className="flex-grow flex overflow-hidden">
         {/* Left Panel: Category Selector */}
-        <aside className="w-20 border-r border-white/5 flex flex-col items-center py-8 gap-8 bg-black/20">
+        <aside className="w-20 border-r border-ink/5 flex flex-col items-center py-8 gap-8 bg-ink/5">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`
                 relative w-12 h-12 rounded-xl flex items-center justify-center transition-all
-                ${activeCategory === cat ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'text-text-secondary hover:text-white hover:bg-white/5'}
+                ${activeCategory === cat ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary hover:bg-ink/5'}
               `}
             >
               <div className="text-[8px] font-black rotate-[-90deg] whitespace-nowrap tracking-widest uppercase">
@@ -343,9 +343,9 @@ const FlatOutfitBuilderPage = () => {
         </aside>
 
         {/* Center Panel: Browsable Wardrobe Grid */}
-        <aside className="w-96 border-r border-white/5 flex flex-col bg-background-secondary/5">
-          <div className="p-6 border-b border-white/5 space-y-4">
-            <h3 className="text-[10px] font-black text-white tracking-[0.3em] uppercase opacity-50">
+        <aside className="w-96 border-r border-ink/5 flex flex-col bg-background-secondary/5">
+          <div className="p-6 border-b border-ink/5 space-y-4">
+            <h3 className="text-[10px] font-black text-text-primary tracking-[0.3em] uppercase opacity-50">
               Available Pieces
             </h3>
             <div className="relative">
@@ -355,7 +355,7 @@ const FlatOutfitBuilderPage = () => {
                 placeholder="SEARCH..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-9 pr-4 text-white text-[9px] font-black tracking-widest focus:outline-none focus:border-accent/50 transition-all"
+                className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[9px] font-black tracking-widest focus:outline-none focus:border-accent/50 transition-all"
               />
             </div>
           </div>
@@ -382,7 +382,7 @@ const FlatOutfitBuilderPage = () => {
                       onClick={() => toggleItem(item.itemId)}
                       className={`
                         relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
-                        ${active ? 'border-accent ring-2 ring-accent/20' : 'border-white/5 hover:border-white/20'}
+                        ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                       `}
                     >
                       <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
@@ -393,7 +393,7 @@ const FlatOutfitBuilderPage = () => {
                         absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                         ${active ? 'opacity-100' : 'opacity-0'}
                       `}>
-                        <div className="bg-white text-accent p-2 rounded-full shadow-xl">
+                        <div className="bg-ink text-accent p-2 rounded-full shadow-xl">
                           <X size={16} className="rotate-45" />
                         </div>
                       </div>
@@ -419,13 +419,13 @@ const FlatOutfitBuilderPage = () => {
 
           <div className="relative">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-[10px] font-black text-white tracking-[0.3em] uppercase opacity-50">
+              <h3 className="text-[10px] font-black text-text-primary tracking-[0.3em] uppercase opacity-50">
                 {showPersonaPreview ? 'Persona Preview' : 'Your Selection'}
               </h3>
               <button
                 onClick={() => setShowPersonaPreview((v) => !v)}
                 disabled={selectedItems.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-white/5 bg-white/[0.02] text-text-secondary hover:text-white hover:border-white/20 disabled:opacity-20 disabled:pointer-events-none"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20 disabled:opacity-20 disabled:pointer-events-none"
               >
                 {showPersonaPreview ? <LayoutGrid size={12} /> : <User size={12} />}
                 {showPersonaPreview ? 'List View' : 'Preview On Persona'}
@@ -442,7 +442,7 @@ const FlatOutfitBuilderPage = () => {
             ) : showPersonaPreview ? (
               <div className="space-y-6">
                 {(excludedIneligibleCount > 0 || excludedWrongPersonaCount > 0) && (
-                  <div className="px-5 py-4 rounded-2xl bg-white/[0.02] border border-white/5 text-[9px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
+                  <div className="px-5 py-4 rounded-2xl bg-ink/[0.02] border border-ink/5 text-[9px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
                     {excludedIneligibleCount > 0 && (
                       <p>{excludedIneligibleCount} {excludedIneligibleCount === 1 ? 'item' : 'items'} hidden — not persona-fitted yet.</p>
                     )}
@@ -450,7 +450,7 @@ const FlatOutfitBuilderPage = () => {
                       <div className="space-y-2 pt-1">
                         {notFittedExcluded.map((item) => (
                           <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
-                            <span className="normal-case tracking-normal text-white/60">{item.name}</span>
+                            <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
                               onClick={() => markItemAsFitted(item.itemId)}
                               className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black uppercase tracking-widest transition-colors"
@@ -471,7 +471,7 @@ const FlatOutfitBuilderPage = () => {
                       <div className="space-y-2 pt-1">
                         {noCutoutExcluded.map((item) => (
                           <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
-                            <span className="normal-case tracking-normal text-white/60">{item.name}</span>
+                            <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
                               onClick={() => removeItem(item.itemId)}
                               className="px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-widest transition-colors"
