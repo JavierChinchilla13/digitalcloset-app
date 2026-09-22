@@ -153,7 +153,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
 
                 <div className="mt-12 pt-8 border-t border-ink/5">
                   <p className="text-[10px] text-text-secondary font-medium tracking-[0.2em] uppercase opacity-30">
-                    Digital Closet Collection 2026
+                    VYSVI Collection 2026
                   </p>
                 </div>
               </div>

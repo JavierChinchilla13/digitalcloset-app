@@ -18,10 +18,15 @@ const LandingPage = () => {
             <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-8 bg-accent/5">
               THE FUTURE OF FASHION
             </span>
-            <h1 className="text-6xl md:text-8xl lg:text-9xl font-light tracking-tighter mb-8 leading-none">
-              DIGITAL <br />
-              <span className="text-accent italic font-medium">CLOSET</span>
+            {/* Task 72: VYSVI's own lockup - the wordmark plus its
+                "Digital Wardrobe" subline, matching BrandMark.tsx's
+                two-line layout at hero scale. */}
+            <h1 className="text-6xl md:text-8xl lg:text-9xl font-light tracking-tighter mb-4 leading-none">
+              VYSVI
             </h1>
+            <p className="text-accent text-sm md:text-base font-medium tracking-[0.5em] uppercase mb-8">
+              Digital Wardrobe
+            </p>
             <p className="text-text-secondary text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed">
               Curate your premium wardrobe, build futuristic outfits, and customize your digital persona in a high-end fashion ecosystem.
             </p>

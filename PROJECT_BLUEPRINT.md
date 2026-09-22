@@ -1131,7 +1131,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **70** Page passes in both modes (Landing, Login/Signup, Closet,
       Outfits, Attire, Categories, Category detail, Persona)
 - [x] **71** Editor / fitting tools (Fabric.js colors from tokens)
-- [ ] **72** Branding: VYSVI rename, logo swap-in, favicon, page title
+- [x] **72** Branding: VYSVI rename, logo swap-in, favicon, page title
 
 ### Phase 10 — Persona fitting repair & deformation
 
@@ -3666,6 +3666,55 @@ that would be unreadable on a silver accent.
   rename strings (`Navbar`, `MainLayout` footer,
   `ClothingDetailsModal.tsx:156`, `sections/AvatarSection.tsx:100`),
   `index.html` title + favicon, remove unused `App.css`.
+
+  **✅ Task 72 COMPLETE 2026-09-21.**
+  - New `components/BrandMark.tsx`: the interim VYSVI text wordmark
+    (`font-display`, wide-tracked, matching the logo's letterforms), with
+    an optional `withSubline` prop for the two-line "VYSVI / DIGITAL
+    WARDROBE" lockup. Explicitly the placeholder the plan called for -
+    its own top comment says where the real `<img>` swap (keyed off
+    `data-theme`) goes once the user's transparent PNG/SVG + dark-ink
+    files land in `frontend/public`. `frontend/public/logo.png` (which
+    the user has already dropped in) is **not** wired in yet - it has a
+    solid light background baked in, so it would show as a white box in
+    the dark navbar; still needs a transparent version.
+  - Wired into `Navbar.tsx` in place of the old "DIGITALCLOSET" text logo.
+  - Renamed every remaining brand string: `MainLayout` footer, `index.html`
+    `<title>` (was the Vite default "frontend"), `ClothingDetailsModal.tsx`'s
+    collection caption, the orphaned `sections/AvatarSection.tsx`'s
+    decorative side label, and `LandingPage.tsx`'s hero - rebuilt as
+    VYSVI's own two-line lockup (`VYSVI` + a tracked "DIGITAL WARDROBE"
+    subline) rather than just swapping the word "Digital Closet" for
+    "VYSVI" inside the old two-line "DIGITAL / CLOSET" heading shape.
+  - **Judgment call:** `ClosetPage.tsx`'s own `<h1>` also said "DIGITAL
+    CLOSET", but that was always this *page's* title coinciding with the
+    old *app* name, not the brand mark itself - the nav link to it is
+    just "Closet". Renamed to "MY WARDROBE" (matching "Complete Wardrobe
+    Management" directly beneath it) instead of putting "VYSVI" on a
+    page whose route is `/closet`.
+  - `App.css` confirmed unreferenced anywhere in `src` and removed.
+  - **Not done, both flagged rather than acted on unilaterally:**
+    - **Favicon:** left as the existing purple lightning-bolt SVG. A
+      proper "V" monogram needs a clean vector/transparent source, which
+      a raster lockup with a baked-in background can't reliably provide
+      automatically - same blocker as the navbar logo itself.
+    - **Landing hero body copy** ("build *futuristic* outfits... in a
+      high-end fashion ecosystem") still uses the pre-redesign
+      "futuristic" voice, which sits oddly against the new editorial
+      direction. Left alone - a marketing copy rewrite is a content/voice
+      decision, not a rename, and wasn't part of what this task's plan
+      text asked for.
+  - Verified live in both themes: navbar wordmark, Landing hero lockup,
+    footer, `/closet`'s "MY WARDROBE" heading, and the browser tab title
+    ("VYSVI — Digital Wardrobe", confirmed via the tab's own title, not
+    just the HTML source). `grep` confirms zero remaining "Digital
+    Closet"/"DIGITALCLOSET" strings anywhere in `frontend` (source,
+    `public`, `index.html`, the READMEs). `tsc -b --force` + `vite build`
+    clean.
+
+**Phase 9.6 is now complete (Tasks 66-72).** Remaining open item: the
+user's transparent-background logo files, for the real `BrandMark`/favicon
+swap - not blocking, since the text wordmark stands on its own.
 
 Verification for each: `tsc -b --force`, `vite build`, live in both modes
 (browser `colorScheme` emulation for system-follow), screenshots of every
