@@ -92,7 +92,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl bg-background-secondary border border-ink/10 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50"
+            className="relative w-full max-w-2xl bg-background-secondary border border-ink/10 rounded-xl overflow-hidden shadow-lg shadow-black/50"
           >
             <button
               onClick={onClose}
@@ -115,7 +115,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
               <div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-4">
-                    <span className="px-3 py-1 bg-accent/10 text-accent text-[10px] font-black tracking-widest uppercase rounded-full border border-accent/20">
+                    <span className="px-3 py-1 bg-accent/10 text-accent text-[10px] font-medium tracking-widest uppercase rounded-full border border-accent/20">
                       {item.category}
                     </span>
                   </div>
@@ -134,7 +134,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                         <Calendar size={14} />
                       </div>
                       <div>
-                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[8px]">Upload Date</p>
+                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Upload Date</p>
                         <p className="text-text-primary font-medium">{formatDate(item.uploadDate)}</p>
                       </div>
                     </div>
@@ -144,7 +144,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                         <Layers size={14} />
                       </div>
                       <div>
-                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[8px]">Category</p>
+                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Category</p>
                         <p className="text-text-primary font-medium uppercase tracking-widest">{item.category}</p>
                       </div>
                     </div>
@@ -152,7 +152,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                 </div>
 
                 <div className="mt-12 pt-8 border-t border-ink/5">
-                  <p className="text-[10px] text-text-secondary font-black tracking-[0.2em] uppercase opacity-30">
+                  <p className="text-[10px] text-text-secondary font-medium tracking-[0.2em] uppercase opacity-30">
                     Digital Closet Collection 2026
                   </p>
                 </div>

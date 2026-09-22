@@ -127,7 +127,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className={`relative bg-background-secondary border border-ink/5 rounded-[2.5rem] shadow-2xl overflow-hidden transition-all duration-500 ${
+            className={`relative bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ${
               isStudioOpen ? 'w-full max-w-6xl h-[90vh]' : 'w-full max-w-2xl'
             }`}
             onClick={(e) => e.stopPropagation()}
@@ -137,8 +137,8 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 {/* Header */}
                 <div className="flex justify-between items-center p-8 border-b border-ink/5">
                   <div>
-                    <h2 className="text-2xl font-light tracking-tighter text-text-primary uppercase">Edit Garment</h2>
-                    <p className="text-[10px] text-text-secondary font-black tracking-widest uppercase mt-1 opacity-50">Refining your collection</p>
+                    <h2 className="text-2xl font-light tracking-tight text-text-primary">Edit Garment</h2>
+                    <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase mt-1 opacity-50">Refining your collection</p>
                   </div>
                   <button 
                     onClick={onClose}
@@ -156,13 +156,13 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                         <Sparkles size={20} />
                       </div>
                       <div>
-                        <h4 className="text-[10px] font-black uppercase tracking-widest text-text-primary">Fabric Studio</h4>
-                        <p className="text-[8px] text-text-secondary uppercase tracking-widest opacity-60">Resize and reposition garment</p>
+                        <h4 className="text-[10px] font-medium uppercase tracking-widest text-text-primary">Fabric Studio</h4>
+                        <p className="text-[10px] text-text-secondary uppercase tracking-widest opacity-60">Resize and reposition garment</p>
                       </div>
                     </div>
                     <button 
                       onClick={() => setIsStudioOpen(true)}
-                      className="px-6 py-3 bg-accent hover:bg-accent-hover text-on-accent text-[8px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg"
+                      className="px-6 py-3 bg-accent hover:bg-accent-hover text-on-accent text-[10px] font-medium uppercase tracking-widest rounded-xl transition-all shadow-lg"
                     >
                       Open Studio
                     </button>
@@ -170,7 +170,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
 
                   {/* Category Selector */}
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-black">
+                    <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-medium">
                       <Shirt size={12} className="text-accent" />
                       <span>Category</span>
                     </div>
@@ -194,7 +194,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                             `}
                           >
                             <Icon size={20} />
-                            <span className="text-[8px] font-black uppercase tracking-widest">{CATEGORY_LABELS[cat]}</span>
+                            <span className="text-[10px] font-medium uppercase tracking-widest">{CATEGORY_LABELS[cat]}</span>
                           </motion.button>
                         );
                       })}
@@ -203,7 +203,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
 
                   {/* Name Input */}
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-black">
+                    <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-medium">
                       <Type size={12} className="text-accent" />
                       <span>Garment Name</span>
                     </div>
@@ -218,7 +218,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
 
                   {/* Description Input */}
                   <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-black">
+                    <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-medium">
                       <AlignLeft size={12} className="text-accent" />
                       <span>Description</span>
                     </div>
@@ -238,19 +238,19 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     {status === 'updating' && (
                       <div className="flex items-center gap-2 text-accent">
                         <Loader2 size={16} className="animate-spin" />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Updating...</span>
+                        <span className="text-[10px] font-medium uppercase tracking-widest">Updating...</span>
                       </div>
                     )}
                     {status === 'success' && (
                       <div className="flex items-center gap-2 text-emerald-400">
                         <CheckCircle2 size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Saved Successfully</span>
+                        <span className="text-[10px] font-medium uppercase tracking-widest">Saved Successfully</span>
                       </div>
                     )}
                     {status === 'error' && (
                       <div className="flex items-center gap-2 text-rose-400">
                         <AlertCircle size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">{errorMessage}</span>
+                        <span className="text-[10px] font-medium uppercase tracking-widest">{errorMessage}</span>
                       </div>
                     )}
                   </div>
@@ -258,7 +258,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   <div className="flex gap-4">
                     <button 
                       onClick={onClose}
-                      className="px-8 py-4 text-text-secondary hover:text-text-primary text-[10px] font-black uppercase tracking-widest transition-colors"
+                      className="px-8 py-4 text-text-secondary hover:text-text-primary text-[10px] font-medium uppercase tracking-widest transition-colors"
                     >
                       Cancel
                     </button>
@@ -266,7 +266,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       onClick={() => handleUpdate()}
                       disabled={status === 'updating' || !name}
                       className={`
-                        px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-xl
+                        px-10 py-4 rounded-full text-[10px] font-medium uppercase tracking-[0.2em] transition-all shadow-md
                         ${status === 'updating' || !name
                           ? 'bg-ink/5 text-ink/20 cursor-not-allowed'
                           : 'bg-accent hover:bg-accent-hover text-on-accent hover:scale-105 active:scale-95'

@@ -53,7 +53,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md bg-background-secondary border border-rose-500/20 rounded-[2rem] shadow-2xl overflow-hidden"
+            className="relative w-full max-w-md bg-background-secondary border border-rose-500/20 rounded-xl shadow-lg overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-8 text-center">
@@ -70,7 +70,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 <button
                   onClick={handleDelete}
                   disabled={isDeleting}
-                  className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-full transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20"
+                  className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20"
                 >
                   {isDeleting ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -81,7 +81,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
                 <button
                   onClick={onClose}
                   disabled={isDeleting}
-                  className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-black uppercase tracking-[0.2em] rounded-full transition-all"
+                  className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all"
                 >
                   Cancel
                 </button>

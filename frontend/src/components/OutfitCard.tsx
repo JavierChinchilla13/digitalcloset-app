@@ -118,7 +118,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
       whileHover={{ y: -8 }}
       className="group relative"
     >
-      <div className="relative aspect-[3/4] rounded-[2rem] overflow-hidden border border-ink/5 bg-background-secondary shadow-xl transition-all">
+      <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-ink/5 bg-background-secondary shadow-md transition-all">
         
         {/* Main Content Area */}
         <div className="w-full h-full p-4 flex flex-col items-center justify-center">
@@ -136,7 +136,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
                     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                     {idx === 3 && equippedItems.length > 4 && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-                        <span className="text-white text-[10px] font-black">+{equippedItems.length - 3}</span>
+                        <span className="text-white text-[10px] font-medium">+{equippedItems.length - 3}</span>
                       </div>
                     )}
                   </div>
@@ -197,7 +197,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
           <div className="space-y-3">
             <button 
               onClick={handleApply}
-              className="w-full py-3 bg-ink text-background-main font-black text-[10px] rounded-xl tracking-[0.2em] flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
+              className="w-full py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl tracking-[0.2em] flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
             >
               <Play size={12} fill="currentColor" />
               WEAR STYLE
@@ -217,20 +217,20 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <div className="bg-rose-500/20 p-4 rounded-full mb-4">
                 <Trash2 size={24} className="text-rose-500" />
               </div>
-              <p className="text-text-primary text-[12px] font-black uppercase tracking-widest mb-2">Delete Outfit?</p>
-              <p className="text-ink/60 text-[8px] uppercase tracking-widest mb-6 leading-relaxed">
+              <p className="text-text-primary text-[12px] font-medium uppercase tracking-widest mb-2">Delete Outfit?</p>
+              <p className="text-ink/60 text-[10px] uppercase tracking-widest mb-6 leading-relaxed">
                 This action is permanent and cannot be undone.
               </p>
               <div className="flex gap-4 w-full">
                 <button
                   onClick={() => removeOutfit(outfit.outfitId)}
-                  className="flex-grow py-3 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-lg active:scale-95 transition-all"
+                  className="flex-grow py-3 bg-rose-500 text-white text-[10px] font-medium uppercase tracking-[0.2em] rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   DELETE
                 </button>
                 <button 
                   onClick={() => setIsDeleting(false)}
-                  className="flex-grow py-3 bg-ink/10 text-text-primary text-[10px] font-black uppercase tracking-[0.2em] rounded-xl border border-ink/10 active:scale-95 transition-all"
+                  className="flex-grow py-3 bg-ink/10 text-text-primary text-[10px] font-medium uppercase tracking-[0.2em] rounded-xl border border-ink/10 active:scale-95 transition-all"
                 >
                   CANCEL
                 </button>
@@ -246,7 +246,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
         </h3>
         <div className="flex items-center gap-2 opacity-30">
           <Calendar size={10} className="text-text-secondary" />
-          <span className="text-[8px] font-black uppercase tracking-widest text-text-secondary">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-text-secondary">
             {formatDate(outfit.createdAt)}
           </span>
         </div>
@@ -260,7 +260,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
           <button
             onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
             title={`${hiddenReasons} - open in the editor to fix`}
-            className="flex items-center gap-1.5 pt-1 text-[8px] font-black uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors"
+            className="flex items-center gap-1.5 pt-1 text-[10px] font-medium uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors"
           >
             <AlertTriangle size={10} />
             {hiddenCount} {hiddenCount === 1 ? 'item' : 'items'} hidden · Fix
