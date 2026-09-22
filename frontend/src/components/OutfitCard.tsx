@@ -8,7 +8,7 @@ import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitDraftStore, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
-import { computePersonaEligibility } from '../utils/personaEligibility';
+import { computePersonaEligibility, applyLegacyShoeFallback } from '../utils/personaEligibility';
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -75,11 +75,16 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   // items) rather than eligibility.previewPersona, which re-derives slots
   // from category/side - an older outfit's shoe with no recorded side
   // would lose its saved leftShoe/rightShoe slot that way.
+  // Task 66: shoes with no recorded side/slot get the legacy-pair fallback,
+  // same as the flat builder's preview.
   const outfitPersona = useMemo(() => {
     const eligibleIds = new Set(eligibility.eligibleItems.map((item) => item.itemId));
     return {
       type: outfit.avatarType,
-      ...equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
+      ...applyLegacyShoeFallback(
+        equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
+        eligibility.eligibleItems
+      ),
     };
   }, [eligibility, outfit.items, outfit.avatarType]);
 
