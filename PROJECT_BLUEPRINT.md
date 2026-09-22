@@ -1136,7 +1136,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 ### Phase 9.7 — Shoe-save bug, real logo, Outfit Showcase, Attire redesign *(planned 2026-09-21, before Phase 10)*
 
 - [x] **73** Fix shoe-save losing its image (blob URL never uploaded to Cloudinary)
-- [ ] **74** Process the real logo (favicon + Landing hero + asset for Task 75)
+- [x] **74** Process the real logo (favicon + Landing hero + asset for Task 75)
 - [ ] **75** New Outfit Showcase page (majestic carousel, reachable via the logo)
 - [ ] **76** Redesign the Attire browse panel (3 sections, category dropdown,
       fix the selection-shrink bug)
@@ -3781,18 +3781,58 @@ real `naturalWidth`) - the precise repro of "the image disappears" no
 longer reproduces. `tsc -b --force` + `vite build` clean. Test items
 deleted after.
 
-### Tasks 74-76 — real logo, Outfit Showcase page, Attire redesign (planned, not started)
+### Task 74 — Process the real logo
 
-See the plan file for full detail. Summary:
-- **74** - make `logo.png` (286x284, solid light background baked in, no
-  transparent/dark-ink variant) usable: transparency via in-browser
-  canvas chroma-keying (flat background, more reliable than AI
-  segmentation for this kind of asset), an auto-cropped favicon from the
-  ribbon mark, a `filter: invert(1)` experiment for light-mode contrast
-  (the art is close to grayscale) with a stated fallback if it looks
-  wrong. Used for the favicon and `LandingPage`'s hero (confirmed with
-  the user - real image there too, not just text); `Navbar`/`BrandMark`
-  explicitly stay text, per the user's preference.
+**✅ COMPLETE 2026-09-21.** The plan assumed `logo.png` needed
+chroma-keying to remove a baked-in background - turned out to be wrong,
+and worth recording: a per-pixel alpha scan (`getImageData`, sampling a
+grid across the whole image) showed the file **already has real alpha
+transparency** - the flat "cream background" seen in every preview
+(this plan's own investigation included) was just the image viewer's own
+light backdrop showing through, not part of the file. No chroma-keying
+was needed at all; `public/logo.png` is used as-is.
+- **Favicon:** auto-cropped to just the "V" ribbon mark (excluding the
+  wordmark, illegible at favicon size) by scanning the alpha channel for
+  the mark's bounding box within the image's upper portion, padding it,
+  and squaring it. Getting the resulting canvas data safely out of the
+  browser pane and onto disk needed its own workaround - long base64
+  strings hand-typed through the model corrupt in transit (proven by two
+  failed attempts, one truncated by a tool-side length limit, one
+  transcribed wrong) - so the crop is instead uploaded through the app's
+  own `cloudinaryService.uploadImage` (already working, no new
+  infrastructure) and then `curl`ed straight to `public/favicon.png`,
+  byte-exact, no manual transcription anywhere in the path. Wired into
+  `index.html` in place of the old placeholder `favicon.svg` (left in
+  `public/`, unreferenced, not deleted).
+- **Light-mode contrast:** measured, not guessed - a luminance scan of
+  every opaque pixel gives the artwork an average contrast of only
+  ~1.7:1 against the light theme's background (the palest highlight/text
+  pixels closer to ~1:1, effectively invisible), versus ~8.9:1 on the
+  dark background. The planned `filter: invert(1)` trick was analyzed
+  mathematically (grayscale inversion is exactly `1 - luminance` here)
+  rather than eyeballed, since the browser pane's screenshot tool was
+  unreliable this session (see below) - it turned out to be only a
+  partial fix (roughly half the wordmark's tonal range crosses into good
+  contrast, half doesn't), not worth the risk of an odd color cast for a
+  modest gain. Went with the plan's stated fallback instead: the same
+  asset in both themes. **Known result:** the logo reads clearly in dark
+  mode and only "soft"/muted in light mode - a real dark-ink variant from
+  the user would look meaningfully better; not blocking, since this is
+  decorative branding, not functional text.
+- Used for the favicon and `LandingPage`'s hero (replacing Task 72's text
+  lockup, confirmed with the user beforehand) - an `sr-only` `<h1>` kept
+  alongside the `<img>` for accessibility/SEO. `Navbar`/`BrandMark` stay
+  text, per the user's explicit preference.
+- **Tooling note:** the in-app browser pane's screenshot tool rendered
+  at a tiny, unusable size for most of this task regardless of tab or
+  resize calls (host-side, not a page bug) - verification leaned on
+  DOM-level checks instead (`naturalWidth`/`complete` on the loaded
+  `<img>`, `get_page_text` confirming full page content, the favicon
+  `<link>`'s resolved `href`), which is why this task's evidence is
+  programmatic rather than a screenshot. One resize call later in the
+  task did recover a normal screenshot, confirming the page itself was
+  never actually broken.
+- `tsc -b --force` + `vite build` clean.
 - **75** - new `/showcase` route (protected), only reachable by clicking
   the logo while authenticated (guests keep going to `/` as today, no
   outfits to show). Active outfit large/centered via `PersonaRenderer`,
