@@ -41,7 +41,7 @@ const CategoryPicker = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-3 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20"
+        className="flex items-center gap-2 px-4 py-3 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20"
       >
         <Tag size={12} />
         {buttonLabel}
@@ -50,9 +50,9 @@ const CategoryPicker = ({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-56 bg-background-secondary border border-ink/10 rounded-2xl shadow-2xl p-2 z-40 space-y-1 max-h-64 overflow-y-auto no-scrollbar">
+          <div className="absolute right-0 top-full mt-2 w-56 bg-background-secondary border border-ink/10 rounded-2xl shadow-lg p-2 z-40 space-y-1 max-h-64 overflow-y-auto no-scrollbar">
             {collections.length === 0 && !isCreating && (
-              <p className="px-3 py-2 text-[8px] font-bold uppercase tracking-widest text-text-secondary opacity-50">
+              <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-text-secondary opacity-50">
                 No categories yet
               </p>
             )}
@@ -80,7 +80,7 @@ const CategoryPicker = ({
                     onChange={(e) => onNewNameChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && onConfirmCreate()}
                     placeholder="CATEGORY NAME"
-                    className="flex-grow min-w-0 bg-ink/5 border border-ink/10 rounded-lg px-2 py-1.5 text-text-primary text-[9px] font-black tracking-widest uppercase focus:outline-none focus:border-accent/50"
+                    className="flex-grow min-w-0 bg-ink/5 border border-ink/10 rounded-lg px-2 py-1.5 text-text-primary text-[9px] font-medium tracking-widest uppercase focus:outline-none focus:border-accent/50"
                   />
                   <button onClick={onConfirmCreate} className="p-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors">
                     <Check size={12} />

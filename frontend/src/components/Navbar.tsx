@@ -27,7 +27,7 @@ const Navbar = () => {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel px-8 py-3 rounded-full flex items-center gap-12 border border-ink/10 shadow-2xl pointer-events-auto"
+        className="glass-panel px-4 sm:px-6 md:px-8 py-3 rounded-full flex items-center gap-3 sm:gap-8 md:gap-12 border border-ink/10 shadow-lg pointer-events-auto"
       >
         {/* Logo */}
         <Link
@@ -53,7 +53,7 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  "text-[10px] font-black uppercase tracking-[0.2em] transition-all relative py-1",
+                  "text-[10px] font-medium uppercase tracking-[0.2em] transition-all relative py-1",
                   isActive ? "text-accent" : "text-text-secondary hover:text-text-primary"
                 )}
               >
@@ -74,12 +74,15 @@ const Navbar = () => {
           })}
         </div>
 
-        {/* Auth Buttons */}
-        <div className="flex items-center gap-4 border-l border-ink/10 pl-8">
+        {/* Auth Buttons - Task 69: padding/gaps step down at each breakpoint
+            (found in Task 67: the pill was already wider than a 375px phone
+            before the toggle even existed) so the pill fits a phone screen
+            without hiding any of the icon links. */}
+        <div className="flex items-center gap-1 sm:gap-3 md:gap-4 border-l border-ink/10 pl-2 sm:pl-6 md:pl-8">
           {/* Task 67: light / dark / system toggle - shown logged in or out. */}
           <ThemeToggle />
           {isAuthenticated ? (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
               {/* Task 47: persona-type entry point - Attire (Task 40) no
                   longer points at /persona, so this is now the only
                   discoverable path back to the persona-type picker. A
@@ -109,7 +112,7 @@ const Navbar = () => {
               >
                 <LogOut size={16} />
               </button>
-              <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent text-[10px] font-black">
+              <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent text-[10px] font-medium">
                 {user?.email[0].toUpperCase()}
               </div>
             </div>
@@ -117,13 +120,13 @@ const Navbar = () => {
             <>
               <Link 
                 to="/login" 
-                className="text-[10px] font-black uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
+                className="text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
               >
                 Login
               </Link>
               <Link 
                 to="/signup" 
-                className="bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                className="bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded-full text-[10px] font-medium uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg"
               >
                 Join
               </Link>

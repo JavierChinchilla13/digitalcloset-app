@@ -1127,7 +1127,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
       no-flash script, navbar toggle, fonts
 - [x] **68** Mechanical token migration (`white`/`black` utilities -> `ink`
       tokens, `on-accent`) + remove glows
-- [ ] **69** Shared components restyle (Navbar, footer, Toast, cards, modals)
+- [x] **69** Shared components restyle (Navbar, footer, Toast, cards, modals)
 - [ ] **70** Page passes in both modes (Landing, Login/Signup, Closet,
       Outfits, Attire, Categories, Category detail, Persona)
 - [ ] **71** Editor / fitting tools (Fabric.js colors from tokens)
@@ -3503,6 +3503,47 @@ that would be unreadable on a silver accent.
   ClothingCard, OutfitCard, CategoryPicker, the modals. Rules:
   `font-black` -> medium/light, label floor ~10-11px (currently 7-8px),
   radii `2rem/3rem` -> `xl/2xl`, hairline silver borders, serif headings.
+
+  **✅ Task 69 COMPLETE 2026-09-21.** Scope: `Navbar`, `MainLayout`
+  (footer read as already understated - left alone), `Toast`,
+  `ClothingCard`, `OutfitCard`, `CategoryPicker`, `ClothingDetailsModal`,
+  `EditClothingModal`, `DeleteConfirmationModal`. `SectionWrapper` is
+  purely structural (layout/motion, no color or type) - nothing to change.
+  - `font-black` -> `font-medium` on every uppercase-tracked label/button
+    across the 8 files (all confirmed to be labels/buttons, not headings -
+    real headings are `<h1>/<h2>` tags, already serif+light via Task 67's
+    base-layer rule and untouched here).
+  - `text-[7px]`/`text-[8px]` -> `text-[10px]` (13 spots: category tags,
+    footer captions, form field labels, chip buttons).
+  - `rounded-[2rem]` -> `rounded-xl`, `rounded-[2.5rem]` -> `rounded-2xl`
+    on the 4 modal/card outer shells that had them (`OutfitCard`,
+    `ClothingDetailsModal`, `EditClothingModal`, `DeleteConfirmationModal`).
+    Pill shapes (`rounded-full` on nav, chips, primary buttons) are a
+    deliberate silhouette, not the "2rem/3rem card blob" the rule targets,
+    and were left alone.
+  - `shadow-2xl` -> `shadow-lg`, `shadow-xl` -> `shadow-md` throughout (on
+    top of Task 68's removal of the colored accent/neon shadows).
+  - `EditClothingModal`'s "EDIT GARMENT" heading was uppercase where every
+    other modal heading (`ClothingDetailsModal`, `DeleteConfirmationModal`)
+    is sentence case - dropped the `uppercase` class for consistency; both
+    are `<h2>`, so both already render in the serif display font.
+  - **Found while checking Task 67's flagged mobile-navbar overflow**
+    (455px pill on a 375px screen even before the toggle) and fixed here
+    rather than deferred to 70, since it's the same component: the pill's
+    padding/gaps now step down at each breakpoint
+    (`px-4 sm:px-6 md:px-8`, `gap-3 sm:gap-8 md:gap-12`, similarly for the
+    auth-button row) instead of one fixed size. No icon links were hidden.
+    Verified at 375px: pill now 363px, no horizontal page overflow.
+  - Verified live in both themes: `/closet` grid + navbar (light, dark,
+    375px mobile), `ClothingDetailsModal`, `EditClothingModal` (incl. its
+    graphite-accent "Open Studio"/"Save Changes" buttons in light mode),
+    `DeleteConfirmationModal` (light) - serif headings, hairline borders,
+    restrained shadows, no neon glow, medium-weight tracked labels read
+    clearly at the new floor size. `tsc -b --force` + `vite build` clean.
+    Test item created for the check was deleted.
+  - **Not done here (still Task 70/71):** the 32 low-contrast
+    `text-secondary` + low-opacity spots, the missing `no-scrollbar` CSS
+    rule, off-palette blue/rose hues, and every page not named above.
 - **70 Page passes** - each checked in both modes at desktop + mobile.
   Orphaned pages (`/dashboard`, `DemoPage`, `OutfitBuilderPage`,
   `sections/*`, `PersonaSpotlight`) get the token migration only.

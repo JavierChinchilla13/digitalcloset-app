@@ -140,7 +140,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
           </div>
 
           <div className={`
-            flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-[8px] font-black uppercase tracking-widest
+            flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-[10px] font-medium uppercase tracking-widest
             ${isEquipped ? 'bg-accent text-on-accent shadow-lg' : 'bg-ink/10 text-ink/50'}
           `}>
             <Shirt size={10} />
@@ -150,7 +150,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
 
         {/* Category Tag (Mini) */}
         <div className="absolute top-2 left-2">
-          <span className="px-2 py-0.5 bg-black/40 backdrop-blur-md text-white text-[7px] font-black tracking-widest uppercase rounded-full border border-white/10">
+          <span className="px-2 py-0.5 bg-black/40 backdrop-blur-md text-white text-[10px] font-medium tracking-widest uppercase rounded-full border border-white/10">
             {item.category}
           </span>
         </div>
@@ -163,7 +163,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
         `}>
           {item.name}
         </h3>
-        <p className="text-[8px] text-text-secondary font-black tracking-widest uppercase opacity-40 mt-0.5">
+        <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase opacity-40 mt-0.5">
           {item.category}
         </p>
       </div>

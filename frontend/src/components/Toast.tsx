@@ -53,7 +53,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               className="pointer-events-auto"
             >
               <div className={`
-                flex items-center gap-4 px-6 py-4 rounded-2xl border backdrop-blur-xl shadow-2xl min-w-[300px]
+                flex items-center gap-4 px-6 py-4 rounded-2xl border backdrop-blur-xl shadow-lg min-w-[300px]
                 ${toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : ''}
                 ${toast.type === 'error' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : ''}
                 ${toast.type === 'info' ? 'bg-accent/10 border-accent/20 text-accent' : ''}
@@ -64,7 +64,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                   {toast.type === 'info' && <Info size={20} />}
                 </div>
                 
-                <p className="flex-grow text-xs font-black uppercase tracking-widest">{toast.message}</p>
+                <p className="flex-grow text-xs font-medium uppercase tracking-widest">{toast.message}</p>
                 
                 <button 
                   onClick={() => removeToast(toast.id)}
