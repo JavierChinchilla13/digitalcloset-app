@@ -114,7 +114,7 @@ const CategoriesPage = () => {
           <div className="space-y-4">
             <button
               onClick={() => navigate('/')}
-              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
               Back to Attire
@@ -122,7 +122,7 @@ const CategoriesPage = () => {
             <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
               MY <br /> <span className="text-accent">CATEGORIES</span>
             </h1>
-            <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest opacity-40">
+            <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
               Organize your closet // {collections.length} {collections.length === 1 ? 'category' : 'categories'}
             </p>
           </div>
@@ -139,7 +139,7 @@ const CategoriesPage = () => {
                     if (e.key === 'Escape') cancelCreate();
                   }}
                   placeholder="CATEGORY NAME"
-                  className="bg-ink/5 border border-ink/10 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-black tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all w-56"
+                  className="bg-ink/5 border border-ink/10 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all w-56"
                 />
                 <button
                   onClick={handleCreate}
@@ -161,7 +161,7 @@ const CategoriesPage = () => {
             ) : (
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="group px-8 py-4 bg-ink text-background-main font-black rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5"
+                className="group px-8 py-4 bg-ink text-background-main font-medium rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5"
               >
                 <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
                 <span className="text-[10px] tracking-[0.2em] uppercase">Create</span>
@@ -177,7 +177,7 @@ const CategoriesPage = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="SEARCH CATEGORIES..."
-            className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-4 text-text-primary text-[9px] font-black tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all"
+            className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all"
           />
         </div>
 
@@ -191,20 +191,20 @@ const CategoriesPage = () => {
               className="py-32 flex flex-col items-center justify-center text-center"
             >
               <Loader2 className="animate-spin text-accent mb-4" size={40} />
-              <p className="text-[8px] font-black tracking-[0.4em] text-text-primary uppercase opacity-20">Synchronizing...</p>
+              <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">Synchronizing...</p>
             </motion.div>
           ) : collections.length === 0 ? (
             <motion.div
               key="empty"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-[3rem] bg-ink/[0.01]"
+              className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]"
             >
               <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
                 <Tag size={40} className="text-text-secondary" />
               </div>
               <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">No categories yet</h3>
-              <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase mb-4 opacity-30">
+              <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase mb-4">
                 Create one above to start organizing your closet
               </p>
             </motion.div>
@@ -213,13 +213,13 @@ const CategoriesPage = () => {
               key="no-matches"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-[3rem] bg-ink/[0.01]"
+              className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]"
             >
               <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
                 <Search size={40} className="text-text-secondary" />
               </div>
               <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">No matches</h3>
-              <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase mb-4 opacity-30">
+              <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase mb-4">
                 No categories match "{searchQuery}"
               </p>
             </motion.div>
@@ -263,7 +263,7 @@ const CategoriesPage = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md bg-background-secondary border border-rose-500/20 rounded-[2rem] shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md bg-background-secondary border border-rose-500/20 rounded-xl shadow-lg overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-8 text-center">
@@ -280,14 +280,14 @@ const CategoriesPage = () => {
                   <button
                     onClick={confirmDelete}
                     disabled={isDeleting}
-                    className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white text-xs font-black uppercase tracking-[0.2em] rounded-full transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20"
+                    className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20"
                   >
                     {isDeleting ? <Loader2 size={16} className="animate-spin" /> : 'Confirm Deletion'}
                   </button>
                   <button
                     onClick={() => setPendingDelete(null)}
                     disabled={isDeleting}
-                    className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-black uppercase tracking-[0.2em] rounded-full transition-all"
+                    className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all"
                   >
                     Cancel
                   </button>
@@ -329,7 +329,7 @@ const CollectionCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={() => !isRenaming && onOpenDetail()}
-      className={`rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden transition-colors ${
+      className={`rounded-xl border border-ink/5 bg-ink/[0.02] overflow-hidden transition-colors ${
         isRenaming ? '' : 'cursor-pointer hover:border-ink/20'
       }`}
     >
@@ -354,7 +354,7 @@ const CollectionCard = ({
           ) : (
             <h3 className="text-lg font-bold text-text-primary truncate">{collection.name}</h3>
           )}
-          <p className="text-[9px] font-black text-text-secondary uppercase tracking-widest opacity-50 mt-1">
+          <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50 mt-1">
             {collection.items.length} {collection.items.length === 1 ? 'item' : 'items'} · {collection.outfits.length} {collection.outfits.length === 1 ? 'outfit' : 'outfits'}
           </p>
         </div>

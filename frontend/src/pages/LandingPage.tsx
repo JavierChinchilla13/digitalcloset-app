@@ -15,7 +15,7 @@ const LandingPage = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
           >
-            <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-black tracking-[0.4em] mb-8 bg-accent/5">
+            <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-8 bg-accent/5">
               THE FUTURE OF FASHION
             </span>
             <h1 className="text-6xl md:text-8xl lg:text-9xl font-light tracking-tighter mb-8 leading-none">
@@ -29,13 +29,13 @@ const LandingPage = () => {
             <div className="flex flex-wrap justify-center gap-6">
               <Link 
                 to="/signup" 
-                className="px-10 py-5 bg-ink text-background-main font-black rounded-full transition-all hover:scale-105 active:scale-95 shadow-2xl"
+                className="px-10 py-5 bg-ink text-background-main font-medium rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg"
               >
                 GET STARTED
               </Link>
               <Link 
                 to="/demo" 
-                className="px-10 py-5 glass-panel text-text-primary font-black rounded-full transition-all hover:bg-ink/10"
+                className="px-10 py-5 glass-panel text-text-primary font-medium rounded-full transition-all hover:bg-ink/10"
               >
                 VIEW DEMO
               </Link>
@@ -51,7 +51,7 @@ const LandingPage = () => {
           className="relative w-full max-w-5xl mx-auto mt-20 aspect-[21/9] rounded-t-[4rem] overflow-hidden border-x border-t border-ink/10 bg-gradient-to-b from-ink/5 to-transparent p-1"
         >
           <div className="w-full h-full rounded-t-[3.8rem] overflow-hidden bg-background-secondary flex items-center justify-center">
-             <div className="text-accent/20 font-black text-9xl tracking-tighter select-none">PREMIUM</div>
+             <div className="text-accent/20 font-medium text-9xl tracking-tighter select-none">PREMIUM</div>
           </div>
         </motion.div>
       </section>
@@ -87,7 +87,7 @@ const LandingPage = () => {
       <SectionWrapper className="bg-background-secondary/30 border-y border-ink/5 py-40">
         <div className="flex flex-col lg:flex-row items-center gap-20">
           <div className="lg:w-1/2">
-            <span className="text-accent text-[10px] font-black tracking-[0.4em] mb-6 block uppercase">Seamless Integration</span>
+            <span className="text-accent text-[10px] font-medium tracking-[0.4em] mb-6 block uppercase">Seamless Integration</span>
             <h2 className="text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
               A FASHION TECH <br />
               <span className="italic text-accent">EXPERIENCE</span>
@@ -99,16 +99,16 @@ const LandingPage = () => {
               {['DARK MODE ARCHITECTURE', 'MINIMALIST DESIGN LANGUAGE', 'FLUID MOTION SYSTEMS'].map((item) => (
                 <div key={item} className="flex items-center gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                  <span className="text-xs font-black tracking-widest uppercase">{item}</span>
+                  <span className="text-xs font-medium tracking-widest uppercase">{item}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div className="lg:w-1/2 w-full aspect-square glass-panel rounded-[3rem] relative overflow-hidden group">
+          <div className="lg:w-1/2 w-full aspect-square glass-panel rounded-2xl relative overflow-hidden group">
              <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
              <div className="w-full h-full flex items-center justify-center p-20">
                 <div className="w-full h-full border border-dashed border-ink/10 rounded-2xl flex items-center justify-center">
-                  <span className="text-ink/10 font-black text-6xl tracking-tighter">PREVIEW</span>
+                  <span className="text-ink/10 font-medium text-6xl tracking-tighter">PREVIEW</span>
                 </div>
              </div>
           </div>
@@ -120,7 +120,7 @@ const LandingPage = () => {
         <h2 className="text-6xl md:text-8xl font-light tracking-tighter mb-12">READY TO <span className="italic text-accent">UPGRADE?</span></h2>
         <Link 
           to="/signup" 
-          className="inline-block px-16 py-8 bg-accent text-on-accent font-black text-xl rounded-full transition-all hover:scale-105 active:scale-95 shadow-2xl"
+          className="inline-block px-16 py-8 bg-accent text-on-accent font-medium text-xl rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg"
         >
           CREATE YOUR CLOSET
         </Link>

@@ -104,7 +104,7 @@ const ClosetPage = () => {
           <div className="space-y-4">
             <button
               onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
               Back to Attire
@@ -113,15 +113,16 @@ const ClosetPage = () => {
               DIGITAL <br /> <span className="text-accent">CLOSET</span>
             </h1>
             <div className="flex items-center gap-4 pt-2">
-              <p className="text-text-secondary text-xs font-medium uppercase tracking-widest opacity-40">
+              <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">
                 Complete Wardrobe Management // {items.length} Unique Pieces
               </p>
               <div className="h-4 w-px bg-ink/10" />
               <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full">
-                <div
-                  className={`w-1.5 h-1.5 rounded-full ${persona.type === PersonaType.MALE ? "bg-blue-400" : "bg-rose-400"}`}
-                />
-                <span className="text-[8px] font-black uppercase tracking-widest text-accent">
+                {/* Task 70: was a blue/rose dot keyed off persona type - off-palette
+                    for the silver/graphite look, and purely decorative anyway
+                    since the label right next to it already names the persona. */}
+                <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                <span className="text-[10px] font-medium uppercase tracking-widest text-accent">
                   Active Persona: {getDisplayName(persona.type)}
                 </span>
               </div>
@@ -130,7 +131,7 @@ const ClosetPage = () => {
 
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="group px-10 py-5 bg-ink text-background-main font-black rounded-[2rem] flex items-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5"
+            className="group px-10 py-5 bg-ink text-background-main font-medium rounded-xl flex items-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5"
           >
             <Plus
               size={20}
@@ -155,7 +156,7 @@ const ClosetPage = () => {
                 placeholder="SEARCH YOUR COLLECTION..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-6 text-text-primary text-[10px] font-black tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/[0.08] transition-all"
+                className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-6 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/[0.08] transition-all"
               />
             </div>
 
@@ -165,7 +166,7 @@ const ClosetPage = () => {
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
                   className={`
-                    flex-shrink-0 px-6 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all border
+                    flex-shrink-0 px-6 rounded-2xl text-[10px] font-medium uppercase tracking-widest transition-all border
                     ${
                       activeCategory === cat
                         ? "bg-accent text-on-accent border-accent shadow-lg"
@@ -181,7 +182,7 @@ const ClosetPage = () => {
             <button
               onClick={() => setShowOnlyFavorites(!showOnlyFavorites)}
               className={`
-                flex items-center justify-center gap-3 px-6 py-4 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all border
+                flex items-center justify-center gap-3 px-6 py-4 rounded-2xl text-[10px] font-medium uppercase tracking-widest transition-all border
                 ${
                   showOnlyFavorites
                     ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
@@ -198,10 +199,10 @@ const ClosetPage = () => {
           </div>
 
           {/* Persona Filtering Row */}
-          <div className="flex items-center gap-4 bg-ink/[0.02] border border-ink/5 p-2 rounded-[2rem] self-center">
+          <div className="flex items-center gap-4 bg-ink/[0.02] border border-ink/5 p-2 rounded-xl self-center">
             <div className="px-6 flex items-center gap-2 text-text-secondary border-r border-ink/10 mr-2">
               <Users size={14} className="text-accent" />
-              <span className="text-[8px] font-black uppercase tracking-widest">
+              <span className="text-[10px] font-medium uppercase tracking-widest">
                 Persona Filter
               </span>
             </div>
@@ -211,10 +212,10 @@ const ClosetPage = () => {
                   key={p}
                   onClick={() => setActivePersonaFilter(p)}
                   className={`
-                    px-8 py-3 rounded-full text-[8px] font-black uppercase tracking-[0.2em] transition-all
+                    px-8 py-3 rounded-full text-[10px] font-medium uppercase tracking-[0.2em] transition-all
                     ${
                       activePersonaFilter === p
-                        ? "bg-ink text-background-main shadow-xl"
+                        ? "bg-ink text-background-main shadow-md"
                         : "text-text-secondary hover:text-text-primary"
                     }
                   `}
@@ -230,19 +231,19 @@ const ClosetPage = () => {
         {isLoading && items.length === 0 ? (
           <div className="py-40 flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-accent mb-4" size={48} />
-            <p className="text-[10px] font-black tracking-[0.4em] text-text-primary uppercase opacity-20">
+            <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">
               Syncing Collection...
             </p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-[3rem] bg-ink/[0.01]">
+          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]">
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
               <Shirt size={40} className="text-text-secondary" />
             </div>
             <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">
               No garments found
             </h3>
-            <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-30">
+            <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase">
               Try adjusting your filters or add a new piece to your collection
             </p>
           </div>

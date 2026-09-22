@@ -46,14 +46,14 @@ const CategoryDetailPage = () => {
     return (
       <div className="min-h-screen bg-background-main pt-24 pb-20">
         <SectionWrapper>
-          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-[3rem] bg-ink/[0.01]">
+          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]">
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
               <Tag size={40} className="text-text-secondary" />
             </div>
             <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">Category not found</h3>
             <button
               onClick={() => navigate('/categories')}
-              className="flex items-center gap-2 text-accent hover:text-text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-2 text-accent hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
               Back to Categories
@@ -71,7 +71,7 @@ const CategoryDetailPage = () => {
           <div className="space-y-4">
             <button
               onClick={() => navigate('/categories')}
-              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
               Back to Categories
@@ -79,14 +79,14 @@ const CategoryDetailPage = () => {
             <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none break-words">
               {collection.name}
             </h1>
-            <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest opacity-40">
+            <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
               {collection.items.length} {collection.items.length === 1 ? 'item' : 'items'} · {collection.outfits.length} {collection.outfits.length === 1 ? 'outfit' : 'outfits'}
             </p>
           </div>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="group px-8 py-4 bg-ink text-background-main font-black rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5"
+            className="group px-8 py-4 bg-ink text-background-main font-medium rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5"
           >
             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
             <span className="text-[10px] tracking-[0.2em] uppercase">Add to Category</span>
@@ -94,12 +94,12 @@ const CategoryDetailPage = () => {
         </div>
 
         {collection.items.length === 0 && collection.outfits.length === 0 ? (
-          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-[3rem] bg-ink/[0.01]">
+          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]">
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
               <Shirt size={40} className="text-text-secondary" />
             </div>
             <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">Nothing here yet</h3>
-            <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase mb-4 opacity-30">
+            <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase mb-4">
               Add existing items or outfits above, or link one in from the
               upload flow or outfit save
             </p>
@@ -110,7 +110,7 @@ const CategoryDetailPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-text-secondary opacity-50">
                   <Shirt size={14} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Items</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest">Items</span>
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
                   {collection.items.map((item) => (
@@ -124,7 +124,7 @@ const CategoryDetailPage = () => {
                         <X size={12} />
                       </button>
                       <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                        <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.itemName}</p>
+                        <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.itemName}</p>
                       </div>
                     </div>
                   ))}
@@ -136,7 +136,7 @@ const CategoryDetailPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-text-secondary opacity-50">
                   <LayoutGrid size={14} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Outfits</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest">Outfits</span>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {collection.outfits.map((outfit) => (
@@ -228,7 +228,7 @@ const OutfitPreviewThumb = ({ outfit }: { outfit: Outfit }) => {
           {item.imageUrl && <img src={item.imageUrl} alt={item.itemName ?? ''} className="w-full h-full object-cover" />}
           {idx === 3 && outfit.items.length > 4 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <span className="text-white text-[8px] font-black">+{outfit.items.length - 3}</span>
+              <span className="text-white text-[10px] font-medium">+{outfit.items.length - 3}</span>
             </div>
           )}
         </div>
@@ -323,13 +323,13 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-3xl max-h-[85vh] bg-background-secondary border border-ink/5 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-3xl max-h-[85vh] bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center p-8 pb-6 border-b border-ink/5 flex-shrink-0">
               <div>
                 <h2 className="text-2xl font-light tracking-tighter text-text-primary uppercase">Add to Category</h2>
-                <p className="text-[10px] text-text-secondary font-black tracking-widest uppercase mt-1 opacity-50">
+                <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase mt-1 opacity-50">
                   To "{collection.name}"
                 </p>
               </div>
@@ -344,7 +344,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                   <button
                     key={t}
                     onClick={() => setTab(t)}
-                    className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors ${
+                    className={`px-5 py-2 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-colors ${
                       tab === t ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
@@ -362,7 +362,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={tab === 'ITEMS' ? 'SEARCH ITEMS...' : 'SEARCH OUTFITS...'}
-                  className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-12 pr-4 text-text-primary text-[9px] font-black tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all"
+                  className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-12 pr-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all"
                 />
               </div>
               {tab === 'ITEMS' && (
@@ -372,7 +372,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                       <button
                         key={cat}
                         onClick={() => setCategoryFilter(cat)}
-                        className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-colors border ${
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-widest transition-colors border ${
                           categoryFilter === cat
                             ? 'bg-accent/10 border-accent text-accent'
                             : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'
@@ -387,7 +387,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                       <button
                         key={type}
                         onClick={() => setPersonaFilter(type)}
-                        className={`px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest transition-colors border ${
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-medium uppercase tracking-widest transition-colors border ${
                           personaFilter === type
                             ? 'bg-accent/10 border-accent text-accent'
                             : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'
@@ -408,7 +408,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                     {availableItems.length === 0 ? (
                       <div className="py-16 flex flex-col items-center justify-center text-center opacity-40">
                         <Shirt size={32} className="text-text-secondary mb-4" />
-                        <p className="text-[9px] font-black uppercase tracking-widest">
+                        <p className="text-[10px] font-medium uppercase tracking-widest">
                           {items.length === 0
                             ? 'No items in your closet yet'
                             : items.length === existingItemIds.size
@@ -429,7 +429,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                             >
                               <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                               <div className="absolute top-1.5 left-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                                <span className="text-[6px] font-black text-white uppercase tracking-widest">{item.personaType}</span>
+                                <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
                               </div>
                               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 {isAdding ? (
@@ -441,7 +441,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                                 )}
                               </div>
                               <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                                <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+                                <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
                               </div>
                             </button>
                           );
@@ -452,7 +452,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
 
                   {collection.items.length > 0 && (
                     <div className="space-y-3 pt-6 border-t border-ink/5">
-                      <p className="text-[8px] font-black text-text-secondary uppercase tracking-widest opacity-50">
+                      <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
                         Already in this category ({collection.items.length})
                       </p>
                       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
@@ -467,7 +467,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                               <X size={12} />
                             </button>
                             <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                              <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.itemName}</p>
+                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.itemName}</p>
                             </div>
                           </div>
                         ))}
@@ -481,7 +481,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                     {availableOutfits.length === 0 ? (
                       <div className="py-16 flex flex-col items-center justify-center text-center opacity-40">
                         <LayoutGrid size={32} className="text-text-secondary mb-4" />
-                        <p className="text-[9px] font-black uppercase tracking-widest">
+                        <p className="text-[10px] font-medium uppercase tracking-widest">
                           {outfits.length === 0
                             ? 'No saved outfits yet'
                             : outfits.length === existingOutfitIds.size
@@ -511,7 +511,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                                 )}
                               </div>
                               <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                                <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{outfit.name}</p>
+                                <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{outfit.name}</p>
                               </div>
                             </button>
                           );
@@ -522,7 +522,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
 
                   {collection.outfits.length > 0 && (
                     <div className="space-y-3 pt-6 border-t border-ink/5">
-                      <p className="text-[8px] font-black text-text-secondary uppercase tracking-widest opacity-50">
+                      <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
                         Already in this category ({collection.outfits.length})
                       </p>
                       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
@@ -544,7 +544,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                                 <X size={12} />
                               </button>
                               <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                                <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{collectionOutfit.outfitName}</p>
+                                <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{collectionOutfit.outfitName}</p>
                               </div>
                             </div>
                           );

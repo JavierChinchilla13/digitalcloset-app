@@ -1128,7 +1128,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **68** Mechanical token migration (`white`/`black` utilities -> `ink`
       tokens, `on-accent`) + remove glows
 - [x] **69** Shared components restyle (Navbar, footer, Toast, cards, modals)
-- [ ] **70** Page passes in both modes (Landing, Login/Signup, Closet,
+- [x] **70** Page passes in both modes (Landing, Login/Signup, Closet,
       Outfits, Attire, Categories, Category detail, Persona)
 - [ ] **71** Editor / fitting tools (Fabric.js colors from tokens)
 - [ ] **72** Branding: VYSVI rename, logo swap-in, favicon, page title
@@ -3547,6 +3547,45 @@ that would be unreadable on a silver accent.
 - **70 Page passes** - each checked in both modes at desktop + mobile.
   Orphaned pages (`/dashboard`, `DemoPage`, `OutfitBuilderPage`,
   `sections/*`, `PersonaSpotlight`) get the token migration only.
+
+  **✅ Task 70 COMPLETE 2026-09-21.**
+  - Applied the same mechanical rules as Task 69 to all 9 in-scope pages:
+    `font-black` -> `font-medium`, the `text-[6-9px]` label floor raised
+    to `text-[10px]`, `rounded-[2rem]` -> `rounded-xl` and
+    `rounded-[2.5rem]/[2.8rem]/[3rem]` -> `rounded-2xl`,
+    `shadow-2xl`/`shadow-xl` -> `shadow-lg`/`shadow-md`.
+  - **Fixed the 3 findings carried over from Tasks 68/69:**
+    - The 12 real low-contrast spots (of the 15 matched - 2 in
+      `FlatOutfitBuilderPage` were `disabled:opacity-20`, correctly
+      faint only when disabled, left alone) had their `opacity-20/30/40`
+      modifier removed outright - `text-secondary`'s own color already
+      reads as muted in both themes; stacking opacity on top of an
+      already-muted color is what washed it out to near-invisible in
+      light mode.
+    - Added the missing `.no-scrollbar` utility to `index.css`
+      (`scrollbar-width: none` + the `::-webkit-scrollbar` equivalent) -
+      it had been referenced 17 times across the app (category chips,
+      `CategoryPicker`, `EditClothingModal`, the shoe-pair row) with no
+      definition backing it, so every one of those rows showed a native
+      scrollbar in both themes until now.
+    - `ClosetPage`'s active-persona dot was a hard-coded `bg-blue-400`/
+      `bg-rose-400` keyed off persona type - off-palette, and redundant
+      since the label right next to it already names the persona.
+      Replaced with a single `bg-accent` dot for both types.
+  - `FittingTool/ShoeFittingEditor.tsx`'s own `blue`/`emerald` left/right
+    tab colors are the same category of off-palette issue but live in a
+    component, not a page - left for Task 71 as planned, not fixed here.
+  - Verified live in both themes (Landing, Login, Signup logged out;
+    Closet, Saved Outfits, Attire with the persona preview, Categories,
+    Category Detail incl. its Add-to-Category modal, Persona logged in),
+    plus a 375px mobile check on Landing and Closet (no horizontal
+    overflow, text wraps correctly). `tsc -b --force` + `vite build`
+    clean. Test items/outfit/category created for the check were deleted.
+  - **Found, not fixed (out of scope for a styling pass):** `OutfitCard`
+    shows "Invalid Date" under an outfit created directly through the
+    API in this session (no `createdAt` in the payload) - a
+    `formatDate`/data issue, not a color or typography one; flagging for
+    a future task rather than fixing blind here.
 - **71 Editor / fitting tools** - Fabric colors via a small
   `utils/themeColors.ts` reading the CSS variables; neutral canvas
   surfaces; check the persona base PNGs on the light background.

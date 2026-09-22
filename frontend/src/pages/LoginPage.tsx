@@ -62,7 +62,7 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
+            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
               <input 
@@ -79,8 +79,8 @@ const LoginPage = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between items-end px-4">
-              <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Password</label>
-              <button type="button" className="text-[10px] font-black tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</button>
+              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Password</label>
+              <button type="button" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</button>
             </div>
             <div className="relative group">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
@@ -99,7 +99,7 @@ const LoginPage = () => {
           <button 
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-ink text-background-main font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-ink/5 group disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full py-4 bg-ink text-background-main font-medium rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md shadow-ink/5 group disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? (
               <Loader2 className="animate-spin" size={18} />

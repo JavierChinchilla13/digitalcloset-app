@@ -53,7 +53,7 @@ const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (item
       <X size={10} />
     </button>
     <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-      <p className="text-[6px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+      <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
     </div>
   </motion.div>
 );
@@ -281,7 +281,7 @@ const FlatOutfitBuilderPage = () => {
               className="bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"
             />
-            <p className="text-[8px] font-black text-accent tracking-[0.4em] uppercase">
+            <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
               {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
             </p>
           </div>
@@ -312,7 +312,7 @@ const FlatOutfitBuilderPage = () => {
           <button
             onClick={handleSave}
             disabled={isSaving || selectedItemIds.length === 0}
-            className="px-8 py-3 bg-ink text-background-main font-black text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
+            className="px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {id ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
@@ -332,7 +332,7 @@ const FlatOutfitBuilderPage = () => {
                 ${activeCategory === cat ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary hover:bg-ink/5'}
               `}
             >
-              <div className="text-[8px] font-black rotate-[-90deg] whitespace-nowrap tracking-widest uppercase">
+              <div className="text-[10px] font-medium rotate-[-90deg] whitespace-nowrap tracking-widest uppercase">
                 {cat}
               </div>
               {activeCategory === cat && (
@@ -345,7 +345,7 @@ const FlatOutfitBuilderPage = () => {
         {/* Center Panel: Browsable Wardrobe Grid */}
         <aside className="w-96 border-r border-ink/5 flex flex-col bg-background-secondary/5">
           <div className="p-6 border-b border-ink/5 space-y-4">
-            <h3 className="text-[10px] font-black text-text-primary tracking-[0.3em] uppercase opacity-50">
+            <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
               Available Pieces
             </h3>
             <div className="relative">
@@ -355,7 +355,7 @@ const FlatOutfitBuilderPage = () => {
                 placeholder="SEARCH..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[9px] font-black tracking-widest focus:outline-none focus:border-accent/50 transition-all"
+                className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
               />
             </div>
           </div>
@@ -363,12 +363,12 @@ const FlatOutfitBuilderPage = () => {
             {isLoading && items.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20">
                 <Loader2 className="animate-spin text-accent" size={24} />
-                <p className="text-[8px] font-black uppercase tracking-widest">Syncing Wardrobe...</p>
+                <p className="text-[10px] font-medium uppercase tracking-widest">Syncing Wardrobe...</p>
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                 <Shirt size={32} className="text-text-secondary" />
-                <p className="text-[8px] font-black uppercase tracking-widest">No pieces found</p>
+                <p className="text-[10px] font-medium uppercase tracking-widest">No pieces found</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
@@ -387,18 +387,18 @@ const FlatOutfitBuilderPage = () => {
                     >
                       <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                       <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                        <span className="text-[6px] font-black text-white uppercase tracking-widest">{item.personaType}</span>
+                        <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
                       </div>
                       <div className={`
                         absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                         ${active ? 'opacity-100' : 'opacity-0'}
                       `}>
-                        <div className="bg-ink text-accent p-2 rounded-full shadow-xl">
+                        <div className="bg-ink text-accent p-2 rounded-full shadow-md">
                           <X size={16} className="rotate-45" />
                         </div>
                       </div>
                       <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                        <p className="text-[8px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+                        <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
                       </div>
                     </motion.div>
                   );
@@ -419,13 +419,13 @@ const FlatOutfitBuilderPage = () => {
 
           <div className="relative">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-[10px] font-black text-text-primary tracking-[0.3em] uppercase opacity-50">
+              <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
                 {showPersonaPreview ? 'Persona Preview' : 'Your Selection'}
               </h3>
               <button
                 onClick={() => setShowPersonaPreview((v) => !v)}
                 disabled={selectedItems.length === 0}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20 disabled:opacity-20 disabled:pointer-events-none"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20 disabled:opacity-20 disabled:pointer-events-none"
               >
                 {showPersonaPreview ? <LayoutGrid size={12} /> : <User size={12} />}
                 {showPersonaPreview ? 'List View' : 'Preview On Persona'}
@@ -435,14 +435,14 @@ const FlatOutfitBuilderPage = () => {
             {selectedItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
                 <Shirt size={40} className="text-text-secondary" />
-                <p className="text-[9px] font-black uppercase tracking-widest">
+                <p className="text-[10px] font-medium uppercase tracking-widest">
                   Select pieces from the left to build an outfit
                 </p>
               </div>
             ) : showPersonaPreview ? (
               <div className="space-y-6">
                 {(excludedIneligibleCount > 0 || excludedWrongPersonaCount > 0) && (
-                  <div className="px-5 py-4 rounded-2xl bg-ink/[0.02] border border-ink/5 text-[9px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
+                  <div className="px-5 py-4 rounded-2xl bg-ink/[0.02] border border-ink/5 text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
                     {excludedIneligibleCount > 0 && (
                       <p>{excludedIneligibleCount} {excludedIneligibleCount === 1 ? 'item' : 'items'} hidden — not persona-fitted yet.</p>
                     )}
@@ -453,13 +453,13 @@ const FlatOutfitBuilderPage = () => {
                             <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
                               onClick={() => markItemAsFitted(item.itemId)}
-                              className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black uppercase tracking-widest transition-colors"
+                              className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
                               Mark as Fitted
                             </button>
                             <button
                               onClick={() => setFitModalItem(item)}
-                              className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[8px] font-black uppercase tracking-widest transition-colors"
+                              className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
                               Adjust &amp; Fit
                             </button>
@@ -474,7 +474,7 @@ const FlatOutfitBuilderPage = () => {
                             <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
                               onClick={() => removeItem(item.itemId)}
-                              className="px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[8px] font-black uppercase tracking-widest transition-colors"
+                              className="px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
                               Remove From Outfit
                             </button>
@@ -495,7 +495,7 @@ const FlatOutfitBuilderPage = () => {
               <div className="space-y-8">
                 {groupedSelection.map((group) => (
                   <div key={group.category} className="space-y-3">
-                    <p className="text-[8px] font-black text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                    <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
                       {formatCategoryLabel(group.category)}
                     </p>
                     {group.category === ClothingCategory.SHOES ? (
@@ -512,7 +512,7 @@ const FlatOutfitBuilderPage = () => {
 
                 {accessoryItems.length > 0 && (
                   <div className="space-y-3">
-                    <p className="text-[8px] font-black text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                    <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
                       Accessories
                     </p>
                     <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">

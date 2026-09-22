@@ -66,7 +66,7 @@ const SignupPage = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase pl-4">First Name</label>
+              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">First Name</label>
               <input 
                 type="text" 
                 value={firstName}
@@ -77,7 +77,7 @@ const SignupPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase pl-4">Last Name</label>
+              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Last Name</label>
               <input 
                 type="text" 
                 value={lastName}
@@ -90,7 +90,7 @@ const SignupPage = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
+            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
               <input 
@@ -106,7 +106,7 @@ const SignupPage = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase pl-4">Password</label>
+            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Password</label>
             <div className="relative group">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
               <input 
@@ -124,7 +124,7 @@ const SignupPage = () => {
           <button 
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-accent text-on-accent font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl group disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full py-4 bg-accent text-on-accent font-medium rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md group disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? (
               <Loader2 className="animate-spin" size={18} />

@@ -113,4 +113,17 @@
   .premium-card {
     @apply bg-card rounded-2xl border border-ink/10 shadow-lg transition-all duration-300;
   }
+
+  /* Task 70: referenced by CategoryPicker, EditClothingModal and the
+     category-chip/shoe-pair scroll rows since well before this phase, but
+     never actually defined - every one of those rows has been showing a
+     native scrollbar in both themes. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
