@@ -1123,7 +1123,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 ### Phase 9.6 — Shoe fix + VYSVI redesign *(planned 2026-09-21, before Phase 10)*
 
 - [x] **66** Fix shoes not appearing on the persona (unsided shoes had no slot)
-- [ ] **67** Theme infrastructure: semantic tokens, light/dark/system store,
+- [x] **67** Theme infrastructure: semantic tokens, light/dark/system store,
       no-flash script, navbar toggle, fonts
 - [ ] **68** Mechanical token migration (`white`/`black` utilities -> `ink`
       tokens, `on-accent`) + remove glows
@@ -3415,6 +3415,39 @@ that would be unreadable on a silver accent.
   `#FFFFFF`, ink `#16171A`, secondary `#666971`, accent graphite
   `#3A3D44` (silver kept for borders/decoration - too faint as text on
   white). To be tuned live and contrast-checked to WCAG AA.
+
+  **✅ Task 67 COMPLETE 2026-09-21.** Implemented as planned:
+  - `index.css`: palette as `--vy-*` variables per theme (dark default,
+    `[data-theme="light"]`, plus a `prefers-color-scheme` fallback when the
+    attribute is absent), exposed through `@theme inline` so every
+    existing utility (`bg-background-main`, `text-text-primary`,
+    `bg-accent/30`...) follows the theme unchanged. New tokens:
+    `ink`, `on-accent`, `line`. Palette values are exactly the starting
+    palette above. Fonts: Jost (body) + Cormorant Garamond (h1/h2 via the
+    base layer); Inter dropped. Contrast (computed): secondary text is
+    ~7.1:1 on the dark bg and ~5.0:1 on the light bg.
+  - `store/useThemeStore.ts` (`system|light|dark`, default system,
+    persisted under `vysvi-theme` with try/catch, `initTheme()` called in
+    `main.tsx`), inline no-flash script + `color-scheme` meta in
+    `index.html`, `components/ThemeToggle.tsx` (icon = the *preference*,
+    cycles system -> light -> dark) in the navbar for logged-in and
+    logged-out users.
+  - Verified live: dark/light token values resolve correctly; toggle
+    cycles and persists across reload; fresh visitor with OS dark -> dark,
+    OS light + `system` -> light on cold load; handler logic follows the
+    device only while the preference is `system` (tested with an injected
+    fake `matchMedia`, because the browser pane's color-scheme emulation
+    flips `matches` but never dispatches the `change` event - a pane
+    limitation, the real OS event isn't testable here); `tsc -b --force` +
+    `vite build` clean.
+  - **Known and expected until Task 68:** light mode looks broken (white
+    text on off-white) because 669 hard-coded `white`/`black` utilities
+    don't follow the theme yet; the dark palette is already fully applied
+    (blue accent is gone).
+  - **Found, deferred to Task 69:** the navbar pill is already wider than
+    a 375px phone (455px without the toggle, 503px with it - the toggle
+    adds 48px). Pre-existing; fix with the navbar restyle (hide/condense
+    items on small screens).
 - **68 Token migration** - scripted `text-white` -> `text-text-primary`,
   `*-white/N` -> `*-ink/N`, `text-white` on accent -> `text-on-accent`;
   manual review for text/scrims over item photos, recessed `bg-black/N`

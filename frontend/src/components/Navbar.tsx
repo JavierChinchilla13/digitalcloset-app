@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
+import ThemeToggle from './ThemeToggle';
 import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle, Tag } from 'lucide-react';
 
 const Navbar = () => {
@@ -75,6 +76,8 @@ const Navbar = () => {
 
         {/* Auth Buttons */}
         <div className="flex items-center gap-4 border-l border-white/10 pl-8">
+          {/* Task 67: light / dark / system toggle - shown logged in or out. */}
+          <ThemeToggle />
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               {/* Task 47: persona-type entry point - Attire (Task 40) no

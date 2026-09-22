@@ -1,16 +1,85 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --color-background-main: #0F1115;
-  --color-background-secondary: #171A21;
-  --color-card: #1F2430;
-  --color-text-primary: #F5F7FA;
-  --color-text-secondary: #9CA3AF;
-  --color-accent: #5B8CFF;
-  --color-accent-hover: #7AA2FF;
+/* Task 67, Phase 9.6 - VYSVI theme tokens.
+   The palette is defined once per theme as plain CSS variables (--vy-*), then
+   exposed to Tailwind through `@theme inline` below, so every existing
+   utility (bg-background-main, text-text-primary, bg-accent/30 ...) follows
+   the active theme with no component changes. The theme is chosen by the
+   data-theme attribute on <html> (set by useThemeStore / the inline script
+   in index.html). Silver/graphite on purpose: no colored accent.
 
-  --font-inter: "Inter", sans-serif;
+   `ink` is the foreground tint - near-white in dark mode, near-black in
+   light - the theme-aware replacement for the hard-coded white/N utilities
+   (Task 68 migrates them). `on-accent` is text that sits on the accent. */
+
+/* Dark (default when no attribute is set, and the no-JS fallback for dark). */
+:root,
+:root[data-theme="dark"] {
+  --vy-bg-main: #0B0B0C;
+  --vy-bg-secondary: #131315;
+  --vy-card: #1A1A1D;
+  --vy-text-primary: #F2F2F3;
+  --vy-text-secondary: #9A9CA3;
+  --vy-accent: #C7CBD1;
+  --vy-accent-hover: #E3E6EA;
+  --vy-on-accent: #0B0B0C;
+  --vy-ink: #F2F2F3;
+  --vy-line: #2A2A2E;
+}
+
+/* Light: warm off-white paper, graphite ink. Silver is too faint as text on
+   light backgrounds, so the light accent is graphite; silver stays for
+   borders and decoration. */
+:root[data-theme="light"] {
+  --vy-bg-main: #F6F5F3;
+  --vy-bg-secondary: #EDECE9;
+  --vy-card: #FFFFFF;
+  --vy-text-primary: #16171A;
+  --vy-text-secondary: #666971;
+  --vy-accent: #3A3D44;
+  --vy-accent-hover: #1F2126;
+  --vy-on-accent: #FFFFFF;
+  --vy-ink: #16171A;
+  --vy-line: #DAD8D3;
+}
+
+/* No-JS fallback: follow the device when the attribute was never set. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --vy-bg-main: #F6F5F3;
+    --vy-bg-secondary: #EDECE9;
+    --vy-card: #FFFFFF;
+    --vy-text-primary: #16171A;
+    --vy-text-secondary: #666971;
+    --vy-accent: #3A3D44;
+    --vy-accent-hover: #1F2126;
+    --vy-on-accent: #FFFFFF;
+    --vy-ink: #16171A;
+    --vy-line: #DAD8D3;
+  }
+}
+
+/* `inline` makes the generated utilities reference the variables directly
+   (instead of copying their values), which is what lets them switch. */
+@theme inline {
+  --color-background-main: var(--vy-bg-main);
+  --color-background-secondary: var(--vy-bg-secondary);
+  --color-card: var(--vy-card);
+  --color-text-primary: var(--vy-text-primary);
+  --color-text-secondary: var(--vy-text-secondary);
+  --color-accent: var(--vy-accent);
+  --color-accent-hover: var(--vy-accent-hover);
+  --color-on-accent: var(--vy-on-accent);
+  --color-ink: var(--vy-ink);
+  --color-line: var(--vy-line);
+}
+
+@theme {
+  /* Jost: geometric, Futura-like - matches the logo's wide-tracked caps.
+     Cormorant Garamond: the editorial serif for large headings. */
+  --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
 
   --animate-float: float 6s ease-in-out infinite;
 
@@ -22,11 +91,15 @@
 
 @layer base {
   body {
-    @apply bg-background-main text-text-primary font-inter antialiased selection:bg-accent/30;
+    @apply bg-background-main text-text-primary font-sans antialiased selection:bg-accent/30;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply text-text-primary tracking-tight;
+  }
+
+  h1, h2 {
+    @apply font-display;
   }
 }
 
