@@ -38,7 +38,7 @@ const OutfitsSection = () => {
         </div>
         <button 
           onClick={() => navigate('/outfits/new')}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all border border-white/5 font-black text-[10px] uppercase tracking-widest"
+          className="flex items-center gap-2 px-5 py-2.5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-lg transition-all border border-ink/5 font-black text-[10px] uppercase tracking-widest"
         >
           <Plus size={14} />
           <span>Create New</span>
@@ -46,7 +46,7 @@ const OutfitsSection = () => {
       </div>
 
       {filteredOutfits.length === 0 ? (
-        <div className="text-center py-24 border-2 border-dashed border-white/5 rounded-3xl opacity-20">
+        <div className="text-center py-24 border-2 border-dashed border-ink/5 rounded-3xl opacity-20">
           <p className="text-[10px] text-text-secondary uppercase tracking-[0.3em] font-black">No styles saved yet for this persona</p>
         </div>
       ) : (

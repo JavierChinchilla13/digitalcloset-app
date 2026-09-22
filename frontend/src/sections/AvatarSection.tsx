@@ -64,7 +64,7 @@ const AvatarSection = () => {
           >
             <Link
               to="/persona"
-              className="px-12 py-5 border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] hover:border-white/20 text-white font-black rounded-full flex items-center gap-3 transition-all backdrop-blur-md shadow-xl"
+              className="px-12 py-5 border border-ink/5 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-ink/20 text-text-primary font-black rounded-full flex items-center gap-3 transition-all backdrop-blur-md shadow-xl"
             >
               <UserCog size={18} className="text-text-secondary" />
               <span className="text-[11px] tracking-[0.2em] uppercase">
@@ -76,8 +76,8 @@ const AvatarSection = () => {
               onClick={handleSaveOutfit}
               disabled={isSaving}
               className={`
-                px-6 py-3 border border-white/10 rounded-full flex items-center gap-2 transition-all text-[9px] font-black uppercase tracking-widest
-                ${saveSuccess ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : "bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white"}
+                px-6 py-3 border border-ink/10 rounded-full flex items-center gap-2 transition-all text-[9px] font-black uppercase tracking-widest
+                ${saveSuccess ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : "bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary"}
               `}
             >
               {isSaving ? (
@@ -96,12 +96,12 @@ const AvatarSection = () => {
       <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-background-main via-background-main/80 to-transparent pointer-events-none z-20" />
 
       <div className="hidden lg:block absolute left-12 top-1/2 -translate-y-1/2 -rotate-90">
-        <p className="text-[8px] font-black tracking-[0.5em] text-white/20 uppercase">
+        <p className="text-[8px] font-black tracking-[0.5em] text-ink/20 uppercase">
           Digital Closet System v2.0 // Node: Persona_Main
         </p>
       </div>
       <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 rotate-90">
-        <p className="text-[8px] font-black tracking-[0.5em] text-white/20 uppercase">
+        <p className="text-[8px] font-black tracking-[0.5em] text-ink/20 uppercase">
           Biometric Data: {persona.type} // Sync: Stable
         </p>
       </div>

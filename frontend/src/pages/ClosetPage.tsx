@@ -104,22 +104,22 @@ const ClosetPage = () => {
           <div className="space-y-4">
             <button
               onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-text-secondary hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest"
+              className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-black uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
               Back to Attire
             </button>
-            <h1 className="text-6xl font-light tracking-tighter text-white uppercase leading-none">
+            <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
               DIGITAL <br /> <span className="text-accent">CLOSET</span>
             </h1>
             <div className="flex items-center gap-4 pt-2">
               <p className="text-text-secondary text-xs font-medium uppercase tracking-widest opacity-40">
                 Complete Wardrobe Management // {items.length} Unique Pieces
               </p>
-              <div className="h-4 w-px bg-white/10" />
+              <div className="h-4 w-px bg-ink/10" />
               <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full">
                 <div
-                  className={`w-1.5 h-1.5 rounded-full ${persona.type === PersonaType.MALE ? "bg-blue-400" : "bg-rose-400"} animate-pulse`}
+                  className={`w-1.5 h-1.5 rounded-full ${persona.type === PersonaType.MALE ? "bg-blue-400" : "bg-rose-400"}`}
                 />
                 <span className="text-[8px] font-black uppercase tracking-widest text-accent">
                   Active Persona: {getDisplayName(persona.type)}
@@ -130,7 +130,7 @@ const ClosetPage = () => {
 
           <button
             onClick={() => setIsUploadModalOpen(true)}
-            className="group px-10 py-5 bg-white text-background-main font-black rounded-[2rem] flex items-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/5"
+            className="group px-10 py-5 bg-ink text-background-main font-black rounded-[2rem] flex items-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5"
           >
             <Plus
               size={20}
@@ -155,7 +155,7 @@ const ClosetPage = () => {
                 placeholder="SEARCH YOUR COLLECTION..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-6 text-white text-[10px] font-black tracking-widest focus:outline-none focus:border-accent/50 focus:bg-white/[0.08] transition-all"
+                className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-6 text-text-primary text-[10px] font-black tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/[0.08] transition-all"
               />
             </div>
 
@@ -168,8 +168,8 @@ const ClosetPage = () => {
                     flex-shrink-0 px-6 rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all border
                     ${
                       activeCategory === cat
-                        ? "bg-accent text-white border-accent shadow-lg shadow-accent/20"
-                        : "bg-white/5 text-text-secondary border-white/5 hover:border-white/20"
+                        ? "bg-accent text-on-accent border-accent shadow-lg"
+                        : "bg-ink/5 text-text-secondary border-ink/5 hover:border-ink/20"
                     }
                   `}
                 >
@@ -185,7 +185,7 @@ const ClosetPage = () => {
                 ${
                   showOnlyFavorites
                     ? "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                    : "bg-white/5 text-text-secondary border-white/5 hover:border-white/20"
+                    : "bg-ink/5 text-text-secondary border-ink/5 hover:border-ink/20"
                 }
               `}
             >
@@ -198,8 +198,8 @@ const ClosetPage = () => {
           </div>
 
           {/* Persona Filtering Row */}
-          <div className="flex items-center gap-4 bg-white/[0.02] border border-white/5 p-2 rounded-[2rem] self-center">
-            <div className="px-6 flex items-center gap-2 text-text-secondary border-r border-white/10 mr-2">
+          <div className="flex items-center gap-4 bg-ink/[0.02] border border-ink/5 p-2 rounded-[2rem] self-center">
+            <div className="px-6 flex items-center gap-2 text-text-secondary border-r border-ink/10 mr-2">
               <Users size={14} className="text-accent" />
               <span className="text-[8px] font-black uppercase tracking-widest">
                 Persona Filter
@@ -214,8 +214,8 @@ const ClosetPage = () => {
                     px-8 py-3 rounded-full text-[8px] font-black uppercase tracking-[0.2em] transition-all
                     ${
                       activePersonaFilter === p
-                        ? "bg-white text-background-main shadow-xl"
-                        : "text-text-secondary hover:text-white"
+                        ? "bg-ink text-background-main shadow-xl"
+                        : "text-text-secondary hover:text-text-primary"
                     }
                   `}
                 >
@@ -230,16 +230,16 @@ const ClosetPage = () => {
         {isLoading && items.length === 0 ? (
           <div className="py-40 flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-accent mb-4" size={48} />
-            <p className="text-[10px] font-black tracking-[0.4em] text-white uppercase opacity-20">
+            <p className="text-[10px] font-black tracking-[0.4em] text-text-primary uppercase opacity-20">
               Syncing Collection...
             </p>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.01]">
-            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-8 opacity-20">
+          <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-[3rem] bg-ink/[0.01]">
+            <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
               <Shirt size={40} className="text-text-secondary" />
             </div>
-            <h3 className="text-xl font-light text-white tracking-[0.3em] uppercase mb-4">
+            <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">
               No garments found
             </h3>
             <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-30">
@@ -262,12 +262,6 @@ const ClosetPage = () => {
           </div>
         )}
       </SectionWrapper>
-
-      {/* Background Studio Detail */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full pointer-events-none -z-10 opacity-30">
-        <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-accent/5 blur-[120px] rounded-full" />
-        <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-accent/5 blur-[160px] rounded-full" />
-      </div>
 
       {/* Modals */}
       <UploadFlow

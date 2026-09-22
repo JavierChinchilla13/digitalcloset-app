@@ -498,19 +498,19 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className={`relative bg-background-secondary border border-white/5 rounded-[3rem] shadow-2xl overflow-hidden transition-all duration-700 ${
+        className={`relative bg-background-secondary border border-ink/5 rounded-[3rem] shadow-2xl overflow-hidden transition-all duration-700 ${
           step === 'FITTING' || step === 'SHOE_FITTING' || step === 'JACKET_FITTING' || step === 'GARMENT_CLEANUP' ? 'w-full max-w-6xl h-[90vh]' : 'w-full max-w-2xl'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           onClick={handleClose}
-          className="absolute top-8 right-8 p-3 hover:bg-white/5 rounded-full transition-colors text-text-secondary hover:text-white z-50"
+          className="absolute top-8 right-8 p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary z-50"
         >
           <X size={20} />
         </button>
 
-        <div className="absolute top-0 left-0 right-0 h-1 bg-white/5 overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-ink/5 overflow-hidden">
           <motion.div 
             className="h-full bg-accent"
             initial={{ width: '0%' }}
@@ -530,15 +530,15 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'UPLOAD' && (
               <motion.div key="upload" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">Step 1 — Initial Intake</h2>
+                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 1 — Initial Intake</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Drop your garment to begin digitization</p>
                 </div>
-                <div onClick={() => document.getElementById('file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-accent/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
+                <div onClick={() => document.getElementById('file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-ink/10 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-accent/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
                   <input id="file-input" type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
-                  <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-accent/10 transition-all duration-500">
+                  <div className="w-20 h-20 rounded-full bg-ink/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-accent/10 transition-all duration-500">
                     <Upload className="text-accent" size={32} />
                   </div>
-                  <p className="text-white font-bold tracking-tight text-lg">Select Image</p>
+                  <p className="text-text-primary font-bold tracking-tight text-lg">Select Image</p>
                 </div>
               </motion.div>
             )}
@@ -546,7 +546,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'CONFIG' && (
               <motion.div key="config" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">Step 2 — Architecture</h2>
+                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 2 — Architecture</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Define garment category and persona target</p>
                 </div>
                 <div className="space-y-10">
@@ -559,7 +559,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                       {Object.values(ClothingCategory).map((cat) => {
                         const Icon = CATEGORY_ICONS[cat];
                         return (
-                          <button key={cat} onClick={() => setCategory(cat)} className={`flex flex-col items-center gap-3 p-4 w-24 rounded-2xl border transition-all ${category === cat ? 'bg-accent/10 border-accent text-white' : 'bg-white/[0.02] border-white/5 text-text-secondary hover:border-white/20'}`}>
+                          <button key={cat} onClick={() => setCategory(cat)} className={`flex flex-col items-center gap-3 p-4 w-24 rounded-2xl border transition-all ${category === cat ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'}`}>
                             <Icon size={18} />
                             <span className="text-[8px] font-black uppercase tracking-widest">{cat}</span>
                           </button>
@@ -574,7 +574,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       {[PersonaType.MALE, PersonaType.FEMALE].map((type) => (
-                        <button key={type} onClick={() => setPersonaType(type)} className={`flex items-center justify-center gap-4 py-6 rounded-[2rem] border transition-all ${personaType === type ? 'bg-accent/10 border-accent text-white' : 'bg-white/[0.02] border-white/5 text-text-secondary hover:border-white/20'}`}>
+                        <button key={type} onClick={() => setPersonaType(type)} className={`flex items-center justify-center gap-4 py-6 rounded-[2rem] border transition-all ${personaType === type ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'}`}>
                           <span className="text-xs font-black uppercase tracking-[0.3em]">{type}</span>
                         </button>
                       ))}
@@ -598,14 +598,14 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     />
                   </div>
                 </div>
-                <button onClick={handleNextAfterConfig} className="w-full py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 active:scale-[0.98] flex items-center justify-center gap-3">
+                <button onClick={handleNextAfterConfig} className="w-full py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3">
                   <Sparkles size={18} />
                   <span>Next Step</span>
                 </button>
                 {category !== ClothingCategory.SHOES && (
                   <button
                     onClick={handleSkipBackgroundRemoval}
-                    className="w-full py-4 bg-white/[0.02] hover:bg-white/5 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                    className="w-full py-4 bg-ink/[0.02] hover:bg-ink/5 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                   >
                     Skip Background Removal — Keep Original, No Persona
                   </button>
@@ -641,15 +641,15 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'SHOE_UPLOAD_RIGHT' && (
               <motion.div key="upload-right" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">Step 3 — Second Asset</h2>
+                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Second Asset</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Upload the RIGHT shoe image</p>
                 </div>
-                <div onClick={() => document.getElementById('right-file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
+                <div onClick={() => document.getElementById('right-file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-ink/10 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-emerald-500/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
                   <input id="right-file-input" type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && (setRightFile(e.target.files[0]), startProcessing())} />
-                  <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-500/10 transition-all duration-500">
+                  <div className="w-20 h-20 rounded-full bg-ink/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-500/10 transition-all duration-500">
                     <Upload className="text-emerald-500" size={32} />
                   </div>
-                  <p className="text-white font-bold tracking-tight text-lg">Select Right Shoe</p>
+                  <p className="text-text-primary font-bold tracking-tight text-lg">Select Right Shoe</p>
                 </div>
               </motion.div>
             )}
@@ -659,34 +659,34 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                 {!error ? (
                   <>
                     <div className="relative">
-                      <div className="w-32 h-32 rounded-full border-2 border-white/5 flex items-center justify-center">
+                      <div className="w-32 h-32 rounded-full border-2 border-ink/5 flex items-center justify-center">
                         <Loader2 className="text-accent animate-spin" size={48} />
                       </div>
                       <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-accent/20 blur-3xl rounded-full" />
                     </div>
                     <div className="text-center space-y-6">
-                      <p className="text-white font-bold tracking-tight text-xl">{processingStatus}</p>
+                      <p className="text-text-primary font-bold tracking-tight text-xl">{processingStatus}</p>
                     </div>
                   </>
                 ) : (
                   <div className="text-center space-y-6 max-w-sm">
                     <AlertCircle size={40} className="text-red-500 mx-auto" />
                     <div className="space-y-2">
-                      <p className="text-white font-bold tracking-tight text-lg">Processing Failed</p>
+                      <p className="text-text-primary font-bold tracking-tight text-lg">Processing Failed</p>
                       <p className="text-text-secondary text-[10px] uppercase tracking-widest leading-relaxed">{error}</p>
                     </div>
                     
                     <div className="flex flex-col gap-3 pt-4">
                       <button 
                         onClick={startProcessing} 
-                        className="w-full py-4 bg-accent hover:bg-accent-hover text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all shadow-lg shadow-accent/20"
+                        className="w-full py-4 bg-accent hover:bg-accent-hover text-on-accent rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all shadow-lg"
                       >
                         Retry Removal
                       </button>
                       
                       <button 
                         onClick={continueWithOriginal} 
-                        className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all"
+                        className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all"
                       >
                         Continue with Original
                       </button>
@@ -699,14 +699,14 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'PREVIEW' && backgroundRemovedUrl && (
               <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">Step 3 — Analysis Preview</h2>
+                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Analysis Preview</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Compare AI extraction with original source</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-8 h-[40vh]">
                   <div className="space-y-4">
                     <p className="text-[10px] font-black tracking-widest text-text-secondary uppercase text-center opacity-50">Original Source</p>
-                    <div className="flex-1 h-full rounded-[2rem] border border-white/5 bg-white/[0.02] overflow-hidden flex items-center justify-center p-4">
+                    <div className="flex-1 h-full rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-4">
                       <img src={originalPreviewUrl!} alt="Original" className="max-w-full max-h-full object-contain" />
                     </div>
                   </div>
@@ -722,7 +722,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                 <div className="flex flex-col gap-4">
                   <button
                     onClick={() => setStep('GARMENT_CLEANUP')}
-                    className="w-full py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3"
+                    className="w-full py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl flex items-center justify-center gap-3"
                   >
                     <Sparkles size={18} />
                     <span>Confirm & Continue</span>
@@ -730,7 +730,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
 
                   <button
                     onClick={() => { setSkipPersonaStatus(PersonaStatus.NOT_FITTED); setStep('SKIP_PERSONA'); }}
-                    className="w-full py-4 bg-white/[0.02] hover:bg-white/5 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                    className="w-full py-4 bg-ink/[0.02] hover:bg-ink/5 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                   >
                     Skip Persona Fitting — Save for Flat Builder Only
                   </button>
@@ -738,13 +738,13 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <div className="grid grid-cols-2 gap-4">
                     <button
                       onClick={startProcessing}
-                      className="py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                      className="py-4 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                     >
                       Retry Removal
                     </button>
                     <button
                       onClick={continueWithOriginal}
-                      className="py-4 bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                      className="py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                     >
                       Skip AI Results
                     </button>
@@ -756,7 +756,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'SKIP_PERSONA' && (
               <motion.div key="skip-persona" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">
+                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">
                     {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'Save Original As-Is' : 'Save Without Fitting'}
                   </h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">
@@ -766,7 +766,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   </p>
                 </div>
 
-                <div className="rounded-[2rem] border border-white/5 bg-white/[0.02] overflow-hidden flex items-center justify-center p-6 h-[30vh]">
+                <div className="rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-6 h-[30vh]">
                   <img
                     src={(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? originalPreviewUrl : backgroundRemovedUrl) ?? undefined}
                     alt="Preview"
@@ -780,28 +780,28 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     value={skipName}
                     onChange={(e) => setSkipName(e.target.value)}
                     placeholder="Garment name"
-                    className="w-full px-5 py-4 bg-white/[0.02] border border-white/5 rounded-2xl text-white placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
+                    className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-text-primary placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
                   />
                   <input
                     type="text"
                     value={skipDescription}
                     onChange={(e) => setSkipDescription(e.target.value)}
                     placeholder="Description (optional)"
-                    className="w-full px-5 py-4 bg-white/[0.02] border border-white/5 rounded-2xl text-white placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
+                    className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-text-primary placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
                   />
                 </div>
 
                 <div className="flex flex-col gap-4">
                   <button
                     onClick={handleSkipSave}
-                    className="w-full py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 flex items-center justify-center gap-3"
+                    className="w-full py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl flex items-center justify-center gap-3"
                   >
                     <Sparkles size={18} />
                     <span>Save to Closet</span>
                   </button>
                   <button
                     onClick={() => setStep(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'CONFIG' : 'PREVIEW')}
-                    className="w-full py-4 bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-white/5"
+                    className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                   >
                     Back
                   </button>

@@ -97,11 +97,11 @@ const OutfitBuilderPage = () => {
   return (
     <div className="h-screen bg-background-main flex flex-col overflow-hidden pt-16">
       {/* Dynamic Header */}
-      <header className="px-8 py-6 border-b border-white/5 bg-background-secondary/20 flex items-center justify-between z-20">
+      <header className="px-8 py-6 border-b border-ink/5 bg-background-secondary/20 flex items-center justify-between z-20">
         <div className="flex items-center gap-6">
           <button 
             onClick={() => navigate('/outfits')}
-            className="p-3 hover:bg-white/5 rounded-xl text-text-secondary transition-colors border border-white/5"
+            className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary transition-colors border border-ink/5"
           >
             <ChevronLeft size={20} />
           </button>
@@ -109,7 +109,7 @@ const OutfitBuilderPage = () => {
             <input 
               value={outfitName} 
               onChange={e => setOutfitName(e.target.value)}
-              className="bg-transparent text-xl font-light text-white tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
+              className="bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"
             />
             <p className="text-[8px] font-black text-accent tracking-[0.4em] uppercase">Style Orchestration Mode</p>
@@ -119,7 +119,7 @@ const OutfitBuilderPage = () => {
         <div className="flex items-center gap-4">
           <button 
             onClick={clearLook}
-            className="p-3 hover:bg-white/5 rounded-xl text-text-secondary hover:text-white transition-colors border border-white/5"
+            className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary hover:text-text-primary transition-colors border border-ink/5"
             title="Reset Look"
           >
             <RotateCcw size={18} />
@@ -127,7 +127,7 @@ const OutfitBuilderPage = () => {
           <button 
             onClick={handleSave}
             disabled={isSaving}
-            className="px-8 py-3 bg-white text-background-main font-black text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-white/5 tracking-[0.2em]"
+            className="px-8 py-3 bg-ink text-background-main font-black text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl shadow-ink/5 tracking-[0.2em]"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
             {id ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
@@ -137,7 +137,7 @@ const OutfitBuilderPage = () => {
 
       <div className="flex-grow flex overflow-hidden">
         {/* Left Panel: Category Selector */}
-        <aside className="w-20 border-r border-white/5 flex flex-col items-center py-8 gap-8 bg-black/20">
+        <aside className="w-20 border-r border-ink/5 flex flex-col items-center py-8 gap-8 bg-ink/5">
           {Object.values(ClothingCategory)
             .map((cat) => (
             <button
@@ -145,7 +145,7 @@ const OutfitBuilderPage = () => {
               onClick={() => setActiveCategory(cat)}
               className={`
                 relative w-12 h-12 rounded-xl flex items-center justify-center transition-all
-                ${activeCategory === cat ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'text-text-secondary hover:text-white hover:bg-white/5'}
+                ${activeCategory === cat ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary hover:bg-ink/5'}
               `}
             >
               <div className="text-[8px] font-black rotate-[-90deg] whitespace-nowrap tracking-widest uppercase">
@@ -162,9 +162,9 @@ const OutfitBuilderPage = () => {
         </aside>
 
         {/* Center Panel: Wardrobe Grid */}
-        <aside className="w-80 border-r border-white/5 flex flex-col bg-background-secondary/5">
-          <div className="p-6 border-b border-white/5">
-            <h3 className="text-[10px] font-black text-white tracking-[0.3em] uppercase opacity-50 flex items-center gap-2">
+        <aside className="w-80 border-r border-ink/5 flex flex-col bg-background-secondary/5">
+          <div className="p-6 border-b border-ink/5">
+            <h3 className="text-[10px] font-black text-text-primary tracking-[0.3em] uppercase opacity-50 flex items-center gap-2">
               <Sparkles size={12} className="text-accent" />
               Available Pieces
             </h3>
@@ -189,7 +189,7 @@ const OutfitBuilderPage = () => {
                         onClick={() => toggleItem(item)}
                         className={`
                           relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
-                          ${active ? 'border-accent ring-2 ring-accent/20' : 'border-white/5 hover:border-white/20'}
+                          ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                         `}
                       >
                         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
@@ -197,7 +197,7 @@ const OutfitBuilderPage = () => {
                           absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                           ${active ? 'opacity-100' : 'opacity-0'}
                         `}>
-                          <div className="bg-white text-accent p-2 rounded-full shadow-xl">
+                          <div className="bg-ink text-accent p-2 rounded-full shadow-xl">
                             <Plus size={16} className="rotate-45" />
                           </div>
                         </div>
@@ -227,8 +227,8 @@ const OutfitBuilderPage = () => {
 
           {/* Quick HUD Detail */}
           <div className="absolute bottom-8 right-8 flex flex-col items-end gap-2 opacity-20">
-            <p className="text-[6px] font-black tracking-[0.5em] text-white uppercase">Real-time Layering Active</p>
-            <div className="h-[1px] w-24 bg-gradient-to-l from-white to-transparent" />
+            <p className="text-[6px] font-black tracking-[0.5em] text-text-primary uppercase">Real-time Layering Active</p>
+            <div className="h-[1px] w-24 bg-gradient-to-l from-ink to-transparent" />
           </div>
         </main>
       </div>

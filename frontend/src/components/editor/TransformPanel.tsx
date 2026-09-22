@@ -48,7 +48,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
           <Icon size={12} className="text-accent" />
           <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
         </div>
-        <span className="text-[10px] font-mono text-white/50">{value.toFixed(1)}</span>
+        <span className="text-[10px] font-mono text-ink/50">{value.toFixed(1)}</span>
       </div>
       <input 
         type="range"
@@ -57,7 +57,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-accent"
+        className="w-full h-1 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
       />
     </div>
   );
@@ -70,7 +70,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
           <p className="text-[9px] font-black text-text-secondary uppercase tracking-[0.3em]">Proportions</p>
           <button 
             onClick={() => setIsLocked(!isLocked)}
-            className={`p-2 rounded-lg transition-all ${isLocked ? 'bg-accent/20 text-accent' : 'bg-white/5 text-text-secondary hover:text-white'}`}
+            className={`p-2 rounded-lg transition-all ${isLocked ? 'bg-accent/20 text-accent' : 'bg-ink/5 text-text-secondary hover:text-text-primary'}`}
             title={isLocked ? "Unlock Aspect Ratio" : "Lock Aspect Ratio"}
           >
             {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
@@ -113,7 +113,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
           />
         </div>
         
-        <div className="h-px bg-white/5" />
+        <div className="h-px bg-ink/5" />
 
         <Slider 
           label="Rotation" 
@@ -141,14 +141,14 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <button 
             onClick={() => onTransformChange({ flipX: !transform.flipX })}
-            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${transform.flipX ? 'bg-accent/10 border-accent text-white' : 'bg-white/5 border-white/5 text-text-secondary hover:border-white/10'}`}
+            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${transform.flipX ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/5 border-ink/5 text-text-secondary hover:border-ink/10'}`}
           >
             <FlipHorizontal size={14} />
             <span className="text-[8px] font-black uppercase">Flip X</span>
           </button>
           <button 
             onClick={() => onTransformChange({ flipY: !transform.flipY })}
-            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${transform.flipY ? 'bg-accent/10 border-accent text-white' : 'bg-white/5 border-white/5 text-text-secondary hover:border-white/10'}`}
+            className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${transform.flipY ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/5 border-ink/5 text-text-secondary hover:border-ink/10'}`}
           >
             <FlipVertical size={14} />
             <span className="text-[8px] font-black uppercase">Flip Y</span>
@@ -157,7 +157,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
 
         <button 
           onClick={onReset}
-          className="w-full flex items-center justify-center gap-2 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/5 transition-all"
+          className="w-full flex items-center justify-center gap-2 py-4 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-2xl border border-ink/5 transition-all"
         >
           <Undo2 size={14} className="text-accent" />
           <span className="text-[9px] font-black uppercase tracking-widest">Reset Transform</span>

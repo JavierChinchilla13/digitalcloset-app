@@ -41,7 +41,7 @@ const CategoryPicker = ({
     <div className="relative">
       <button
         onClick={() => setIsOpen((v) => !v)}
-        className="flex items-center gap-2 px-4 py-3 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-white/5 bg-white/[0.02] text-text-secondary hover:text-white hover:border-white/20"
+        className="flex items-center gap-2 px-4 py-3 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20"
       >
         <Tag size={12} />
         {buttonLabel}
@@ -50,7 +50,7 @@ const CategoryPicker = ({
       {isOpen && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 w-56 bg-background-secondary border border-white/10 rounded-2xl shadow-2xl p-2 z-40 space-y-1 max-h-64 overflow-y-auto no-scrollbar">
+          <div className="absolute right-0 top-full mt-2 w-56 bg-background-secondary border border-ink/10 rounded-2xl shadow-2xl p-2 z-40 space-y-1 max-h-64 overflow-y-auto no-scrollbar">
             {collections.length === 0 && !isCreating && (
               <p className="px-3 py-2 text-[8px] font-bold uppercase tracking-widest text-text-secondary opacity-50">
                 No categories yet
@@ -63,7 +63,7 @@ const CategoryPicker = ({
                   key={c.collectionId}
                   onClick={() => onToggle(c.collectionId)}
                   className={`w-full flex items-center justify-between gap-2 text-left px-3 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-colors ${
-                    isSelected ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-white/5 hover:text-white'
+                    isSelected ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-ink/5 hover:text-text-primary'
                   }`}
                 >
                   <span className="truncate">{c.name}</span>
@@ -71,7 +71,7 @@ const CategoryPicker = ({
                 </button>
               );
             })}
-            <div className="pt-1 border-t border-white/5">
+            <div className="pt-1 border-t border-ink/5">
               {isCreating ? (
                 <div className="flex items-center gap-1 p-1">
                   <input
@@ -80,12 +80,12 @@ const CategoryPicker = ({
                     onChange={(e) => onNewNameChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && onConfirmCreate()}
                     placeholder="CATEGORY NAME"
-                    className="flex-grow min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white text-[9px] font-black tracking-widest uppercase focus:outline-none focus:border-accent/50"
+                    className="flex-grow min-w-0 bg-ink/5 border border-ink/10 rounded-lg px-2 py-1.5 text-text-primary text-[9px] font-black tracking-widest uppercase focus:outline-none focus:border-accent/50"
                   />
                   <button onClick={onConfirmCreate} className="p-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors">
                     <Check size={12} />
                   </button>
-                  <button onClick={onCancelCreate} className="p-1.5 rounded-lg hover:bg-white/5 text-text-secondary transition-colors">
+                  <button onClick={onCancelCreate} className="p-1.5 rounded-lg hover:bg-ink/5 text-text-secondary transition-colors">
                     <X size={12} />
                   </button>
                 </div>

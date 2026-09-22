@@ -92,7 +92,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl bg-background-secondary border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50"
+            className="relative w-full max-w-2xl bg-background-secondary border border-ink/10 rounded-[2rem] overflow-hidden shadow-2xl shadow-black/50"
           >
             <button
               onClick={onClose}
@@ -103,7 +103,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
 
             <div className="flex flex-col md:flex-row h-full">
               {/* Image Section */}
-              <div className="md:w-1/2 aspect-[3/4] md:aspect-auto relative overflow-hidden bg-white/5">
+              <div className="md:w-1/2 aspect-[3/4] md:aspect-auto relative overflow-hidden bg-ink/5">
                 <img
                   src={item.imageUrl}
                   alt={item.name}
@@ -120,7 +120,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                     </span>
                   </div>
                   
-                  <h2 className="text-3xl font-light tracking-tight text-white mb-4">
+                  <h2 className="text-3xl font-light tracking-tight text-text-primary mb-4">
                     {item.name}
                   </h2>
                   
@@ -130,28 +130,28 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
 
                   <div className="space-y-4">
                     <div className="flex items-center gap-4 text-xs">
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-secondary">
+                      <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center text-text-secondary">
                         <Calendar size={14} />
                       </div>
                       <div>
                         <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[8px]">Upload Date</p>
-                        <p className="text-white font-medium">{formatDate(item.uploadDate)}</p>
+                        <p className="text-text-primary font-medium">{formatDate(item.uploadDate)}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4 text-xs">
-                      <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-text-secondary">
+                      <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center text-text-secondary">
                         <Layers size={14} />
                       </div>
                       <div>
                         <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[8px]">Category</p>
-                        <p className="text-white font-medium uppercase tracking-widest">{item.category}</p>
+                        <p className="text-text-primary font-medium uppercase tracking-widest">{item.category}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-white/5">
+                <div className="mt-12 pt-8 border-t border-ink/5">
                   <p className="text-[10px] text-text-secondary font-black tracking-[0.2em] uppercase opacity-30">
                     Digital Closet Collection 2026
                   </p>

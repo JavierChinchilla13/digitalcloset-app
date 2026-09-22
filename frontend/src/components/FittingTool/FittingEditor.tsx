@@ -72,12 +72,12 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         <div className="flex items-center gap-6">
           <button 
             onClick={onBack}
-            className="p-3 hover:bg-white/5 rounded-2xl text-text-secondary hover:text-white transition-all border border-white/5"
+            className="p-3 hover:bg-ink/5 rounded-2xl text-text-secondary hover:text-text-primary transition-all border border-ink/5"
           >
             <ChevronLeft size={20} />
           </button>
           <div className="space-y-1">
-            <h2 className="text-xl font-light tracking-tighter text-white uppercase italic flex items-center gap-2">
+            <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic flex items-center gap-2">
               <Sparkles size={16} className="text-accent" />
               Fabric Studio
             </h2>
@@ -97,10 +97,10 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
       <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-hidden">
         {/* Left Sidebar: Advanced Controls */}
         <aside className="w-full md:w-80 flex flex-col gap-8 order-2 md:order-1 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-white/5 rounded-[2.5rem] p-8 space-y-10">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-6">
-              <div className="w-2 h-2 bg-accent rounded-full shadow-[0_0_10px_#5B8CFF]" />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Geometric Calibration</h3>
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-10">
+            <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
+              <div className="w-2 h-2 bg-accent rounded-full" />
+              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Geometric Calibration</h3>
             </div>
             
             <TransformPanel 
@@ -135,10 +135,10 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
 
         {/* Right Sidebar: Identity */}
         <aside className="w-full md:w-80 flex flex-col gap-8 order-3 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-6">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full shadow-[0_0_10px_#34D399]" />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Garment Identity</h3>
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-8">
+            <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Garment Identity</h3>
             </div>
 
             <div className="space-y-8">
@@ -153,7 +153,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Vintage Oversized Tee"
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 px-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-white/[0.05] transition-all uppercase tracking-widest"
+                  className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all uppercase tracking-widest"
                 />
               </div>
 
@@ -168,7 +168,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Details about material, fit, etc."
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 px-6 text-xs text-white/70 focus:outline-none focus:border-accent/50 focus:bg-white/[0.05] transition-all resize-none leading-relaxed"
+                  className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-xs text-ink/70 focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all resize-none leading-relaxed"
                 />
               </div>
             </div>
@@ -179,8 +179,8 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               className={`
                 w-full py-6 rounded-2xl font-black text-[10px] tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl
                 ${!name
-                  ? 'bg-white/5 text-text-secondary cursor-not-allowed opacity-20' 
-                  : 'bg-white text-background-main hover:scale-[1.02] active:scale-[0.98]'
+                  ? 'bg-ink/5 text-text-secondary cursor-not-allowed opacity-20' 
+                  : 'bg-ink text-background-main hover:scale-[1.02] active:scale-[0.98]'
                 }
               `}
             >

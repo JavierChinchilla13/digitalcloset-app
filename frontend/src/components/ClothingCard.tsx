@@ -75,8 +75,8 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
       <div className={`
         relative aspect-[3/4] rounded-xl overflow-hidden mb-3 border transition-all duration-300
         ${isEquipped 
-          ? 'border-accent ring-2 ring-accent/20 shadow-lg shadow-accent/10' 
-          : 'border-white/5 bg-white/5 hover:border-white/20'
+          ? 'border-accent ring-2 ring-accent/20 shadow-lg' 
+          : 'border-ink/5 bg-ink/5 hover:border-ink/20'
         }
       `}>
         <img 
@@ -107,7 +107,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
                 e.stopPropagation();
                 onViewDetails(item);
               }}
-              className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors border border-white/10"
+              className="p-2 bg-ink/10 hover:bg-ink/20 text-text-primary rounded-lg transition-colors border border-ink/10"
               title="Details"
             >
               <Info size={14} />
@@ -120,7 +120,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
                     e.stopPropagation();
                     onEdit(item);
                   }}
-                  className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors border border-white/10"
+                  className="p-2 bg-ink/10 hover:bg-ink/20 text-text-primary rounded-lg transition-colors border border-ink/10"
                   title="Edit"
                 >
                   <Edit2 size={14} />
@@ -141,7 +141,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
 
           <div className={`
             flex items-center gap-2 px-3 py-1.5 rounded-full transition-all text-[8px] font-black uppercase tracking-widest
-            ${isEquipped ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-white/10 text-white/50'}
+            ${isEquipped ? 'bg-accent text-on-accent shadow-lg' : 'bg-ink/10 text-ink/50'}
           `}>
             <Shirt size={10} />
             <span>{isEquipped ? 'Equipped' : 'Wear'}</span>
@@ -159,7 +159,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
       <div className="px-1">
         <h3 className={`
           text-[10px] font-bold tracking-tight line-clamp-1 transition-colors
-          ${isEquipped ? 'text-accent' : 'text-white group-hover:text-accent'}
+          ${isEquipped ? 'text-accent' : 'text-text-primary group-hover:text-accent'}
         `}>
           {item.name}
         </h3>

@@ -1125,7 +1125,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **66** Fix shoes not appearing on the persona (unsided shoes had no slot)
 - [x] **67** Theme infrastructure: semantic tokens, light/dark/system store,
       no-flash script, navbar toggle, fonts
-- [ ] **68** Mechanical token migration (`white`/`black` utilities -> `ink`
+- [x] **68** Mechanical token migration (`white`/`black` utilities -> `ink`
       tokens, `on-accent`) + remove glows
 - [ ] **69** Shared components restyle (Navbar, footer, Toast, cards, modals)
 - [ ] **70** Page passes in both modes (Landing, Login/Signup, Closet,
@@ -3453,6 +3453,52 @@ that would be unreadable on a silver accent.
   manual review for text/scrims over item photos, recessed `bg-black/N`
   panels, and status colors; strip glows / accent shadows / decorative
   pulses.
+
+  **✅ Task 68 COMPLETE 2026-09-21.**
+  - **Migration:** a context-aware Node codemod (kept out of the repo; it
+    needs no Python) rewrote **593 of 669** hard-coded `white`/`black`
+    utilities across 36 files: `*-white/N` -> `*-ink/N` (text, bg, border,
+    ring, shadow, placeholder, gradients, hover/focus variants, bracket
+    opacities like `/[0.08]`), `bg-white` -> `bg-ink`, `text-white` ->
+    `text-text-primary`, `text-white` on a solid accent -> `text-on-accent`
+    (30), recessed `bg-black/10-30` panels -> `bg-ink/5`. It scans real
+    string/template literals (nested `${}` branches included) and decides
+    per element, and holds back anything ambiguous.
+  - **Manual review of the held-back cases** (22 `text-white` near a photo
+    scrim or accent background + 2 ambiguous): 9 converted by hand
+    (item-name label under a card, empty-state icon, editor headings,
+    OutfitCard/CategoryDetail preview-tile backgrounds, the shoe editor
+    header; the segmentation-card label became `text-text-primary
+    group-hover:text-white` because its dark gradient only shows on hover).
+  - **67 tokens deliberately left hard-coded:** white text/borders over
+    photos and dark scrims, white on solid rose/red/emerald status buttons,
+    `bg-black/40-60` modal backdrops and chips, `from-black/80` photo
+    gradients, and the editor canvas stages (`bg-black/40` in
+    `ClothingCanvas`, `JacketCanvas`, `ShoeCanvas`, `GarmentCleanup`) which
+    Task 71 owns.
+  - **Effects removed:** 28 colored accent shadows (`shadow-accent/N`) and
+    neon glow shadows (`shadow-[0_0_..]`) in 18 files; the decorative
+    blurred glow blobs in `ClosetPage`, `LandingPage`, `PersonaPage`,
+    `SavedOutfitsPage` (whole wrapper elements deleted); the decorative
+    `animate-pulse` on the persona dot; the unused `.glow-effect` CSS. The
+    remaining `animate-pulse` is a real loading indicator and stays.
+    `.glass-panel` / `.premium-card` now use `border-ink/10` (they had
+    hard-coded `white/5` in `index.css`).
+  - **Verified:** `tsc -b --force` + `vite build` clean; live in both
+    themes - `/closet` (dark + light), `/categories/:id` (light), Attire
+    with the persona preview (light: the mannequin sits cleanly on the
+    off-white; photo labels stay white on their gradients). Test data
+    created for the check was deleted.
+  - **Found, for Tasks 69/70:** (1) **32 places pair `text-text-secondary`
+    with `opacity-10..40`** (e.g. the subtitle and the card category label
+    on `/closet`) - readable enough on dark, too faint on light; needs
+    real contrast values. (2) **`no-scrollbar` is used 17 times but never
+    defined**, so the category chip row shows a native scrollbar in both
+    themes (pre-existing). (3) The persona indicator dot still uses
+    `bg-blue-400`/`bg-rose-400` (`ClosetPage`) and the shoe editor has
+    `blue` accents - off-palette for the silver look. (4) Full
+    page-by-page light/dark review is still Task 70; only the pages above
+    were looked at here.
 - **69 Shared components** - Navbar, footer, Toast, SectionWrapper,
   ClothingCard, OutfitCard, CategoryPicker, the modals. Rules:
   `font-black` -> medium/light, label floor ~10-11px (currently 7-8px),

@@ -27,12 +27,12 @@ const Navbar = () => {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="glass-panel px-8 py-3 rounded-full flex items-center gap-12 border border-white/10 shadow-2xl pointer-events-auto"
+        className="glass-panel px-8 py-3 rounded-full flex items-center gap-12 border border-ink/10 shadow-2xl pointer-events-auto"
       >
         {/* Logo */}
         <Link
           to="/"
-          className="text-xl font-bold tracking-tighter text-white hover:text-accent transition-colors"
+          className="text-xl font-bold tracking-tighter text-text-primary hover:text-accent transition-colors"
         >
           DIGITAL<span className="text-accent">CLOSET</span>
         </Link>
@@ -75,7 +75,7 @@ const Navbar = () => {
         </div>
 
         {/* Auth Buttons */}
-        <div className="flex items-center gap-4 border-l border-white/10 pl-8">
+        <div className="flex items-center gap-4 border-l border-ink/10 pl-8">
           {/* Task 67: light / dark / system toggle - shown logged in or out. */}
           <ThemeToggle />
           {isAuthenticated ? (
@@ -87,7 +87,7 @@ const Navbar = () => {
                   keeping Attire/Closet/Outfits as the only primary links. */}
               <Link
                 to="/persona"
-                className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-all"
+                className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
                 title="Persona"
               >
                 <UserCircle size={16} />
@@ -98,14 +98,14 @@ const Navbar = () => {
                   the only primary center links rather than adding a 4th. */}
               <Link
                 to="/categories"
-                className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-all"
+                className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
                 title="Categories"
               >
                 <Tag size={16} />
               </Link>
               <button
                 onClick={logout}
-                className="p-2 rounded-full hover:bg-white/5 text-text-secondary hover:text-white transition-all"
+                className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
               >
                 <LogOut size={16} />
               </button>
@@ -123,7 +123,7 @@ const Navbar = () => {
               </Link>
               <Link 
                 to="/signup" 
-                className="bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg shadow-accent/20"
+                className="bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg"
               >
                 Join
               </Link>

@@ -104,23 +104,13 @@
 }
 
 @layer components {
+  /* Task 68: theme-aware surfaces (were hard-coded white/5 borders). The
+     unused .glow-effect class was removed with the rest of the glow styling. */
   .glass-panel {
-    @apply bg-background-secondary/40 backdrop-blur-md border border-white/5;
+    @apply bg-background-secondary/70 backdrop-blur-md border border-ink/10;
   }
-  
+
   .premium-card {
-    @apply bg-card rounded-2xl border border-white/5 shadow-2xl transition-all duration-300;
-  }
-
-  .glow-effect {
-    @apply relative overflow-hidden;
-  }
-
-  .glow-effect::before {
-    @apply content-[''] absolute inset-0 bg-gradient-to-tr from-accent/0 via-accent/5 to-accent/20 opacity-0 transition-opacity duration-500;
-  }
-
-  .glow-effect:hover::before {
-    @apply opacity-100;
+    @apply bg-card rounded-2xl border border-ink/10 shadow-lg transition-all duration-300;
   }
 }

@@ -310,7 +310,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <Sparkles className="text-accent" size={20} />
-            <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic">Cleanup Studio</h2>
+            <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Cleanup Studio</h2>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-black tracking-widest text-text-secondary uppercase opacity-40">
             <Info size={10} />
@@ -318,24 +318,24 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
           </div>
         </div>
 
-        <div className="flex bg-white/5 rounded-2xl p-1 border border-white/5">
-           <button onClick={() => setMode('erase')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'erase' ? 'bg-accent text-white' : 'text-text-secondary hover:text-white'}`}><Eraser size={12} /><span>Erase</span></button>
-           <button onClick={() => setMode('restore')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'restore' ? 'bg-emerald-500 text-white' : 'text-text-secondary hover:text-white'}`}><Brush size={12} /><span>Restore</span></button>
-           <button onClick={() => setMode('pan')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'pan' ? 'bg-white/10 text-white' : 'text-text-secondary hover:text-white'}`}><Hand size={12} /><span>Pan</span></button>
+        <div className="flex bg-ink/5 rounded-2xl p-1 border border-ink/5">
+           <button onClick={() => setMode('erase')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'erase' ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text-primary'}`}><Eraser size={12} /><span>Erase</span></button>
+           <button onClick={() => setMode('restore')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'restore' ? 'bg-emerald-500 text-white' : 'text-text-secondary hover:text-text-primary'}`}><Brush size={12} /><span>Restore</span></button>
+           <button onClick={() => setMode('pan')} className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mode === 'pan' ? 'bg-ink/10 text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}><Hand size={12} /><span>Pan</span></button>
         </div>
       </div>
 
       <div className="flex-1 flex gap-6 overflow-hidden">
-        <aside className="w-20 flex flex-col items-center gap-4 py-6 bg-white/[0.02] border border-white/5 rounded-[2.5rem] shrink-0">
-          <button disabled={!canUndo} onClick={handleUndo} className={`p-4 rounded-2xl transition-all ${canUndo ? 'text-white hover:bg-white/5' : 'text-white/10 cursor-not-allowed'}`}><Undo2 size={20} /></button>
-          <button disabled={!canRedo} onClick={handleRedo} className={`p-4 rounded-2xl transition-all ${canRedo ? 'text-white hover:bg-white/5' : 'text-white/10 cursor-not-allowed'}`}><Redo2 size={20} /></button>
-          <div className="h-px w-10 bg-white/5 my-2" />
-          <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="p-4 rounded-2xl text-text-secondary hover:text-white transition-all"><ZoomIn size={20} /></button>
-          <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} className="p-4 rounded-2xl text-text-secondary hover:text-white transition-all"><ZoomOut size={20} /></button>
+        <aside className="w-20 flex flex-col items-center gap-4 py-6 bg-ink/[0.02] border border-ink/5 rounded-[2.5rem] shrink-0">
+          <button disabled={!canUndo} onClick={handleUndo} className={`p-4 rounded-2xl transition-all ${canUndo ? 'text-text-primary hover:bg-ink/5' : 'text-ink/10 cursor-not-allowed'}`}><Undo2 size={20} /></button>
+          <button disabled={!canRedo} onClick={handleRedo} className={`p-4 rounded-2xl transition-all ${canRedo ? 'text-text-primary hover:bg-ink/5' : 'text-ink/10 cursor-not-allowed'}`}><Redo2 size={20} /></button>
+          <div className="h-px w-10 bg-ink/5 my-2" />
+          <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="p-4 rounded-2xl text-text-secondary hover:text-text-primary transition-all"><ZoomIn size={20} /></button>
+          <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} className="p-4 rounded-2xl text-text-secondary hover:text-text-primary transition-all"><ZoomOut size={20} /></button>
           <button onClick={handleReset} className="p-4 rounded-2xl text-red-400/40 hover:text-red-400 transition-all mt-auto"><RotateCcw size={20} /></button>
         </aside>
 
-        <main ref={containerRef} className="flex-1 relative bg-[#0a0a0a] rounded-[3rem] border border-white/5 overflow-hidden group">
+        <main ref={containerRef} className="flex-1 relative bg-[#0a0a0a] rounded-[3rem] border border-ink/5 overflow-hidden group">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
           <canvas ref={canvasRef} />
           <div className="absolute bottom-8 left-8 flex items-center gap-4">
@@ -345,25 +345,25 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
         </main>
 
         <aside className="w-72 flex flex-col gap-6 shrink-0">
-          <div className="bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-8 space-y-8 backdrop-blur-xl">
+          <div className="bg-ink/[0.02] border border-ink/5 rounded-[2.5rem] p-8 space-y-8 backdrop-blur-xl">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-accent">
                 <Brush size={14} />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em]">Brush Size</span>
               </div>
               <div className="flex justify-between text-[9px] font-black text-text-secondary opacity-60"><span>{brushSize}px</span></div>
-              <input type="range" min="5" max="150" value={brushSize} onChange={(e) => setBrushSize(parseInt(e.target.value))} className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-accent" />
+              <input type="range" min="5" max="150" value={brushSize} onChange={(e) => setBrushSize(parseInt(e.target.value))} className="w-full h-1 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent" />
             </div>
           </div>
 
           <div className="mt-auto space-y-4">
-            <button onClick={handleFinish} disabled={isProcessing} className="w-full py-7 bg-accent hover:bg-accent-hover text-white rounded-[2.5rem] font-black text-xs tracking-[0.5em] uppercase transition-all shadow-2xl shadow-accent/20 flex items-center justify-center gap-3">
+            <button onClick={handleFinish} disabled={isProcessing} className="w-full py-7 bg-accent hover:bg-accent-hover text-on-accent rounded-[2.5rem] font-black text-xs tracking-[0.5em] uppercase transition-all shadow-2xl flex items-center justify-center gap-3">
               {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Save size={18} />}
               <span>Finalize & Next</span>
             </button>
             <div className="grid grid-cols-2 gap-4">
-              <button onClick={onBack} className="py-5 bg-white/5 hover:bg-white/10 text-white rounded-[2rem] font-black text-[9px] tracking-[0.3em] uppercase transition-all">Back</button>
-              <button onClick={onSkip} className="py-5 bg-white/5 hover:bg-white/10 text-text-secondary hover:text-white rounded-[2rem] font-black text-[9px] uppercase transition-all">Skip AI</button>
+              <button onClick={onBack} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-[2rem] font-black text-[9px] tracking-[0.3em] uppercase transition-all">Back</button>
+              <button onClick={onSkip} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-[2rem] font-black text-[9px] uppercase transition-all">Skip AI</button>
             </div>
           </div>
         </aside>

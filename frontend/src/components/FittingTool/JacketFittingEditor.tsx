@@ -149,12 +149,12 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
         <div className="flex items-center gap-6">
           <button 
             onClick={onBack}
-            className="p-3 hover:bg-white/5 rounded-2xl text-text-secondary hover:text-white transition-all border border-white/5"
+            className="p-3 hover:bg-ink/5 rounded-2xl text-text-secondary hover:text-text-primary transition-all border border-ink/5"
           >
             <ChevronLeft size={20} />
           </button>
           <div className="space-y-1">
-            <h2 className="text-xl font-light tracking-tighter text-white uppercase italic flex items-center gap-2">
+            <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic flex items-center gap-2">
               <Layers size={16} className="text-accent" />
               Modular Jacket Studio
             </h2>
@@ -163,7 +163,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
         </div>
 
         <div className="flex items-center gap-3">
-           <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-1 flex gap-1">
+           <div className="bg-ink/[0.02] border border-ink/5 rounded-2xl p-1 flex gap-1">
               {Object.keys(segments).map(name => (
                 <button
                   key={name}
@@ -173,8 +173,8 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                   }}
                   className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
                     activePart === name && !isGroupMode 
-                      ? 'bg-accent text-white shadow-[0_0_15px_rgba(91,140,255,0.3)]' 
-                      : 'text-text-secondary hover:text-white'
+                      ? 'bg-accent text-on-accent' 
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
                   {name.replace(/([A-Z])/g, ' $1')}
@@ -186,8 +186,8 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                 }}
                 className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
                   isGroupMode 
-                    ? 'bg-accent text-white shadow-[0_0_15px_rgba(91,140,255,0.3)]' 
-                    : 'text-text-secondary hover:text-white'
+                    ? 'bg-accent text-on-accent' 
+                    : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
                 All
@@ -198,10 +198,10 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
 
       <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-hidden">
         <aside className="w-full md:w-80 flex flex-col gap-8 order-2 md:order-1 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-white/5 rounded-[2.5rem] p-8 space-y-10">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-6">
-              <div className={`w-2 h-2 rounded-full shadow-[0_0_10px_currentColor] ${isGroupMode ? 'text-emerald-400 bg-emerald-400' : 'text-accent bg-accent'}`} />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-white uppercase">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-10">
+            <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
+              <div className={`w-2 h-2 rounded-full ${isGroupMode ? 'text-emerald-400 bg-emerald-400' : 'text-accent bg-accent'}`} />
+              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">
                 {isGroupMode ? 'Global Calibration' : `${activePart.replace(/([A-Z])/g, ' $1')} Calibration`}
               </h3>
             </div>
@@ -214,13 +214,13 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               />
             )}
 
-            <div className="pt-6 border-t border-white/5 space-y-6">
+            <div className="pt-6 border-t border-ink/5 space-y-6">
                <div className="flex items-center gap-2">
                  <Scissors size={12} className="text-accent" />
-                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white">Center Opening</span>
+                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-primary">Center Opening</span>
                </div>
                <div className="space-y-4">
-                 <div className="flex justify-between text-[10px] font-mono text-white/50">
+                 <div className="flex justify-between text-[10px] font-mono text-ink/50">
                     <span>Closed</span>
                     <span>{Math.round((modularData.openness || 0) * 100)}%</span>
                  </div>
@@ -229,7 +229,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                    min="0" max="0.6" step="0.01"
                    value={modularData.openness || 0}
                    onChange={(e) => handleOpennessChange(parseFloat(e.target.value))}
-                   className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-accent"
+                   className="w-full h-1 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
                  />
                </div>
             </div>
@@ -267,10 +267,10 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
         </main>
 
         <aside className="w-full md:w-80 flex flex-col gap-8 order-3 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-white/5 rounded-[2.5rem] p-8 space-y-8">
-            <div className="flex items-center gap-3 border-b border-white/5 pb-6">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full shadow-[0_0_10px_#34D399]" />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-white uppercase">Modular Identity</h3>
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-8">
+            <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full" />
+              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Modular Identity</h3>
             </div>
 
             <div className="space-y-8">
@@ -284,7 +284,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Leather Biker Jacket"
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 px-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-white/[0.05] transition-all uppercase tracking-widest"
+                  className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all uppercase tracking-widest"
                 />
               </div>
 
@@ -298,7 +298,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Details about material, modular fit, etc."
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-5 px-6 text-xs text-white/70 focus:outline-none focus:border-accent/50 focus:bg-white/[0.05] transition-all resize-none leading-relaxed"
+                  className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-xs text-ink/70 focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all resize-none leading-relaxed"
                 />
               </div>
             </div>
@@ -309,8 +309,8 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               className={`
                 w-full py-6 rounded-2xl font-black text-[10px] tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl
                 ${!name
-                  ? 'bg-white/5 text-text-secondary cursor-not-allowed opacity-20' 
-                  : 'bg-white text-background-main hover:scale-[1.02] active:scale-[0.98]'
+                  ? 'bg-ink/5 text-text-secondary cursor-not-allowed opacity-20' 
+                  : 'bg-ink text-background-main hover:scale-[1.02] active:scale-[0.98]'
                 }
               `}
             >

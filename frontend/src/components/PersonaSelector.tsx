@@ -15,10 +15,10 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({ currentType, onTypeCh
   ];
 
   return (
-    <div className="relative inline-flex bg-background-secondary p-1.5 rounded-full border border-white/5 backdrop-blur-md shadow-2xl">
+    <div className="relative inline-flex bg-background-secondary p-1.5 rounded-full border border-ink/5 backdrop-blur-md shadow-2xl">
       {/* Background Sliding Indicator */}
       <motion.div
-        className="absolute h-[calc(100%-12px)] bg-accent rounded-full shadow-lg shadow-accent/20"
+        className="absolute h-[calc(100%-12px)] bg-accent rounded-full shadow-lg"
         initial={false}
         animate={{
           x: currentType === PersonaType.MALE ? 0 : 120,
@@ -36,7 +36,7 @@ const PersonaSelector: React.FC<PersonaSelectorProps> = ({ currentType, onTypeCh
             onClick={() => onTypeChange(opt.type)}
             className={`
               relative z-10 flex items-center gap-2.5 px-6 py-2.5 rounded-full transition-colors duration-300
-              ${isActive ? 'text-white' : 'text-text-secondary hover:text-text-primary'}
+              ${isActive ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary'}
             `}
             style={{ width: opt.type === PersonaType.MALE ? 120 : 140 }}
           >

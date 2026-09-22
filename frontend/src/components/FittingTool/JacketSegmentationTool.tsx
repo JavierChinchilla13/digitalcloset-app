@@ -82,7 +82,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
           />
         </div>
         <div className="text-center space-y-2">
-          <h3 className="text-2xl font-light tracking-tight text-white uppercase italic">AI Semantic Analysis</h3>
+          <h3 className="text-2xl font-light tracking-tight text-text-primary uppercase italic">AI Semantic Analysis</h3>
           <p className="text-text-secondary text-[10px] font-black tracking-[0.4em] uppercase opacity-40">Parsing jacket architecture...</p>
         </div>
       </div>
@@ -92,7 +92,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
   return (
     <div className="flex flex-col h-full space-y-8">
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-light tracking-tighter text-white uppercase italic italic">Step 3 — Architecture Decomposition</h2>
+        <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic italic">Step 3 — Architecture Decomposition</h2>
         <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Select identified regions for independent manipulation</p>
       </div>
 
@@ -105,7 +105,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
             className={`relative aspect-[3/4] rounded-3xl border-2 transition-all cursor-pointer overflow-hidden group ${
               selectedSegments.has(name) 
                 ? 'border-accent bg-accent/5' 
-                : 'border-white/5 bg-white/[0.02] grayscale opacity-60'
+                : 'border-ink/5 bg-ink/[0.02] grayscale opacity-60'
             }`}
           >
             <img src={url} alt={name} className="w-full h-full object-contain p-4" />
@@ -113,12 +113,12 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white">{name.replace(/([A-Z])/g, ' $1')}</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-text-primary group-hover:text-white">{name.replace(/([A-Z])/g, ' $1')}</span>
               {selectedSegments.has(name) && <CheckCircle2 size={16} className="text-accent" />}
             </div>
 
             {selectedSegments.has(name) && (
-              <div className="absolute top-4 right-4 bg-accent text-white p-1 rounded-full">
+              <div className="absolute top-4 right-4 bg-accent text-on-accent p-1 rounded-full">
                 <Check size={12} />
               </div>
             )}
@@ -126,7 +126,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
         ))}
 
         {segmentUrls.size === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-20 text-text-secondary border-2 border-dashed border-white/10 rounded-[2.5rem]">
+          <div className="col-span-full flex flex-col items-center justify-center py-20 text-text-secondary border-2 border-dashed border-ink/10 rounded-[2.5rem]">
             <Scissors size={48} className="opacity-20 mb-4" />
             <p className="text-xs font-black uppercase tracking-widest opacity-40 text-center px-8">
               AI could not decompose this jacket automatically.<br/>Falling back to rigid single-layer mode.
@@ -146,14 +146,14 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
         <div className="flex gap-4">
           <button
             onClick={onBack}
-            className="flex-1 py-6 bg-white/5 hover:bg-white/10 text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all"
+            className="flex-1 py-6 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all"
           >
             Back
           </button>
           <button
             onClick={handleFinish}
             disabled={!!uploadingStatus}
-            className="flex-[2] py-6 bg-accent hover:bg-accent-hover text-white rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl shadow-accent/20 active:scale-[0.98] flex items-center justify-center gap-3"
+            className="flex-[2] py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3"
           >
             {uploadingStatus ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
             <span>{segmentUrls.size > 0 ? 'Initialize Modular Studio' : 'Proceed Rigid'}</span>

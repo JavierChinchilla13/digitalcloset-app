@@ -66,7 +66,7 @@ const ClosetSection = () => {
     : [];
 
   return (
-    <SectionWrapper className="bg-background-secondary/10 border-y border-white/5 py-16">
+    <SectionWrapper className="bg-background-secondary/10 border-y border-ink/5 py-16">
       <div className="flex justify-between items-end mb-12 px-2">
         <div>
           <h2 className="text-4xl font-light tracking-tighter mb-2 uppercase">Your Closet</h2>
@@ -75,7 +75,7 @@ const ClosetSection = () => {
         <div className="flex flex-col gap-3">
           <button 
             onClick={() => navigate('/closet')}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-lg transition-all border border-white/5 font-black text-[10px] uppercase tracking-widest"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-lg transition-all border border-ink/5 font-black text-[10px] uppercase tracking-widest"
           >
             <LayoutPanelTop size={14} className="text-accent" />
             <span>View Full Closet</span>
@@ -83,7 +83,7 @@ const ClosetSection = () => {
           
           <button 
             onClick={() => setIsUploadModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white px-5 py-2.5 rounded-lg font-black transition-all shadow-lg shadow-accent/20 text-[10px] uppercase tracking-widest"
+            className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-on-accent px-5 py-2.5 rounded-lg font-black transition-all shadow-lg text-[10px] uppercase tracking-widest"
           >
             <Plus size={14} />
             <span>Add Garment</span>
@@ -97,7 +97,7 @@ const ClosetSection = () => {
           <p className="text-[10px] font-black tracking-[0.2em] uppercase">Syncing Wardrobe...</p>
         </div>
       ) : categories.length === 0 ? (
-        <div className="text-center py-24 border-2 border-dashed border-white/5 rounded-3xl opacity-20">
+        <div className="text-center py-24 border-2 border-dashed border-ink/5 rounded-3xl opacity-20">
           <p className="text-[10px] text-text-secondary uppercase tracking-[0.3em] font-black">Your closet is empty</p>
         </div>
       ) : (
@@ -112,8 +112,8 @@ const ClosetSection = () => {
             >
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">{category}</span>
-                <div className="h-[1px] flex-grow bg-white/5" />
-                <button className="text-[8px] font-bold text-text-secondary hover:text-white transition-colors uppercase tracking-widest">
+                <div className="h-[1px] flex-grow bg-ink/5" />
+                <button className="text-[8px] font-bold text-text-secondary hover:text-text-primary transition-colors uppercase tracking-widest">
                   {categoryItems.length} ITEMS
                 </button>
               </div>

@@ -49,7 +49,7 @@ const SignupPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-white">Join the Future</h1>
+          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">Join the Future</h1>
           <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">Create your digital identity</p>
         </div>
 
@@ -72,7 +72,7 @@ const SignupPage = () => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Alexander"
-                className="w-full bg-background-secondary border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
                 disabled={isLoading}
               />
             </div>
@@ -83,7 +83,7 @@ const SignupPage = () => {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="McQueen"
-                className="w-full bg-background-secondary border border-white/5 rounded-2xl py-4 px-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
                 disabled={isLoading}
               />
             </div>
@@ -99,7 +99,7 @@ const SignupPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="fashion@example.com"
-                className="w-full bg-background-secondary border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
                 disabled={isLoading}
               />
             </div>
@@ -115,7 +115,7 @@ const SignupPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-background-secondary border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-white focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
                 disabled={isLoading}
               />
             </div>
@@ -124,7 +124,7 @@ const SignupPage = () => {
           <button 
             type="submit"
             disabled={isLoading}
-            className="w-full py-4 bg-accent text-white font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-accent/20 group disabled:opacity-50 disabled:hover:scale-100"
+            className="w-full py-4 bg-accent text-on-accent font-black rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl group disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? (
               <Loader2 className="animate-spin" size={18} />
@@ -140,7 +140,7 @@ const SignupPage = () => {
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">
             Already have an account? {' '}
-            <Link to="/login" className="text-white font-bold hover:text-accent transition-colors">Sign in here</Link>
+            <Link to="/login" className="text-text-primary font-bold hover:text-accent transition-colors">Sign in here</Link>
           </p>
         </div>
       </motion.div>
