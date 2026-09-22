@@ -66,9 +66,9 @@ const CATEGORY_TO_SLOT: Partial<Record<ClothingCategory, string>> = {
 // its category, so the backend's outfit contract is populated the same way
 // the persona equip path already does - letting a later persona preview
 // (Task 38) bucket items correctly via the existing equippedFromOutfitItems.
-// Shoes without a recorded side (legacy single-image pairs) get no slot -
-// they stay valid in the flat list, they just won't appear in a persona
-// preview until that's resolved (not a Task 35 concern).
+// Shoes without a recorded side (legacy single-image pairs) get no slot here -
+// they stay valid in the flat list. The persona preview places them anyway via
+// applyLegacyShoeFallback in utils/personaEligibility.ts (Task 66).
 export function outfitItemsFromDraft(itemIds: number[], items: ClothingItem[]): OutfitRequest['items'] {
   const itemsById = new Map(items.map((item) => [item.itemId, item]));
 

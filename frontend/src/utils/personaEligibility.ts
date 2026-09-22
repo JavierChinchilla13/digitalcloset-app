@@ -1,6 +1,7 @@
-import { PersonaStatus } from '../types';
+import { ClothingCategory, PersonaStatus } from '../types';
 import type { ClothingItem, OutfitItem, PersonaState, PersonaType } from '../types';
 import { equippedFromOutfitItems } from '../store/useOutfitStore';
+import type { EquippedItemIds } from '../store/useOutfitStore';
 import { outfitItemsFromDraft } from '../store/useOutfitDraftStore';
 
 // Persona-eligibility filtering (Task 38, extracted into a shared utility
@@ -39,6 +40,39 @@ export interface PersonaEligibility {
 const isFittedStatus = (item: ClothingItem): boolean =>
   item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED;
 
+// Task 66 (Phase 9.6): a shoe with no recorded `side` (older items, or any
+// created outside the left/right pair flow) has no slot - outfitItemsFromDraft
+// can only map side 'left'/'right' to leftShoe/rightShoe - so it never made it
+// onto the persona at all. This gives such shoes the same treatment
+// usePersonaStore.setEquippedItem already gives them: a legacy single-image
+// shoe is treated as the whole pair when both feet are free (PersonaRenderer
+// draws it once, using the category's default transform), otherwise it takes
+// whichever foot is still empty. Shoes already placed by a recorded slot are
+// left alone, and any unsided shoe past the two feet is ignored.
+export function applyLegacyShoeFallback(
+  equipped: EquippedItemIds,
+  eligibleItems: ClothingItem[]
+): EquippedItemIds {
+  const result = { ...equipped };
+
+  for (const item of eligibleItems) {
+    if (item.category !== ClothingCategory.SHOES) continue;
+    if (item.side === 'left' || item.side === 'right') continue;
+    if (result.leftShoeId === item.itemId || result.rightShoeId === item.itemId) continue;
+
+    if (result.leftShoeId == null && result.rightShoeId == null) {
+      result.leftShoeId = item.itemId;
+      result.rightShoeId = item.itemId;
+    } else if (result.leftShoeId == null) {
+      result.leftShoeId = item.itemId;
+    } else if (result.rightShoeId == null) {
+      result.rightShoeId = item.itemId;
+    }
+  }
+
+  return result;
+}
+
 // Splits `selectedItems` into what can be shown on a `targetPersonaType`
 // persona and why the rest can't. `allItems` is the full closet, needed
 // because outfitItemsFromDraft looks up each item's category/side by id to
@@ -74,7 +108,7 @@ export function computePersonaEligibility(
 
   const previewPersona: PersonaState = {
     type: targetPersonaType,
-    ...equippedFromOutfitItems(eligibleOutfitItems),
+    ...applyLegacyShoeFallback(equippedFromOutfitItems(eligibleOutfitItems), eligibleItems),
   };
 
   return { previewPersona, eligibleItems, ineligibleItems, notFittedItems, noCutoutItems, wrongPersonaItems };
