@@ -1120,6 +1120,19 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **65** Fix `ClothingCard`'s fixed-width-in-grid layout bug
       (`/closet`)
 
+### Phase 9.6 — Shoe fix + VYSVI redesign *(planned 2026-09-21, before Phase 10)*
+
+- [x] **66** Fix shoes not appearing on the persona (unsided shoes had no slot)
+- [ ] **67** Theme infrastructure: semantic tokens, light/dark/system store,
+      no-flash script, navbar toggle, fonts
+- [ ] **68** Mechanical token migration (`white`/`black` utilities -> `ink`
+      tokens, `on-accent`) + remove glows
+- [ ] **69** Shared components restyle (Navbar, footer, Toast, cards, modals)
+- [ ] **70** Page passes in both modes (Landing, Login/Signup, Closet,
+      Outfits, Attire, Categories, Category detail, Persona)
+- [ ] **71** Editor / fitting tools (Fabric.js colors from tokens)
+- [ ] **72** Branding: VYSVI rename, logo swap-in, favicon, page title
+
 ### Phase 10 — Persona fitting repair & deformation
 
 *(renumbered 2026-09-01 from 44–48 to 52–56, same reason as Phase 9 above)*
@@ -3307,3 +3320,124 @@ Dead scroll-target calls gone; WEAR STYLE does something real      ✅ (Task 63)
 CategoryDetailPage's item grid matches the established compact style ✅ (Task 64)
 ClothingCard fills its grid column correctly, no more squeezed gap ✅ (Task 65)
 ```
+
+---
+
+# Phase 9.6 — Shoe fix + VYSVI redesign *(planned 2026-09-21, before Phase 10)*
+
+Two requests from the user before Phase 10 resumes: (1) shoes never
+appear on the persona, (2) a full visual redesign around the new VYSVI
+logo. Decisions taken with the user: they supply the logo files
+(transparent PNG/SVG + a dark-ink variant for light mode); the app is
+renamed **VYSVI / Digital Wardrobe** everywhere; **pure silver/graphite**
+palette (no colored accent); **editorial fashion look** (serif headings,
+lighter type, softer corners, no glows), not colors-only; light + dark
+mode, defaulting to the device's setting ("system"), with a manual
+toggle. Lands on `phase-9-categories-experience`, same precedent as 9.5.
+Full plan: `C:\Users\javid\.claude\plans\partitioned-painting-crab.md`.
+
+### Task 66 — Shoes not appearing on the persona
+
+**✅ COMPLETE 2026-09-21.** Reproduced live first (test account, items
+created through the API, image = the dev server's `favicon.svg`):
+- Shoes with a recorded `side` render correctly (layers at z 200/201,
+  feet region) - so the pair-upload flow itself was not the problem.
+- A shoe with **no `side`** produced no layer at all. Cause:
+  `outfitItemsFromDraft` (`useOutfitDraftStore.ts`) only maps
+  `side: 'left'|'right'` to a `leftShoe`/`rightShoe` slot, so an unsided
+  shoe got no slot and never reached `PersonaRenderer` - in the flat
+  builder's preview *and* in `OutfitCard`'s persona view (Task 62).
+- Fix: `applyLegacyShoeFallback(equipped, eligibleItems)` in
+  `utils/personaEligibility.ts`, mirroring `usePersonaStore`'s existing
+  legacy-shoe rule: both feet free -> the shoe becomes the pair
+  (`PersonaRenderer`'s existing `leftShoe.itemId === rightShoe.itemId`
+  branch draws it once with the category default transform); one foot
+  free -> takes that foot; extras ignored; already-slotted shoes
+  untouched. Applied in `computePersonaEligibility` and in
+  `OutfitCard.outfitPersona`. Stale comment in `useOutfitDraftStore.ts`
+  updated.
+- Verified live: unsided shoe now shows in the flat builder preview
+  (z200) and in a saved outfit's card persona view; sided pair still
+  correct; `tsc -b --force` + `vite build` clean; test data removed.
+- Open point for the user: if their real shoes DO have a side and still
+  don't show, that's a different cause (likely their saved transform) and
+  needs a look at one of their actual items.
+
+### Task 66b — Background remover broken (found right after Task 66)
+
+**✅ COMPLETE 2026-09-21.** User report: "background remover doesn't
+work anymore." Reproduced by calling `BrowserBgRemover` directly in the
+browser pane: `Failed to create session: TypeError:
+r._OrtGetInputOutputMetadata is not a function`. Because the hybrid
+service (`lib/background-removers/index.ts`) falls back to the FastAPI
+service on `:8000` - which isn't running here (no Python installed) -
+and then to the original image, the user just saw "AI unavailable /
+original image used".
+- **Cause:** `@imgly/background-removal 1.7.0` has a peer dependency on
+  `onnxruntime-web` **exactly 1.21.0**, but `package.json` didn't pin it,
+  so npm resolved the single top-level copy to `1.26.0-dev...` (wanted by
+  `@huggingface/transformers 4.2.0`, used by `segmentationService`). imgly
+  ran the 1.26 JS runtime against its own 1.21-era wasm from its CDN.
+- **Fix:** added `"onnxruntime-web": "1.21.0"` (exact) as a direct
+  dependency (`frontend/package.json` + lockfile). imgly now resolves
+  1.21.0 at top level; transformers keeps its own nested 1.26 copy
+  (`node_modules/@huggingface/transformers/node_modules/onnxruntime-web`).
+  Installed with `--legacy-peer-deps` - plain `npm install` fails on an
+  older, unrelated conflict (`fabric-warpvas` wants fabric 6, project is
+  on 7; that package is the dead warp scaffolding slated for Task 55).
+- **Gotcha:** Vite keeps a pre-bundled dependency cache; after this change
+  the dev server must be restarted with `node_modules/.vite` cleared or
+  the old (broken) bundle keeps being served. Anyone pulling this needs
+  `npm install --legacy-peer-deps` and a dev-server restart.
+- **Verified live:** `BrowserBgRemover` and the full `bgRemovalService`
+  (method `browser`) return a PNG with the background removed (79%
+  transparent on the mannequin test image); `segmentationService` still
+  imports; `tsc -b --force` + `vite build` clean.
+
+### Tasks 67-72 — VYSVI redesign (planned, not started)
+
+Findings that shape it: the app is dark-only; semantic tokens
+(`background-main`, `background-secondary`, `card`, `text-primary`,
+`text-secondary`, `accent`, `accent-hover`) exist in `index.css` and are
+used ~536 times (keep those names), but there are **669 hard-coded
+`white`/`black` utilities across 38 files** plus 31 hard-coded hex/rgba
+(mostly Fabric.js `#5B8CFF`), and 35 `text-white`-on-`bg-accent` spots
+that would be unreadable on a silver accent.
+
+- **67 Theme infrastructure** - CSS-variable tokens switched by
+  `data-theme` on `<html>`; add `ink`, `on-accent`, `line`; new
+  `useThemeStore` (`system|light|dark`, default system, persisted,
+  live-follows OS changes); inline no-flash script in `index.html`;
+  sun/moon/monitor toggle in `Navbar`; fonts: serif display (Cormorant
+  Garamond) + Jost for UI. Starting palette - dark: bg `#0B0B0C`,
+  surface `#131315`, card `#1A1A1D`, ink `#F2F2F3`, secondary `#9A9CA3`,
+  accent silver `#C7CBD1`; light: bg `#F6F5F3`, surface `#EDECE9`, card
+  `#FFFFFF`, ink `#16171A`, secondary `#666971`, accent graphite
+  `#3A3D44` (silver kept for borders/decoration - too faint as text on
+  white). To be tuned live and contrast-checked to WCAG AA.
+- **68 Token migration** - scripted `text-white` -> `text-text-primary`,
+  `*-white/N` -> `*-ink/N`, `text-white` on accent -> `text-on-accent`;
+  manual review for text/scrims over item photos, recessed `bg-black/N`
+  panels, and status colors; strip glows / accent shadows / decorative
+  pulses.
+- **69 Shared components** - Navbar, footer, Toast, SectionWrapper,
+  ClothingCard, OutfitCard, CategoryPicker, the modals. Rules:
+  `font-black` -> medium/light, label floor ~10-11px (currently 7-8px),
+  radii `2rem/3rem` -> `xl/2xl`, hairline silver borders, serif headings.
+- **70 Page passes** - each checked in both modes at desktop + mobile.
+  Orphaned pages (`/dashboard`, `DemoPage`, `OutfitBuilderPage`,
+  `sections/*`, `PersonaSpotlight`) get the token migration only.
+- **71 Editor / fitting tools** - Fabric colors via a small
+  `utils/themeColors.ts` reading the CSS variables; neutral canvas
+  surfaces; check the persona base PNGs on the light background.
+- **72 Branding** - `BrandMark` (theme-aware logo; interim tracked-caps
+  text wordmark until the user's files land in `frontend/public`),
+  rename strings (`Navbar`, `MainLayout` footer,
+  `ClothingDetailsModal.tsx:156`, `sections/AvatarSection.tsx:100`),
+  `index.html` title + favicon, remove unused `App.css`.
+
+Verification for each: `tsc -b --force`, `vite build`, live in both modes
+(browser `colorScheme` emulation for system-follow), screenshots of every
+changed page, contrast spot-checks, Fabric handles visible in both modes.
+
+**Open dependency:** logo files from the user for Task 72's final swap.
