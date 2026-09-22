@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
+import BrandMark from './BrandMark';
 import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle, Tag } from 'lucide-react';
 
 const Navbar = () => {
@@ -29,12 +30,10 @@ const Navbar = () => {
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="glass-panel px-4 sm:px-6 md:px-8 py-3 rounded-full flex items-center gap-3 sm:gap-8 md:gap-12 border border-ink/10 shadow-lg pointer-events-auto"
       >
-        {/* Logo */}
-        <Link
-          to="/"
-          className="text-xl font-bold tracking-tighter text-text-primary hover:text-accent transition-colors"
-        >
-          DIGITAL<span className="text-accent">CLOSET</span>
+        {/* Logo - Task 72: VYSVI wordmark (see BrandMark.tsx for why it's
+            still text, not the real logo image). */}
+        <Link to="/" className="hover:opacity-70 transition-opacity">
+          <BrandMark />
         </Link>
 
         {/* Center Links */}

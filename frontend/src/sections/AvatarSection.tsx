@@ -97,7 +97,7 @@ const AvatarSection = () => {
 
       <div className="hidden lg:block absolute left-12 top-1/2 -translate-y-1/2 -rotate-90">
         <p className="text-[8px] font-black tracking-[0.5em] text-ink/20 uppercase">
-          Digital Closet System v2.0 // Node: Persona_Main
+          VYSVI System v2.0 // Node: Persona_Main
         </p>
       </div>
       <div className="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 rotate-90">

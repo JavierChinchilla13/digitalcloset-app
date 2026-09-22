@@ -109,8 +109,12 @@ const ClosetPage = () => {
               <ChevronLeft size={14} />
               Back to Attire
             </button>
+            {/* Task 72: was "DIGITAL CLOSET" - the app's old name, not this
+                page's own title (the nav link is just "Closet"). Renamed
+                to match "Complete Wardrobe Management" right below it,
+                rather than repeating the new VYSVI brand name here too. */}
             <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
-              DIGITAL <br /> <span className="text-accent">CLOSET</span>
+              MY <br /> <span className="text-accent">WARDROBE</span>
             </h1>
             <div className="flex items-center gap-4 pt-2">
               <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">

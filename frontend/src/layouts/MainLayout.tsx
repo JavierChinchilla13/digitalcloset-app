@@ -10,7 +10,7 @@ const MainLayout = () => {
       </main>
 
       <footer className="py-12 border-t border-ink/5 text-center text-text-secondary text-sm">
-        <p>© 2026 DIGITAL CLOSET. DESIGNED FOR THE FUTURE OF FASHION.</p>
+        <p>© 2026 VYSVI. DESIGNED FOR THE FUTURE OF FASHION.</p>
       </footer>
     </div>
   );
