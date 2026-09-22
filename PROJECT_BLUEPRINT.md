@@ -4327,3 +4327,111 @@ reported.
   full visual pass, since the screenshot tool went back to its unreliable
   tiny-scale rendering for that specific check. All 18 test items deleted
   after, confirmed empty on re-fetch.
+
+**Follow-up, after committing** - "on list view please center the items
+right now they are to the side", plus a request for a persona-type
+switcher below the Your Selection/Persona Preview header, explicitly "a
+list" rather than a toggle, "cause later you could add a third person."
+- **The centering bug:** the "Your Selection" list view laid its cards
+  out with CSS Grid (`grid-cols-3 sm:grid-cols-4 md:grid-cols-5`). A grid
+  always reserves all N column tracks regardless of how many children
+  exist, and fills them left-to-right - with fewer items than columns
+  (the common case here), the cards packed into the left-most tracks and
+  left the rest of the row visibly blank, reading as "off to the side."
+  Fixed by switching every selection-panel card row (`SelectionCard`'s
+  containers, both grouped-category rows and the accessories row) from
+  `grid grid-cols-N` to `flex flex-wrap justify-center`, and giving
+  `SelectionCard` itself a fixed width (`w-36 sm:w-40`, matching its
+  prior grid-track size) instead of letting a grid track size it - a
+  flex row centers however many cards are actually present, in any row,
+  at any count. Also applied to `ShoeSubRow`'s two sub-rows (the paired
+  left/right shoes, and any unpaired overflow), which had the same
+  issue (plus the paired row's old `max-w-[220px]` was dropped since the
+  cards' own fixed width now does that job).
+- **Persona-type switcher:** new `PersonaTypeSwitcher.tsx`, a small
+  dropdown-list control (not a cycle-on-click toggle like
+  `ThemeToggle.tsx`) placed directly under the Your Selection/Persona
+  Preview header, wired to `usePersonaStore`'s existing `setPersonaType`
+  (previously only reachable from the standalone `/persona` page - this
+  page already *read* `persona.type` for Persona Preview's eligibility
+  filtering and the outfit's default `avatarType`, but had no way to
+  change it itself). Modeled on `ClothingCategoryFilter`'s toggle-button
+  + panel-below structure (itself modeled on `CategoryPicker`) - a third
+  reuse of that interaction pattern in the codebase now. Built as a list
+  rendered from `Object.values(PersonaType)` rather than two hardcoded
+  branches, per explicit request - adding a third `PersonaType` enum
+  member in the future needs no change here, it just becomes another
+  row.
+- **Verified live:** created a Top item and a left/right shoe pair,
+  selected all three, measured each row's actual rendered card
+  positions (not just the container's) against the panel's true visible
+  center - both the single Top card and the shoe pair (as a unit)
+  centered exactly on it (825px, matching the panel's own computed
+  center to the pixel). Opened the persona switcher, confirmed it shows
+  "Male"/"Female" as a list (not a two-state toggle), selected "Female"
+  and confirmed the button's label updated, then switched back to
+  "Male" to leave the test account's persisted persona-type unchanged.
+  `tsc -b --force` + `vite build` clean; test items deleted after,
+  confirmed empty on re-fetch.
+
+**Second follow-up, after committing** - "now to see the entire outfit I
+need to scroll can you make it so that I can see all the outfit or at
+least most of it, also the female/male button depending on whats
+selected only garments of that gender should appear also add a any
+option and if you add to the outfit both male and female garments...
+switch to female and add female garments it should give you an alert
+that you are mixing."
+- **Gender-filtered browse + "Any":** the browse grid now filters by the
+  persona switcher's value (`item.personaType === genderFilter`), on top
+  of the existing search/category filters - directly supersedes the
+  page's original "deliberately does NOT filter by persona type" design
+  call (file-level comment updated to explain why). "Any" was added as a
+  third list entry in `PersonaTypeSwitcher` (now typed
+  `PersonaType | 'ANY'`, exported as `PersonaFilterValue`) to get back
+  the unfiltered view - it's local UI/filter state, not a real
+  `PersonaType`, since the global persona store and every other page
+  reading it (Persona Preview's eligibility, `SavedOutfitsPage`'s own
+  filtering, etc.) only ever expect Male or Female. Selecting Male/Female
+  here still also calls `setPersonaType` (keeps the first follow-up's
+  wiring to Persona Preview/the save default); selecting "Any" only
+  updates the local filter, leaving the global persona type wherever it
+  last was.
+- **Mixed-gender alert:** a new `selectedPersonaTypes`/`isMixedPersona`
+  memo (distinct `personaType` values across the current selection) feeds
+  a `useEffect` keyed on `isMixedPersona` - fires a toast ("This outfit
+  mixes Male and Female garments") the moment the selection newly
+  becomes mixed, same "just happened, not a live nag" shape as the
+  existing Persona Preview exclusion toast. Mixed outfits are still
+  allowed to be built (that part of the original design stands) - this
+  only makes it visible instead of only being discoverable later in
+  Persona Preview.
+- **The scroll fix - three changes together, not one big one:**
+  1. Merged Jacket/Top/Dress into one flowing "Top" row in the selection
+     panel (`selectionSections`, replacing `groupSelectedItemsForDisplay`
+     on this page), matching the browse panel's own `browseSections`
+     grouping (Task 76) - one fewer row when a Jacket and Top/Dress are
+     both selected, and the two panels now group the same way.
+  2. Tightened vertical rhythm throughout the selection panel: inter-
+     section gaps `space-y-8` → `space-y-3`, label-to-row gaps `space-y-3`
+     → `space-y-1.5`, the panel's own padding `p-8` → `p-6`, and the
+     header/persona-switcher rows' margins trimmed.
+  3. A modest card-size trim, `w-36 sm:w-40` (144/160px) → `w-32 sm:w-36`
+     (128/144px) - deliberately NOT back to the pre-Task-76 size that
+     drew the original "too small" complaint, just enough to help close
+     the gap without the first two changes having to carry the whole fix
+     alone.
+- **Verified live, with numbers, not just "looks better":** a real
+  6-item outfit (Jacket, Top, Bottom, a left/right Shoe pair, an
+  Accessory - 4 rendered rows after the Top merge) measured at
+  `scrollHeight` 1390px against a 739px visible panel height (53%
+  visible, only Top and part of Jacket/Top's old separate rows in view)
+  *before* this round's changes; 1139px after the row merge alone (65%
+  visible); 1026px after also trimming spacing and card size (72%
+  visible) - and critically, measured each section's own position: Top
+  and Bottom now render fully inside the visible area, Shoes renders
+  ~95% inside it (a sliver of its bottom edge below the fold), and only
+  Accessories requires scrolling to reach. Visually confirmed with an
+  actual screenshot (worked this round) showing centered, appropriately-
+  sized cards, not cramped. `tsc -b --force` + `vite build` clean;
+  gender-filter/mixing-alert/scroll test items (7 total, one deliberately
+  the opposite gender) deleted after, confirmed empty on re-fetch.

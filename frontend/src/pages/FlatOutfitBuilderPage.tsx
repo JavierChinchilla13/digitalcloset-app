@@ -7,7 +7,7 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useCollectionStore } from '../store/useCollectionStore';
-import { groupSelectedItemsForDisplay, pairShoesForDisplay } from '../utils/selectionDisplay';
+import { pairShoesForDisplay } from '../utils/selectionDisplay';
 import { computePersonaEligibility } from '../utils/personaEligibility';
 import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
@@ -15,6 +15,7 @@ import PersonaRenderer from '../components/PersonaRenderer';
 import EditClothingModal from '../components/EditClothingModal';
 import CategoryPicker from '../components/CategoryPicker';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
+import PersonaTypeSwitcher, { type PersonaFilterValue } from '../components/PersonaTypeSwitcher';
 import { useToast } from '../components/Toast';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
@@ -22,34 +23,45 @@ import { useToast } from '../components/Toast';
 // useOutfitDraftStore's flat selectedItemIds, then save/update it as a
 // backend outfit via outfitItemsFromDraft.
 //
-// Deliberately does NOT filter the browse grid by persona type the way
-// ClosetPage/OutfitBuilderPage do - restricting selection to one persona
-// type here would misrepresent the item-first pivot's own premise (an
-// outfit should be assemblable from any of the user's items). Each card
-// shows its persona type as a small badge instead, so mixed selections stay
-// legible. This makes a call on open question #7 (mixed-persona outfits)
-// for the *selection* UI specifically. The optional persona preview
-// (Task 38) is where that tradeoff becomes visible: it can only ever show
-// FITTED items matching one persona type (reusing PersonaRenderer/
-// equippedFromOutfitItems unchanged), so anything else in the selection is
-// called out by count rather than silently dropped.
-function formatCategoryLabel(category: ClothingCategory): string {
-  return category.charAt(0) + category.slice(1).toLowerCase();
-}
+// Originally deliberately did NOT filter the browse grid by persona type
+// the way ClosetPage/OutfitBuilderPage do, on the reasoning that an
+// outfit should be assemblable from any of the user's items (open
+// question #7's resolution for the *selection* UI specifically) - each
+// card just showed its persona type as a badge instead, so mixed
+// selections stayed legible. Superseded by explicit follow-up feedback
+// (Task 76, second follow-up): the browse grid now DOES filter by the
+// PersonaTypeSwitcher's gender ("only garments of that gender should
+// appear"), with an "Any" mode as the escape hatch back to the original
+// unfiltered behavior. Mixed-persona outfits are still allowed (that
+// part of the original call stands) - selecting items of more than one
+// gender now surfaces a toast instead of only being noticeable later in
+// Persona Preview (which can still only ever render FITTED items
+// matching one persona type, unchanged).
 
 // Selection panel card (Task 43). Task 76 follow-up: this used to be
 // noticeably smaller/denser than the browse grid's own cards (a 4/5/6-
 // column grid of aspect-[4/5] tiles vs. browse's 2-column aspect-[3/4]),
 // so the instant an item was selected, the right panel visibly "shrank"
 // next to the left one - confirmed as a real, reported bug, not just a
-// style preference. Matched to browse's own aspect-[3/4] here; the grid
-// itself (see below) also dropped to fewer max columns so cards actually
-// render close to browse-card size instead of just sharing a ratio.
+// style preference. Matched to browse's own aspect-[3/4] here.
+// Task 76 second follow-up: switched from a CSS-grid layout (fixed
+// column count, cards sized by the grid's own track width) to a fixed
+// card width here, with the containers below using `flex flex-wrap
+// justify-center` instead of `grid`. A grid with more columns than
+// selected items packs everything into the left-most tracks and leaves
+// the rest of the row visibly empty - reported as items sitting "to the
+// side" instead of centered. `flex-wrap` + `justify-center` centers
+// however many cards actually exist, in any row, regardless of count.
+// Third follow-up: trimmed w-36/w-40 (144/160px) down to w-32/w-36
+// (128/144px) as part of the "see the whole outfit without scrolling"
+// fix - a modest step down (not back to the old, too-small pre-Task-76
+// size), traded off against row count/spacing reductions elsewhere so no
+// single change had to carry the whole fix on its own.
 const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (itemId: number) => void }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="relative aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
+    className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
   >
     <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
     <button
@@ -73,15 +85,15 @@ const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (item
 const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (itemId: number) => void }) => {
   const { left, right, unpaired } = pairShoesForDisplay(items);
   return (
-    <div className="space-y-3">
+    <div className="space-y-1.5">
       {(left || right) && (
-        <div className="grid grid-cols-2 gap-4 max-w-[220px]">
+        <div className="flex gap-4 justify-center">
           {left && <SelectionCard item={left} onRemove={onRemove} />}
           {right && <SelectionCard item={right} onRemove={onRemove} />}
         </div>
       )}
       {unpaired.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+        <div className="flex flex-wrap gap-4 justify-center">
           {unpaired.map((item) => (
             <SelectionCard key={item.itemId} item={item} onRemove={onRemove} />
           ))}
@@ -102,11 +114,15 @@ const FlatOutfitBuilderPage = () => {
   const { pathname, state: navState } = useLocation();
   const isLandingRoute = pathname === '/';
   const { items, isLoading, fetchItems, markItemAsFitted } = useClothingStore();
-  // Read-only: only used as the outfit's avatarType default (open question
-  // #6's recommendation - the backend's Outfit.avatarType is NOT NULL and
-  // this page has no single persona type of its own to draw from). Never
-  // mutated here - the persona equip semantics stay untouched.
-  const { persona } = usePersonaStore();
+  // Used as the outfit's avatarType default (open question #6's
+  // recommendation - the backend's Outfit.avatarType is NOT NULL and this
+  // page has no single persona type of its own to draw from) AND drives
+  // Persona Preview's eligibility filtering below. Task 76 follow-up:
+  // `setPersonaType` is now also exposed here via PersonaTypeSwitcher, so
+  // this page can change it directly instead of only through /persona -
+  // the persona *equip* state (topIds/bottomIds/etc.) still isn't touched
+  // here, only which type it targets.
+  const { persona, setPersonaType } = usePersonaStore();
   const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
   const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
   const { collections, fetchCollections, createCollection } = useCollectionStore();
@@ -117,6 +133,25 @@ const FlatOutfitBuilderPage = () => {
   const [outfitName, setOutfitName] = useState('New Style');
   const [isSaving, setIsSaving] = useState(false);
   const [outfitsReady, setOutfitsReady] = useState(false);
+
+  // Second follow-up to Task 76: the persona switcher now also filters the
+  // browse grid by gender ("only garments of that gender should appear"),
+  // with an "Any" mode to see everything again - the page's original
+  // "deliberately does NOT filter by persona type" stance (see the file-
+  // level comment above) is superseded by this explicit request. "Any"
+  // isn't a real `PersonaType`, so this is local state, not the global
+  // persona store - starts matching whatever the global persona currently
+  // is, a reasonable default, but only Male/Female selections here also
+  // update the global store (see handleGenderFilterChange below); "Any"
+  // is filter-only and leaves the global persona type (and therefore
+  // Persona Preview/the save default) exactly where it was.
+  const [genderFilter, setGenderFilter] = useState<PersonaFilterValue>(persona.type);
+  const handleGenderFilterChange = (next: PersonaFilterValue) => {
+    setGenderFilter(next);
+    if (next !== 'ANY') {
+      setPersonaType(next);
+    }
+  };
 
   // Task 51: which categories (if any) the outfit being SAVED should also
   // be added to. Only meaningful for new outfits (id is unset) - editing an
@@ -197,9 +232,10 @@ const FlatOutfitBuilderPage = () => {
     return items.filter((item) => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = activeCategory === 'ALL' || item.category === activeCategory;
-      return matchesSearch && matchesCategory;
+      const matchesGender = genderFilter === 'ANY' || item.personaType === genderFilter;
+      return matchesSearch && matchesCategory && matchesGender;
     });
-  }, [items, searchQuery, activeCategory]);
+  }, [items, searchQuery, activeCategory, genderFilter]);
 
   // Task 76: the browse grid used to be one flat, unordered grid of
   // whatever matched the search/category filter. Reorganized into fixed
@@ -253,14 +289,44 @@ const FlatOutfitBuilderPage = () => {
     [selectedItemIds, items]
   );
 
-  // Selection panel grouping (Task 43): buckets selectedItems into
-  // SELECTION_DISPLAY_ORDER sub-groups, accessories separated out
-  // entirely - reuses Task 42's pure helpers, no grouping logic of its own.
-  const groupedSelection = useMemo(() => groupSelectedItemsForDisplay(selectedItems), [selectedItems]);
+  // Selection panel grouping (Task 43). Second follow-up to Task 76: used
+  // to be SELECTION_DISPLAY_ORDER's five separate labeled groups (Jacket,
+  // Top, Dress, Bottom, Shoes) - one of the contributors to needing a
+  // scroll to see the whole outfit ("make it so I can see all the outfit
+  // or at least most of it"). Merged Jacket/Top/Dress into one flowing
+  // "Top" row instead, same grouping the browse panel's own
+  // `browseSections` already uses (Task 76) - one fewer row, and the two
+  // panels now group selections the same way.
+  const TOP_MERGE_ORDER = useMemo(() => [ClothingCategory.DRESS, ClothingCategory.TOP, ClothingCategory.JACKET], []);
+  const selectionSections = useMemo(() => {
+    const byCategories = (cats: ClothingCategory[]) =>
+      selectedItems
+        .filter((item) => cats.includes(item.category))
+        .sort((a, b) => cats.indexOf(a.category) - cats.indexOf(b.category));
+    return [
+      { label: 'Top', items: byCategories(TOP_MERGE_ORDER) },
+      { label: 'Bottom', items: byCategories([ClothingCategory.BOTTOM]) },
+    ].filter((section) => section.items.length > 0);
+  }, [selectedItems, TOP_MERGE_ORDER]);
+  const shoeItems = useMemo(
+    () => selectedItems.filter((item) => item.category === ClothingCategory.SHOES),
+    [selectedItems]
+  );
   const accessoryItems = useMemo(
     () => selectedItems.filter((item) => item.category === ClothingCategory.ACCESSORY),
     [selectedItems]
   );
+
+  // Second follow-up to Task 76: mixed-gender warning. The page still
+  // deliberately allows an outfit to contain items of more than one
+  // `personaType` (that design call is unchanged - see the file-level
+  // comment above) - this just surfaces it, rather than the user
+  // noticing only when Persona Preview silently hides half the outfit.
+  const selectedPersonaTypes = useMemo(
+    () => Array.from(new Set(selectedItems.map((item) => item.personaType))),
+    [selectedItems]
+  );
+  const isMixedPersona = selectedPersonaTypes.length > 1;
 
   // Opens with the preview already on when arriving from OutfitCard's
   // "Wear Style" (Task 63), which navigates here with this hint in the
@@ -303,6 +369,24 @@ const FlatOutfitBuilderPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPersonaPreview]);
+
+  // Second follow-up to Task 76: "if you have selected for example male
+  // have male garments and then switch to female and add female garments
+  // it should give you an alert that you are mixing." Keyed on
+  // `isMixedPersona` itself (not the selection as a whole) so it fires
+  // once right when the outfit newly becomes mixed, not on every
+  // selection change afterward while it stays mixed - same "just
+  // happened" notification shape as the exclusion toast above. Removing
+  // items back down to one type and then mixing again re-fires it, since
+  // that's a real false->true transition of the same dependency.
+  useEffect(() => {
+    if (!isMixedPersona) return;
+    const labels = selectedPersonaTypes
+      .map((type) => type.charAt(0) + type.slice(1).toLowerCase())
+      .join(' and ');
+    showToast(`This outfit mixes ${labels} garments`, 'info');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMixedPersona]);
 
   if (!outfitsReady) {
     return (
@@ -488,7 +572,7 @@ const FlatOutfitBuilderPage = () => {
         </aside>
 
         {/* Right Panel: Current Selection (no persona rendering) */}
-        <main className="flex-grow relative bg-background-main overflow-y-auto no-scrollbar p-8">
+        <main className="flex-grow relative bg-background-main overflow-y-auto no-scrollbar p-6">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
               backgroundImage: 'radial-gradient(#5B8CFF 1px, transparent 1px)',
@@ -497,7 +581,7 @@ const FlatOutfitBuilderPage = () => {
           />
 
           <div className="relative">
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
                 {showPersonaPreview ? 'Persona Preview' : 'Your Selection'}
               </h3>
@@ -509,6 +593,21 @@ const FlatOutfitBuilderPage = () => {
                 {showPersonaPreview ? <LayoutGrid size={12} /> : <User size={12} />}
                 {showPersonaPreview ? 'List View' : 'Preview On Persona'}
               </button>
+            </div>
+
+            {/* Task 76 follow-up: persona type switcher, directly below the
+                Your Selection/Persona Preview header - a dropdown list
+                (not a cycle-on-click toggle) so a future third persona
+                type is just another list row, not a UI rework. Second
+                follow-up: also the browse grid's gender filter now (see
+                handleGenderFilterChange) - "Any" mode leaves Persona
+                Preview's own eligibility filtering below and the save
+                default on whatever the global persona type currently is. */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
+                Persona
+              </span>
+              <PersonaTypeSwitcher value={genderFilter} onChange={handleGenderFilterChange} />
             </div>
 
             {selectedItems.length === 0 ? (
@@ -571,30 +670,44 @@ const FlatOutfitBuilderPage = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-8">
-                {groupedSelection.map((group) => (
-                  <div key={group.category} className="space-y-3">
+              // Follow-up: "to see the entire outfit I need to scroll... make
+              // it so I can see all the outfit or at least most of it" -
+              // tightened the vertical rhythm (32px between groups -> 16px,
+              // 12px label-to-row gap -> 6px), same tradeoff as the Outfit
+              // Showcase page's own scroll fix (Task 75) - and merged
+              // Jacket/Top/Dress into one "Top" row (selectionSections,
+              // above) instead of three separate ones, matching the browse
+              // panel's own grouping - one fewer row on top of the tighter
+              // spacing, without shrinking the just-approved card size.
+              <div className="space-y-3">
+                {selectionSections.map((section) => (
+                  <div key={section.label} className="space-y-1.5">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
-                      {formatCategoryLabel(group.category)}
+                      {section.label}
                     </p>
-                    {group.category === ClothingCategory.SHOES ? (
-                      <ShoeSubRow items={group.items} onRemove={removeItem} />
-                    ) : (
-                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                        {group.items.map((item) => (
-                          <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
-                        ))}
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-4 justify-center">
+                      {section.items.map((item) => (
+                        <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
+                      ))}
+                    </div>
                   </div>
                 ))}
 
+                {shoeItems.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                      Shoes
+                    </p>
+                    <ShoeSubRow items={shoeItems} onRemove={removeItem} />
+                  </div>
+                )}
+
                 {accessoryItems.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-1.5">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
                       Accessories
                     </p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                    <div className="flex flex-wrap gap-4 justify-center">
                       {accessoryItems.map((item) => (
                         <SelectionCard key={item.itemId} item={item} onRemove={removeItem} />
                       ))}
