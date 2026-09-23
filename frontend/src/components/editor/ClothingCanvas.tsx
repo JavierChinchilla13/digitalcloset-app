@@ -32,7 +32,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   onCanvasReady,
   activeTool = 'select'
 }) => {
-  const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
+  const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
       canvas?.setDimensions(size);
@@ -41,8 +41,36 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   });
   const isUpdatingRef = useRef(false);
 
-  const mannequinUrl = personaType === PersonaType.MALE 
-    ? '/personas/male-base.png' 
+  // Task 53 (stale closure fix): `handleModified` below is registered once
+  // in an effect with `[]` deps, and `updateCrop` (in the crop effect) is
+  // re-created only when `activeTool` changes - neither re-runs when
+  // `transform` itself changes, so a plain `transform` reference inside
+  // either closure stays frozen at whatever it was when that effect last
+  // ran. Both spread `{...transform, ...}` to build the next update, so a
+  // stale `transform` there silently reverts any other in-flight change
+  // (confirmed live: entering crop mode then dragging the crop box once
+  // reverted an unrelated sidebar edit). `transformRef` is written on
+  // every render (a plain assignment, not an effect - cheap, and always
+  // up to date before any event handler can fire), so reading
+  // `transformRef.current` instead always gets the latest value
+  // regardless of which render created the closure that's reading it.
+  const transformRef = useRef(transform);
+  transformRef.current = transform;
+
+  // Task 53 (mask-follows-garment fix): tracks the garment's own
+  // left/top from whichever code path last positioned it - a direct
+  // canvas drag (`handleModified` below) or a programmatic sync from
+  // props (the "Sync Transform updates from props" effect further down)
+  // - so either path can compute "how far did it just move" as a plain
+  // delta and shift the crop mask's `clipPath` by the same amount,
+  // keeping it visually attached regardless of which path is moving the
+  // garment. Initialized once the garment actually loads (see that
+  // effect below); `null` until then means "nothing to compare against
+  // yet," not "moved by zero."
+  const lastGarmentPosRef = useRef<{ left: number; top: number } | null>(null);
+
+  const mannequinUrl = personaType === PersonaType.MALE
+    ? '/personas/male-base.png'
     : '/personas/female-base.png';
 
   // Initialize Canvas
@@ -57,15 +85,52 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       selection: false,
     });
 
-    fabricCanvasRef.current = canvas;
+    // Task 52/53 bug fix: was a direct `fabricCanvasRef.current = canvas`
+    // assignment - see useFabricCanvas's own comment on setFabricCanvas
+    // for why that left the canvas at the browser's default 300x150 size
+    // (blank-looking) until something else happened to resize the
+    // container. setFabricCanvas re-applies the correct size immediately.
+    setFabricCanvas(canvas);
     if (onCanvasReady) onCanvasReady(canvas);
 
     const handleModified = () => {
       const activeObject = canvas.getActiveObject();
       if (activeObject && activeObject.name === 'garment' && !isUpdatingRef.current) {
+        // Task 53 (mask-follows-garment fix, the direct-drag path): this
+        // fires on every 'object:moving' tick while the user is actively
+        // dragging the garment on canvas - the actual, common way a
+        // garment gets moved (there's no X/Y position slider in
+        // TransformPanel, only direct canvas dragging). The earlier fix
+        // in the "Sync Transform updates from props" effect below only
+        // covers the *other* direction (React state pushing a position
+        // onto the canvas), which direct dragging never goes through -
+        // without this, the crop window would still visibly stay put
+        // while the garment slides out from under it during the drag
+        // itself, even though the final position eventually gets
+        // recorded correctly. Same shift-by-delta approach, just applied
+        // here instead: compare the garment's position now to where it
+        // was on the last tick (tracked in `lastGarmentPosRef`, shared
+        // with the other sync path so neither computes a delta against
+        // stale data) and shift the clip by the same amount.
+        const curLeft = activeObject.left ?? 0;
+        const curTop = activeObject.top ?? 0;
+        if (
+          lastGarmentPosRef.current &&
+          activeObject.clipPath &&
+          activeObject.clipPath.name === 'cropMask'
+        ) {
+          const deltaX = curLeft - lastGarmentPosRef.current.left;
+          const deltaY = curTop - lastGarmentPosRef.current.top;
+          if (deltaX !== 0 || deltaY !== 0) {
+            const clip = activeObject.clipPath as Rect;
+            clip.set({ left: (clip.left ?? 0) + deltaX, top: (clip.top ?? 0) + deltaY });
+          }
+        }
+        lastGarmentPosRef.current = { left: curLeft, top: curTop };
+
         const virtualTransform = getVirtualTransform(activeObject, canvas.getWidth(), canvas.getHeight());
         onTransformChange({
-          ...transform,
+          ...transformRef.current,
           ...virtualTransform,
         });
       }
@@ -78,7 +143,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
 
     return () => {
       canvas.dispose();
-      fabricCanvasRef.current = null;
+      setFabricCanvas(null);
     };
   }, []);
 
@@ -117,7 +182,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
 
       canvas.add(cropBox);
       canvas.setActiveObject(cropBox);
-      
+
       const updateCrop = () => {
         const clipRect = new Rect({
           left: cropBox.left,
@@ -130,9 +195,9 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
           absolutePositioned: true
         });
         garment.set({ clipPath: clipRect });
-        
+
         onTransformChange({
-          ...transform,
+          ...transformRef.current,
           maskLeft: toVirtualCoord(cropBox.left!, canvas.getHeight()),
           maskTop: toVirtualCoord(cropBox.top!, canvas.getHeight()),
           maskWidth: toVirtualCoord(cropBox.getScaledWidth(), canvas.getHeight()),
@@ -228,6 +293,14 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         canvas.add(garment);
         canvas.setActiveObject(garment);
         canvas.requestRenderAll();
+
+        // Task 53 (mask-follows-garment fix): establishes the baseline
+        // `handleModified`/the sync effect below compare against for
+        // their first delta - without this, the first drag or programmatic
+        // move after a (re)load would compare against `null` (correctly
+        // skipped, per the guards in both places) or, worse, stale data
+        // left over from a previous garment.
+        lastGarmentPosRef.current = { left: garment.left ?? 0, top: garment.top ?? 0 };
       } catch (err) {
         console.error("Error loading images into Fabric canvas:", err);
       }
@@ -248,9 +321,47 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
 
+      // Task 53 (mask-follows-garment fix): the crop mask's clipPath is
+      // `absolutePositioned: true` (canvas-space, not relative to the
+      // garment's own transform - see the crop effect above), so without
+      // this it stays fixed in place while the garment moves underneath
+      // it - confirmed live as "moving a cropped garment slides it under
+      // a stationary window." Capture how far the garment is about to
+      // move, in the same canvas-pixel units the clip's own left/top are
+      // stored in, and shift the clip by that same delta so it stays
+      // visually attached, then persist the shifted position back into
+      // `transform.maskLeft/maskTop` so a save/reload doesn't lose it -
+      // the load effect above re-derives the clip from those fields, not
+      // from whatever the live Fabric object happens to hold at the
+      // moment of saving. Fixes translation (the reported case) and
+      // keeps working under scaling too, since the delta is computed in
+      // the same already-scaled canvas-pixel space the clip lives in.
+      // Rotation is a known remaining gap: an absolutely-positioned,
+      // axis-aligned clip can translate and resize with the object, but
+      // can't rotate with it without also being re-expressed in the
+      // garment's own local coordinate space - out of scope for this fix.
+      const prevLeft = garment.left ?? 0;
+      const prevTop = garment.top ?? 0;
+      const newLeft = toCanvasX(transform.x, canvasWidth, canvasHeight);
+      const newTop = toCanvasCoord(transform.y, canvasHeight);
+      const deltaX = newLeft - prevLeft;
+      const deltaY = newTop - prevTop;
+
+      if ((deltaX !== 0 || deltaY !== 0) && garment.clipPath && garment.clipPath.name === 'cropMask') {
+        const clip = garment.clipPath as Rect;
+        const newClipLeft = (clip.left ?? 0) + deltaX;
+        const newClipTop = (clip.top ?? 0) + deltaY;
+        clip.set({ left: newClipLeft, top: newClipTop });
+        onTransformChange({
+          ...transformRef.current,
+          maskLeft: toVirtualCoord(newClipLeft, canvasHeight),
+          maskTop: toVirtualCoord(newClipTop, canvasHeight),
+        });
+      }
+
       garment.set({
-        left: toCanvasX(transform.x, canvasWidth, canvasHeight),
-        top: toCanvasCoord(transform.y, canvasHeight),
+        left: newLeft,
+        top: newTop,
         angle: transform.rotation,
         opacity: transform.opacity ?? 1,
         flipX: transform.flipX ?? false,
@@ -277,6 +388,11 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       }
 
       garment.setCoords();
+      // Keep the shared "last known position" ref in sync with whatever
+      // this pass just set, so a subsequent direct canvas drag
+      // (`handleModified` above) computes its own delta against this
+      // pass's result instead of stale data from before it ran.
+      lastGarmentPosRef.current = { left: garment.left ?? 0, top: garment.top ?? 0 };
       canvas.requestRenderAll();
       isUpdatingRef.current = false;
     }

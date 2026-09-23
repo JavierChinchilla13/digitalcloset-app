@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -55,6 +56,19 @@ public class GlobalExceptionHandler {
         body.put("errors", fieldErrors);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // Bad credentials / unknown user from AuthenticationManager.authenticate()
+    // - AuthenticationException is a RuntimeException, so without this handler
+    // it falls through to the generic RuntimeException handler below and
+    // returns a misleading 500 instead of a proper 401.
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Object> handleAuthenticationException(AuthenticationException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", "Invalid email or password");
+
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     }
 
     // Fallback for anything else (unexpected RuntimeExceptions, NPEs, DB errors,
