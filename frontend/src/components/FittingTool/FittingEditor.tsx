@@ -122,13 +122,14 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         {/* Main Canvas Area */}
         <main className="flex-1 flex flex-col gap-6 order-1 md:order-2">
           <div className="flex-grow relative min-h-[500px]">
-             <ClothingCanvas 
+             <ClothingCanvas
                 imageUrl={imageUrl}
                 category={category}
                 personaType={personaType}
                 transform={transform}
                 onTransformChange={setTransform}
                 onCanvasReady={(canvas) => { fabricCanvasRef.current = canvas; }}
+                activeTool={activeTool}
               />
           </div>
         </main>

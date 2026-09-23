@@ -36,7 +36,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
   activeSide,
   onSideSelect
 }) => {
-  const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
+  const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
       canvas?.setDimensions(size);
@@ -61,7 +61,12 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
       selection: false,
     });
 
-    fabricCanvasRef.current = canvas;
+    // Task 52/53 bug fix: was a direct `fabricCanvasRef.current = canvas`
+    // assignment - see useFabricCanvas's own comment on setFabricCanvas
+    // for why that left the canvas at the browser's default 300x150 size
+    // (blank-looking) until something else happened to resize the
+    // container. setFabricCanvas re-applies the correct size immediately.
+    setFabricCanvas(canvas);
     if (onCanvasReady) onCanvasReady(canvas);
 
     const handleModified = (e: any) => {
@@ -94,7 +99,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
 
     return () => {
       canvas.dispose();
-      fabricCanvasRef.current = null;
+      setFabricCanvas(null);
     };
   }, []);
 

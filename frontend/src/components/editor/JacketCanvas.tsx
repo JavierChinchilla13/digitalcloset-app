@@ -34,7 +34,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   activePart = 'torso',
   isGroupMode = false
 }) => {
-  const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
+  const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     resizeThreshold: 5,
   });
@@ -75,7 +75,12 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
       height: canvasSize.height
     });
 
-    fabricCanvasRef.current = canvas;
+    // Task 53: consistent with ClothingCanvas/ShoeCanvas's own fix for the
+    // blank-canvas bug, though this component was never actually affected
+    // by it - it already passes `width`/`height` straight to the Canvas
+    // constructor above (gated on `canvasSize.height` being ready), so
+    // there was never a stale-300x150-default window to begin with.
+    setFabricCanvas(canvas);
     if (onCanvasReady) onCanvasReady(canvas);
 
     const handleModified = (e?: any) => {
@@ -294,7 +299,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
     return () => {
       cancelled = true;
       canvas.dispose();
-      fabricCanvasRef.current = null;
+      setFabricCanvas(null);
     };
   }, [segments, personaType, canvasSize]); // Re-init on hard changes
 

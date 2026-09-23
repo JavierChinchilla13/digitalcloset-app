@@ -1146,7 +1146,8 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 *(renumbered 2026-09-01 from 44–48 to 52–56, same reason as Phase 9 above)*
 
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
-- [ ] **53** Fix crop stale closure + mask-follows-garment
+- [x] **53** Fix crop stale closure + mask-follows-garment (+ the
+      blank-canvas bug found in Task 52, per explicit request)
 - [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
 - [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
 - [ ] **56** Prototype bake-on-save deformation for one garment type
@@ -2493,10 +2494,133 @@ reaching the crop tool at all, and it's a small, well-understood fix
 once `fabricCanvasRef.current` becomes available, e.g. via its own
 effect keyed off canvas creation instead of only off container resize).
 
+### Task 53 — fixes implemented (2026-09-22, "go ahead and fix Task 53,
+include the blank-canvas bug")
+
+**Blank-canvas bug (shared across all three Fabric editors):**
+`useFabricCanvas` now tracks the last computed size in a
+`latestSizeRef`, kept up to date even before a Fabric `Canvas` exists,
+and returns a new `setFabricCanvas(canvas)` function that callers use
+in place of a direct `fabricCanvasRef.current = canvas` assignment -
+it sets the ref *and* immediately re-applies the last known size via
+the same `onResize` callback path, instead of only ever updating on a
+container resize that may never come. Updated all three editors
+(`ClothingCanvas.tsx`, `ShoeCanvas.tsx` - both had the exact same buggy
+pattern; `JacketCanvas.tsx` - never actually affected, since it already
+passes `width`/`height` straight to the `Canvas` constructor, updated
+anyway for consistency with the shared hook's own intended usage).
+Verified live, repeatedly, on fresh tabs and after a full dev-server
+restart (to rule out any HMR/stale-module explanation): the canvas now
+renders at its correct size (e.g. 384x512, matching the enforced 3:4
+aspect ratio) with the mannequin and garment both visible on the very
+first open, no resize needed, no console errors.
+
+**Stale closure:** added `transformRef` (written on every render, not
+inside an effect), and swapped every `...transform` spread inside a
+closure that doesn't re-run when `transform` changes for
+`...transformRef.current` - both in `updateCrop` (the originally-
+diagnosed case) and in `handleModified` (registered once with `[]`
+deps in the "Initialize Canvas" effect, fires on every direct garment
+drag/scale/rotate on canvas - the *same* class of bug, just not
+flagged in the original 5-defect list, since it doesn't corrupt mask
+fields specifically - `getVirtualTransform` already re-derives those
+live from the canvas - but would silently drop any other field, like a
+hypothetical future `zIndex`/`openness` control, changed between mount
+and a drag). Verified live: entered crop mode, changed rotation via the
+sidebar slider to 45, dragged the crop box - rotation stayed at 45
+(previously reverted to 0).
+
+**Mask-follows-garment - two directions, not one:** the first pass
+only fixed the React-state-pushes-a-position-onto-canvas direction (in
+the "Sync Transform updates from props" effect) - by shifting the
+clip's `left`/`top` by the same delta the garment is about to move,
+computed against the garment's *previous* canvas position, then
+persisting the shift back to `transform.maskLeft/maskTop` so it isn't
+lost on save/reload. Live testing then showed this doesn't cover the
+*actual* common case at all: there's no X/Y position slider anywhere in
+`TransformPanel`, so a user can only ever move a garment by dragging it
+directly on canvas - which goes through `handleModified`
+(canvas-drag-pushes-a-position-into-React-state), the opposite
+direction, never touched by the first pass. Added the same delta-shift
+logic there too, comparing against a new shared `lastGarmentPosRef`
+(also written by the "Sync Transform" effect, so neither direction
+computes a delta against data the other direction just made stale) -
+this is what actually moves the clip in real time *during* a drag,
+before `handleModified` even reports the new position back to React.
+Verified live with a real pre-cropped test item (mask smaller than the
+garment, off-center): dragged the garment on canvas, and the visible
+crop content - the same two flower blooms, same relative position
+within the frame - moved together with it as a unit, rather than the
+crop window staying put while a different part of the photo slid
+underneath. Rotation remains a known, documented gap (an
+absolutely-positioned axis-aligned clip can translate and resize with
+the object but can't rotate with it without being re-expressed in the
+garment's own local coordinate space) - out of scope for this pass,
+translation was the specifically reported symptom.
+
+**Found in passing during this round's live testing, NOT fixed - a
+new, separate issue flagged for a future task, not expanded into
+here per the user's specific request scope:** during crop mode,
+`garment.set({ selectable: false })` does not reliably prevent the
+garment from becoming the active object and receiving drag events.
+Reproduced repeatedly, including with zero `resize_window` calls in
+the test sequence (ruling out the canvas-resize-mid-crop theory as the
+sole cause) and via direct instrumentation (`canvas.getActiveObject()`
+genuinely returns the garment, not the crop box, immediately after a
+drag that visually looked like it was on the crop box). Practical
+effect: a user who thinks they're resizing/moving the crop window
+during crop mode may actually be dragging the garment underneath it
+instead - a plausible real contributor to the tool "feeling broken,"
+separate from all three fixes above. Root cause not yet isolated
+(current leading theory: `canvas.setActiveObject(cropBox)` not
+reliably holding once the crop box's own bounds are hit near an edge,
+but this needs dedicated investigation, not a guess baked into this
+commit).
+
+**Verification:** `tsc -b --force` + `vite build` clean after every
+change, including the final pass. Live-tested all three fixes on fresh
+browser tabs after a full dev-server restart. Test items created for
+verification (a plain item for the blank-canvas/stale-closure checks,
+a second item created directly via the API with a pre-existing
+off-center mask for the mask-follow check) were deleted after,
+confirmed empty on re-fetch.
+
+### Task 53 follow-up — Crop & Mask button did nothing (2026-09-22)
+
+User report: "when I click crop and mask it does nothing." Reproduced
+live - clicking the toolbar button visibly toggled active state (the
+button itself is styled purely off `FittingEditor`'s own `activeTool`
+state), but nothing happened on canvas. Root cause, confirmed via a
+temporary `window.__debugCanvas` exposure and direct queries against
+the live Fabric canvas: `FittingEditor.tsx`'s render of `<ClothingCanvas>`
+never actually passed its `activeTool` state down as a prop - the call
+only passed `imageUrl`/`category`/`personaType`/`transform`/
+`onTransformChange`/`onCanvasReady`. Since `ClothingCanvas`'s own
+`activeTool` prop defaults to `'select'`, it silently never saw the
+toolbar's `'crop'` value, so the "Handle Tool Changes (Crop)" effect
+(which adds the `cropBox` and locks the garment) never ran - confirmed
+directly: canvas objects stayed `[mannequin, garment]` with
+`garment.selectable: true` and the active object still `garment` after
+clicking the button. This is a separate bug from all three fixed above
+- a missing one-line prop wire, most likely present since the crop tool
+was first built, not something the other fixes touched.
+(`JacketFittingEditor`/`ShoeFittingEditor` don't have a crop tool at
+all, so they're unaffected.)
+
+**Fix:** `FittingEditor.tsx` now passes `activeTool={activeTool}` to
+`<ClothingCanvas>`.
+
+**Verified live:** fresh tab, real click sequence (Edit garment → Open
+Studio → Crop & Mask) - the crop box now appears with handles,
+drag-resizing it live-updates the mask, and switching back to Select
+shows the garment correctly clipped to the new bounds. `tsc -b --force`
++ `vite build` clean. Test item deleted after, confirmed via API.
+
 ### Tasks
 
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
-- [ ] **53** Fix crop stale closure + mask-follows-garment
+- [x] **53** Fix crop stale closure + mask-follows-garment (+ the
+      blank-canvas bug found in Task 52, per explicit request)
 - [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
 - [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
 - [ ] **56** Prototype bake-on-save deformation for one garment type
