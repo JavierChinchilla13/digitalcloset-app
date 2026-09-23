@@ -4597,3 +4597,15 @@ that you are mixing."
   sized cards, not cramped. `tsc -b --force` + `vite build` clean;
   gender-filter/mixing-alert/scroll test items (7 total, one deliberately
   the opposite gender) deleted after, confirmed empty on re-fetch.
+
+**Phase 9.7 is now complete (Tasks 73-76, plus twelve rounds of live
+follow-up feedback on Task 75 and two on Task 76 - see each task's own
+write-up above for the full history).** Per the checkpoint precedent set
+in Phase 9.5's own planning note, the checkpoint into `main` and the cut
+of `phase-10-persona-fitting` waited until all of Phase 9.5/9.6/9.7 was
+done - that happened 2026-09-22: `phase-9-categories-experience` merged
+into `main` cleanly (no conflicts), verified with `tsc -b --force` +
+`vite build` on the frontend and `./mvnw compile` on the backend (all
+clean) post-merge, then pushed; `phase-10-persona-fitting` cut from the
+updated `main` and pushed. Phase 10 (Tasks 52-56, crop-tool repair)
+starts fresh on that branch.
