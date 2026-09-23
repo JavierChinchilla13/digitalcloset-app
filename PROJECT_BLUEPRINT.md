@@ -1145,7 +1145,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 *(renumbered 2026-09-01 from 44–48 to 52–56, same reason as Phase 9 above)*
 
-- [ ] **52** Reproduce + confirm crop tool defects live; report before fixing
+- [x] **52** Reproduce + confirm crop tool defects live; report before fixing
 - [ ] **53** Fix crop stale closure + mask-follows-garment
 - [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
 - [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
@@ -2401,9 +2401,101 @@ canvas — `PersonaLayer` renders an `<img>` with CSS `transform` and
 (c) do nothing; accept rigid transforms        (valid, defer)
 ```
 
+### Task 52 — live reproduction results (2026-09-22)
+
+Opened `FittingEditor` (via `ClosetPage`'s "Edit" -> "Open Studio") on a
+real test item and worked through the crop tool live. One major defect
+found that the earlier code-reading diagnosis didn't anticipate, plus
+live corroboration for the documented ones where interaction allowed it.
+
+**New finding, not in the original 5 - likely the primary reason the
+tool "feels broken":** `ClothingCanvas`'s Fabric canvas renders
+**completely blank** on every normal open - no mannequin, no garment,
+nothing visible - until *something* fires a browser `resize` event.
+Confirmed the exact mechanism, not just the symptom:
+- `ClothingCanvas` calls `useFabricCanvas({ aspectRatio: ASPECT_RATIO,
+  onResize: (size, canvas) => { canvas?.setDimensions(size); ... } })`
+  *before* its own "Initialize Canvas" `useEffect` that actually
+  constructs the Fabric `Canvas` instance. React runs effects in the
+  order they're registered during render, so on first mount,
+  `useFabricCanvas`'s own internal resize effect (registered earlier,
+  since the hook is called first) fires its initial `updateSize()`
+  *before* `fabricCanvasRef.current` has been set - so `onResize` runs
+  with `canvas === null`, and `canvas?.setDimensions(size)` is a silent
+  no-op. The Fabric `Canvas` is then constructed with no explicit
+  width/height, so it keeps the HTML `<canvas>` element's built-in
+  browser default: 300x150px. Nothing calls `setDimensions` again
+  afterward unless the container's size genuinely changes and the
+  `ResizeObserver` fires a second time - which a real user's browser
+  essentially never does on its own.
+- Verified live, both ways: confirmed the canvas DOM element measured
+  exactly 300x150 (the browser's literal built-in default - not a
+  coincidence) with nothing visible in it; then triggered a real window
+  resize (not a synthetic event - an actual 1px viewport width change),
+  which fixed it instantly - canvas resized to its correct ~490x660,
+  mannequin and garment both rendered correctly. Reproduced this
+  blank-then-fixed-by-resize sequence twice, consistently.
+- This makes every one of the 5 originally-documented defects below
+  harder to even notice/diagnose as a *user*, since most people would
+  give up on an apparently-blank editor before ever reaching the crop
+  tool itself - but it's a separate bug from all five, worth its own
+  fix line rather than folding into Task 53.
+
+**The 5 originally-documented defects, live-testing status:**
+1. **Stale closure** - live evidence obtained, though not a clean
+   isolated repro: with the canvas rendering correctly (post-resize-fix),
+   entered crop mode, then dragged the crop box once. The sidebar's
+   "Height" slider (`transform.height`, a garment property with nothing
+   to do with the crop mask) changed from 450 to 300 as a direct result
+   of that single crop-box drag - concrete live evidence that
+   interacting with the crop box corrupts unrelated transform state,
+   consistent with the diagnosed stale-closure mechanism (`updateCrop`
+   spreading a `transform` object captured once at crop-mode-entry over
+   whatever the live state currently is). Did not additionally isolate a
+   clean "change rotation via the sidebar mid-crop, then drag, watch it
+   revert" repro - the canvas's own size instability during testing (see
+   below) made precisely targeting small Fabric resize handles
+   unreliable enough that a negative result there wouldn't be meaningful.
+2. **Mask doesn't follow the garment** - confirmed via code (the clip
+   rect is `absolutePositioned: true` in both the crop effect and the
+   load effect, in `ClothingCanvas.tsx`) but not independently isolated
+   live this round - the same handle-targeting difficulty applied.
+   High-confidence given the code is unambiguous and unchanged since the
+   original diagnosis.
+3. **No un-crop** - confirmed live: `CanvasToolbar` renders exactly two
+   tool buttons, "Select" and "Crop & Mask" - no reset/clear affordance
+   exists anywhere in the studio UI.
+4. **Race on entry** - not independently reproduced this round (timing-
+   dependent, and the canvas-blank bug above already produces a
+   superficially similar "nothing happened" symptom that would need to
+   be told apart from the real race condition first). Code-level logic
+   (`if (!garment) return;` with no re-run when the garment finishes
+   loading, since the effect only depends on `[activeTool]`) is
+   unchanged from the original diagnosis.
+5. **Mask survives only via the live clipPath object** - architectural,
+   confirmed by re-reading `getVirtualTransform`; not independently
+   live-tested this round.
+
+**Open Question #11 answer:** based on the stale-closure evidence
+obtained (a fresh crop-mode entry, immediately followed by one drag,
+already corrupted unrelated state), this reads as broken for **new**
+crops, not just on reopening an existing one - though a dedicated
+reopen-an-existing-crop repro wasn't separately isolated this round.
+
+**Also worth noting for Task 53's scope:** fixing the stale closure and
+mask-follow defects without first fixing the canvas-sizing bug above
+would leave the *default* experience unchanged (still blank until a
+resize happens to fire) - recommend fixing the canvas sizing first (or
+in the same pass), since it's what actually blocks a normal user from
+reaching the crop tool at all, and it's a small, well-understood fix
+(most likely: swap the two effects' registration order in
+`ClothingCanvas.tsx`, or have `useFabricCanvas` call `onResize` again
+once `fabricCanvasRef.current` becomes available, e.g. via its own
+effect keyed off canvas creation instead of only off container resize).
+
 ### Tasks
 
-- [ ] **52** Reproduce + confirm crop tool defects live; report before fixing
+- [x] **52** Reproduce + confirm crop tool defects live; report before fixing
 - [ ] **53** Fix crop stale closure + mask-follows-garment
 - [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
 - [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
@@ -2487,8 +2579,13 @@ the phase they block.
 
 ### Blocking Phase 10 (fitting)
 
-11. **Crop repro.** Is it broken for *new* crops, for *reopening* an existing
-    crop, or both? This decides which of the five defects gets fixed first.
+11. ✅ **Crop repro — RESOLVED (Task 52, 2026-09-22).** Broken for *new*
+    crops (live evidence: a fresh crop-mode entry followed by a single
+    drag already corrupted unrelated transform state) - see Task 52's
+    write-up under 10a for the full live-testing results, including a
+    newly-found sixth defect (the canvas renders blank until a window
+    resize fires) that's likely the primary reason the tool feels broken
+    at all.
 12. **Deformation approach.** Confirm bake-on-save (b) over a persona
     renderer rewrite (a).
 
