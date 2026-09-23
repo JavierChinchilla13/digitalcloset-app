@@ -1,14 +1,21 @@
-import { useEffect, useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Sparkles, Loader2, User, LayoutList } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useOutfitStore } from '../store/useOutfitStore';
-import { useClothingStore } from '../store/useClothingStore';
-import { usePersonaStore } from '../store/usePersonaStore';
-import { buildOutfitPersona } from '../utils/personaEligibility';
-import { buildShowcaseRows } from '../utils/selectionDisplay';
-import PersonaRenderer from '../components/PersonaRenderer';
-import type { ClothingItem, Outfit, PersonaState } from '../types';
+import { useEffect, useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Loader2,
+  User,
+  LayoutList,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useOutfitStore } from "../store/useOutfitStore";
+import { useClothingStore } from "../store/useClothingStore";
+import { usePersonaStore } from "../store/usePersonaStore";
+import { buildOutfitPersona } from "../utils/personaEligibility";
+import { buildShowcaseRows } from "../utils/selectionDisplay";
+import PersonaRenderer from "../components/PersonaRenderer";
+import type { ClothingItem, Outfit, PersonaState } from "../types";
 
 // Outfit Showcase (Task 75, Phase 9.7) - reachable by clicking the navbar
 // logo while signed in ("a landing page that is basically an outfit
@@ -69,7 +76,13 @@ import type { ClothingItem, Outfit, PersonaState } from '../types';
 // depends on keeping these images small - so they're back to the 160px
 // size, `py-0.5` stays as-is (that part of the fix was real and unrelated
 // to size).
-const CategoryRow = ({ displayItems, extraCount }: { displayItems: ClothingItem[]; extraCount: number }) => (
+const CategoryRow = ({
+  displayItems,
+  extraCount,
+}: {
+  displayItems: ClothingItem[];
+  extraCount: number;
+}) => (
   <div className="flex items-center justify-center gap-3 py-0.5 border-b border-ink/5 last:border-b-0">
     {displayItems.map((item) => (
       <img
@@ -140,49 +153,112 @@ const CategoryRow = ({ displayItems, extraCount }: { displayItems: ClothingItem[
 // only work if Tailwind's build-time scanner can see the literal text)
 // rather than one size for every outfit.
 const RAY_COUNT = 8;
-const AURA_CENTER = 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none';
+const AURA_CENTER =
+  "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none";
 
 // Diameter scales roughly with sqrt(rowCount) (aura area, not diameter,
 // should track content amount) off the 4-row size validated live -
 // clamped to 1-4 rows since a bare-persona/no-rows case still wants a
 // reasonably sized glow, not a pinprick.
 const AURA_SIZE_BY_ROWS: Record<1 | 2 | 3 | 4, string> = {
-  1: 'w-[220px] h-[220px] sm:w-[280px] sm:h-[280px]',
-  2: 'w-[270px] h-[270px] sm:w-[340px] sm:h-[340px]',
-  3: 'w-[330px] h-[330px] sm:w-[415px] sm:h-[415px]',
-  4: 'w-[380px] h-[380px] sm:w-[480px] sm:h-[480px]',
+  1: "w-[220px] h-[220px] sm:w-[280px] sm:h-[280px]",
+  2: "w-[270px] h-[270px] sm:w-[340px] sm:h-[340px]",
+  3: "w-[330px] h-[330px] sm:w-[415px] sm:h-[415px]",
+  4: "w-[380px] h-[380px] sm:w-[480px] sm:h-[480px]",
 };
 const RING_SIZE_BY_ROWS: Record<1 | 2 | 3 | 4, string> = {
-  1: 'w-[154px] h-[154px] sm:w-[196px] sm:h-[196px]',
-  2: 'w-[189px] h-[189px] sm:w-[238px] sm:h-[238px]',
-  3: 'w-[231px] h-[231px] sm:w-[291px] sm:h-[291px]',
-  4: 'w-[266px] h-[266px] sm:w-[336px] sm:h-[336px]',
+  1: "w-[154px] h-[154px] sm:w-[196px] sm:h-[196px]",
+  2: "w-[189px] h-[189px] sm:w-[238px] sm:h-[238px]",
+  3: "w-[231px] h-[231px] sm:w-[291px] sm:h-[291px]",
+  4: "w-[266px] h-[266px] sm:w-[336px] sm:h-[336px]",
 };
 const CORE_SIZE_BY_ROWS: Record<1 | 2 | 3 | 4, string> = {
-  1: 'w-[187px] h-[187px] sm:w-[238px] sm:h-[238px]',
-  2: 'w-[230px] h-[230px] sm:w-[289px] sm:h-[289px]',
-  3: 'w-[281px] h-[281px] sm:w-[353px] sm:h-[353px]',
-  4: 'w-[323px] h-[323px] sm:w-[408px] sm:h-[408px]',
+  1: "w-[187px] h-[187px] sm:w-[238px] sm:h-[238px]",
+  2: "w-[230px] h-[230px] sm:w-[289px] sm:h-[289px]",
+  3: "w-[281px] h-[281px] sm:w-[353px] sm:h-[353px]",
+  4: "w-[323px] h-[323px] sm:w-[408px] sm:h-[408px]",
 };
-const clampRowCount = (n: number): 1 | 2 | 3 | 4 => Math.min(Math.max(Math.round(n), 1), 4) as 1 | 2 | 3 | 4;
+// Eleventh follow-up: sized off AURA_SIZE_BY_ROWS (the largest layer -
+// flash/rays), applied as a min-height on AuraGlow's own wrapper instead
+// of a width/height on an aura layer - see the comment on that wrapper
+// below for why a sparse outfit's shorter content was letting the aura
+// clip against an overflow-hidden ancestor. Twelfth follow-up: matching
+// the diameter exactly still clipped - Tailwind's global border-box
+// reset means `min-height` INCLUDES this wrapper's own `py-2` padding
+// rather than adding on top of it, so the actual available room was 16px
+// short of the aura's own size alone; on top of that, the "hot core"
+// layer uses `blur-2xl`, and a CSS blur filter visually bleeds past its
+// element's own geometric box (unlike a radial-gradient, which fades
+// within its own bounds) - neither of those was in the original budget.
+// +100px over the base diameter comfortably covers both without needing
+// to compute the blur radius's exact falloff.
+const AURA_MIN_HEIGHT_BY_ROWS: Record<1 | 2 | 3 | 4, string> = {
+  1: "min-h-[320px] sm:min-h-[380px]",
+  2: "min-h-[370px] sm:min-h-[440px]",
+  3: "min-h-[430px] sm:min-h-[515px]",
+  4: "min-h-[480px] sm:min-h-[580px]",
+};
+const clampRowCount = (n: number): 1 | 2 | 3 | 4 =>
+  Math.min(Math.max(Math.round(n), 1), 4) as 1 | 2 | 3 | 4;
 
-const AuraGlow = ({ rowCount, children }: { rowCount: number; children: React.ReactNode }) => {
+const AuraGlow = ({
+  rowCount,
+  flashKey,
+  children,
+}: {
+  rowCount: number;
+  // Outfit-switch animation follow-up: the active ShowcaseSlot instance is
+  // now persistent across outfit switches (see OutfitShowcasePage below),
+  // so this component no longer remounts on its own when a new outfit
+  // becomes active - which would otherwise silence the one-time entry
+  // flash after the very first outfit. Putting the outfit's id here as a
+  // `key` on JUST the flash element (not the whole AuraGlow, and not
+  // wrapped in AnimatePresence/no `exit` prop) forces a plain, synchronous
+  // remount of that one element whenever the outfit changes, replaying the
+  // flash - nothing to get stuck on since there's no exit animation to
+  // await, unlike the AnimatePresence-based attempts that caused the
+  // switching bug fixed earlier. The looping rays/rings/core stay on the
+  // same instance and keep cycling uninterrupted, which reads better
+  // than restarting them on every click anyway.
+  flashKey: string | number;
+  children: React.ReactNode;
+}) => {
   const bucket = clampRowCount(rowCount);
   const auraSize = AURA_SIZE_BY_ROWS[bucket];
   const ringSize = RING_SIZE_BY_ROWS[bucket];
   const coreSize = CORE_SIZE_BY_ROWS[bucket];
 
   return (
-    <div className="relative flex items-center justify-center py-2">
+    // Eleventh follow-up: "check the aura flow when an outfit have less
+    // pieces...it cuts off" - every aura layer is sized off AURA_SIZE_
+    // BY_ROWS (a fixed diameter per row count, unrelated to the actual
+    // content height), but this wrapper's own height was previously
+    // whatever `children` (the garment rows) needed - for a sparse
+    // outfit (1-2 rows), that's shorter than the aura's own diameter, so
+    // the aura stuck out past this box's edges. A parent further up
+    // (the carousel's middle row) clips overflow, so the aura's top/
+    // bottom got visibly cut off instead of rendering as a clean circle.
+    // `min-h`, keyed off the same per-row-count bucket as the aura's own
+    // size, guarantees this wrapper is always at least as tall as the
+    // aura needs, regardless of how little content is inside it.
+    <div
+      className={`relative flex items-center justify-center py-2 ${AURA_MIN_HEIGHT_BY_ROWS[bucket]}`}
+    >
       {/* Entry flash - a bright burst that blooms once and fades, like the
-          initial "flash" frame of a power-up. */}
+          initial "flash" frame of a power-up. Keyed per-outfit (see the
+          comment on the `flashKey` prop above) so it replays every time a
+          new outfit becomes active, not just on the page's first load. */}
       <motion.div
+        key={flashKey}
         aria-hidden
         className={`${AURA_CENTER} ${auraSize} rounded-full`}
-        style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(199,203,209,0.6) 35%, transparent 70%)' }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(199,203,209,0.6) 35%, transparent 70%)",
+        }}
         initial={{ opacity: 1, scale: 0.2 }}
         animate={{ opacity: 0, scale: 1.6 }}
-        transition={{ duration: 1.2, ease: 'easeOut' }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
       />
 
       {/* Spinning energy rays - thin silver beams around the center, rotating
@@ -192,7 +268,7 @@ const AuraGlow = ({ rowCount, children }: { rowCount: number; children: React.Re
         aria-hidden
         className={`${AURA_CENTER} ${auraSize}`}
         animate={{ rotate: 360 }}
-        transition={{ duration: 150, repeat: Infinity, ease: 'linear' }}
+        transition={{ duration: 150, repeat: Infinity, ease: "linear" }}
       >
         {Array.from({ length: RAY_COUNT }).map((_, i) => (
           <motion.div
@@ -200,10 +276,16 @@ const AuraGlow = ({ rowCount, children }: { rowCount: number; children: React.Re
             className="absolute top-1/2 left-1/2 w-1/2 h-[3px] origin-left"
             style={{
               transform: `rotate(${(360 / RAY_COUNT) * i}deg)`,
-              background: 'linear-gradient(90deg, rgba(226,230,235,0.9), transparent)',
+              background:
+                "linear-gradient(90deg, rgba(226,230,235,0.9), transparent)",
             }}
             animate={{ opacity: [0.2, 0.9, 0.2] }}
-            transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: i * 1.4 }}
+            transition={{
+              duration: 16,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: i * 1.4,
+            }}
           />
         ))}
       </motion.div>
@@ -214,9 +296,14 @@ const AuraGlow = ({ rowCount, children }: { rowCount: number; children: React.Re
           key={i}
           aria-hidden
           className={`${AURA_CENTER} ${ringSize} rounded-full border-2`}
-          style={{ borderColor: 'rgba(199,203,209,0.5)' }}
+          style={{ borderColor: "rgba(199,203,209,0.5)" }}
           animate={{ scale: [0.9, 1.6], opacity: [0.7, 0] }}
-          transition={{ duration: 22, repeat: Infinity, ease: 'easeOut', delay: i * 11 }}
+          transition={{
+            duration: 22,
+            repeat: Infinity,
+            ease: "easeOut",
+            delay: i * 11,
+          }}
         />
       ))}
 
@@ -224,25 +311,13 @@ const AuraGlow = ({ rowCount, children }: { rowCount: number; children: React.Re
       <motion.div
         aria-hidden
         className={`${AURA_CENTER} ${coreSize} rounded-full blur-2xl`}
-        style={{ background: 'radial-gradient(circle, rgba(240,242,245,0.85) 0%, rgba(199,203,209,0.35) 55%, transparent 80%)' }}
+        style={{
+          background:
+            "radial-gradient(circle, rgba(240,242,245,0.85) 0%, rgba(199,203,209,0.35) 55%, transparent 80%)",
+        }}
         animate={{ opacity: [0.7, 1, 0.7], scale: [0.97, 1.06, 0.97] }}
-        transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
-
-      {/* Rising sparks - anchored to the same fixed square (not the content
-          box), spread across its width so they still stay within the glow. */}
-      <div className={`${AURA_CENTER} ${auraSize}`}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <motion.div
-            key={i}
-            aria-hidden
-            className="absolute bottom-[10%] w-1.5 h-1.5 rounded-full pointer-events-none"
-            style={{ left: `${20 + i * 12}%`, background: 'rgba(226,230,235,0.9)', boxShadow: '0 0 6px 2px rgba(199,203,209,0.7)' }}
-            animate={{ y: [0, -140], opacity: [0, 1, 0] }}
-            transition={{ duration: 16, repeat: Infinity, ease: 'easeOut', delay: i * 2.6 }}
-          />
-        ))}
-      </div>
 
       <div className="relative">{children}</div>
     </div>
@@ -253,12 +328,18 @@ interface ShowcaseSlotProps {
   outfit: Outfit;
   items: ClothingItem[];
   persona: PersonaState;
-  role: 'active' | 'side';
+  role: "active" | "side";
   onSelect?: () => void;
 }
 
-const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotProps) => {
-  const isActive = role === 'active';
+const ShowcaseSlot = ({
+  outfit,
+  items,
+  persona,
+  role,
+  onSelect,
+}: ShowcaseSlotProps) => {
+  const isActive = role === "active";
   const [showPersona, setShowPersona] = useState(false);
 
   // Default view resets to the flat rows whenever a different outfit
@@ -278,18 +359,29 @@ const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotPr
 
   const rows = useMemo(() => buildShowcaseRows(outfitItems), [outfitItems]);
   const accessoryCount = useMemo(
-    () => outfitItems.filter((item) => item.category === 'ACCESSORY').length,
-    [outfitItems]
+    () => outfitItems.filter((item) => item.category === "ACCESSORY").length,
+    [outfitItems],
   );
 
   return (
+    // Animation follow-up: the active role's opacity is now fully owned
+    // by the persistent fade wrapper in OutfitShowcasePage - this
+    // component's own initial/animate opacity, if also applied here,
+    // ended up nested inside that wrapper's opacity animation and got
+    // visibly stuck at 0 (two independent motion components both racing
+    // to control the same CSS `opacity` property on overlapping
+    // elements). `initial={false}` skips this component's own mount
+    // animation for the active role (nothing to skip in practice, since
+    // it no longer remounts) while leaving it in place, unchanged, for
+    // the side role - which still remounts per outfit and still needs
+    // its own enter/exit fade.
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={isActive ? false : { opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={!isActive ? onSelect : undefined}
-      className={`shrink-0 ${isActive ? 'w-[340px] sm:w-[460px]' : 'w-[150px] sm:w-[180px] cursor-pointer'}`}
+      className={`shrink-0 ${isActive ? "w-[340px] sm:w-[460px]" : "w-[150px] sm:w-[180px] cursor-pointer"}`}
       whileHover={!isActive ? { scale: 1.03 } : undefined}
     >
       {isActive ? (
@@ -298,7 +390,7 @@ const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotPr
               around the active outfit was removed - the content (and its
               aura) now floats directly on the page instead of sitting in a
               square. */}
-          <AuraGlow rowCount={rows.length}>
+          <AuraGlow rowCount={rows.length} flashKey={outfit.outfitId}>
             <AnimatePresence mode="wait">
               {!showPersona ? (
                 <motion.div
@@ -309,11 +401,16 @@ const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotPr
                   className="px-6"
                 >
                   {rows.map((row) => (
-                    <CategoryRow key={row.category} displayItems={row.displayItems} extraCount={row.extraCount} />
+                    <CategoryRow
+                      key={row.category}
+                      displayItems={row.displayItems}
+                      extraCount={row.extraCount}
+                    />
                   ))}
                   {accessoryCount > 0 && (
                     <p className="pt-3 text-center text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                      + {accessoryCount} {accessoryCount === 1 ? 'Accessory' : 'Accessories'}
+                      + {accessoryCount}{" "}
+                      {accessoryCount === 1 ? "Accessory" : "Accessories"}
                     </p>
                   )}
                 </motion.div>
@@ -325,7 +422,10 @@ const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotPr
                   exit={{ opacity: 0 }}
                   className="px-8"
                 >
-                  <PersonaRenderer persona={persona} className="h-[45vh] sm:h-[50vh]" />
+                  <PersonaRenderer
+                    persona={persona}
+                    className="h-[45vh] sm:h-[50vh]"
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -340,17 +440,26 @@ const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotPr
             className="w-full py-4 mt-2 border-t border-ink/5 flex items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary hover:bg-ink/[0.02] transition-all rounded-xl"
           >
             {showPersona ? <LayoutList size={14} /> : <User size={14} />}
-            {showPersona ? 'Show Pieces' : 'View on Persona'}
+            {showPersona ? "Show Pieces" : "View on Persona"}
           </button>
         </div>
       ) : (
         <div className="aspect-[3/4] rounded-2xl border border-ink/5 bg-card/60 overflow-hidden opacity-50 hover:opacity-80 transition-opacity grid grid-cols-2 gap-0.5 p-0.5">
           {outfitItems.slice(0, 4).map((item, idx) => (
-            <div key={item.itemId} className={`relative overflow-hidden rounded-lg bg-ink/5 ${outfitItems.length === 1 ? 'col-span-2 row-span-2' : ''}`}>
-              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+            <div
+              key={item.itemId}
+              className={`relative overflow-hidden rounded-lg bg-ink/5 ${outfitItems.length === 1 ? "col-span-2 row-span-2" : ""}`}
+            >
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                className="w-full h-full object-cover"
+              />
               {idx === 3 && outfitItems.length > 4 && (
                 <div className="absolute inset-0 bg-ink/60 flex items-center justify-center">
-                  <span className="text-on-accent text-[10px] font-medium">+{outfitItems.length - 3}</span>
+                  <span className="text-on-accent text-[10px] font-medium">
+                    +{outfitItems.length - 3}
+                  </span>
                 </div>
               )}
             </div>
@@ -359,7 +468,9 @@ const ShowcaseSlot = ({ outfit, items, persona, role, onSelect }: ShowcaseSlotPr
       )}
       <p
         className={`mt-4 text-center font-medium uppercase tracking-widest line-clamp-1 transition-opacity ${
-          isActive ? 'text-sm text-text-primary opacity-100' : 'text-[10px] text-text-secondary opacity-0'
+          isActive
+            ? "text-sm text-text-primary opacity-100"
+            : "text-[10px] text-text-secondary opacity-0"
         }`}
       >
         {outfit.name}
@@ -388,7 +499,7 @@ const OutfitShowcasePage = () => {
   // listing in the app already follows.
   const outfits = useMemo(
     () => allOutfits.filter((o) => o.avatarType === persona.type),
-    [allOutfits, persona.type]
+    [allOutfits, persona.type],
   );
 
   const n = outfits.length;
@@ -406,16 +517,59 @@ const OutfitShowcasePage = () => {
 
   const activePersona = useMemo(
     () => (activeOutfit ? buildOutfitPersona(activeOutfit, items) : null),
-    [activeOutfit, items]
+    [activeOutfit, items],
   );
   const leftPersona = useMemo(
     () => (leftOutfit ? buildOutfitPersona(leftOutfit, items) : null),
-    [leftOutfit, items]
+    [leftOutfit, items],
   );
   const rightPersona = useMemo(
     () => (rightOutfit ? buildOutfitPersona(rightOutfit, items) : null),
-    [rightOutfit, items]
+    [rightOutfit, items],
   );
+
+  // Outfit-switch animation follow-up: "right now the next set just
+  // appears" - wants a smooth transition. Two earlier attempts at
+  // animating this exact swap (a shared layoutId FLIP, then an
+  // AnimatePresence mode="wait" key-swap - see the switching-bug comment
+  // on the active ShowcaseSlot below) both produced a real, reproducible
+  // stuck-DOM bug, confirmed even in a production build - both depended
+  // on framer-motion's AnimatePresence/exit lifecycle resolving an
+  // unmount, which proved unreliable in this file's nested-AnimatePresence
+  // structure. This sidesteps that mechanism entirely: rather than
+  // remounting a new ShowcaseSlot per outfit and animating its mount/
+  // unmount, the active slot now stays a single persistent instance, and
+  // a small lagging "what's currently displayed" state crossfades it via
+  // a plain `animate` opacity change (no `exit` prop, no
+  // AnimatePresence) - nothing here can get stuck the way an awaited
+  // unmount can, since there's no unmount involved in the swap at all.
+  const FADE_DURATION_MS = 250;
+  const [displayedOutfit, setDisplayedOutfit] = useState(activeOutfit);
+  const [displayedPersona, setDisplayedPersona] = useState(activePersona);
+  const [isFading, setIsFading] = useState(false);
+
+  useEffect(() => {
+    if (activeOutfit?.outfitId === displayedOutfit?.outfitId) return;
+    if (!displayedOutfit) {
+      // Nothing shown yet (first load) - show it directly, no need to
+      // fade "out" of an empty state first.
+      setDisplayedOutfit(activeOutfit);
+      setDisplayedPersona(activePersona);
+      return;
+    }
+    setIsFading(true);
+    const timer = setTimeout(() => {
+      setDisplayedOutfit(activeOutfit);
+      setDisplayedPersona(activePersona);
+      setIsFading(false);
+    }, FADE_DURATION_MS);
+    return () => clearTimeout(timer);
+    // Deliberately keyed only on the outfit id, same pattern as this
+    // file's other "just happened" effects (e.g. the persona-preview
+    // exclusion toast) - activePersona is derived from activeOutfit/items
+    // and read fresh inside the timeout closure, not a separate trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeOutfit?.outfitId]);
 
   const goToPrev = () => setActiveIndex((i) => (n === 0 ? 0 : (i - 1 + n) % n));
   const goToNext = () => setActiveIndex((i) => (n === 0 ? 0 : (i + 1) % n));
@@ -442,16 +596,22 @@ const OutfitShowcasePage = () => {
           <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-8 bg-accent/5 uppercase">
             Your Showcase
           </span>
-          <img src="/logo.png" alt="VYSVI" className="w-40 sm:w-48 mx-auto mb-8" />
+          <img
+            src="/logo.png"
+            alt="VYSVI"
+            className="w-40 sm:w-48 mx-auto mb-8"
+          />
           <p className="text-text-secondary text-base sm:text-lg max-w-md mx-auto mb-10 font-light leading-relaxed">
             Save your first outfit and it will take center stage here.
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="px-10 py-5 bg-ink text-background-main font-medium rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg inline-flex items-center gap-3"
           >
             <Sparkles size={18} />
-            <span className="text-[11px] tracking-[0.2em] uppercase">Let's Get Started</span>
+            <span className="text-[11px] tracking-[0.2em] uppercase">
+              Let's Get Started
+            </span>
           </button>
         </motion.div>
       </div>
@@ -470,15 +630,24 @@ const OutfitShowcasePage = () => {
           Your Showcase
         </span>
         <h1 className="text-4xl sm:text-5xl font-display font-light tracking-tighter text-text-primary">
-          {activeOutfit?.name}
+          {displayedOutfit?.name}
         </h1>
       </div>
 
       {/* Task 75 follow-up: was `items-start` with a guessed `mt-24` offset
           on the side slots to roughly line them up against the (now
           card-less) active content - simpler and more correct to just
-          center the whole row on one axis, same as the heading above it. */}
-      <div className="flex items-center justify-center gap-4 sm:gap-8 w-full max-w-5xl">
+          center the whole row on one axis, same as the heading above it.
+          Layout-stability follow-up: "if a set is full and another only
+          has one item the screen size changes and arrow move around" -
+          this row had no fixed height, so `items-center` recentered the
+          arrows against whatever height the active outfit's own row count
+          (1-4 rows) happened to produce, visibly moving them and resizing
+          the page on every switch. `min-h` pins the row to the tallest
+          real case (a 4-row outfit, measured live), so `items-center` now
+          centers shorter content within a constant box instead of the box
+          itself changing size. */}
+      <div className="flex items-center justify-center gap-4 sm:gap-8 w-full max-w-5xl min-h-[630px] sm:min-h-[760px]">
         <button
           onClick={goToPrev}
           disabled={n < 2}
@@ -524,12 +693,26 @@ const OutfitShowcasePage = () => {
               such dependency: `key={outfit.outfitId}` directly, no
               AnimatePresence - React swaps the DOM instantly and
               synchronously on key change (impossible to get stuck
-              between two children), and ShowcaseSlot's own mount-time
-              `initial`/`animate` still fades each new occupant in. The
-              outgoing card disappears immediately instead of fading out -
-              a smaller effect than before, but a reliable one. */}
-          {activeOutfit && activePersona && (
-            <ShowcaseSlot key={activeOutfit.outfitId} outfit={activeOutfit} items={items} persona={activePersona} role="active" />
+              between two children).
+              Animation follow-up: that instant swap read as "the next set
+              just appears" - now wrapped in a persistent, stably-keyed
+              instance driven by `displayedOutfit` (a small lagging state,
+              see the effect above) and crossfaded with a plain `animate`
+              opacity change - see that effect's comment for why this
+              avoids retrying either of the approaches that got stuck. */}
+          {displayedOutfit && displayedPersona && (
+            <motion.div
+              animate={{ opacity: isFading ? 0 : 1 }}
+              transition={{ duration: FADE_DURATION_MS / 1000 }}
+            >
+              <ShowcaseSlot
+                key="active-slot"
+                outfit={displayedOutfit}
+                items={items}
+                persona={displayedPersona}
+                role="active"
+              />
+            </motion.div>
           )}
 
           <div className="w-[150px] sm:w-[180px] shrink-0 flex justify-start">
@@ -563,7 +746,9 @@ const OutfitShowcasePage = () => {
               key={o.outfitId}
               onClick={() => setActiveIndex(i)}
               className={`h-1.5 rounded-full transition-all ${
-                i === safeIndex ? 'w-6 bg-accent' : 'w-1.5 bg-ink/15 hover:bg-ink/30'
+                i === safeIndex
+                  ? "w-6 bg-accent"
+                  : "w-1.5 bg-ink/15 hover:bg-ink/30"
               }`}
               title={o.name}
             />
