@@ -4237,6 +4237,168 @@ reported.
   + `vite build` clean; test outfits/items deleted after, confirmed
   empty on re-fetch.
 
+**Tenth follow-up, after Phase 9.7 shipped, `/plan`ned first** - "when
+you click an arrow I want it to be a smoth animation to the next set of
+clothes right now the next set just appears," plus "I want the screen
+to stay the same when switching right now if a set is full and another
+only has one item the screen size changes and arrow move around." Asked
+for explicitly via `/plan` given the history above - two earlier
+attempts at animating this exact swap both got stuck.
+- **Approach, chosen specifically to avoid retrying either prior
+  failure:** both previous attempts depended on framer-motion's
+  `AnimatePresence`/`exit` lifecycle resolving an unmount, which proved
+  unreliable in this file's nested-`AnimatePresence` structure (the
+  active slot's own inner rows/persona toggle already uses
+  `AnimatePresence mode="wait"`). This round avoids that mechanism
+  entirely: the active `ShowcaseSlot` is now a single **persistent**
+  instance (`key="active-slot"`, never remounted by outfit id) rather
+  than being swapped per outfit, fed by a small lagging
+  `displayedOutfit`/`displayedPersona` state that only catches up to the
+  real `activeOutfit` after a fixed 250ms via `setTimeout` (with an
+  `isFading` boolean driving a plain `animate` opacity fade on a
+  wrapper - `animate`, not `exit`, so there is no unmount for anything
+  to get stuck on).
+- **A real bug found while verifying this round's own new code (not a
+  repeat of the old one):** `ShowcaseSlot`'s own root already had its
+  own `initial`/`animate` opacity fade (left over from when it used to
+  remount per outfit). With the new outer fade wrapper ALSO animating
+  opacity around it, the two nested, independently-animating opacity
+  controls conflicted - live testing found the active slot stuck at
+  `opacity: 0` indefinitely after a switch (confirmed via
+  `getComputedStyle`, not just the inline style, and confirmed it was
+  not the old duplicate-element bug - only one instance existed, it was
+  just invisible). Fixed by giving `ShowcaseSlot` `initial={isActive ?
+  false : { opacity: 0 }}` - the outer wrapper now solely owns opacity
+  for the active role; the side role (which still remounts per outfit,
+  unchanged) keeps its own fade exactly as before.
+- **Preserving the entry flash:** the one-time "power-up flash" used to
+  replay on every switch as a side effect of the whole slot remounting.
+  Since the active slot no longer remounts, `AuraGlow` now takes a
+  `flashKey` prop (the outfit id) applied as a plain `key` on just the
+  flash element (no `exit`, not wrapped in `AnimatePresence` - a bare
+  `key` change is a synchronous remount with nothing to get stuck on,
+  unlike an awaited exit). The looping rays/rings/core/sparks
+  deliberately do NOT get this treatment - they stay the same instance
+  and keep cycling uninterrupted through a switch, which reads better
+  than restarting on every click. Verified both halves directly: tagged
+  the flash element and the ray wrapper with a custom DOM property
+  before a switch, then checked identity after - the flash was a
+  provably new node (property gone), the ray wrapper was the same node
+  (property survived).
+- **Layout stability:** the carousel row had no fixed height, so
+  `items-center` recentered the prev/next arrows against whatever
+  height the active outfit's own row count (1-4) happened to produce -
+  measured live, a real 4-row/2-shoe outfit needed 731px of content at
+  the `sm:` breakpoint and 603px at the base breakpoint. Added
+  `min-h-[630px] sm:min-h-[760px]` to the row (values include a buffer
+  over those measurements) - `items-center`/`justify-center`, already in
+  place, now centers shorter content inside a constant-size box instead
+  of the box itself changing size. Verified live switching between a
+  real 4-row outfit and a real 1-row outfit at the `sm:` breakpoint: the
+  arrow buttons' Y-position moved only 4px (previously this kind of
+  swing was on the order of 100+px) and the row's own rendered height
+  matched the fixed floor in both cases.
+- **Verified live, working around a tooling limitation:** confirmed no
+  stuck/duplicate DOM state under a rapid-click stress test (next, prev,
+  next, next, same test used for the original switching bug) - exactly
+  one active-slot instance afterward, correctly settled at `opacity: 1`.
+  Confirmed the state machine's timing is correct (the heading's name
+  swaps at ~250-280ms after a click, matching `FADE_DURATION_MS`).
+  Could NOT get a reliable direct visual read on the fade's smoothness
+  specifically (not whether it happens, but whether it visibly
+  interpolates) - the Browser pane reported `document.visibilityState:
+  "hidden"` throughout this session's testing, and hidden tabs commonly
+  suspend `requestAnimationFrame` entirely (what framer-motion's
+  `animate` prop drives), which would make a real, smooth fade appear
+  as a flat, unchanging reading to any poll-based check run from here
+  regardless of whether it's actually smooth for someone looking at the
+  open app. Flagged rather than glossed over - the underlying mechanics
+  (correct state timing, correct final values, no stuck state, no
+  duplicate elements) are all independently verified and support the
+  fade working correctly, but the specific "does it look smooth"
+  question is one the user should confirm themselves. `tsc -b --force` +
+  `vite build` clean; test outfits/items deleted after, confirmed empty
+  on re-fetch.
+
+**Eleventh follow-up, same request** - "before we continue please check
+the aura flow when a outfit have less pieces example two it cuts off so
+it looks weird and not sylish also remove the center circle thats goes
+up from the aura flow I dont like it."
+- **The clipping's real cause:** every aura layer (flash/rays, rings,
+  core) is sized off `AURA_SIZE_BY_ROWS`/`RING_SIZE_BY_ROWS`/
+  `CORE_SIZE_BY_ROWS` - a fixed diameter per row-count bucket, decoupled
+  from the actual content height (that decoupling is what fixed the
+  earlier "tall oval" bug). But `AuraGlow`'s own wrapper `div` had no
+  height of its own beyond whatever its `children` (the garment rows)
+  needed - for a sparse outfit (1-2 rows), that's shorter than the
+  aura's own diameter. A parent further up the tree (the carousel's
+  middle row) clips overflow, so the aura's top and bottom edges were
+  getting visibly cut off instead of rendering as a clean circle - worse
+  the fewer rows an outfit had, since the gap between "how tall the
+  wrapper naturally is" and "how big the aura needs to be" only grows.
+- **Fix:** new `AURA_MIN_HEIGHT_BY_ROWS` lookup (same diameters as
+  `AURA_SIZE_BY_ROWS`, the largest layer) applied as a `min-h` on
+  `AuraGlow`'s own wrapper, keyed off the same row-count bucket as the
+  aura layers themselves - guarantees the wrapper is always at least as
+  tall as the aura needs, regardless of how little garment content is
+  inside it.
+- **Removed the rising sparks** ("the center circle thats goes up") -
+  the six small dots that animated upward (`y: [0, -140]`) out of the
+  aura. Deleted the whole block; the flash/rays/rings/core stay as they
+  are. This also removes what was likely the single biggest contributor
+  to the clipping bug on its own (a 140px vertical travel range well
+  beyond any of the aura's own circle sizes), though the `min-h` fix
+  above stands on its own regardless.
+- **Verified live:** two real test outfits (a 2-row "Two Pieces" and a
+  1-row "One Piece") - measured the ring and core elements' rendered
+  bounds against the `AuraGlow` wrapper's own bounds for the 2-row case:
+  both fully contained (ring 433-671px vs. wrapper 380-725px, core
+  408-697px vs. the same wrapper bounds) - previously these would have
+  exceeded the wrapper and been clipped. Confirmed zero rising-spark
+  elements remain in the DOM (searched by their distinctive
+  `boxShadow`). Visually confirmed with real screenshots for both
+  outfits - a clean, fully-formed circle with no visible clipping in
+  either case, entry flash still firing, no sparks. `tsc -b --force` +
+  `vite build` clean; test outfits/items deleted after, confirmed empty
+  on re-fetch.
+
+**Twelfth follow-up, same request** - "it still cuts off at the top
+please look at it even in the pic you sent at the top it cuts off." The
+Eleventh follow-up's `min-h` fix was real but insufficient by a small,
+specific margin.
+- **Two things the diameter-matched min-height didn't budget for:**
+  (1) Tailwind's global border-box reset means an element's `min-height`
+  INCLUDES its own padding rather than adding on top of it - `AuraGlow`'s
+  wrapper also has `py-2`, so a `min-h` set to exactly the aura's
+  diameter left only `diameter - 16px` of actual content room, a real
+  (if small) deficit. (2) The "hot core" layer uses `blur-2xl` - a CSS
+  blur filter visually bleeds past its own element's geometric box
+  (unlike the radial-gradient layers, which fade within their own
+  bounds), and that bleed was never accounted for at all. Live
+  measurement confirmed the wrapper's top edge sat exactly flush with
+  the overflow-hidden ancestor's own top (both at the same pixel) with
+  only ~5px of computed slack for a 340px element - well inside normal
+  rendering/rounding noise, let alone blur bloom.
+  - **Fix:** bumped every bucket in `AURA_MIN_HEIGHT_BY_ROWS` by +100px
+  over the base diameter (e.g. row-count 2: `min-h-[270px] sm:min-h-
+  [340px]` -> `min-h-[370px] sm:min-h-[440px]`) - comfortably covers
+  both the padding deficit and the blur bleed without needing to compute
+  the blur radius's exact falloff.
+- **Verified live, this time checking actual visual output, not just
+  bounding boxes:** the earlier round's verification measured the ring
+  and core elements' own `getBoundingClientRect()` against the
+  wrapper's - correct as far as it went, but a blurred element's visible
+  bloom extends past what `getBoundingClientRect()` reports for its own
+  box, so that check could never have caught this specific gap. This
+  round re-measured (ring/core now sit 76-101px inside the wrapper's
+  edges, not ~5px) and, more importantly, took real screenshots at both
+  the `sm:` breakpoint (1280px) and a real mobile width (390px) - both
+  show a clean, fully round circle with no visible cut at the top or
+  bottom, including a screenshot taken right after a fresh page load to
+  catch the entry flash near its largest scale. `tsc -b --force` +
+  `vite build` clean; test outfit/items deleted after, confirmed empty
+  on re-fetch.
+
 - **76** - removes the `w-20` vertical category sidebar; a new
   single-select `ClothingCategory` dropdown (modeled on
   `CategoryPicker.tsx`'s toggle-button + panel-below pattern, different
