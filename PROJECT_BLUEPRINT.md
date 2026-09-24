@@ -1148,8 +1148,9 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
 - [x] **53** Fix crop stale closure + mask-follows-garment (+ the
       blank-canvas bug found in Task 52, per explicit request)
-- [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
-- [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
+- [x] **54** Add un-crop / reset affordance to `CanvasToolbar`
+- [x] **55** Remove dead warp scaffolding (source was already gone in
+      Task 26; removed the leftover `fabric-warpvas` dependency)
 - [ ] **56** Prototype bake-on-save deformation for one garment type
 
 ### Phase 4 *(deferred — runs after Phase 10)*
@@ -2867,6 +2868,31 @@ canvas was still empty (before the garment loaded) ended with the crop
 box up and the garment locked. `tsc -b --force` + `vite build` clean.
 Test item deleted, test account deactivated.
 
+### Task 55 - remove dead warp scaffolding (2026-09-23)
+
+Checked first, as the task said ("if not already done in Task 26"): Task
+26 already deleted all the *source* scaffolding (`FabricWarpvas` dynamic
+import, `isWarpMode` prop/ref/state, `warpvasInstances`) - a grep of
+`frontend/src` for `warp`/`Warpvas` finds nothing. What remained was the
+dependency itself: `fabric-warpvas@1.2.0` in `frontend/package.json`
+(plus `warpvas` and `warpvas-perspective` pulled in transitively in the
+lockfile), imported nowhere. Removed it with
+`npm uninstall fabric-warpvas --legacy-peer-deps` (57 lines out of the
+lockfile, 1 out of `package.json`).
+
+Side benefit, confirmed: the "plain `npm install` fails on an older,
+unrelated conflict (`fabric-warpvas` wants fabric 6, project is on 7)"
+gotcha recorded under the onnxruntime-web fix no longer applies - a plain
+`npm install` now completes with exit 0 and no `--legacy-peer-deps`
+needed. Also removed the stale line in `frontend/FRONTEND_CHANGES.md`
+claiming "Mesh Warping (Puppet Warp): Integrated `fabric-warpvas`..." - a
+feature that was never built (per the 10b diagnosis above). Note for
+Task 56: `fabric-warpvas` was not a viable starting point anyway (fabric
+6 only, project is on 7), so a bake-on-save prototype will need its own
+approach.
+
+`tsc -b --force` + `vite build` clean.
+
 ### Tasks
 
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
@@ -2878,7 +2904,8 @@ Test item deleted, test account deactivated.
       garment, and PersonaLayer's center/edge coordinate bug; + flat
       browse/card thumbnails now also show the cropped region instead of
       the full original photo)
-- [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
+- [x] **55** Remove dead warp scaffolding (source was already gone in
+      Task 26; removed the leftover `fabric-warpvas` dependency)
 - [ ] **56** Prototype bake-on-save deformation for one garment type
 
 ### 🏁 Definition of Done
