@@ -15,7 +15,11 @@ import { DEFAULT_TRANSFORMS } from './Presets';
 import ClothingCanvas from '../editor/ClothingCanvas';
 import TransformPanel from '../editor/TransformPanel';
 import CanvasToolbar from '../editor/CanvasToolbar';
-import { exportCanvasToImage } from '../editor/CanvasUtils';
+import WarpPanel, { type WarpApplyResult } from '../editor/WarpPanel';
+import { exportCanvasToImage, CANVAS_PAD } from '../editor/CanvasUtils';
+import { cloudinaryService } from '../../api/cloudinaryService';
+import { retargetTransform } from '../../utils/meshWarp';
+import { serializeWarpData, type WarpData } from '../../utils/warpData';
 
 interface FittingEditorProps {
   imageUrl: string;
@@ -24,28 +28,95 @@ interface FittingEditorProps {
   initialName?: string;
   initialDescription?: string;
   initialTransform?: ClothingTransform;
-  onSave: (data: { name: string; description: string; transform: ClothingTransform }) => void;
+  // Task 56 prototype: offer the mesh-warp tool (tops only, non-modular).
+  // `initialWarp` is the item's saved warp record, if it already has one.
+  allowWarp?: boolean;
+  initialWarp?: WarpData | null;
+  // `imageUrl`/`modularData` are only present when the warp changed this
+  // session: the baked image replaces the item's image, and modularData
+  // ('' to clear) holds what's needed to re-edit or undo the warp.
+  onSave: (data: {
+    name: string;
+    description: string;
+    transform: ClothingTransform;
+    imageUrl?: string;
+    modularData?: string;
+  }) => void;
   onBack: () => void;
 }
 
-const FittingEditor: React.FC<FittingEditorProps> = ({ 
-  imageUrl, 
-  category, 
-  personaType, 
+const FittingEditor: React.FC<FittingEditorProps> = ({
+  imageUrl,
+  category,
+  personaType,
   initialName = '',
   initialDescription = '',
   initialTransform,
-  onSave, 
-  onBack 
+  allowWarp = false,
+  initialWarp = null,
+  onSave,
+  onBack
 }) => {
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [transform, setTransform] = useState<ClothingTransform>(
     initialTransform || DEFAULT_TRANSFORMS[personaType][category]
   );
-  
+
   const [activeTool, setActiveTool] = useState('select');
   const fabricCanvasRef = useRef<Canvas | null>(null);
+
+  // Task 56 prototype (mesh warp). `currentImageUrl` is what the canvas shows
+  // (the baked PNG once a warp is applied); `warp` keeps the original image +
+  // control points so the warp can be re-edited or undone.
+  const [currentImageUrl, setCurrentImageUrl] = useState(imageUrl);
+  const [warp, setWarp] = useState<WarpData | null>(initialWarp);
+  const [warpChanged, setWarpChanged] = useState(false);
+
+  const handleWarpApply = async (result: WarpApplyResult) => {
+    const uploadedUrl = await cloudinaryService.uploadImage(result.bake.blob);
+
+    const previousPx = warp
+      ? { width: warp.bakedWidth, height: warp.bakedHeight }
+      : { width: result.sourceWidth, height: result.sourceHeight };
+    const previousShift = warp?.shift ?? { x: 0, y: 0 };
+
+    setTransform((prev) =>
+      retargetTransform(prev, previousPx, result.bake, {
+        x: result.bake.shift.x - previousShift.x,
+        y: result.bake.shift.y - previousShift.y,
+      })
+    );
+    setWarp({
+      version: 1,
+      originalImageUrl: warp?.originalImageUrl ?? currentImageUrl,
+      originalWidth: result.sourceWidth,
+      originalHeight: result.sourceHeight,
+      grid: result.grid,
+      bakedWidth: result.bake.width,
+      bakedHeight: result.bake.height,
+      shift: result.bake.shift,
+    });
+    setCurrentImageUrl(uploadedUrl);
+    setWarpChanged(true);
+    setActiveTool('select');
+  };
+
+  const handleRestoreWarp = () => {
+    if (!warp) return;
+    setTransform((prev) =>
+      retargetTransform(
+        prev,
+        { width: warp.bakedWidth, height: warp.bakedHeight },
+        { width: warp.originalWidth, height: warp.originalHeight },
+        { x: -warp.shift.x, y: -warp.shift.y }
+      )
+    );
+    setCurrentImageUrl(warp.originalImageUrl);
+    setWarp(null);
+    setWarpChanged(true);
+    if (activeTool === 'warp') setActiveTool('select');
+  };
 
   const handleTransformChange = (updates: Partial<ClothingTransform>) => {
     setTransform(prev => ({ ...prev, ...updates }));
@@ -76,7 +147,16 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
 
   const handleExport = () => {
     if (fabricCanvasRef.current) {
-      const dataUrl = exportCanvasToImage(fabricCanvasRef.current);
+      // Export just the stage, not the handle margin ClothingCanvas pads
+      // around it. The region is in canvas (viewport) pixels, so it starts
+      // at the margin.
+      const canvas = fabricCanvasRef.current;
+      const dataUrl = exportCanvasToImage(canvas, {
+        left: CANVAS_PAD,
+        top: CANVAS_PAD,
+        width: canvas.getWidth() - 2 * CANVAS_PAD,
+        height: canvas.getHeight() - 2 * CANVAS_PAD,
+      });
       const link = document.createElement('a');
       link.download = `fitting-preview-${Date.now()}.png`;
       link.href = dataUrl;
@@ -111,6 +191,9 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
             onExport={handleExport}
             hasMask={!!transform.maskWidth}
             onResetCrop={handleResetCrop}
+            canWarp={allowWarp}
+            hasWarp={!!warp}
+            onRestoreWarp={handleRestoreWarp}
           />
         </div>
       </div>
@@ -144,7 +227,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         <main className="flex-1 flex flex-col gap-6 order-1 md:order-2">
           <div className="flex-grow relative min-h-[500px]">
              <ClothingCanvas
-                imageUrl={imageUrl}
+                imageUrl={currentImageUrl}
                 category={category}
                 personaType={personaType}
                 transform={transform}
@@ -152,6 +235,17 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
                 onCanvasReady={(canvas) => { fabricCanvasRef.current = canvas; }}
                 activeTool={activeTool}
               />
+             {allowWarp && activeTool === 'warp' && (
+               <WarpPanel
+                 sourceUrl={warp?.originalImageUrl ?? currentImageUrl}
+                 warp={warp}
+                 personaType={personaType}
+                 transform={transform}
+                 hasCrop={!!transform.maskWidth}
+                 onApply={handleWarpApply}
+                 onCancel={() => setActiveTool('select')}
+               />
+             )}
           </div>
         </main>
 
@@ -196,7 +290,15 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
             </div>
 
             <button 
-              onClick={() => onSave({ name, description, transform })}
+              onClick={() => onSave({
+                name,
+                description,
+                transform,
+                ...(warpChanged && {
+                  imageUrl: currentImageUrl,
+                  modularData: warp ? serializeWarpData(warp) : '',
+                }),
+              })}
               disabled={!name}
               className={`
                 w-full py-6 rounded-2xl font-medium text-[10px] tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-lg
