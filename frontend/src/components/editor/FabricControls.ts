@@ -28,7 +28,10 @@ export const customizeFabricControls = () => {
   const mtrControl = FabricObject.prototype.controls?.mtr;
   if (mtrControl) {
     mtrControl.y = -0.5;
-    mtrControl.offsetY = -40;
+    // Was -40. With the 10px object padding and the 12px handle, -20 puts the
+    // handle's outer edge ~36px above the object - within ClothingCanvas's
+    // CANVAS_PAD margin, so it stays visible at the top edge of the stage.
+    mtrControl.offsetY = -20;
   }
 };
 

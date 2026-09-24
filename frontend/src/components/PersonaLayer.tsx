@@ -89,10 +89,30 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
       const gLeft = finalTransform.x - gW / 2;
       const gTop = finalTransform.y - gH / 2;
 
-      const insetLeft = ((finalTransform.maskLeft! - gLeft) / gW) * 100;
-      const insetTop = ((finalTransform.maskTop! - gTop) / gH) * 100;
-      const insetRight = 100 - (((finalTransform.maskLeft! + finalTransform.maskWidth) - gLeft) / gW) * 100;
-      const insetBottom = 100 - (((finalTransform.maskTop! + finalTransform.maskHeight) - gTop) / gH) * 100;
+      // maskLeft/maskTop are the crop's CENTER, not its edge - they come
+      // straight from Fabric's clipPath.left/top with originX/Y: 'center'
+      // (same convention as x/y above), but were being used here as if
+      // they were the crop's left/top edge. That silently shifted every
+      // inset by half the mask's own width/height - e.g. a mask
+      // maskWidth=228 wide reads insetRight as if the crop's right edge
+      // were a full extra maskWidth further right than it really is,
+      // clamping to 0% (flush right) far too often and showing a much
+      // narrower, wrongly-positioned sliver of the image than was
+      // actually cropped. Found live while verifying Task 54's un-crop
+      // button: cropped to the right half of a test image, and the
+      // numbers this produced (before this fix) implied a right edge
+      // ~180 virtual units past the garment's own right edge - clamped
+      // away entirely - instead of the ~2-unit overshoot the actual
+      // Fabric clip geometry has.
+      const maskLeftEdge = finalTransform.maskLeft! - finalTransform.maskWidth / 2;
+      const maskTopEdge = finalTransform.maskTop! - finalTransform.maskHeight / 2;
+      const maskRightEdge = finalTransform.maskLeft! + finalTransform.maskWidth / 2;
+      const maskBottomEdge = finalTransform.maskTop! + finalTransform.maskHeight / 2;
+
+      const insetLeft = ((maskLeftEdge - gLeft) / gW) * 100;
+      const insetTop = ((maskTopEdge - gTop) / gH) * 100;
+      const insetRight = 100 - ((maskRightEdge - gLeft) / gW) * 100;
+      const insetBottom = 100 - ((maskBottomEdge - gTop) / gH) * 100;
 
       clipPath = `inset(${Math.max(0, insetTop)}% ${Math.max(0, insetRight)}% ${Math.max(0, insetBottom)}% ${Math.max(0, insetLeft)}%)`;
     }

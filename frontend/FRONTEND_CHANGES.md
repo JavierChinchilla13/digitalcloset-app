@@ -31,7 +31,6 @@
 ### 2. Advanced Modular Studio
 - **Independent Part Manipulation**: Sleeves and torso can be positioned, rotated, and scaled independently for perfect mannequin alignment.
 - **Group Transform Engine**: Added a "Maximize" mode to move the entire garment as a synchronized unit.
-- **Mesh Warping (Puppet Warp)**: Integrated `fabric-warpvas` for non-rigid deformation, allowing sleeves to "bend" naturally.
 - **Dynamic Center Masking**: Interactive "Center Opening" slider that applies CSS/Canvas masks to visualize open-jacket styles.
 
 ### 3. Footwear Precision Engine

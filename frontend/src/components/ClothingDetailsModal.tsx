@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Layers } from 'lucide-react';
 import type { ClothingItem } from '../types';
+import CroppedThumbnail from './CroppedThumbnail';
 
 interface ClothingDetailsModalProps {
   item: ClothingItem | null;
@@ -104,8 +105,9 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
             <div className="flex flex-col md:flex-row h-full">
               {/* Image Section */}
               <div className="md:w-1/2 aspect-[3/4] md:aspect-auto relative overflow-hidden bg-ink/5">
-                <img
-                  src={item.imageUrl}
+                <CroppedThumbnail
+                  imageUrl={item.imageUrl}
+                  transform={item.transform}
                   alt={item.name}
                   className="w-full h-full object-cover"
                 />

@@ -1145,11 +1145,15 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 *(renumbered 2026-09-01 from 44–48 to 52–56, same reason as Phase 9 above)*
 
-- [ ] **52** Reproduce + confirm crop tool defects live; report before fixing
-- [ ] **53** Fix crop stale closure + mask-follows-garment
-- [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
-- [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
-- [ ] **56** Prototype bake-on-save deformation for one garment type
+- [x] **52** Reproduce + confirm crop tool defects live; report before fixing
+- [x] **53** Fix crop stale closure + mask-follows-garment (+ the
+      blank-canvas bug found in Task 52, per explicit request)
+- [x] **54** Add un-crop / reset affordance to `CanvasToolbar`
+- [x] **55** Remove dead warp scaffolding (source was already gone in
+      Task 26; removed the leftover `fabric-warpvas` dependency)
+- [x] **56** Prototype bake-on-save deformation for one garment type
+      (3x3 mesh warp on tops, baked to PNG, original + points kept in
+      `modularData`)
 
 ### Phase 4 *(deferred — runs after Phase 10)*
 
@@ -2401,13 +2405,684 @@ canvas — `PersonaLayer` renders an `<img>` with CSS `transform` and
 (c) do nothing; accept rigid transforms        (valid, defer)
 ```
 
+### Task 52 — live reproduction results (2026-09-22)
+
+Opened `FittingEditor` (via `ClosetPage`'s "Edit" -> "Open Studio") on a
+real test item and worked through the crop tool live. One major defect
+found that the earlier code-reading diagnosis didn't anticipate, plus
+live corroboration for the documented ones where interaction allowed it.
+
+**New finding, not in the original 5 - likely the primary reason the
+tool "feels broken":** `ClothingCanvas`'s Fabric canvas renders
+**completely blank** on every normal open - no mannequin, no garment,
+nothing visible - until *something* fires a browser `resize` event.
+Confirmed the exact mechanism, not just the symptom:
+- `ClothingCanvas` calls `useFabricCanvas({ aspectRatio: ASPECT_RATIO,
+  onResize: (size, canvas) => { canvas?.setDimensions(size); ... } })`
+  *before* its own "Initialize Canvas" `useEffect` that actually
+  constructs the Fabric `Canvas` instance. React runs effects in the
+  order they're registered during render, so on first mount,
+  `useFabricCanvas`'s own internal resize effect (registered earlier,
+  since the hook is called first) fires its initial `updateSize()`
+  *before* `fabricCanvasRef.current` has been set - so `onResize` runs
+  with `canvas === null`, and `canvas?.setDimensions(size)` is a silent
+  no-op. The Fabric `Canvas` is then constructed with no explicit
+  width/height, so it keeps the HTML `<canvas>` element's built-in
+  browser default: 300x150px. Nothing calls `setDimensions` again
+  afterward unless the container's size genuinely changes and the
+  `ResizeObserver` fires a second time - which a real user's browser
+  essentially never does on its own.
+- Verified live, both ways: confirmed the canvas DOM element measured
+  exactly 300x150 (the browser's literal built-in default - not a
+  coincidence) with nothing visible in it; then triggered a real window
+  resize (not a synthetic event - an actual 1px viewport width change),
+  which fixed it instantly - canvas resized to its correct ~490x660,
+  mannequin and garment both rendered correctly. Reproduced this
+  blank-then-fixed-by-resize sequence twice, consistently.
+- This makes every one of the 5 originally-documented defects below
+  harder to even notice/diagnose as a *user*, since most people would
+  give up on an apparently-blank editor before ever reaching the crop
+  tool itself - but it's a separate bug from all five, worth its own
+  fix line rather than folding into Task 53.
+
+**The 5 originally-documented defects, live-testing status:**
+1. **Stale closure** - live evidence obtained, though not a clean
+   isolated repro: with the canvas rendering correctly (post-resize-fix),
+   entered crop mode, then dragged the crop box once. The sidebar's
+   "Height" slider (`transform.height`, a garment property with nothing
+   to do with the crop mask) changed from 450 to 300 as a direct result
+   of that single crop-box drag - concrete live evidence that
+   interacting with the crop box corrupts unrelated transform state,
+   consistent with the diagnosed stale-closure mechanism (`updateCrop`
+   spreading a `transform` object captured once at crop-mode-entry over
+   whatever the live state currently is). Did not additionally isolate a
+   clean "change rotation via the sidebar mid-crop, then drag, watch it
+   revert" repro - the canvas's own size instability during testing (see
+   below) made precisely targeting small Fabric resize handles
+   unreliable enough that a negative result there wouldn't be meaningful.
+2. **Mask doesn't follow the garment** - confirmed via code (the clip
+   rect is `absolutePositioned: true` in both the crop effect and the
+   load effect, in `ClothingCanvas.tsx`) but not independently isolated
+   live this round - the same handle-targeting difficulty applied.
+   High-confidence given the code is unambiguous and unchanged since the
+   original diagnosis.
+3. **No un-crop** - confirmed live: `CanvasToolbar` renders exactly two
+   tool buttons, "Select" and "Crop & Mask" - no reset/clear affordance
+   exists anywhere in the studio UI.
+4. **Race on entry** - not independently reproduced this round (timing-
+   dependent, and the canvas-blank bug above already produces a
+   superficially similar "nothing happened" symptom that would need to
+   be told apart from the real race condition first). Code-level logic
+   (`if (!garment) return;` with no re-run when the garment finishes
+   loading, since the effect only depends on `[activeTool]`) is
+   unchanged from the original diagnosis.
+5. **Mask survives only via the live clipPath object** - architectural,
+   confirmed by re-reading `getVirtualTransform`; not independently
+   live-tested this round.
+
+**Open Question #11 answer:** based on the stale-closure evidence
+obtained (a fresh crop-mode entry, immediately followed by one drag,
+already corrupted unrelated state), this reads as broken for **new**
+crops, not just on reopening an existing one - though a dedicated
+reopen-an-existing-crop repro wasn't separately isolated this round.
+
+**Also worth noting for Task 53's scope:** fixing the stale closure and
+mask-follow defects without first fixing the canvas-sizing bug above
+would leave the *default* experience unchanged (still blank until a
+resize happens to fire) - recommend fixing the canvas sizing first (or
+in the same pass), since it's what actually blocks a normal user from
+reaching the crop tool at all, and it's a small, well-understood fix
+(most likely: swap the two effects' registration order in
+`ClothingCanvas.tsx`, or have `useFabricCanvas` call `onResize` again
+once `fabricCanvasRef.current` becomes available, e.g. via its own
+effect keyed off canvas creation instead of only off container resize).
+
+### Task 53 — fixes implemented (2026-09-22, "go ahead and fix Task 53,
+include the blank-canvas bug")
+
+**Blank-canvas bug (shared across all three Fabric editors):**
+`useFabricCanvas` now tracks the last computed size in a
+`latestSizeRef`, kept up to date even before a Fabric `Canvas` exists,
+and returns a new `setFabricCanvas(canvas)` function that callers use
+in place of a direct `fabricCanvasRef.current = canvas` assignment -
+it sets the ref *and* immediately re-applies the last known size via
+the same `onResize` callback path, instead of only ever updating on a
+container resize that may never come. Updated all three editors
+(`ClothingCanvas.tsx`, `ShoeCanvas.tsx` - both had the exact same buggy
+pattern; `JacketCanvas.tsx` - never actually affected, since it already
+passes `width`/`height` straight to the `Canvas` constructor, updated
+anyway for consistency with the shared hook's own intended usage).
+Verified live, repeatedly, on fresh tabs and after a full dev-server
+restart (to rule out any HMR/stale-module explanation): the canvas now
+renders at its correct size (e.g. 384x512, matching the enforced 3:4
+aspect ratio) with the mannequin and garment both visible on the very
+first open, no resize needed, no console errors.
+
+**Stale closure:** added `transformRef` (written on every render, not
+inside an effect), and swapped every `...transform` spread inside a
+closure that doesn't re-run when `transform` changes for
+`...transformRef.current` - both in `updateCrop` (the originally-
+diagnosed case) and in `handleModified` (registered once with `[]`
+deps in the "Initialize Canvas" effect, fires on every direct garment
+drag/scale/rotate on canvas - the *same* class of bug, just not
+flagged in the original 5-defect list, since it doesn't corrupt mask
+fields specifically - `getVirtualTransform` already re-derives those
+live from the canvas - but would silently drop any other field, like a
+hypothetical future `zIndex`/`openness` control, changed between mount
+and a drag). Verified live: entered crop mode, changed rotation via the
+sidebar slider to 45, dragged the crop box - rotation stayed at 45
+(previously reverted to 0).
+
+**Mask-follows-garment - two directions, not one:** the first pass
+only fixed the React-state-pushes-a-position-onto-canvas direction (in
+the "Sync Transform updates from props" effect) - by shifting the
+clip's `left`/`top` by the same delta the garment is about to move,
+computed against the garment's *previous* canvas position, then
+persisting the shift back to `transform.maskLeft/maskTop` so it isn't
+lost on save/reload. Live testing then showed this doesn't cover the
+*actual* common case at all: there's no X/Y position slider anywhere in
+`TransformPanel`, so a user can only ever move a garment by dragging it
+directly on canvas - which goes through `handleModified`
+(canvas-drag-pushes-a-position-into-React-state), the opposite
+direction, never touched by the first pass. Added the same delta-shift
+logic there too, comparing against a new shared `lastGarmentPosRef`
+(also written by the "Sync Transform" effect, so neither direction
+computes a delta against data the other direction just made stale) -
+this is what actually moves the clip in real time *during* a drag,
+before `handleModified` even reports the new position back to React.
+Verified live with a real pre-cropped test item (mask smaller than the
+garment, off-center): dragged the garment on canvas, and the visible
+crop content - the same two flower blooms, same relative position
+within the frame - moved together with it as a unit, rather than the
+crop window staying put while a different part of the photo slid
+underneath. Rotation remains a known, documented gap (an
+absolutely-positioned axis-aligned clip can translate and resize with
+the object but can't rotate with it without being re-expressed in the
+garment's own local coordinate space) - out of scope for this pass,
+translation was the specifically reported symptom.
+
+**Found in passing during this round's live testing, NOT fixed - a
+new, separate issue flagged for a future task, not expanded into
+here per the user's specific request scope:** during crop mode,
+`garment.set({ selectable: false })` does not reliably prevent the
+garment from becoming the active object and receiving drag events.
+Reproduced repeatedly, including with zero `resize_window` calls in
+the test sequence (ruling out the canvas-resize-mid-crop theory as the
+sole cause) and via direct instrumentation (`canvas.getActiveObject()`
+genuinely returns the garment, not the crop box, immediately after a
+drag that visually looked like it was on the crop box). Practical
+effect: a user who thinks they're resizing/moving the crop window
+during crop mode may actually be dragging the garment underneath it
+instead - a plausible real contributor to the tool "feeling broken,"
+separate from all three fixes above. Root cause not yet isolated
+(current leading theory: `canvas.setActiveObject(cropBox)` not
+reliably holding once the crop box's own bounds are hit near an edge,
+but this needs dedicated investigation, not a guess baked into this
+commit).
+
+**Verification:** `tsc -b --force` + `vite build` clean after every
+change, including the final pass. Live-tested all three fixes on fresh
+browser tabs after a full dev-server restart. Test items created for
+verification (a plain item for the blank-canvas/stale-closure checks,
+a second item created directly via the API with a pre-existing
+off-center mask for the mask-follow check) were deleted after,
+confirmed empty on re-fetch.
+
+### Task 53 follow-up — Crop & Mask button did nothing (2026-09-22)
+
+User report: "when I click crop and mask it does nothing." Reproduced
+live - clicking the toolbar button visibly toggled active state (the
+button itself is styled purely off `FittingEditor`'s own `activeTool`
+state), but nothing happened on canvas. Root cause, confirmed via a
+temporary `window.__debugCanvas` exposure and direct queries against
+the live Fabric canvas: `FittingEditor.tsx`'s render of `<ClothingCanvas>`
+never actually passed its `activeTool` state down as a prop - the call
+only passed `imageUrl`/`category`/`personaType`/`transform`/
+`onTransformChange`/`onCanvasReady`. Since `ClothingCanvas`'s own
+`activeTool` prop defaults to `'select'`, it silently never saw the
+toolbar's `'crop'` value, so the "Handle Tool Changes (Crop)" effect
+(which adds the `cropBox` and locks the garment) never ran - confirmed
+directly: canvas objects stayed `[mannequin, garment]` with
+`garment.selectable: true` and the active object still `garment` after
+clicking the button. This is a separate bug from all three fixed above
+- a missing one-line prop wire, most likely present since the crop tool
+was first built, not something the other fixes touched.
+(`JacketFittingEditor`/`ShoeFittingEditor` don't have a crop tool at
+all, so they're unaffected.)
+
+**Fix:** `FittingEditor.tsx` now passes `activeTool={activeTool}` to
+`<ClothingCanvas>`.
+
+**Verified live:** fresh tab, real click sequence (Edit garment → Open
+Studio → Crop & Mask) - the crop box now appears with handles,
+drag-resizing it live-updates the mask, and switching back to Select
+shows the garment correctly clipped to the new bounds. `tsc -b --force`
++ `vite build` clean. Test item deleted after, confirmed via API.
+
+### Task 54 — un-crop / reset affordance (2026-09-22)
+
+Added a "Reset Crop" button to `CanvasToolbar` (new `hasMask`/`onResetCrop`
+props), shown only when the current item actually has a mask
+(`hasMask={!!transform.maskWidth}` in `FittingEditor`). `handleResetCrop`
+(in `FittingEditor`, using the `fabricCanvasRef` it already holds via
+`onCanvasReady`) clears the garment's live `clipPath`, removes any
+in-progress `cropBox`, clears the four mask fields in `transform` state,
+and exits crop mode back to Select if it was active.
+
+**Also verified, per this round's explicit request, that a crop renders
+correctly in both places it's used** (not just assumed from the code):
+created a test item, centered it on the mannequin, cropped it down to
+roughly half its content via the crop box, and confirmed the *same*
+visible content (not distorted, not offset, not showing the wrong half)
+appeared both in the Fabric Studio editor and in the Attire builder's
+"Preview on Persona" view after saving - screenshots matched. Re-checked
+the `toCanvasX`/`toCanvasCoord` (and `toVirtualX`/`toVirtualCoord`)
+"inconsistency" already flagged as cosmetic-only in this doc's 10a
+diagnosis - confirmed algebraically again here (both reduce to the same
+formula under the enforced 3:4 aspect ratio) and now also empirically
+via this live persona-render check. Clicked Reset Crop, confirmed the
+full uncropped image reappeared in the editor, saved, and confirmed the
+persona view also reverted to the full image and the mask fields came
+back `null` from the API.
+
+(Note: `computer`-tool coordinate clicks intermittently missed this
+button in the emulated-viewport browser pane during testing - a repeat
+of a known session-wide coordinate-scaling quirk, not an app bug;
+confirmed by dispatching a real `.click()` via JS on the actual button
+element, which worked every time.)
+
+`tsc -b --force` + `vite build` clean. Test item deleted after.
+
+### Task 54 correction — two real crop bugs the first verification missed (2026-09-22)
+
+User reported, after the above: "crop image on the preview doesnt look
+crop and on persona preview most of the image disappears." The first
+verification pass's test crop happened to be forgiving enough (a
+roughly-symmetric half-crop of a centered image) that both bugs below
+were present but not visually obvious in a screenshot - a reminder that
+"the screenshot looks plausible" isn't the same as "the numbers are
+correct." Found both by re-testing with `toDataURL`/pixel sampling and
+by checking the saved API values against the display math by hand,
+after the emulated browser-pane screenshot tool turned out to be
+returning stale frames mid-investigation (confirmed via `canvas.
+toDataURL()` sampling the real current pixels against a screenshot that
+still showed old content).
+
+**Bug 1 - crop didn't rescale with the garment (`ClothingCanvas.tsx`).**
+The crop mask's `clipPath` is `absolutePositioned: true` (canvas-space).
+Task 53's mask-follow fix made it track the garment's *position*
+(translate delta), but never its *size* - resizing the garment after
+cropping (sidebar width/height sliders, or a direct corner-handle drag
+on canvas) left the clip at its old absolute size/position while the
+image grew or shrank around it, so the crop window ended up covering a
+wrong, mismatched fraction of the resized image. Reproduced live:
+cropped to the right half of a test image (clip ~127px wide out of a
+~249px-wide garment), then increasing the width via the slider to ~387px
+- the clip's raw width/height never changed, confirmed via direct
+Fabric inspection. Fixed in both directions (matching the existing
+translate-delta pattern): `handleModified` (direct canvas drag/resize)
+and the "Sync Transform updates from props" effect (slider-driven
+resize) now compute a scale ratio alongside the existing position delta
+and resize the clip's `width`/`height` by that ratio, anchored on the
+garment's own center - verified the ratio matches exactly (clip and
+garment both grew by 1.5556x) and that `getVirtualTransform`'s mask
+extraction (which reads `clipPath.width`/`height` directly, not
+`getScaledWidth()`) stays correct by resizing via raw width/height, not
+`scaleX`/`scaleY`.
+
+**Bug 2 - `maskLeft`/`maskTop` used as edges when they're centers
+(`PersonaLayer.tsx`).** `clipPath.left`/`.top` (and everything derived
+from them - `maskLeft`/`maskTop`) are Fabric center coordinates
+(`originX/Y: 'center'`, the same convention `transform.x`/`y` already
+use), but `PersonaLayer`'s clip-path inset math used them directly as
+if they were the crop's left/top edge, without subtracting half the
+mask's own width/height first. This silently shifted every computed
+inset by `maskWidth/2` / `maskHeight/2` - concretely, on the same
+right-half test crop, the buggy math computed the crop's right edge as
+~180 virtual units past the garment's own right edge (clamped to a
+flush-right 0% inset) when the real Fabric geometry only overshoots by
+~3 units; the *left* inset came out ~75% instead of the correct ~50%,
+so the persona rendered a much narrower, wrongly-positioned sliver of
+the image than what the editor actually showed. This is a pre-existing
+bug, unrelated to Task 53/Bug 1 above, and was silently wrong for every
+cropped item previously verified in this doc, including Task 54's first
+pass - the earlier "screenshots matched" check just didn't happen to
+expose it clearly, since a same-ish-size, roughly-centered crop still
+looks superficially plausible even a couple dozen percent off. Fixed by
+computing true left/top/right/bottom edges from the center + full
+width/height before taking the inset percentages.
+
+**Re-verified together:** cropped a fresh test item to its right half,
+resized it via the width slider (exercising both bugs at once),
+confirmed via direct Fabric inspection that the clip's size tracked the
+resize exactly, confirmed via `toDataURL` pixel sampling that the
+editor canvas shows real, varied flower/foliage colors across the
+correct span (not a solid block or the wrong region), saved, and
+confirmed via the persona view's actual computed `clipPath` CSS
+(`inset(0% 0% 0% 49.6%)` - a sane, expected "roughly right half" value)
+and a live screenshot that the persona now shows a full, coherent chunk
+of the flower, not a sliver. `tsc -b --force` + `vite build` clean.
+Test item and test account deleted/deactivated after.
+
+### Task 54 follow-up - crop shows in flat thumbnails too (2026-09-22)
+
+User: "make it so the crop version appears in the preview image." Every
+plain `<img src={item.imageUrl}>` thumbnail (Closet grid cards, Attire
+builder's browse/selection cards, item detail modals, category
+add-item pickers, outfit flat-grid previews, the showcase page) always
+showed the full original photo - none of them looked at
+`transform.mask*` at all, only `PersonaLayer` (the actual persona-worn
+render) did.
+
+Added `frontend/src/utils/cropDisplay.ts` (`getCropBackgroundStyle`)
+and `frontend/src/components/CroppedThumbnail.tsx`, a drop-in
+replacement for `<img className="... object-cover/contain">`. Renders a
+`background-image` div instead of an `<img>` - `background-size`/
+`background-position` (not `object-fit`/`object-position`, which can't
+target an arbitrary sub-region) is what lets it crop-to-a-region
+regardless of the container's own aspect ratio: scale the whole image
+up so the crop region alone fills 100% of the box
+(`background-size: {100/fractionWidth}% {100/fractionHeight}%`), then
+position it so that region's own top-left lands at the box's origin
+(`background-position: {fractionLeft/(1-fractionWidth)*100}% ...`) -
+the standard CSS "crop to sub-region via background" technique, derived
+and verified by hand against a known crop (right-half test item),
+matched the JS-computed values exactly (`200% 100%` /
+`100% 50%`). Falls back to a plain `background-size: cover|contain`
+(matching whatever `object-fit` the call site used before) when an item
+has no mask, so uncropped items - the majority - render identically to
+before.
+
+Wired into every call site that has a full `ClothingItem` (and
+therefore `.transform`) available: `ClothingCard.tsx`,
+`FlatOutfitBuilderPage.tsx` (both the selection strip and the browse
+grid), `ClothingDetailsModal.tsx`, `CategoryDetailPage.tsx`'s add-item
+picker, `OutfitCard.tsx`'s flat-grid fallback, `OutfitBuilderPage.tsx`,
+and `OutfitShowcasePage.tsx` (both the full-pieces row and the
+side/off-screen outfit mini-grid - the row explicitly passes
+`fit="contain"` to preserve its original letterboxed-whole-item look
+for uncropped items). Deliberately left untouched: `CategoryDetailPage.tsx`'s
+collection-item and `OutfitPreviewThumb`'s outfit-item thumbnails, and
+`OutfitShowcasePage.tsx`'s slim outfit-item rows - these use
+`CollectionItem`/`OutfitItem`, DTOs that don't carry `transform` at
+all; adding it would mean widening those API responses, a separate,
+bigger change not asked for here.
+
+Verified live: created a test item via the API with a known right-half
+mask (`x:375, width:450, maskLeft:487.5, maskWidth:225` - virtual-space
+values matching an actual in-editor crop), confirmed the rendered
+thumbnail's computed `background-size`/`background-position`
+(`200% 100%` / `100% 50%`) matched the hand-derived expected values
+exactly, and confirmed visually via screenshot that the Closet card
+shows a zoomed-in view of just the right-half flower, not the full
+two-flower photo. `tsc -b --force` + `vite build` clean. Test item
+deleted, test account deactivated after.
+
+**Correction - stretching (2026-09-22, same day):** user: "make it look
+like center and good not like all strech out." The first version scaled
+`background-size` X and Y *independently* (`100/fractionWidth% ×
+100/fractionHeight%`) so the crop exactly filled the box on both axes -
+only distortion-free by coincidence in the first test, since that crop's
+225x300 region happened to already be a 3:4 aspect matching the card.
+Any crop whose own aspect ratio doesn't match the container (the normal
+case) stretched visibly. Rewrote `getCropBackgroundStyle` to use a single
+*uniform* scale, `s = max(1/fractionWidth, 1/fractionHeight)` - the same
+"smallest zoom that still covers both axes" rule `object-fit: cover`
+itself uses - and a corresponding centering formula
+(`(0.5 - centerFraction*s) / (1-s) * 100`) so the crop's own center lands
+in the middle of the box, on whichever axis wasn't the limiting one some
+of the crop's own edge is now consequently cropped further, the same
+trade-off `cover` always makes, rather than stretching. Re-verified with
+a deliberately mismatched-aspect test crop (full width, only the middle
+1/3 of the height - about as different from a 3:4 card as a crop gets):
+computed style came out `background-size: 300% 300%` (uniform),
+`background-position: 50% 50%` (centered), and the resulting screenshot
+showed a normally-proportioned zoomed photo - round flower petals, not
+elongated - confirming no distortion. `tsc -b --force` + `vite build`
+clean. Test item deleted, test account deactivated after.
+
+**Second correction - fill vs contain (2026-09-23):** user (with a
+screenshot of their real closet): the cropped item "takes the whole
+space ... make it look like the other garments look." Two problems with
+the version above: (1) it was still a cover-style fill, so a tightly
+cropped garment ate the entire card instead of sitting centered with
+breathing room like every other (transparent-margin) cutout; (2) worse,
+`background-size: S% S%` with equal percentages renders the image at the
+*box's* aspect ratio, not its own, so it was actually still distorting
+whenever box and image aspect differed (only "looked" round on the
+sample photo). Fixed both by changing the model: `getCropDisplay` now
+returns the crop's own aspect ratio (`maskWidth/maskHeight`) plus the
+exact-fit `background-size`/`position` for a box of *that* ratio (the
+original edge-anchored formula, which is distortion-free precisely when
+the box matches the crop's proportions), and `CroppedThumbnail` draws
+that inner box sized to *contain* itself within the card at 90%
+(`min(90cqw, 90cqh * ratio)`, container-query units on a
+`container-type: size` wrapper - no JS measuring), centered. Uncropped
+items are untouched. Verified live: two crops of different proportions
+(half-width and a tall slim slice) render as centered, padded,
+undistorted pictures inside the same-size cards as an uncropped item,
+in both the Closet grid and the Attire browse grid + selection strip
+(measured inner boxes ~90% of the card, no collapsed/zero-size cases).
+
+**Not reproduced:** user also reported a blank screen while waiting for
+background removal. Walked the upload flow live (TOP path, and the SHOES
+pair path incl. the Cloudinary upload step): the PROCESSING step showed
+the spinner and live status text ("Analyzing garment...", "Removing
+background (Browser): N%", "Uploading left shoe...") the whole way and
+advanced to the preview/studio step normally - nothing in this session
+touched UploadFlow. Needs the exact screen/category/steps from the user.
+
+### Crop-mode drag bug fixed (2026-09-23)
+
+Closes the "garment becomes the active object during crop mode" issue
+flagged (and left unfixed) in Task 53, plus 10a defect #4 (race on
+entry). Root cause, confirmed in code and live: the crop-mode setup only
+ran when `activeTool` changed, but the "Load Mannequin and Garment"
+effect (re-runs on any `canvasSize`/image change - including the
+canvas going from ~2x3px to its real size as the studio modal animates
+in, and any later container resize) does `canvas.clear()` and then
+unconditionally `setActiveObject(garment)`. That silently wiped the crop
+box and returned the garment as the selectable, draggable active object
+while the toolbar still read "Crop & Mask" - so a drag meant for the
+crop box moved the garment. Clicking Crop before the async garment load
+finished hit the old `if (!garment) return` for the same reason.
+(`selectable: false` alone was also never enough - a non-selectable
+object still receives pointer events.)
+
+Fix in `ClothingCanvas.tsx`: the tool setup became one function,
+`applyToolMode()`, reading only refs (new `activeToolRef`, existing
+`transformRef`), called from both the `[activeTool]` effect and right
+after the garment loads, so the active tool is re-applied on every
+reload. In crop mode the garment is now `selectable: false, evented:
+false` (fully inert), restored on leaving crop mode; and a
+`selection:cleared` handler re-activates the crop box if an empty-canvas
+click would otherwise drop its handles.
+
+Verified live (against a real item, `window` debug hook removed
+afterward): entered crop mode then forced a real container resize -
+canvas reloaded 375x500 -> 300x400 and the crop box, locked garment and
+lit toolbar all survived (previously: box gone, garment active); a
+mouse drag started on the garment outside the crop box moved nothing
+and left the crop box active; dragging the crop box itself moved it and
+applied the mask without touching the garment; Select mode still lets
+the garment be dragged and removes the crop box; clicking Crop while the
+canvas was still empty (before the garment loaded) ended with the crop
+box up and the garment locked. `tsc -b --force` + `vite build` clean.
+Test item deleted, test account deactivated.
+
+### Task 55 - remove dead warp scaffolding (2026-09-23)
+
+Checked first, as the task said ("if not already done in Task 26"): Task
+26 already deleted all the *source* scaffolding (`FabricWarpvas` dynamic
+import, `isWarpMode` prop/ref/state, `warpvasInstances`) - a grep of
+`frontend/src` for `warp`/`Warpvas` finds nothing. What remained was the
+dependency itself: `fabric-warpvas@1.2.0` in `frontend/package.json`
+(plus `warpvas` and `warpvas-perspective` pulled in transitively in the
+lockfile), imported nowhere. Removed it with
+`npm uninstall fabric-warpvas --legacy-peer-deps` (57 lines out of the
+lockfile, 1 out of `package.json`).
+
+Side benefit, confirmed: the "plain `npm install` fails on an older,
+unrelated conflict (`fabric-warpvas` wants fabric 6, project is on 7)"
+gotcha recorded under the onnxruntime-web fix no longer applies - a plain
+`npm install` now completes with exit 0 and no `--legacy-peer-deps`
+needed. Also removed the stale line in `frontend/FRONTEND_CHANGES.md`
+claiming "Mesh Warping (Puppet Warp): Integrated `fabric-warpvas`..." - a
+feature that was never built (per the 10b diagnosis above). Note for
+Task 56: `fabric-warpvas` was not a viable starting point anyway (fabric
+6 only, project is on 7), so a bake-on-save prototype will need its own
+approach.
+
+`tsc -b --force` + `vite build` clean.
+
+### Task 56 - bake-on-save mesh warp prototype (2026-09-23)
+
+Chosen approach (10b option b, agreed with the user): a 3x3 control-point
+mesh warp on **tops**, baked into a new PNG on save, original + control
+points kept for re-editing/undo, stored in the item's existing
+`modularData` string (no DB migration for the prototype - `modular_data`
+is unbounded `TEXT`, and `PersonaRenderer` only parses it when
+`isModular` is true, so it can't collide with the jacket data; warp is
+only offered when the item isn't modular).
+
+**How it works**
+- `utils/meshWarp.ts`: the 9 points (source-pixel space) define a smooth
+  surface (biquadratic Lagrange through them - identity when at their
+  default grid positions); the image is drawn onto it as ~2x32x32
+  textured triangles via per-triangle affine transforms on a plain 2D
+  canvas (own code, no dependency - `fabric-warpvas` was Fabric-6-only).
+  `bakeWarp` renders at 1 source px = 1 output px into the warped
+  surface's bounding box and returns a PNG blob + the box's center shift.
+  `retargetTransform` keeps the garment looking the same size/position
+  when its image's pixel size changes (scales virtual width/height by
+  the same ratio, moves x/y by the image-center shift rotated into the
+  garment's frame) and drops the crop mask (framed against the old
+  image).
+- `components/editor/WarpPanel.tsx`: overlay over the canvas with the
+  live-warped preview, the control net, 9 draggable handles (Pointer
+  Events), Reset Points / Cancel / Apply Warp. Always warps from the
+  ORIGINAL image, never a previously baked one.
+- `FittingEditor.tsx`: `Warp` toolbar tool (`allowWarp`, tops only) and
+  `Restore Original` (when the item has a warp). Apply: bake -> upload the
+  blob via `cloudinaryService` -> swap the canvas's image to the baked URL
+  and retarget the transform. On save it passes `imageUrl` (baked) and
+  `modularData` (warp record, `''` to clear) only if the warp changed;
+  `EditClothingModal` and `UploadFlow.handleSave` forward them.
+  `utils/warpData.ts` defines/parses the record (original URL + size,
+  points, baked size, center shift).
+- Persona view, thumbnails, outfits: **untouched** - they just see an
+  ordinary image URL, which is the point of baking.
+
+**Verified live** (test top + test bottom, real Cloudinary upload):
+Warp button shows for a top, not a bottom. Dragged three points (corner
+up/out, hem sag, side bulge) - live preview bent smoothly; Apply baked and
+uploaded in ~2.5s; the canvas showed the curved garment with transparent
+corners and a selection box fitting the new bounds. Saved: `imageUrl` = new
+Cloudinary PNG, `modularData` = warp record, transform width/height scaled
+1.26x/1.39x with a small center shift, crop cleared. Persona preview shows
+the warped garment correctly with no persona-renderer change. Reopening
+the item: `Restore Original` present, Warp panel starts from the original
+864x576 image. Restore + save: `imageUrl` back to the original,
+`modularData` `''`, transform back to exactly x 375 / y 400 / 450 x 300.
+Math check: an identity warp bakes to the same size with zero shift and
+mean pixel difference 0.06/255 (max 3). That check first exposed
+hairline seams (16k interior pixels at alpha 192-249, from adjacent
+anti-aliased triangle clips only ~touching); fixed by growing each clip
+triangle 2px (0 interior gaps on identity; 309 stray pixels of ~613k opaque
+on a strongly curved warp). `tsc -b --force` + `vite build` clean. Test
+items deleted, account deactivated.
+
+**Follow-up - warp in context on the persona (2026-09-24):** user liked
+the warp but wanted the persona visible while warping so the fit is
+judged where it counts. `WarpPanel` now draws a stage with the same 3:4
+shape as the studio canvas: the mannequin (same base image, scaled to the
+stage height, centered) with the garment drawn on top at its actual studio
+placement - center (`x`,`y`), width/height, rotation, flips, opacity - so
+you drag the 9 points directly on the persona. To support that,
+`meshWarp.ts` replaced its scale/offset "view" with a full 2x3 affine
+(`Affine`, `applyAffine`, `invertAffine`); `WarpPanel` builds the
+source-px -> stage-px matrix from the transform (for an already-warped
+item the transform describes the *baked* image, so the image is anchored
+at the original's center plus the stored shift), and pointer drags are
+mapped back through the inverse. The stage sizes itself to the room the
+panel has (ResizeObserver, 300-760px tall). `FittingEditor` now passes
+`warp`, `personaType` and `transform` to the panel (replacing
+`initialGrid`).
+
+Verified live: garment lands on the stage at exactly the studio's
+position/size (centered, 33% down, 32.5% x 21.6% of the stage height vs
+the expected 33% x 22%); dragged five points on the persona (shoulders
+out, waist in, hem sag) - the reshape reads correctly against the body;
+after Apply the studio's garment footprint matches the stage's (rows
+18-48% / cols 23-77% of the studio canvas vs the computed 19-47% /
+24-76%); reopening the warp panel on the now-baked item reproduced the
+pre-apply stage footprint exactly, confirming the anchor/shift math for
+re-editing. (A first bbox comparison looked off by ~6% at the top edge -
+that was a few of the mannequin's own saturated pixels near the head
+polluting the measurement, not garment; found by dumping per-row pixel
+counts.) `tsc -b --force` + `vite build` clean. Test item/account cleaned
+up.
+
+**Follow-up - handles vanishing at the stage edges (2026-09-24):** user:
+moving the garment to the top/bottom makes the resize handles disappear,
+and the same happened to warp points. Cause (same for both): a canvas can
+only draw inside its own element, and handles sit outside the thing they
+belong to (Fabric's corner handles ~16px out with the 10px object padding
++ 12px handle; the rotate handle 40px further up; warp handle circles are
+centered *on* a point that can sit exactly on the stage edge), so anything
+at the edge was cut off.
+- **Studio (`ClothingCanvas`):** the Fabric canvas is now `CANVAS_PAD`
+  (36px, in `CanvasUtils`) bigger on every side with
+  `setViewportTransform([1,0,0,1,PAD,PAD])`, so scene coordinates are
+  still stage-based. All the places that read `canvas.getWidth()/
+  getHeight()` as "the stage" now use `stageWidth()/stageHeight()`
+  (canvas minus the margin); the mannequin is centered on the stage
+  explicitly (`centerObject` would center on the padded canvas); the
+  render is an outer padded box (`overflow-hidden`) around an inner
+  `containerRef` box that the stage is fitted to, so the padded canvas
+  overflows the inner box by exactly the margin. The rotate handle's
+  offset went from -40 to -20 (`FabricControls.ts`, global) so it fits
+  the margin. Cost: the stage is ~72px shorter than before (the margin has
+  to come out of the same vertical space). `exportCanvasToImage` takes an
+  optional region so "Capture Preview" still exports just the stage.
+- **Warp stage (`WarpPanel`):** canvas is `EDGE_PAD` (17px) larger than the
+  stage; everything is drawn through the matrix with the margin folded in,
+  pointers are mapped minus the margin, and the stage's bounds get a faint
+  outline.
+Verified live: garments placed with their top edge above the stage (y=90,
+top at -20) and bottom edge below it (y=910): top corner-handle pixels
+draw in the margin rows above the stage edge (rows 15-27 of the canvas,
+which didn't exist before) and at the bottom down to row ~730 of 746;
+grabbing the top corner handle *in the margin* and dragging it resized the
+garment (330x220 -> 369x246); warp points dragged to the extreme
+top-left/bottom-right (clamped to the stage corners) draw as whole circles
+(188 white pixels vs 201 for a full circle). First "Capture Preview" pass
+exported the right size but with the persona shifted 36px - the crop
+region is in canvas pixels, not scene coordinates; fixed (persona center
+at 0.495/0.493 of the export width, spanning the full height). Not
+changed: the rotate handle still clips if the garment's *top edge* itself
+is above the stage (it needs ~36px above the object). (The shoe and jacket
+studios were fixed in the next follow-up, below.) `tsc -b --force` +
+`vite build` clean; test items/account cleaned up.
+
+**Follow-up - same fix for the shoe and jacket studios (2026-09-24):**
+`ShoeCanvas` (shoes sit near y=940 of 1000, so bottom handles were the
+classic victim) and `JacketCanvas` had the identical clipping. The
+`ClothingCanvas` helpers moved into `CanvasUtils` so all three share them:
+`stageWidth`/`stageHeight` (canvas minus the margin), `applyStagePadding`
+(size + viewport shift, used as `ShoeCanvas`'s resize handler and by
+`ClothingCanvas`) and `centerOnStage`. `ShoeCanvas`: padded via
+`applyStagePadding`, every canvas-size read switched to the stage size,
+mannequin centered on the stage, outer padded box + inner `containerRef`
+box. `JacketCanvas` recreates its canvas whenever the size changes, so the
+padding goes in the constructor (`width/height + 2*CANVAS_PAD` +
+`setViewportTransform`), plus the same size-read swaps, `centerOnStage`
+and container split; `JacketFittingEditor`'s transparent preview export now
+crops to the stage like Capture Preview does.
+Verified live through the real upload flow: **shoe studio** - canvas is
+stage + margin (stage ratio 0.751), persona centered, handles drawn up to
+12px below the stage bottom into the margin (previously cut at the
+stage edge), dragging a shoe moves it through the shifted viewport;
+**jacket studio** (real segmentation run) - stage ratio 0.749, persona
+centered (x-center 0.499) with its figure rows matching the persona image's
+own opaque extent scaled to the stage exactly (predicted rows 46-640,
+observed bottom row 640), and the selected segment's rotate handle drawn in
+the top margin. `tsc -b --force` + `vite build` clean. Test account
+deactivated. The upload flow's own Cloudinary uploads (shoe / cleaned
+jacket image) from this verification remain in the account's
+`digital-closet` folder.
+
+**Known prototype limits / decisions for later**
+- Tops only; jacket sleeves, pants, dresses not wired (no code blocks
+  them - `allowWarp` is the gate).
+- Applying a warp clears any crop; warping and cropping don't compose.
+- Each Apply uploads a new PNG; superseded/undone bakes stay in Cloudinary
+  (unsigned uploads can't delete) - including the one test bake from
+  this session's verification, in the account's `digital-closet` folder.
+- Storing the warp in `modularData` is a shortcut; if this graduates from
+  prototype it wants real columns (`original_image_url`, `warp_points`) via
+  a Flyway migration.
+- 3x3 gives one smooth bend per axis; a 4x4 grid (or per-region control)
+  would allow S-curves.
+- Cropped thumbnails on a warped item use the crop-less fallback (crop is
+  cleared on warp, so none applies).
+
 ### Tasks
 
-- [ ] **52** Reproduce + confirm crop tool defects live; report before fixing
-- [ ] **53** Fix crop stale closure + mask-follows-garment
-- [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
-- [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
-- [ ] **56** Prototype bake-on-save deformation for one garment type
+- [x] **52** Reproduce + confirm crop tool defects live; report before fixing
+- [x] **53** Fix crop stale closure + mask-follows-garment (+ the
+      blank-canvas bug found in Task 52, per explicit request)
+- [x] **54** Add un-crop / reset affordance to `CanvasToolbar` (+ verified
+      cropped output renders correctly in-editor and on persona; + fixed
+      two real bugs found while verifying - clip not rescaling with the
+      garment, and PersonaLayer's center/edge coordinate bug; + flat
+      browse/card thumbnails now also show the cropped region instead of
+      the full original photo)
+- [x] **55** Remove dead warp scaffolding (source was already gone in
+      Task 26; removed the leftover `fabric-warpvas` dependency)
+- [x] **56** Prototype bake-on-save deformation for one garment type
+      (3x3 mesh warp on tops, baked to PNG, original + points kept in
+      `modularData`)
 
 ### 🏁 Definition of Done
 
@@ -2487,8 +3162,13 @@ the phase they block.
 
 ### Blocking Phase 10 (fitting)
 
-11. **Crop repro.** Is it broken for *new* crops, for *reopening* an existing
-    crop, or both? This decides which of the five defects gets fixed first.
+11. ✅ **Crop repro — RESOLVED (Task 52, 2026-09-22).** Broken for *new*
+    crops (live evidence: a fresh crop-mode entry followed by a single
+    drag already corrupted unrelated transform state) - see Task 52's
+    write-up under 10a for the full live-testing results, including a
+    newly-found sixth defect (the canvas renders blank until a window
+    resize fires) that's likely the primary reason the tool feels broken
+    at all.
 12. **Deformation approach.** Confirm bake-on-save (b) over a persona
     renderer rewrite (a).
 
@@ -4597,3 +5277,15 @@ that you are mixing."
   sized cards, not cramped. `tsc -b --force` + `vite build` clean;
   gender-filter/mixing-alert/scroll test items (7 total, one deliberately
   the opposite gender) deleted after, confirmed empty on re-fetch.
+
+**Phase 9.7 is now complete (Tasks 73-76, plus twelve rounds of live
+follow-up feedback on Task 75 and two on Task 76 - see each task's own
+write-up above for the full history).** Per the checkpoint precedent set
+in Phase 9.5's own planning note, the checkpoint into `main` and the cut
+of `phase-10-persona-fitting` waited until all of Phase 9.5/9.6/9.7 was
+done - that happened 2026-09-22: `phase-9-categories-experience` merged
+into `main` cleanly (no conflicts), verified with `tsc -b --force` +
+`vite build` on the frontend and `./mvnw compile` on the backend (all
+clean) post-merge, then pushed; `phase-10-persona-fitting` cut from the
+updated `main` and pushed. Phase 10 (Tasks 52-56, crop-tool repair)
+starts fresh on that branch.

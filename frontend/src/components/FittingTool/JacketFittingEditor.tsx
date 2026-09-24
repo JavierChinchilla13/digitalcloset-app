@@ -12,7 +12,7 @@ import { Canvas } from 'fabric';
 import { PersonaType, type ClothingTransform, type ModularJacketData } from '../../types';
 import JacketCanvas from '../editor/JacketCanvas';
 import TransformPanel from '../editor/TransformPanel';
-import { exportCanvasToImage } from '../editor/CanvasUtils';
+import { exportCanvasToImage, CANVAS_PAD, stageWidth, stageHeight } from '../editor/CanvasUtils';
 
 interface JacketFittingEditorProps {
   segments: Record<string, string>;
@@ -122,7 +122,14 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
     canvas.renderAll();
 
     // 3. Export clean transparent image
-    const previewUrl = exportCanvasToImage(canvas);
+    // Just the stage, not the handle margin JacketCanvas pads around it
+    // (region is in canvas pixels, so it starts at the margin).
+    const previewUrl = exportCanvasToImage(canvas, {
+      left: CANVAS_PAD,
+      top: CANVAS_PAD,
+      width: stageWidth(canvas),
+      height: stageHeight(canvas),
+    });
 
     // 4. Restore visibility and highlights
     if (mannequin) mannequin.set({ visible: true });

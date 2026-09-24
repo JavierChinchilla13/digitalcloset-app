@@ -9,6 +9,44 @@ export const ASPECT_RATIO = 3 / 4;
 export const VIRTUAL_WIDTH = VIRTUAL_HEIGHT * ASPECT_RATIO;
 
 /**
+ * Margin (px, each side) ClothingCanvas adds around its 3:4 stage. A Fabric
+ * canvas can only draw inside its own element, so selection handles (corner
+ * handles sit ~16px outside the object, the rotate handle ~50px above it)
+ * used to be cut off whenever the garment was moved to the top/bottom edge
+ * of the stage. The canvas is now this much bigger on every side with its
+ * viewport shifted by this amount, so object coordinates are still
+ * stage-based (0..stage width/height) and the handles have room to draw.
+ */
+export const CANVAS_PAD = 36;
+
+// The stage (the 3:4 area all virtual coordinates are relative to) is the
+// canvas minus its CANVAS_PAD margin on every side.
+export const stageWidth = (canvas: Canvas) => canvas.getWidth() - 2 * CANVAS_PAD;
+export const stageHeight = (canvas: Canvas) => canvas.getHeight() - 2 * CANVAS_PAD;
+
+/**
+ * Sizes a canvas to `stage` plus the handle margin and shifts its viewport so
+ * scene coordinates stay stage-based (0,0 is the stage's top-left corner).
+ * Use as the canvas's resize handler.
+ */
+export const applyStagePadding = (canvas: Canvas, stage: { width: number; height: number }) => {
+  canvas.setDimensions({
+    width: stage.width + 2 * CANVAS_PAD,
+    height: stage.height + 2 * CANVAS_PAD,
+  });
+  canvas.setViewportTransform([1, 0, 0, 1, CANVAS_PAD, CANVAS_PAD]);
+};
+
+/**
+ * Centers an object on the stage (getCenterPoint/centerObject would center on
+ * the padded canvas instead).
+ */
+export const centerOnStage = (canvas: Canvas, obj: FabricObject) => {
+  obj.set({ left: stageWidth(canvas) / 2, top: stageHeight(canvas) / 2 });
+  obj.setCoords();
+};
+
+/**
  * Converts virtual X (0-750) to actual canvas pixels, anchored to the center.
  */
 export const toCanvasX = (virtualX: number, canvasWidth: number, canvasHeight: number) => {
@@ -99,9 +137,15 @@ export const centerObject = (canvas: Canvas, obj: FabricObject) => {
 /**
  * Exports the canvas as a high-resolution PNG.
  */
-export const exportCanvasToImage = (canvas: Canvas): string => {
+export const exportCanvasToImage = (
+  canvas: Canvas,
+  // Optional crop, in canvas (viewport) pixels - used to drop ClothingCanvas's
+  // handle margin from the exported image.
+  region?: { left: number; top: number; width: number; height: number }
+): string => {
   return canvas.toDataURL({
     format: 'png',
-    multiplier: 2
+    multiplier: 2,
+    ...region,
   });
 };

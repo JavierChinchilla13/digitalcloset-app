@@ -20,6 +20,7 @@ import type { ClothingItem } from '../types';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
 import FittingEditor from './FittingTool/FittingEditor';
+import { parseWarpData } from '../utils/warpData';
 
 interface EditClothingModalProps {
   item: ClothingItem | null;
@@ -78,7 +79,13 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
     }
   }, [item, isOpen]);
 
-  const handleUpdate = async (overrides?: { name: string; description: string; transform: ClothingTransform }) => {
+  const handleUpdate = async (overrides?: {
+    name: string;
+    description: string;
+    transform: ClothingTransform;
+    imageUrl?: string;
+    modularData?: string;
+  }) => {
     if (!item) return;
     
     const finalName = overrides?.name ?? name;
@@ -94,7 +101,9 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
         name: finalName,
         description: finalDescription,
         category,
-        imageUrl: item.imageUrl,
+        imageUrl: overrides?.imageUrl ?? item.imageUrl,
+        // Only sent when the mesh warp changed this session ('' clears it).
+        ...(overrides?.modularData !== undefined && { modularData: overrides.modularData }),
         transform: finalTransform,
         personaStatus: promoteToFittedOnSave ? PersonaStatus.FITTED : undefined
       });
@@ -287,6 +296,8 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   initialName={name}
                   initialDescription={description}
                   initialTransform={transform}
+                  allowWarp={category === ClothingCategory.TOP && !item?.isModular}
+                  initialWarp={parseWarpData(item?.modularData, item?.isModular)}
                   onBack={() => setIsStudioOpen(false)}
                   onSave={handleUpdate}
                 />
