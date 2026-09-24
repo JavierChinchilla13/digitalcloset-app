@@ -15,6 +15,7 @@ import { usePersonaStore } from "../store/usePersonaStore";
 import { buildOutfitPersona } from "../utils/personaEligibility";
 import { buildShowcaseRows } from "../utils/selectionDisplay";
 import PersonaRenderer from "../components/PersonaRenderer";
+import CroppedThumbnail from "../components/CroppedThumbnail";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
 
 // Outfit Showcase (Task 75, Phase 9.7) - reachable by clicking the navbar
@@ -85,11 +86,13 @@ const CategoryRow = ({
 }) => (
   <div className="flex items-center justify-center gap-3 py-0.5 border-b border-ink/5 last:border-b-0">
     {displayItems.map((item) => (
-      <img
+      <CroppedThumbnail
         key={item.itemId}
-        src={item.imageUrl}
+        imageUrl={item.imageUrl}
+        transform={item.transform}
         alt={item.name}
-        className="w-32 h-32 sm:w-40 sm:h-40 object-contain shrink-0 drop-shadow-md"
+        fit="contain"
+        className="w-32 h-32 sm:w-40 sm:h-40 shrink-0 drop-shadow-md"
       />
     ))}
     {extraCount > 0 && (
@@ -450,8 +453,9 @@ const ShowcaseSlot = ({
               key={item.itemId}
               className={`relative overflow-hidden rounded-lg bg-ink/5 ${outfitItems.length === 1 ? "col-span-2 row-span-2" : ""}`}
             >
-              <img
-                src={item.imageUrl}
+              <CroppedThumbnail
+                imageUrl={item.imageUrl}
+                transform={item.transform}
                 alt={item.name}
                 className="w-full h-full object-cover"
               />

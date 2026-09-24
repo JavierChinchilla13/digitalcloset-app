@@ -2,19 +2,24 @@ import React from 'react';
 import {
   MousePointer2,
   Crop,
-  Download
+  Download,
+  Undo2
 } from 'lucide-react';
 
 interface CanvasToolbarProps {
   activeTool: string;
   onToolChange: (tool: string) => void;
   onExport: () => void;
+  hasMask?: boolean;
+  onResetCrop?: () => void;
 }
 
-const CanvasToolbar: React.FC<CanvasToolbarProps> = ({ 
-  activeTool, 
+const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
+  activeTool,
   onToolChange,
-  onExport
+  onExport,
+  hasMask = false,
+  onResetCrop
 }) => {
   const tools = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
@@ -47,6 +52,18 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             </button>
           );
         })}
+        {hasMask && onResetCrop && (
+          <button
+            onClick={onResetCrop}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-text-secondary hover:bg-ink/5 hover:text-text-primary"
+            title="Reset Crop"
+          >
+            <Undo2 size={16} />
+            <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
+              Reset Crop
+            </span>
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-2 pr-2">

@@ -2616,12 +2616,230 @@ drag-resizing it live-updates the mask, and switching back to Select
 shows the garment correctly clipped to the new bounds. `tsc -b --force`
 + `vite build` clean. Test item deleted after, confirmed via API.
 
+### Task 54 — un-crop / reset affordance (2026-09-22)
+
+Added a "Reset Crop" button to `CanvasToolbar` (new `hasMask`/`onResetCrop`
+props), shown only when the current item actually has a mask
+(`hasMask={!!transform.maskWidth}` in `FittingEditor`). `handleResetCrop`
+(in `FittingEditor`, using the `fabricCanvasRef` it already holds via
+`onCanvasReady`) clears the garment's live `clipPath`, removes any
+in-progress `cropBox`, clears the four mask fields in `transform` state,
+and exits crop mode back to Select if it was active.
+
+**Also verified, per this round's explicit request, that a crop renders
+correctly in both places it's used** (not just assumed from the code):
+created a test item, centered it on the mannequin, cropped it down to
+roughly half its content via the crop box, and confirmed the *same*
+visible content (not distorted, not offset, not showing the wrong half)
+appeared both in the Fabric Studio editor and in the Attire builder's
+"Preview on Persona" view after saving - screenshots matched. Re-checked
+the `toCanvasX`/`toCanvasCoord` (and `toVirtualX`/`toVirtualCoord`)
+"inconsistency" already flagged as cosmetic-only in this doc's 10a
+diagnosis - confirmed algebraically again here (both reduce to the same
+formula under the enforced 3:4 aspect ratio) and now also empirically
+via this live persona-render check. Clicked Reset Crop, confirmed the
+full uncropped image reappeared in the editor, saved, and confirmed the
+persona view also reverted to the full image and the mask fields came
+back `null` from the API.
+
+(Note: `computer`-tool coordinate clicks intermittently missed this
+button in the emulated-viewport browser pane during testing - a repeat
+of a known session-wide coordinate-scaling quirk, not an app bug;
+confirmed by dispatching a real `.click()` via JS on the actual button
+element, which worked every time.)
+
+`tsc -b --force` + `vite build` clean. Test item deleted after.
+
+### Task 54 correction — two real crop bugs the first verification missed (2026-09-22)
+
+User reported, after the above: "crop image on the preview doesnt look
+crop and on persona preview most of the image disappears." The first
+verification pass's test crop happened to be forgiving enough (a
+roughly-symmetric half-crop of a centered image) that both bugs below
+were present but not visually obvious in a screenshot - a reminder that
+"the screenshot looks plausible" isn't the same as "the numbers are
+correct." Found both by re-testing with `toDataURL`/pixel sampling and
+by checking the saved API values against the display math by hand,
+after the emulated browser-pane screenshot tool turned out to be
+returning stale frames mid-investigation (confirmed via `canvas.
+toDataURL()` sampling the real current pixels against a screenshot that
+still showed old content).
+
+**Bug 1 - crop didn't rescale with the garment (`ClothingCanvas.tsx`).**
+The crop mask's `clipPath` is `absolutePositioned: true` (canvas-space).
+Task 53's mask-follow fix made it track the garment's *position*
+(translate delta), but never its *size* - resizing the garment after
+cropping (sidebar width/height sliders, or a direct corner-handle drag
+on canvas) left the clip at its old absolute size/position while the
+image grew or shrank around it, so the crop window ended up covering a
+wrong, mismatched fraction of the resized image. Reproduced live:
+cropped to the right half of a test image (clip ~127px wide out of a
+~249px-wide garment), then increasing the width via the slider to ~387px
+- the clip's raw width/height never changed, confirmed via direct
+Fabric inspection. Fixed in both directions (matching the existing
+translate-delta pattern): `handleModified` (direct canvas drag/resize)
+and the "Sync Transform updates from props" effect (slider-driven
+resize) now compute a scale ratio alongside the existing position delta
+and resize the clip's `width`/`height` by that ratio, anchored on the
+garment's own center - verified the ratio matches exactly (clip and
+garment both grew by 1.5556x) and that `getVirtualTransform`'s mask
+extraction (which reads `clipPath.width`/`height` directly, not
+`getScaledWidth()`) stays correct by resizing via raw width/height, not
+`scaleX`/`scaleY`.
+
+**Bug 2 - `maskLeft`/`maskTop` used as edges when they're centers
+(`PersonaLayer.tsx`).** `clipPath.left`/`.top` (and everything derived
+from them - `maskLeft`/`maskTop`) are Fabric center coordinates
+(`originX/Y: 'center'`, the same convention `transform.x`/`y` already
+use), but `PersonaLayer`'s clip-path inset math used them directly as
+if they were the crop's left/top edge, without subtracting half the
+mask's own width/height first. This silently shifted every computed
+inset by `maskWidth/2` / `maskHeight/2` - concretely, on the same
+right-half test crop, the buggy math computed the crop's right edge as
+~180 virtual units past the garment's own right edge (clamped to a
+flush-right 0% inset) when the real Fabric geometry only overshoots by
+~3 units; the *left* inset came out ~75% instead of the correct ~50%,
+so the persona rendered a much narrower, wrongly-positioned sliver of
+the image than what the editor actually showed. This is a pre-existing
+bug, unrelated to Task 53/Bug 1 above, and was silently wrong for every
+cropped item previously verified in this doc, including Task 54's first
+pass - the earlier "screenshots matched" check just didn't happen to
+expose it clearly, since a same-ish-size, roughly-centered crop still
+looks superficially plausible even a couple dozen percent off. Fixed by
+computing true left/top/right/bottom edges from the center + full
+width/height before taking the inset percentages.
+
+**Re-verified together:** cropped a fresh test item to its right half,
+resized it via the width slider (exercising both bugs at once),
+confirmed via direct Fabric inspection that the clip's size tracked the
+resize exactly, confirmed via `toDataURL` pixel sampling that the
+editor canvas shows real, varied flower/foliage colors across the
+correct span (not a solid block or the wrong region), saved, and
+confirmed via the persona view's actual computed `clipPath` CSS
+(`inset(0% 0% 0% 49.6%)` - a sane, expected "roughly right half" value)
+and a live screenshot that the persona now shows a full, coherent chunk
+of the flower, not a sliver. `tsc -b --force` + `vite build` clean.
+Test item and test account deleted/deactivated after.
+
+### Task 54 follow-up - crop shows in flat thumbnails too (2026-09-22)
+
+User: "make it so the crop version appears in the preview image." Every
+plain `<img src={item.imageUrl}>` thumbnail (Closet grid cards, Attire
+builder's browse/selection cards, item detail modals, category
+add-item pickers, outfit flat-grid previews, the showcase page) always
+showed the full original photo - none of them looked at
+`transform.mask*` at all, only `PersonaLayer` (the actual persona-worn
+render) did.
+
+Added `frontend/src/utils/cropDisplay.ts` (`getCropBackgroundStyle`)
+and `frontend/src/components/CroppedThumbnail.tsx`, a drop-in
+replacement for `<img className="... object-cover/contain">`. Renders a
+`background-image` div instead of an `<img>` - `background-size`/
+`background-position` (not `object-fit`/`object-position`, which can't
+target an arbitrary sub-region) is what lets it crop-to-a-region
+regardless of the container's own aspect ratio: scale the whole image
+up so the crop region alone fills 100% of the box
+(`background-size: {100/fractionWidth}% {100/fractionHeight}%`), then
+position it so that region's own top-left lands at the box's origin
+(`background-position: {fractionLeft/(1-fractionWidth)*100}% ...`) -
+the standard CSS "crop to sub-region via background" technique, derived
+and verified by hand against a known crop (right-half test item),
+matched the JS-computed values exactly (`200% 100%` /
+`100% 50%`). Falls back to a plain `background-size: cover|contain`
+(matching whatever `object-fit` the call site used before) when an item
+has no mask, so uncropped items - the majority - render identically to
+before.
+
+Wired into every call site that has a full `ClothingItem` (and
+therefore `.transform`) available: `ClothingCard.tsx`,
+`FlatOutfitBuilderPage.tsx` (both the selection strip and the browse
+grid), `ClothingDetailsModal.tsx`, `CategoryDetailPage.tsx`'s add-item
+picker, `OutfitCard.tsx`'s flat-grid fallback, `OutfitBuilderPage.tsx`,
+and `OutfitShowcasePage.tsx` (both the full-pieces row and the
+side/off-screen outfit mini-grid - the row explicitly passes
+`fit="contain"` to preserve its original letterboxed-whole-item look
+for uncropped items). Deliberately left untouched: `CategoryDetailPage.tsx`'s
+collection-item and `OutfitPreviewThumb`'s outfit-item thumbnails, and
+`OutfitShowcasePage.tsx`'s slim outfit-item rows - these use
+`CollectionItem`/`OutfitItem`, DTOs that don't carry `transform` at
+all; adding it would mean widening those API responses, a separate,
+bigger change not asked for here.
+
+Verified live: created a test item via the API with a known right-half
+mask (`x:375, width:450, maskLeft:487.5, maskWidth:225` - virtual-space
+values matching an actual in-editor crop), confirmed the rendered
+thumbnail's computed `background-size`/`background-position`
+(`200% 100%` / `100% 50%`) matched the hand-derived expected values
+exactly, and confirmed visually via screenshot that the Closet card
+shows a zoomed-in view of just the right-half flower, not the full
+two-flower photo. `tsc -b --force` + `vite build` clean. Test item
+deleted, test account deactivated after.
+
+**Correction - stretching (2026-09-22, same day):** user: "make it look
+like center and good not like all strech out." The first version scaled
+`background-size` X and Y *independently* (`100/fractionWidth% ×
+100/fractionHeight%`) so the crop exactly filled the box on both axes -
+only distortion-free by coincidence in the first test, since that crop's
+225x300 region happened to already be a 3:4 aspect matching the card.
+Any crop whose own aspect ratio doesn't match the container (the normal
+case) stretched visibly. Rewrote `getCropBackgroundStyle` to use a single
+*uniform* scale, `s = max(1/fractionWidth, 1/fractionHeight)` - the same
+"smallest zoom that still covers both axes" rule `object-fit: cover`
+itself uses - and a corresponding centering formula
+(`(0.5 - centerFraction*s) / (1-s) * 100`) so the crop's own center lands
+in the middle of the box, on whichever axis wasn't the limiting one some
+of the crop's own edge is now consequently cropped further, the same
+trade-off `cover` always makes, rather than stretching. Re-verified with
+a deliberately mismatched-aspect test crop (full width, only the middle
+1/3 of the height - about as different from a 3:4 card as a crop gets):
+computed style came out `background-size: 300% 300%` (uniform),
+`background-position: 50% 50%` (centered), and the resulting screenshot
+showed a normally-proportioned zoomed photo - round flower petals, not
+elongated - confirming no distortion. `tsc -b --force` + `vite build`
+clean. Test item deleted, test account deactivated after.
+
+**Second correction - fill vs contain (2026-09-23):** user (with a
+screenshot of their real closet): the cropped item "takes the whole
+space ... make it look like the other garments look." Two problems with
+the version above: (1) it was still a cover-style fill, so a tightly
+cropped garment ate the entire card instead of sitting centered with
+breathing room like every other (transparent-margin) cutout; (2) worse,
+`background-size: S% S%` with equal percentages renders the image at the
+*box's* aspect ratio, not its own, so it was actually still distorting
+whenever box and image aspect differed (only "looked" round on the
+sample photo). Fixed both by changing the model: `getCropDisplay` now
+returns the crop's own aspect ratio (`maskWidth/maskHeight`) plus the
+exact-fit `background-size`/`position` for a box of *that* ratio (the
+original edge-anchored formula, which is distortion-free precisely when
+the box matches the crop's proportions), and `CroppedThumbnail` draws
+that inner box sized to *contain* itself within the card at 90%
+(`min(90cqw, 90cqh * ratio)`, container-query units on a
+`container-type: size` wrapper - no JS measuring), centered. Uncropped
+items are untouched. Verified live: two crops of different proportions
+(half-width and a tall slim slice) render as centered, padded,
+undistorted pictures inside the same-size cards as an uncropped item,
+in both the Closet grid and the Attire browse grid + selection strip
+(measured inner boxes ~90% of the card, no collapsed/zero-size cases).
+
+**Not reproduced:** user also reported a blank screen while waiting for
+background removal. Walked the upload flow live (TOP path, and the SHOES
+pair path incl. the Cloudinary upload step): the PROCESSING step showed
+the spinner and live status text ("Analyzing garment...", "Removing
+background (Browser): N%", "Uploading left shoe...") the whole way and
+advanced to the preview/studio step normally - nothing in this session
+touched UploadFlow. Needs the exact screen/category/steps from the user.
+
 ### Tasks
 
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
 - [x] **53** Fix crop stale closure + mask-follows-garment (+ the
       blank-canvas bug found in Task 52, per explicit request)
-- [ ] **54** Add un-crop / reset affordance to `CanvasToolbar`
+- [x] **54** Add un-crop / reset affordance to `CanvasToolbar` (+ verified
+      cropped output renders correctly in-editor and on persona; + fixed
+      two real bugs found while verifying - clip not rescaling with the
+      garment, and PersonaLayer's center/edge coordinate bug; + flat
+      browse/card thumbnails now also show the cropped region instead of
+      the full original photo)
 - [ ] **55** Remove dead warp scaffolding (if not already done in Task 26)
 - [ ] **56** Prototype bake-on-save deformation for one garment type
 
