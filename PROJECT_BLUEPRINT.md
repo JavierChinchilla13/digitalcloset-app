@@ -1157,7 +1157,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 ### Phase 4 *(deferred — runs after Phase 10)*
 
-- [ ] **21** Resolve Forgot Password
+- [ ] **21** Resolve Forgot Password (next - Phase 4 in progress)
 - [ ] **22** Add route guards + error boundaries
 
 ### Phase 5 *(deferred)*
@@ -5289,3 +5289,13 @@ into `main` cleanly (no conflicts), verified with `tsc -b --force` +
 clean) post-merge, then pushed; `phase-10-persona-fitting` cut from the
 updated `main` and pushed. Phase 10 (Tasks 52-56, crop-tool repair)
 starts fresh on that branch.
+
+**Phase 10 is now complete (Tasks 52-56, plus follow-ups: crop-mode drag
+fix, thumbnails showing the crop, mesh warp shown in context on the
+persona, and handle-clipping fixes across all three studios).**
+Checkpoint done 2026-09-24: `phase-10-persona-fitting` merged into `main`
+(`--no-ff`, no conflicts, `main` had no commits it lacked), verified
+post-merge with `tsc -b --force` + `vite build` on the frontend and
+`./mvnw compile` on the backend (all clean), pushed; `phase-4-auth-and-guards`
+cut from the updated `main` and pushed. Phase 4 (Task 21 Forgot Password,
+Task 22 route guards + error boundaries) starts on that branch.
