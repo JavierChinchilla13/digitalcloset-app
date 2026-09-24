@@ -3021,10 +3021,36 @@ exported the right size but with the persona shifted 36px - the crop
 region is in canvas pixels, not scene coordinates; fixed (persona center
 at 0.495/0.493 of the export width, spanning the full height). Not
 changed: the rotate handle still clips if the garment's *top edge* itself
-is above the stage (it needs ~36px above the object); the shoe and jacket
-studios (`ShoeCanvas`, `JacketCanvas`) have the same edge-clipping and were
-not touched. `tsc -b --force` + `vite build` clean; test items/account
-cleaned up.
+is above the stage (it needs ~36px above the object). (The shoe and jacket
+studios were fixed in the next follow-up, below.) `tsc -b --force` +
+`vite build` clean; test items/account cleaned up.
+
+**Follow-up - same fix for the shoe and jacket studios (2026-09-24):**
+`ShoeCanvas` (shoes sit near y=940 of 1000, so bottom handles were the
+classic victim) and `JacketCanvas` had the identical clipping. The
+`ClothingCanvas` helpers moved into `CanvasUtils` so all three share them:
+`stageWidth`/`stageHeight` (canvas minus the margin), `applyStagePadding`
+(size + viewport shift, used as `ShoeCanvas`'s resize handler and by
+`ClothingCanvas`) and `centerOnStage`. `ShoeCanvas`: padded via
+`applyStagePadding`, every canvas-size read switched to the stage size,
+mannequin centered on the stage, outer padded box + inner `containerRef`
+box. `JacketCanvas` recreates its canvas whenever the size changes, so the
+padding goes in the constructor (`width/height + 2*CANVAS_PAD` +
+`setViewportTransform`), plus the same size-read swaps, `centerOnStage`
+and container split; `JacketFittingEditor`'s transparent preview export now
+crops to the stage like Capture Preview does.
+Verified live through the real upload flow: **shoe studio** - canvas is
+stage + margin (stage ratio 0.751), persona centered, handles drawn up to
+12px below the stage bottom into the margin (previously cut at the
+stage edge), dragging a shoe moves it through the shifted viewport;
+**jacket studio** (real segmentation run) - stage ratio 0.749, persona
+centered (x-center 0.499) with its figure rows matching the persona image's
+own opaque extent scaled to the stage exactly (predicted rows 46-640,
+observed bottom row 640), and the selected segment's rotate handle drawn in
+the top margin. `tsc -b --force` + `vite build` clean. Test account
+deactivated. The upload flow's own Cloudinary uploads (shoe / cleaned
+jacket image) from this verification remain in the account's
+`digital-closet` folder.
 
 **Known prototype limits / decisions for later**
 - Tops only; jacket sleeves, pants, dresses not wired (no code blocks

@@ -6,8 +6,11 @@ import {
   toCanvasCoord,
   toCanvasX,
   loadFabricImage,
-  centerObject,
-  getVirtualTransform
+  centerOnStage,
+  getVirtualTransform,
+  CANVAS_PAD,
+  stageWidth,
+  stageHeight
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
@@ -71,9 +74,12 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
       backgroundColor: 'transparent',
       preserveObjectStacking: true,
       selection: true,
-      width: canvasSize.width,
-      height: canvasSize.height
+      // Stage plus the handle margin on every side, with the viewport
+      // shifted so coordinates stay stage-based - see CANVAS_PAD.
+      width: canvasSize.width + 2 * CANVAS_PAD,
+      height: canvasSize.height + 2 * CANVAS_PAD
     });
+    canvas.setViewportTransform([1, 0, 0, 1, CANVAS_PAD, CANVAS_PAD]);
 
     // Task 53: consistent with ClothingCanvas/ShoeCanvas's own fix for the
     // blank-canvas bug, though this component was never actually affected
@@ -86,8 +92,8 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
     const handleModified = (e?: any) => {
       if (isUpdatingRef.current || cancelled) return;
       
-      const canvasHeight = canvas.getHeight();
-      const canvasWidth = canvas.getWidth();
+      const canvasHeight = stageHeight(canvas);
+      const canvasWidth = stageWidth(canvas);
       const target = e?.target;
 
       // --- Visual Virtual Grouping (Real-time movement, scaling, rotation) ---
@@ -230,15 +236,15 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
           originX: 'center',
           originY: 'center',
         });
-        mannequin.scale(canvas.getHeight() / mannequin.height!);
-        centerObject(canvas, mannequin);
+        mannequin.scale(stageHeight(canvas) / mannequin.height!);
+        centerOnStage(canvas, mannequin);
         lockObject(mannequin);
         canvas.add(mannequin);
         canvas.sendObjectToBack(mannequin);
 
         // 2. Jacket Segments
-        const canvasHeight = canvas.getHeight();
-        const canvasWidth = canvas.getWidth();
+        const canvasHeight = stageHeight(canvas);
+        const canvasWidth = stageWidth(canvas);
         for (const [name, url] of Object.entries(segments)) {
           const segmentImg = await loadFabricImage(url);
           if (cancelled) return;
@@ -320,8 +326,8 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
         const segmentData = modularData.segments[obj.name as keyof ModularJacketData['segments']];
         if (segmentData) {
           const trans = segmentData.transform;
-          const canvasHeight = canvas.getHeight();
-          const canvasWidth = canvas.getWidth();
+          const canvasHeight = stageHeight(canvas);
+          const canvasWidth = stageWidth(canvas);
           
           obj.set({
             left: toCanvasX(trans.x, canvasWidth, canvasHeight),
@@ -422,9 +428,13 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   }, [activePart, isGroupMode, onSelectPart]);
 
   return (
-    <div ref={containerRef} className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner">
+    <div className="relative w-full h-full min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner" style={{ padding: CANVAS_PAD }}>
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
-      <canvas ref={canvasRef} />
+      {/* The stage is sized from this inner box; the outer box's padding is
+          the handle margin (see CANVAS_PAD in ClothingCanvas's notes). */}
+      <div ref={containerRef} className="relative w-full h-full flex items-center justify-center">
+        <canvas ref={canvasRef} />
+      </div>
       {/* Task 71: fixed light colors, not the theme tokens - see the
           matching comment in ClothingCanvas.tsx. */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">

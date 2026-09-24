@@ -8,16 +8,14 @@ import {
   toCanvasX,
   loadFabricImage,
   getVirtualTransform,
-  CANVAS_PAD
+  CANVAS_PAD,
+  stageWidth,
+  stageHeight,
+  applyStagePadding
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
 import { getStageAccentHex, getStageAccentRgba } from '../../utils/themeColors';
-
-// The stage (the 3:4 area all coordinates are relative to) is the canvas minus
-// its CANVAS_PAD margin on every side - see CANVAS_PAD.
-const stageWidth = (canvas: Canvas) => canvas.getWidth() - 2 * CANVAS_PAD;
-const stageHeight = (canvas: Canvas) => canvas.getHeight() - 2 * CANVAS_PAD;
 
 interface ClothingCanvasProps {
   imageUrl: string;
@@ -40,13 +38,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
-      canvas?.setDimensions({
-        width: size.width + 2 * CANVAS_PAD,
-        height: size.height + 2 * CANVAS_PAD,
-      });
-      // Shift the viewport so scene coordinates stay stage-based (0,0 is the
-      // stage's top-left corner, not the padded canvas's).
-      canvas?.setViewportTransform([1, 0, 0, 1, CANVAS_PAD, CANVAS_PAD]);
+      if (canvas) applyStagePadding(canvas, size);
       canvas?.requestRenderAll();
     },
   });
