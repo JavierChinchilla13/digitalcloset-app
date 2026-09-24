@@ -19,6 +19,33 @@ export const VIRTUAL_WIDTH = VIRTUAL_HEIGHT * ASPECT_RATIO;
  */
 export const CANVAS_PAD = 36;
 
+// The stage (the 3:4 area all virtual coordinates are relative to) is the
+// canvas minus its CANVAS_PAD margin on every side.
+export const stageWidth = (canvas: Canvas) => canvas.getWidth() - 2 * CANVAS_PAD;
+export const stageHeight = (canvas: Canvas) => canvas.getHeight() - 2 * CANVAS_PAD;
+
+/**
+ * Sizes a canvas to `stage` plus the handle margin and shifts its viewport so
+ * scene coordinates stay stage-based (0,0 is the stage's top-left corner).
+ * Use as the canvas's resize handler.
+ */
+export const applyStagePadding = (canvas: Canvas, stage: { width: number; height: number }) => {
+  canvas.setDimensions({
+    width: stage.width + 2 * CANVAS_PAD,
+    height: stage.height + 2 * CANVAS_PAD,
+  });
+  canvas.setViewportTransform([1, 0, 0, 1, CANVAS_PAD, CANVAS_PAD]);
+};
+
+/**
+ * Centers an object on the stage (getCenterPoint/centerObject would center on
+ * the padded canvas instead).
+ */
+export const centerOnStage = (canvas: Canvas, obj: FabricObject) => {
+  obj.set({ left: stageWidth(canvas) / 2, top: stageHeight(canvas) / 2 });
+  obj.setCoords();
+};
+
 /**
  * Converts virtual X (0-750) to actual canvas pixels, anchored to the center.
  */
