@@ -8,6 +8,7 @@ import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitDraftStore, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
+import CroppedThumbnail from './CroppedThumbnail';
 import { computePersonaEligibility, buildOutfitPersona } from '../utils/personaEligibility';
 
 interface OutfitCardProps {
@@ -122,7 +123,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               >
                 {equippedItems.slice(0, 4).map((item, idx) => (
                   <div key={item.itemId} className={`relative rounded-xl overflow-hidden border border-ink/5 bg-ink/5 ${equippedItems.length === 1 ? 'col-span-2 row-span-2' : ''}`}>
-                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                    <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
                     {idx === 3 && equippedItems.length > 4 && (
                       <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
                         <span className="text-white text-[10px] font-medium">+{equippedItems.length - 3}</span>

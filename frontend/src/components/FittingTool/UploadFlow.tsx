@@ -409,7 +409,13 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleSave = async (data: { name: string; description: string; transform: ClothingTransform }) => {
+  const handleSave = async (data: {
+    name: string;
+    description: string;
+    transform: ClothingTransform;
+    imageUrl?: string;
+    modularData?: string;
+  }) => {
     if (!processedImageUrl) return;
     try {
       await createItemAndMaybeAddToCollection({
@@ -417,7 +423,10 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         description: data.description,
         category,
         personaType,
-        imageUrl: processedImageUrl,
+        // The baked image replaces the upload if a mesh warp was applied
+        // (Task 56 prototype); modularData then holds the warp record.
+        imageUrl: data.imageUrl ?? processedImageUrl,
+        ...(data.modularData ? { modularData: data.modularData } : {}),
         transform: data.transform
       });
       handleClose();
@@ -830,7 +839,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
 
             {step === 'FITTING' && (
               <motion.div key="fitting" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex-1 h-full">
-                <FittingEditor imageUrl={processedImageUrl!} category={category} personaType={personaType} onSave={handleSave} onBack={() => setStep('CONFIG')} />
+                <FittingEditor imageUrl={processedImageUrl!} category={category} personaType={personaType} allowWarp={category === ClothingCategory.TOP} onSave={handleSave} onBack={() => setStep('CONFIG')} />
               </motion.div>
             )}
 

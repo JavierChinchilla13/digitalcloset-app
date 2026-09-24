@@ -4,6 +4,7 @@ import { Shirt, Info, Edit2, Trash2, Star } from 'lucide-react';
 import type { ClothingItem, PersonaState } from '../types';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
+import CroppedThumbnail from './CroppedThumbnail';
 
 interface ClothingCardProps {
   item: ClothingItem;
@@ -79,8 +80,9 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
           : 'border-ink/5 bg-ink/5 hover:border-ink/20'
         }
       `}>
-        <img 
-          src={item.imageUrl} 
+        <CroppedThumbnail
+          imageUrl={item.imageUrl}
+          transform={item.transform}
           alt={item.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />

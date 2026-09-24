@@ -6,8 +6,12 @@ import {
   toCanvasX,
   toCanvasCoord,
   loadFabricImage,
-  centerObject,
-  getVirtualTransform
+  centerOnStage,
+  getVirtualTransform,
+  CANVAS_PAD,
+  stageWidth,
+  stageHeight,
+  applyStagePadding
 } from '../editor/CanvasUtils';
 import { customizeFabricControls, lockObject } from '../editor/FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
@@ -36,10 +40,12 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
   activeSide,
   onSideSelect
 }) => {
-  const { canvasRef, fabricCanvasRef, containerRef, canvasSize } = useFabricCanvas({
+  const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
-      canvas?.setDimensions(size);
+      // Stage plus the handle margin (see CANVAS_PAD) - shoes sit near the
+      // bottom of the stage, exactly where handles used to get cut off.
+      if (canvas) applyStagePadding(canvas, size);
       canvas?.requestRenderAll();
     },
   });
@@ -61,7 +67,12 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
       selection: false,
     });
 
-    fabricCanvasRef.current = canvas;
+    // Task 52/53 bug fix: was a direct `fabricCanvasRef.current = canvas`
+    // assignment - see useFabricCanvas's own comment on setFabricCanvas
+    // for why that left the canvas at the browser's default 300x150 size
+    // (blank-looking) until something else happened to resize the
+    // container. setFabricCanvas re-applies the correct size immediately.
+    setFabricCanvas(canvas);
     if (onCanvasReady) onCanvasReady(canvas);
 
     const handleModified = (e: any) => {
@@ -69,7 +80,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
       if (activeObject && (activeObject.name === 'leftShoe' || activeObject.name === 'rightShoe') && !isUpdatingRef.current) {
         const side = activeObject.name === 'leftShoe' ? 'left' : 'right';
         const currentBaseTransform = side === 'left' ? leftTransform : rightTransform;
-        const virtualTransform = getVirtualTransform(activeObject, canvas.getWidth(), canvas.getHeight());
+        const virtualTransform = getVirtualTransform(activeObject, stageWidth(canvas), stageHeight(canvas));
         
         onTransformChange(side, {
           ...currentBaseTransform,
@@ -94,7 +105,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
 
     return () => {
       canvas.dispose();
-      fabricCanvasRef.current = null;
+      setFabricCanvas(null);
     };
   }, []);
 
@@ -123,15 +134,15 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
           originX: 'center',
           originY: 'center',
         });
-        const mannequinScale = canvas.getHeight() / mannequin.height!;
+        const mannequinScale = stageHeight(canvas) / mannequin.height!;
         mannequin.scale(mannequinScale);
-        centerObject(canvas, mannequin);
+        centerOnStage(canvas, mannequin);
         lockObject(mannequin);
         canvas.add(mannequin);
         canvas.sendObjectToBack(mannequin);
 
-        const canvasWidth = canvas.getWidth();
-        const canvasHeight = canvas.getHeight();
+        const canvasWidth = stageWidth(canvas);
+        const canvasHeight = stageHeight(canvas);
 
         // 2. Setup Foot Indicators
         const indicatorColor = getStageAccentRgba(0.4);
@@ -221,8 +232,8 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
 
     const leftObj = canvas.getObjects().find(obj => obj.name === 'leftShoe');
     const rightObj = canvas.getObjects().find(obj => obj.name === 'rightShoe');
-    const canvasWidth = canvas.getWidth();
-    const canvasHeight = canvas.getHeight();
+    const canvasWidth = stageWidth(canvas);
+    const canvasHeight = stageHeight(canvas);
 
     isUpdatingRef.current = true;
     
@@ -284,9 +295,9 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
   }, [activeSide]);
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
+    <div
+      className="relative w-full h-full min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
+      style={{ padding: CANVAS_PAD }}
     >
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
@@ -294,7 +305,11 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
           backgroundSize: '30px 30px'
         }}
       />
-      <canvas ref={canvasRef} />
+      {/* The stage is sized from this inner box; the outer box's padding is
+          the handle margin (see CANVAS_PAD). */}
+      <div ref={containerRef} className="relative w-full h-full flex items-center justify-center">
+        <canvas ref={canvasRef} />
+      </div>
       {/* Task 71: fixed light colors, not the theme tokens - see the
           matching comment in ClothingCanvas.tsx. */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">

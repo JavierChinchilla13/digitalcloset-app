@@ -7,6 +7,7 @@ import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitStore } from '../store/useOutfitStore';
 import { useToast } from '../components/Toast';
 import SectionWrapper from '../components/SectionWrapper';
+import CroppedThumbnail from '../components/CroppedThumbnail';
 import { ClothingCategory, PersonaType } from '../types';
 import type { ClothingItem, Collection, Outfit } from '../types';
 
@@ -427,7 +428,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                               disabled={isAdding}
                               className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 hover:border-accent/50 transition-all group disabled:opacity-50"
                             >
-                              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                              <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
                               <div className="absolute top-1.5 left-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
                                 <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
                               </div>

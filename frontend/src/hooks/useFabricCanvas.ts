@@ -45,6 +45,22 @@ export function useFabricCanvas(options: UseFabricCanvasOptions = {}) {
   const onResizeRef = useRef(onResize);
   onResizeRef.current = onResize;
 
+  // Task 52/53 bug fix: the very first `updateSize()` call below always
+  // used to fire before any caller's "create the Fabric Canvas" effect
+  // (every editor calls this hook first in its component body, so this
+  // effect - registered first - runs first too) - so `onResize` ran with
+  // `fabricCanvasRef.current` still null, `canvas?.setDimensions(size)`
+  // was a silent no-op, and the Canvas kept the browser's built-in
+  // 300x150 default forever unless the container happened to resize
+  // again later (which a real user's browser essentially never does on
+  // its own) - reproduced live as a completely blank editor canvas on
+  // every normal open. `latestSizeRef` keeps the last computed size
+  // around even before a Canvas exists, so `setFabricCanvas` (below) can
+  // immediately re-apply it the instant the Canvas actually is created,
+  // instead of only ever updating on a container resize that may never
+  // come.
+  const latestSizeRef = useRef<CanvasSize>({ width: 0, height: 0 });
+
   useEffect(() => {
     if (aspectRatio === undefined) return;
 
@@ -58,6 +74,8 @@ export function useFabricCanvas(options: UseFabricCanvasOptions = {}) {
         height = offsetHeight;
         width = height * aspectRatio;
       }
+
+      latestSizeRef.current = { width, height };
 
       setCanvasSize((prev) => {
         if (
@@ -83,7 +101,18 @@ export function useFabricCanvas(options: UseFabricCanvasOptions = {}) {
     };
   }, [aspectRatio, resizeThreshold]);
 
-  return { canvasRef, fabricCanvasRef, containerRef, canvasSize };
+  // Callers should use this instead of assigning `fabricCanvasRef.current`
+  // directly (every editor used to) - see the comment on `latestSizeRef`
+  // above for why a plain assignment misses the canvas's correct initial
+  // size.
+  const setFabricCanvas = (canvas: Canvas | null) => {
+    fabricCanvasRef.current = canvas;
+    if (canvas && latestSizeRef.current.width > 0) {
+      onResizeRef.current?.(latestSizeRef.current, canvas);
+    }
+  };
+
+  return { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas };
 }
 
 // Measures a container element's size, retrying while layout hasn't settled
