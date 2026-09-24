@@ -7,12 +7,17 @@ import {
   toVirtualCoord,
   toCanvasX,
   loadFabricImage,
-  centerObject,
-  getVirtualTransform
+  getVirtualTransform,
+  CANVAS_PAD
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
 import { getStageAccentHex, getStageAccentRgba } from '../../utils/themeColors';
+
+// The stage (the 3:4 area all coordinates are relative to) is the canvas minus
+// its CANVAS_PAD margin on every side - see CANVAS_PAD.
+const stageWidth = (canvas: Canvas) => canvas.getWidth() - 2 * CANVAS_PAD;
+const stageHeight = (canvas: Canvas) => canvas.getHeight() - 2 * CANVAS_PAD;
 
 interface ClothingCanvasProps {
   imageUrl: string;
@@ -35,7 +40,13 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
-      canvas?.setDimensions(size);
+      canvas?.setDimensions({
+        width: size.width + 2 * CANVAS_PAD,
+        height: size.height + 2 * CANVAS_PAD,
+      });
+      // Shift the viewport so scene coordinates stay stage-based (0,0 is the
+      // stage's top-left corner, not the padded canvas's).
+      canvas?.setViewportTransform([1, 0, 0, 1, CANVAS_PAD, CANVAS_PAD]);
       canvas?.requestRenderAll();
     },
   });
@@ -170,7 +181,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         lastGarmentPosRef.current = { left: curLeft, top: curTop };
         lastGarmentScaleRef.current = { scaleX: curScaleX, scaleY: curScaleY };
 
-        const virtualTransform = getVirtualTransform(activeObject, canvas.getWidth(), canvas.getHeight());
+        const virtualTransform = getVirtualTransform(activeObject, stageWidth(canvas), stageHeight(canvas));
         onTransformChange({
           ...transformRef.current,
           ...virtualTransform,
@@ -229,7 +240,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       // garment stays fully inert (nothing to grab or drag) while cropping.
       garment.set({ selectable: false, evented: false });
 
-      const canvasHeight = canvas.getHeight();
+      const canvasHeight = stageHeight(canvas);
 
       // Initialize crop box at current mask position or fallback to 80% of garment
       const cropBox = new Rect({
@@ -266,10 +277,10 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
 
         onTransformChange({
           ...transformRef.current,
-          maskLeft: toVirtualCoord(cropBox.left!, canvas.getHeight()),
-          maskTop: toVirtualCoord(cropBox.top!, canvas.getHeight()),
-          maskWidth: toVirtualCoord(cropBox.getScaledWidth(), canvas.getHeight()),
-          maskHeight: toVirtualCoord(cropBox.getScaledHeight(), canvas.getHeight()),
+          maskLeft: toVirtualCoord(cropBox.left!, stageHeight(canvas)),
+          maskTop: toVirtualCoord(cropBox.top!, stageHeight(canvas)),
+          maskWidth: toVirtualCoord(cropBox.getScaledWidth(), stageHeight(canvas)),
+          maskHeight: toVirtualCoord(cropBox.getScaledHeight(), stageHeight(canvas)),
         });
         canvas.requestRenderAll();
       };
@@ -315,16 +326,19 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
           originY: 'center',
         });
         
-        const mannequinScale = canvas.getHeight() / mannequin.height!;
+        const canvasWidth = stageWidth(canvas);
+        const canvasHeight = stageHeight(canvas);
+
+        const mannequinScale = canvasHeight / mannequin.height!;
         mannequin.scale(mannequinScale);
-        
-        centerObject(canvas, mannequin);
+
+        // Centered on the stage (not the padded canvas, which is what
+        // centerObject/getCenterPoint would use).
+        mannequin.set({ left: canvasWidth / 2, top: canvasHeight / 2 });
+        mannequin.setCoords();
         lockObject(mannequin);
         canvas.add(mannequin);
         canvas.sendObjectToBack(mannequin);
-
-        const canvasWidth = canvas.getWidth();
-        const canvasHeight = canvas.getHeight();
         
         // Setup Garment
         garment.set({
@@ -395,8 +409,8 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
     const garment = canvas.getObjects().find(obj => obj.name === 'garment');
     if (garment) {
       isUpdatingRef.current = true;
-      const canvasWidth = canvas.getWidth();
-      const canvasHeight = canvas.getHeight();
+      const canvasWidth = stageWidth(canvas);
+      const canvasHeight = stageHeight(canvas);
 
       // Task 53 (mask-follows-garment fix): the crop mask's clipPath is
       // `absolutePositioned: true` (canvas-space, not relative to the
@@ -499,17 +513,22 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   }, [transform.x, transform.y, transform.width, transform.height, transform.rotation, transform.opacity, transform.flipX, transform.flipY]);
 
   return (
-    <div 
-      ref={containerRef}
-      className="relative w-full h-full min-h-[500px] flex items-center justify-center bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
+    <div
+      className="relative w-full h-full min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
+      style={{ padding: CANVAS_PAD }}
     >
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
         style={{
           backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`,
-          backgroundSize: '30px 30px' 
-        }} 
+          backgroundSize: '30px 30px'
+        }}
       />
-      <canvas ref={canvasRef} />
+      {/* The stage is sized from this inner box (the outer box's padding is
+          the handle margin - see CANVAS_PAD); the padded canvas is centered
+          in it and overflows it by exactly that margin on every side. */}
+      <div ref={containerRef} className="relative w-full h-full flex items-center justify-center">
+        <canvas ref={canvasRef} />
+      </div>
       {/* Task 71: text-primary/accent would follow the site theme and turn
           near-black in light mode - invisible on this stage, which stays
           dark in both themes (see index.css). Fixed light colors instead,

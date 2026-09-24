@@ -1151,7 +1151,9 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 - [x] **54** Add un-crop / reset affordance to `CanvasToolbar`
 - [x] **55** Remove dead warp scaffolding (source was already gone in
       Task 26; removed the leftover `fabric-warpvas` dependency)
-- [ ] **56** Prototype bake-on-save deformation for one garment type
+- [x] **56** Prototype bake-on-save deformation for one garment type
+      (3x3 mesh warp on tops, baked to PNG, original + points kept in
+      `modularData`)
 
 ### Phase 4 *(deferred — runs after Phase 10)*
 
@@ -2893,6 +2895,152 @@ approach.
 
 `tsc -b --force` + `vite build` clean.
 
+### Task 56 - bake-on-save mesh warp prototype (2026-09-23)
+
+Chosen approach (10b option b, agreed with the user): a 3x3 control-point
+mesh warp on **tops**, baked into a new PNG on save, original + control
+points kept for re-editing/undo, stored in the item's existing
+`modularData` string (no DB migration for the prototype - `modular_data`
+is unbounded `TEXT`, and `PersonaRenderer` only parses it when
+`isModular` is true, so it can't collide with the jacket data; warp is
+only offered when the item isn't modular).
+
+**How it works**
+- `utils/meshWarp.ts`: the 9 points (source-pixel space) define a smooth
+  surface (biquadratic Lagrange through them - identity when at their
+  default grid positions); the image is drawn onto it as ~2x32x32
+  textured triangles via per-triangle affine transforms on a plain 2D
+  canvas (own code, no dependency - `fabric-warpvas` was Fabric-6-only).
+  `bakeWarp` renders at 1 source px = 1 output px into the warped
+  surface's bounding box and returns a PNG blob + the box's center shift.
+  `retargetTransform` keeps the garment looking the same size/position
+  when its image's pixel size changes (scales virtual width/height by
+  the same ratio, moves x/y by the image-center shift rotated into the
+  garment's frame) and drops the crop mask (framed against the old
+  image).
+- `components/editor/WarpPanel.tsx`: overlay over the canvas with the
+  live-warped preview, the control net, 9 draggable handles (Pointer
+  Events), Reset Points / Cancel / Apply Warp. Always warps from the
+  ORIGINAL image, never a previously baked one.
+- `FittingEditor.tsx`: `Warp` toolbar tool (`allowWarp`, tops only) and
+  `Restore Original` (when the item has a warp). Apply: bake -> upload the
+  blob via `cloudinaryService` -> swap the canvas's image to the baked URL
+  and retarget the transform. On save it passes `imageUrl` (baked) and
+  `modularData` (warp record, `''` to clear) only if the warp changed;
+  `EditClothingModal` and `UploadFlow.handleSave` forward them.
+  `utils/warpData.ts` defines/parses the record (original URL + size,
+  points, baked size, center shift).
+- Persona view, thumbnails, outfits: **untouched** - they just see an
+  ordinary image URL, which is the point of baking.
+
+**Verified live** (test top + test bottom, real Cloudinary upload):
+Warp button shows for a top, not a bottom. Dragged three points (corner
+up/out, hem sag, side bulge) - live preview bent smoothly; Apply baked and
+uploaded in ~2.5s; the canvas showed the curved garment with transparent
+corners and a selection box fitting the new bounds. Saved: `imageUrl` = new
+Cloudinary PNG, `modularData` = warp record, transform width/height scaled
+1.26x/1.39x with a small center shift, crop cleared. Persona preview shows
+the warped garment correctly with no persona-renderer change. Reopening
+the item: `Restore Original` present, Warp panel starts from the original
+864x576 image. Restore + save: `imageUrl` back to the original,
+`modularData` `''`, transform back to exactly x 375 / y 400 / 450 x 300.
+Math check: an identity warp bakes to the same size with zero shift and
+mean pixel difference 0.06/255 (max 3). That check first exposed
+hairline seams (16k interior pixels at alpha 192-249, from adjacent
+anti-aliased triangle clips only ~touching); fixed by growing each clip
+triangle 2px (0 interior gaps on identity; 309 stray pixels of ~613k opaque
+on a strongly curved warp). `tsc -b --force` + `vite build` clean. Test
+items deleted, account deactivated.
+
+**Follow-up - warp in context on the persona (2026-09-24):** user liked
+the warp but wanted the persona visible while warping so the fit is
+judged where it counts. `WarpPanel` now draws a stage with the same 3:4
+shape as the studio canvas: the mannequin (same base image, scaled to the
+stage height, centered) with the garment drawn on top at its actual studio
+placement - center (`x`,`y`), width/height, rotation, flips, opacity - so
+you drag the 9 points directly on the persona. To support that,
+`meshWarp.ts` replaced its scale/offset "view" with a full 2x3 affine
+(`Affine`, `applyAffine`, `invertAffine`); `WarpPanel` builds the
+source-px -> stage-px matrix from the transform (for an already-warped
+item the transform describes the *baked* image, so the image is anchored
+at the original's center plus the stored shift), and pointer drags are
+mapped back through the inverse. The stage sizes itself to the room the
+panel has (ResizeObserver, 300-760px tall). `FittingEditor` now passes
+`warp`, `personaType` and `transform` to the panel (replacing
+`initialGrid`).
+
+Verified live: garment lands on the stage at exactly the studio's
+position/size (centered, 33% down, 32.5% x 21.6% of the stage height vs
+the expected 33% x 22%); dragged five points on the persona (shoulders
+out, waist in, hem sag) - the reshape reads correctly against the body;
+after Apply the studio's garment footprint matches the stage's (rows
+18-48% / cols 23-77% of the studio canvas vs the computed 19-47% /
+24-76%); reopening the warp panel on the now-baked item reproduced the
+pre-apply stage footprint exactly, confirming the anchor/shift math for
+re-editing. (A first bbox comparison looked off by ~6% at the top edge -
+that was a few of the mannequin's own saturated pixels near the head
+polluting the measurement, not garment; found by dumping per-row pixel
+counts.) `tsc -b --force` + `vite build` clean. Test item/account cleaned
+up.
+
+**Follow-up - handles vanishing at the stage edges (2026-09-24):** user:
+moving the garment to the top/bottom makes the resize handles disappear,
+and the same happened to warp points. Cause (same for both): a canvas can
+only draw inside its own element, and handles sit outside the thing they
+belong to (Fabric's corner handles ~16px out with the 10px object padding
++ 12px handle; the rotate handle 40px further up; warp handle circles are
+centered *on* a point that can sit exactly on the stage edge), so anything
+at the edge was cut off.
+- **Studio (`ClothingCanvas`):** the Fabric canvas is now `CANVAS_PAD`
+  (36px, in `CanvasUtils`) bigger on every side with
+  `setViewportTransform([1,0,0,1,PAD,PAD])`, so scene coordinates are
+  still stage-based. All the places that read `canvas.getWidth()/
+  getHeight()` as "the stage" now use `stageWidth()/stageHeight()`
+  (canvas minus the margin); the mannequin is centered on the stage
+  explicitly (`centerObject` would center on the padded canvas); the
+  render is an outer padded box (`overflow-hidden`) around an inner
+  `containerRef` box that the stage is fitted to, so the padded canvas
+  overflows the inner box by exactly the margin. The rotate handle's
+  offset went from -40 to -20 (`FabricControls.ts`, global) so it fits
+  the margin. Cost: the stage is ~72px shorter than before (the margin has
+  to come out of the same vertical space). `exportCanvasToImage` takes an
+  optional region so "Capture Preview" still exports just the stage.
+- **Warp stage (`WarpPanel`):** canvas is `EDGE_PAD` (17px) larger than the
+  stage; everything is drawn through the matrix with the margin folded in,
+  pointers are mapped minus the margin, and the stage's bounds get a faint
+  outline.
+Verified live: garments placed with their top edge above the stage (y=90,
+top at -20) and bottom edge below it (y=910): top corner-handle pixels
+draw in the margin rows above the stage edge (rows 15-27 of the canvas,
+which didn't exist before) and at the bottom down to row ~730 of 746;
+grabbing the top corner handle *in the margin* and dragging it resized the
+garment (330x220 -> 369x246); warp points dragged to the extreme
+top-left/bottom-right (clamped to the stage corners) draw as whole circles
+(188 white pixels vs 201 for a full circle). First "Capture Preview" pass
+exported the right size but with the persona shifted 36px - the crop
+region is in canvas pixels, not scene coordinates; fixed (persona center
+at 0.495/0.493 of the export width, spanning the full height). Not
+changed: the rotate handle still clips if the garment's *top edge* itself
+is above the stage (it needs ~36px above the object); the shoe and jacket
+studios (`ShoeCanvas`, `JacketCanvas`) have the same edge-clipping and were
+not touched. `tsc -b --force` + `vite build` clean; test items/account
+cleaned up.
+
+**Known prototype limits / decisions for later**
+- Tops only; jacket sleeves, pants, dresses not wired (no code blocks
+  them - `allowWarp` is the gate).
+- Applying a warp clears any crop; warping and cropping don't compose.
+- Each Apply uploads a new PNG; superseded/undone bakes stay in Cloudinary
+  (unsigned uploads can't delete) - including the one test bake from
+  this session's verification, in the account's `digital-closet` folder.
+- Storing the warp in `modularData` is a shortcut; if this graduates from
+  prototype it wants real columns (`original_image_url`, `warp_points`) via
+  a Flyway migration.
+- 3x3 gives one smooth bend per axis; a 4x4 grid (or per-region control)
+  would allow S-curves.
+- Cropped thumbnails on a warped item use the crop-less fallback (crop is
+  cleared on warp, so none applies).
+
 ### Tasks
 
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
@@ -2906,7 +3054,9 @@ approach.
       the full original photo)
 - [x] **55** Remove dead warp scaffolding (source was already gone in
       Task 26; removed the leftover `fabric-warpvas` dependency)
-- [ ] **56** Prototype bake-on-save deformation for one garment type
+- [x] **56** Prototype bake-on-save deformation for one garment type
+      (3x3 mesh warp on tops, baked to PNG, original + points kept in
+      `modularData`)
 
 ### 🏁 Definition of Done
 

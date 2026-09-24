@@ -3,7 +3,9 @@ import {
   MousePointer2,
   Crop,
   Download,
-  Undo2
+  Undo2,
+  RotateCcw,
+  Grid3x3
 } from 'lucide-react';
 
 interface CanvasToolbarProps {
@@ -12,6 +14,10 @@ interface CanvasToolbarProps {
   onExport: () => void;
   hasMask?: boolean;
   onResetCrop?: () => void;
+  // Task 56 prototype: mesh warp, offered only for garment types that support it.
+  canWarp?: boolean;
+  hasWarp?: boolean;
+  onRestoreWarp?: () => void;
 }
 
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
@@ -19,11 +25,15 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   onToolChange,
   onExport,
   hasMask = false,
-  onResetCrop
+  onResetCrop,
+  canWarp = false,
+  hasWarp = false,
+  onRestoreWarp
 }) => {
   const tools = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
     { id: 'crop', icon: Crop, label: 'Crop & Mask' },
+    ...(canWarp ? [{ id: 'warp', icon: Grid3x3, label: 'Warp' }] : []),
   ];
 
   return (
@@ -61,6 +71,18 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             <Undo2 size={16} />
             <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
               Reset Crop
+            </span>
+          </button>
+        )}
+        {hasWarp && onRestoreWarp && (
+          <button
+            onClick={onRestoreWarp}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-text-secondary hover:bg-ink/5 hover:text-text-primary"
+            title="Restore Original (undo warp)"
+          >
+            <RotateCcw size={16} />
+            <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
+              Restore Original
             </span>
           </button>
         )}
