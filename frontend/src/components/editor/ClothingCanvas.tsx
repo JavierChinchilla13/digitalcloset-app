@@ -57,6 +57,12 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   const transformRef = useRef(transform);
   transformRef.current = transform;
 
+  // Same latest-value pattern for the active tool - needed by the load
+  // effect and the selection:cleared handler, neither of which re-runs
+  // when `activeTool` changes.
+  const activeToolRef = useRef(activeTool);
+  activeToolRef.current = activeTool;
+
   // Task 53 (mask-follows-garment fix): tracks the garment's own
   // left/top from whichever code path last positioned it - a direct
   // canvas drag (`handleModified` below) or a programmatic sync from
@@ -177,14 +183,35 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
     canvas.on('object:moving', handleModified);
     canvas.on('object:rotating', handleModified);
 
+    // While cropping, clicking empty canvas would deselect the crop box
+    // (dropping its handles, so the next drag has nothing to grab) - keep
+    // it active instead.
+    canvas.on('selection:cleared', () => {
+      if (activeToolRef.current !== 'crop') return;
+      const cropBox = canvas.getObjects().find(obj => obj.name === 'cropBox');
+      if (cropBox) {
+        canvas.setActiveObject(cropBox);
+        canvas.requestRenderAll();
+      }
+    });
+
     return () => {
       canvas.dispose();
       setFabricCanvas(null);
     };
   }, []);
 
-  // Handle Tool Changes (Crop)
-  useEffect(() => {
+  // Puts the canvas into whichever tool mode `activeToolRef` says is active
+  // (crop box up + garment locked, or garment selectable). Called both when
+  // the tool changes and right after the garment (re)loads - the load
+  // effect below does `canvas.clear()`, which used to silently wipe the
+  // crop box and hand the garment back as the active, draggable object
+  // while the toolbar still said "Crop & Mask" (any container resize
+  // mid-crop, or clicking Crop before the async garment load finished and
+  // hitting the old `if (!garment) return`). A drag meant for the crop box
+  // then moved the garment instead. Reads only refs, so it's safe to call
+  // from either effect's closure.
+  const applyToolMode = () => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
@@ -194,11 +221,16 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
     const existingCropBox = canvas.getObjects().find(obj => obj.name === 'cropBox');
     if (existingCropBox) canvas.remove(existingCropBox);
 
-    if (activeTool === 'crop') {
-      garment.set({ selectable: false });
-      
+    const transform = transformRef.current;
+
+    if (activeToolRef.current === 'crop') {
+      // evented: false as well as selectable: false - a merely
+      // non-selectable object still receives pointer events, so the
+      // garment stays fully inert (nothing to grab or drag) while cropping.
+      garment.set({ selectable: false, evented: false });
+
       const canvasHeight = canvas.getHeight();
-      
+
       // Initialize crop box at current mask position or fallback to 80% of garment
       const cropBox = new Rect({
         left: transform.maskWidth ? toCanvasCoord(transform.maskLeft!, canvasHeight) : garment.left,
@@ -247,11 +279,16 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       cropBox.on('scaling', updateCrop);
 
     } else {
-      garment.set({ selectable: true });
+      garment.set({ selectable: true, evented: true });
       canvas.setActiveObject(garment);
     }
-    
+
     canvas.requestRenderAll();
+  };
+
+  // Handle Tool Changes (Crop)
+  useEffect(() => {
+    applyToolMode();
   }, [activeTool]);
 
   // Load Mannequin and Garment
@@ -327,7 +364,10 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         }
 
         canvas.add(garment);
-        canvas.setActiveObject(garment);
+        // Re-applies whichever tool is active (crop box + locked garment, or
+        // garment selected) instead of always selecting the garment - see
+        // applyToolMode.
+        applyToolMode();
         canvas.requestRenderAll();
 
         // Task 53 (mask-follows-garment fix): establishes the baseline
