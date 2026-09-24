@@ -2829,6 +2829,44 @@ background (Browser): N%", "Uploading left shoe...") the whole way and
 advanced to the preview/studio step normally - nothing in this session
 touched UploadFlow. Needs the exact screen/category/steps from the user.
 
+### Crop-mode drag bug fixed (2026-09-23)
+
+Closes the "garment becomes the active object during crop mode" issue
+flagged (and left unfixed) in Task 53, plus 10a defect #4 (race on
+entry). Root cause, confirmed in code and live: the crop-mode setup only
+ran when `activeTool` changed, but the "Load Mannequin and Garment"
+effect (re-runs on any `canvasSize`/image change - including the
+canvas going from ~2x3px to its real size as the studio modal animates
+in, and any later container resize) does `canvas.clear()` and then
+unconditionally `setActiveObject(garment)`. That silently wiped the crop
+box and returned the garment as the selectable, draggable active object
+while the toolbar still read "Crop & Mask" - so a drag meant for the
+crop box moved the garment. Clicking Crop before the async garment load
+finished hit the old `if (!garment) return` for the same reason.
+(`selectable: false` alone was also never enough - a non-selectable
+object still receives pointer events.)
+
+Fix in `ClothingCanvas.tsx`: the tool setup became one function,
+`applyToolMode()`, reading only refs (new `activeToolRef`, existing
+`transformRef`), called from both the `[activeTool]` effect and right
+after the garment loads, so the active tool is re-applied on every
+reload. In crop mode the garment is now `selectable: false, evented:
+false` (fully inert), restored on leaving crop mode; and a
+`selection:cleared` handler re-activates the crop box if an empty-canvas
+click would otherwise drop its handles.
+
+Verified live (against a real item, `window` debug hook removed
+afterward): entered crop mode then forced a real container resize -
+canvas reloaded 375x500 -> 300x400 and the crop box, locked garment and
+lit toolbar all survived (previously: box gone, garment active); a
+mouse drag started on the garment outside the crop box moved nothing
+and left the crop box active; dragging the crop box itself moved it and
+applied the mask without touching the garment; Select mode still lets
+the garment be dragged and removes the crop box; clicking Crop while the
+canvas was still empty (before the garment loaded) ended with the crop
+box up and the garment locked. `tsc -b --force` + `vite build` clean.
+Test item deleted, test account deactivated.
+
 ### Tasks
 
 - [x] **52** Reproduce + confirm crop tool defects live; report before fixing
