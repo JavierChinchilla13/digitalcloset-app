@@ -69,6 +69,24 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   // yet," not "moved by zero."
   const lastGarmentPosRef = useRef<{ left: number; top: number } | null>(null);
 
+  // Found live while verifying Task 54: resizing the garment (width/height
+  // sliders, or a direct corner-handle drag on canvas) after cropping left
+  // the crop's clipPath at its old canvas-pixel size/position while the
+  // garment grew/shrank around it - since `clipPath` is `absolutePositioned`
+  // (canvas-space, not relative to the garment's own scale), the crop
+  // window then covered a completely different, wrong-proportioned slice
+  // of the now-differently-sized image. Confirmed live: cropped to the
+  // right half of a test image, then doubled the width via the sidebar
+  // slider - the clip's absolute left/top/width/height never changed, so
+  // it ended up covering a much smaller, shifted fraction of the enlarged
+  // image than intended, and the saved mask reproduced the same wrong
+  // proportions on the persona. Same two-direction shape as the
+  // mask-follows-garment fix above: tracks the garment's last known scale
+  // so both the props-sync effect and the direct-drag handler can rescale
+  // the clip by the same ratio the garment itself just scaled by, not just
+  // shift it by a translation delta.
+  const lastGarmentScaleRef = useRef<{ scaleX: number; scaleY: number } | null>(null);
+
   const mannequinUrl = personaType === PersonaType.MALE
     ? '/personas/male-base.png'
     : '/personas/female-base.png';
@@ -114,19 +132,37 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         // stale data) and shift the clip by the same amount.
         const curLeft = activeObject.left ?? 0;
         const curTop = activeObject.top ?? 0;
+        const curScaleX = activeObject.scaleX ?? 1;
+        const curScaleY = activeObject.scaleY ?? 1;
         if (
           lastGarmentPosRef.current &&
+          lastGarmentScaleRef.current &&
           activeObject.clipPath &&
           activeObject.clipPath.name === 'cropMask'
         ) {
           const deltaX = curLeft - lastGarmentPosRef.current.left;
           const deltaY = curTop - lastGarmentPosRef.current.top;
-          if (deltaX !== 0 || deltaY !== 0) {
+          const scaleRatioX = curScaleX / lastGarmentScaleRef.current.scaleX;
+          const scaleRatioY = curScaleY / lastGarmentScaleRef.current.scaleY;
+          if (deltaX !== 0 || deltaY !== 0 || scaleRatioX !== 1 || scaleRatioY !== 1) {
             const clip = activeObject.clipPath as Rect;
-            clip.set({ left: (clip.left ?? 0) + deltaX, top: (clip.top ?? 0) + deltaY });
+            const newClipLeft = curLeft + ((clip.left ?? 0) - lastGarmentPosRef.current.left) * scaleRatioX;
+            const newClipTop = curTop + ((clip.top ?? 0) - lastGarmentPosRef.current.top) * scaleRatioY;
+            // Resize via the clip's raw width/height, not scaleX/scaleY -
+            // getVirtualTransform (called just below) reads clipPath.width/
+            // height directly, not getScaledWidth()/getScaledHeight(), so a
+            // clip built anywhere in this file (updateCrop included) always
+            // keeps scaleX/scaleY at 1 and bakes size into width/height.
+            clip.set({
+              left: newClipLeft,
+              top: newClipTop,
+              width: (clip.width ?? 0) * scaleRatioX,
+              height: (clip.height ?? 0) * scaleRatioY,
+            });
           }
         }
         lastGarmentPosRef.current = { left: curLeft, top: curTop };
+        lastGarmentScaleRef.current = { scaleX: curScaleX, scaleY: curScaleY };
 
         const virtualTransform = getVirtualTransform(activeObject, canvas.getWidth(), canvas.getHeight());
         onTransformChange({
@@ -301,6 +337,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         // skipped, per the guards in both places) or, worse, stale data
         // left over from a previous garment.
         lastGarmentPosRef.current = { left: garment.left ?? 0, top: garment.top ?? 0 };
+        lastGarmentScaleRef.current = { scaleX: garment.scaleX ?? 1, scaleY: garment.scaleY ?? 1 };
       } catch (err) {
         console.error("Error loading images into Fabric canvas:", err);
       }
@@ -342,20 +379,59 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       // garment's own local coordinate space - out of scope for this fix.
       const prevLeft = garment.left ?? 0;
       const prevTop = garment.top ?? 0;
+      const prevScaleX = garment.scaleX ?? 1;
+      const prevScaleY = garment.scaleY ?? 1;
       const newLeft = toCanvasX(transform.x, canvasWidth, canvasHeight);
       const newTop = toCanvasCoord(transform.y, canvasHeight);
+
+      // getOriginalSize() only exists on FabricImage, not the generic
+      // FabricObject canvas.getObjects().find(...) returns - the garment is
+      // always a FabricImage in practice (loaded via loadFabricImage), but
+      // the guard makes that provably safe instead of assumed.
+      let newScaleX = prevScaleX;
+      let newScaleY = prevScaleY;
+      if (transform.width && transform.height && garment instanceof FabricImage) {
+        const targetWidth = toCanvasCoord(transform.width, canvasHeight);
+        const targetHeight = toCanvasCoord(transform.height, canvasHeight);
+        const baseWidth = garment.getOriginalSize().width;
+        const baseHeight = garment.getOriginalSize().height;
+        newScaleX = targetWidth / baseWidth;
+        newScaleY = targetHeight / baseHeight;
+      }
+
       const deltaX = newLeft - prevLeft;
       const deltaY = newTop - prevTop;
+      const scaleRatioX = newScaleX / prevScaleX;
+      const scaleRatioY = newScaleY / prevScaleY;
 
-      if ((deltaX !== 0 || deltaY !== 0) && garment.clipPath && garment.clipPath.name === 'cropMask') {
+      // Task 53 (mask-follows-garment fix) + its Task 54 follow-up (the
+      // clip also needs to rescale, not just translate, when the garment's
+      // width/height change - found live while verifying Task 54: cropping
+      // then resizing via the sidebar sliders left the clip at its old
+      // absolute canvas size/position while the image grew/shrank around
+      // it, so the crop window ended up covering a wrong, mismatched
+      // fraction of the resized image). Both deltas collapse to a no-op
+      // (ratio 1, delta 0) when neither position nor size actually
+      // changed, so this single block safely covers plain moves, plain
+      // resizes, and both at once.
+      if ((deltaX !== 0 || deltaY !== 0 || scaleRatioX !== 1 || scaleRatioY !== 1) && garment.clipPath && garment.clipPath.name === 'cropMask') {
         const clip = garment.clipPath as Rect;
-        const newClipLeft = (clip.left ?? 0) + deltaX;
-        const newClipTop = (clip.top ?? 0) + deltaY;
-        clip.set({ left: newClipLeft, top: newClipTop });
+        const newClipLeft = newLeft + ((clip.left ?? 0) - prevLeft) * scaleRatioX;
+        const newClipTop = newTop + ((clip.top ?? 0) - prevTop) * scaleRatioY;
+        // Resize via the clip's raw width/height, not scaleX/scaleY -
+        // getVirtualTransform reads clipPath.width/height directly, not
+        // getScaledWidth()/getScaledHeight(), so a clip built anywhere in
+        // this file (updateCrop included) always keeps scaleX/scaleY at 1
+        // and bakes size into width/height.
+        const newClipWidth = (clip.width ?? 0) * scaleRatioX;
+        const newClipHeight = (clip.height ?? 0) * scaleRatioY;
+        clip.set({ left: newClipLeft, top: newClipTop, width: newClipWidth, height: newClipHeight });
         onTransformChange({
           ...transformRef.current,
           maskLeft: toVirtualCoord(newClipLeft, canvasHeight),
           maskTop: toVirtualCoord(newClipTop, canvasHeight),
+          maskWidth: toVirtualCoord(newClipWidth, canvasHeight),
+          maskHeight: toVirtualCoord(newClipHeight, canvasHeight),
         });
       }
 
@@ -366,33 +442,17 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
         opacity: transform.opacity ?? 1,
         flipX: transform.flipX ?? false,
         flipY: transform.flipY ?? false,
+        scaleX: newScaleX,
+        scaleY: newScaleY,
       });
 
-      // getOriginalSize() only exists on FabricImage, not the generic
-      // FabricObject canvas.getObjects().find(...) returns - the garment is
-      // always a FabricImage in practice (loaded via loadFabricImage), but
-      // the guard makes that provably safe instead of assumed.
-      if (transform.width && transform.height && garment instanceof FabricImage) {
-        const targetWidth = toCanvasCoord(transform.width, canvasHeight);
-        const targetHeight = toCanvasCoord(transform.height, canvasHeight);
-
-        // Calculate required scales based on base image dimensions
-        // fabric image scaleX = targetWidth / baseWidth
-        const baseWidth = garment.getOriginalSize().width;
-        const baseHeight = garment.getOriginalSize().height;
-
-        garment.set({
-          scaleX: targetWidth / baseWidth,
-          scaleY: targetHeight / baseHeight
-        });
-      }
-
       garment.setCoords();
-      // Keep the shared "last known position" ref in sync with whatever
-      // this pass just set, so a subsequent direct canvas drag
-      // (`handleModified` above) computes its own delta against this
+      // Keep the shared "last known position/scale" refs in sync with
+      // whatever this pass just set, so a subsequent direct canvas drag
+      // (`handleModified` above) computes its own delta/ratio against this
       // pass's result instead of stale data from before it ran.
       lastGarmentPosRef.current = { left: garment.left ?? 0, top: garment.top ?? 0 };
+      lastGarmentScaleRef.current = { scaleX: garment.scaleX ?? 1, scaleY: garment.scaleY ?? 1 };
       canvas.requestRenderAll();
       isUpdatingRef.current = false;
     }

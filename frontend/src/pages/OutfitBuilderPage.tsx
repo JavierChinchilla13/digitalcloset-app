@@ -13,6 +13,7 @@ import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, outfitItemsFromEquipped, equippedFromOutfitItems } from '../store/useOutfitStore';
 import type { OutfitRequest } from '../types';
+import CroppedThumbnail from '../components/CroppedThumbnail';
 import { ClothingCategory } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 
@@ -192,7 +193,7 @@ const OutfitBuilderPage = () => {
                           ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                         `}
                       >
-                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                        <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
                         <div className={`
                           absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                           ${active ? 'opacity-100' : 'opacity-0'}

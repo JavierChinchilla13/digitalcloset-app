@@ -55,6 +55,25 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
     setTransform(DEFAULT_TRANSFORMS[personaType][category]);
   };
 
+  const handleResetCrop = () => {
+    const canvas = fabricCanvasRef.current;
+    if (canvas) {
+      const garment = canvas.getObjects().find(obj => obj.name === 'garment');
+      if (garment) garment.set({ clipPath: undefined });
+      const cropBox = canvas.getObjects().find(obj => obj.name === 'cropBox');
+      if (cropBox) canvas.remove(cropBox);
+      canvas.requestRenderAll();
+    }
+    setTransform(prev => ({
+      ...prev,
+      maskLeft: undefined,
+      maskTop: undefined,
+      maskWidth: undefined,
+      maskHeight: undefined,
+    }));
+    if (activeTool === 'crop') setActiveTool('select');
+  };
+
   const handleExport = () => {
     if (fabricCanvasRef.current) {
       const dataUrl = exportCanvasToImage(fabricCanvasRef.current);
@@ -86,10 +105,12 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         </div>
 
         <div className="w-full md:w-auto">
-          <CanvasToolbar 
+          <CanvasToolbar
             activeTool={activeTool}
             onToolChange={setActiveTool}
             onExport={handleExport}
+            hasMask={!!transform.maskWidth}
+            onResetCrop={handleResetCrop}
           />
         </div>
       </div>

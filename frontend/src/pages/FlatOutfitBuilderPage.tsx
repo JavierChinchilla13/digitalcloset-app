@@ -13,6 +13,7 @@ import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 import EditClothingModal from '../components/EditClothingModal';
+import CroppedThumbnail from '../components/CroppedThumbnail';
 import CategoryPicker from '../components/CategoryPicker';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import PersonaTypeSwitcher, { type PersonaFilterValue } from '../components/PersonaTypeSwitcher';
@@ -63,7 +64,7 @@ const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (item
     animate={{ opacity: 1, scale: 1 }}
     className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
   >
-    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+    <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
     <button
       onClick={() => onRemove(item.itemId)}
       className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -529,7 +530,7 @@ const FlatOutfitBuilderPage = () => {
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                             `}
                           >
-                            <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                            <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
                             <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
                               <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
                             </div>
