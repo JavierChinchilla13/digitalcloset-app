@@ -151,7 +151,7 @@ const ClosetPage = () => {
         {/* Filters & Search Bar */}
         <div className="flex flex-col gap-6 mb-12">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-2 relative group">
+            <div className="lg:col-span-3 relative group">
               <Search
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors"
                 size={18}
@@ -163,25 +163,6 @@ const ClosetPage = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-6 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/[0.08] transition-all"
               />
-            </div>
-
-            <div className="flex justify-center gap-2 overflow-x-auto no-scrollbar pb-2 lg:pb-0">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`
-                    flex-shrink-0 px-6 rounded-2xl text-[10px] font-medium uppercase tracking-widest transition-all border
-                    ${
-                      activeCategory === cat
-                        ? "bg-accent text-on-accent border-accent shadow-lg"
-                        : "bg-ink/5 text-text-secondary border-ink/5 hover:border-ink/20"
-                    }
-                  `}
-                >
-                  {cat}
-                </button>
-              ))}
             </div>
 
             <button
@@ -201,6 +182,30 @@ const ClosetPage = () => {
               />
               Favorites Only
             </button>
+          </div>
+
+          {/* Category chips: on their own full-width row under the search bar.
+              They used to sit in a 1/4-width grid column inside a centered
+              overflow-x-auto strip with the scrollbar hidden, so with 7 chips the
+              overflow spilled off both edges and ALL/TOP/BOTTOM and the last
+              chips could not be seen or reached. Wrapping shows every category. */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`
+                  flex-shrink-0 px-6 py-3 rounded-2xl text-[10px] font-medium uppercase tracking-widest transition-all border
+                  ${
+                    activeCategory === cat
+                      ? "bg-accent text-on-accent border-accent shadow-lg"
+                      : "bg-ink/5 text-text-secondary border-ink/5 hover:border-ink/20"
+                  }
+                `}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
 
           {/* Persona Filtering Row */}
