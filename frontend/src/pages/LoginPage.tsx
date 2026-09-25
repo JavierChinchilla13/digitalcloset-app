@@ -80,7 +80,7 @@ const LoginPage = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-end px-4">
               <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Password</label>
-              <button type="button" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</button>
+              <Link to="/forgot-password" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</Link>
             </div>
             <div className="relative group">
               <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
