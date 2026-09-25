@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
 import CroppedThumbnail from './CroppedThumbnail';
 import { computePersonaEligibility, buildOutfitPersona } from '../utils/personaEligibility';
+import { useSafeAction } from '../hooks/useSafeAction';
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -19,6 +20,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPersona, setShowPersona] = useState(false);
   const { removeOutfit, duplicateOutfit } = useOutfitStore();
+  const runSafely = useSafeAction();
   const { items: closetItems } = useClothingStore();
   const { updatePersona } = usePersonaStore();
   const { setDraft } = useOutfitDraftStore();
@@ -162,7 +164,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <Info size={14} />
             </button>
             <button
-              onClick={() => duplicateOutfit(outfit)}
+              onClick={() => runSafely(() => duplicateOutfit(outfit), "Couldn't duplicate this outfit")}
               className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
               title="Duplicate"
             >
@@ -213,7 +215,13 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               </p>
               <div className="flex gap-4 w-full">
                 <button
-                  onClick={() => removeOutfit(outfit.outfitId)}
+                  onClick={async () => {
+                    // Only close the confirm prompt on success - on failure the
+                    // toast explains and the user can retry from here.
+                    if (await runSafely(() => removeOutfit(outfit.outfitId), "Couldn't delete this outfit")) {
+                      setIsDeleting(false);
+                    }
+                  }}
                   className="flex-grow py-3 bg-rose-500 text-white text-[10px] font-medium uppercase tracking-[0.2em] rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   DELETE

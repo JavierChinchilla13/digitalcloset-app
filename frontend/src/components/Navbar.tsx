@@ -4,10 +4,10 @@ import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
 import BrandMark from './BrandMark';
-import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle, Tag } from 'lucide-react';
+import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle, Tag, ShieldCheck } from 'lucide-react';
 
 const Navbar = () => {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { isAuthenticated, isAdmin, user, logout } = useAuthStore();
   const location = useLocation();
 
   // "Attire" points at / (Task 40, Phase 8 pivot) - the flat outfit builder
@@ -107,6 +107,16 @@ const Navbar = () => {
               >
                 <Tag size={16} />
               </Link>
+              {/* Task 22: account management - only rendered for admins. */}
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
+                  title="Admin"
+                >
+                  <ShieldCheck size={16} />
+                </Link>
+              )}
               <button
                 onClick={logout}
                 className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"

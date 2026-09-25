@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Sparkles, Shirt, LayoutGrid, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -6,20 +6,31 @@ import { useOutfitStore } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import OutfitCard from '../components/OutfitCard';
 import SectionWrapper from '../components/SectionWrapper';
+import ErrorState from '../components/ErrorState';
 
 const SavedOutfitsPage = () => {
   const { outfits, fetchOutfits } = useOutfitStore();
+  const [loadFailed, setLoadFailed] = useState(false);
   const { persona } = usePersonaStore();
   const navigate = useNavigate();
   const [showContent, setShowContent] = useState(false);
+
+  // Task 22: the fetch swallows its error into the store, so read it back
+  // after each attempt to tell "empty" apart from "couldn't load".
+  const loadOutfits = useCallback(async () => {
+    setLoadFailed(false);
+    await fetchOutfits();
+    setLoadFailed(!!useOutfitStore.getState().error);
+    setShowContent(true);
+  }, [fetchOutfits]);
 
   const filteredOutfits = outfits.filter(o => o.avatarType === persona.type);
 
   // Robust content visibility trigger - fetch once, only gate the loader on
   // the first fetch (not on isLoading, which also flips during save/delete).
   useEffect(() => {
-    fetchOutfits().finally(() => setShowContent(true));
-  }, [fetchOutfits]);
+    loadOutfits();
+  }, [loadOutfits]);
 
   return (
     <div className="relative min-h-screen pb-20">
@@ -61,6 +72,13 @@ const SavedOutfitsPage = () => {
               <Loader2 className="animate-spin text-accent mb-4" size={40} />
               <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">Synchronizing...</p>
             </motion.div>
+          ) : loadFailed && outfits.length === 0 ? (
+            <ErrorState
+              key="error"
+              title="We couldn't load your outfits"
+              message="Check your connection and try again."
+              onRetry={loadOutfits}
+            />
           ) : filteredOutfits.length === 0 ? (
             <motion.div 
               key="empty"

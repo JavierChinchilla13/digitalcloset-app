@@ -413,13 +413,13 @@ Accessory rendering           ✅
 
 ### Tasks
 
-- [ ] **CF14** — Implement or remove Forgot Password
-- [ ] Add role-based route guard
-- [ ] Use existing `isAdmin`
-- [ ] Add error boundary around `PersonaRenderer`
-- [ ] Add error boundary around `UploadFlow`
-- [ ] Ensure failures display recoverable UI
-- [ ] Remove dead buttons
+- [x] **CF14** — Implement or remove Forgot Password (Task 21)
+- [x] Add role-based route guard (Task 22)
+- [x] Use existing `isAdmin` (Task 22)
+- [x] Add error boundary around `PersonaRenderer` (Task 22)
+- [x] Add error boundary around `UploadFlow` (Task 22)
+- [x] Ensure failures display recoverable UI (Task 22)
+- [x] Remove dead buttons (Task 22)
 
 ### UX Principle
 
@@ -1158,7 +1158,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 ### Phase 4 *(deferred — runs after Phase 10)*
 
 - [x] **21** Resolve Forgot Password (built: token reset flow, dev-mail first)
-- [ ] **22** Add route guards + error boundaries
+- [x] **22** Add route guards + error boundaries (built: `ProtectedRoute requireAdmin` + minimal `/admin` page, boundaries, ErrorState on load failures, silent-failure fixes)
 
 ### Phase 5 *(deferred)*
 
@@ -1295,6 +1295,8 @@ TASK 02
 45    Add "Adjust & Fit" to EditClothingModal
 46    Toast + upgraded alert UI
 41    Back-button copy + Saved Outfits stale-link fix (out of order, see Master Task List note)
+21    Resolve Forgot Password (Phase 4; the list above predates Phases 8-10)
+22    Add route guards + error boundaries (Phase 4)
 ```
 
 ## 🎉 PHASE 1 — SECURITY & CORRECTNESS: COMPLETE
@@ -5429,3 +5431,58 @@ an account exists. Verified live against the running servers with an unknown
 address (no mail sent, nothing written): surrounding spaces trimmed,
 address shown, "Try again" returns to the form with it prefilled.
 `tsc -b --force` + `vite build` clean.
+
+### Task 22 - Route guards + error boundaries (2026-09-24)
+
+Investigation found the real gaps were broader than "add two boundaries":
+mutations in the stores swallowed their errors, so callers reported success
+after a failure (and drafts were cleared), and pages had no "couldn't load"
+state at all - a failed fetch looked like an empty account.
+
+**Guard.** `ProtectedRoute` (`App.tsx`) takes `requireAdmin`: signed-out ->
+`/login`, signed-in non-admin -> `/`. Uses the existing persisted `isAdmin`.
+The backend `@PreAuthorize` remains the real enforcement (the guard just
+avoids showing a page that can only fail). User chose "guard + minimal admin
+page": new `/admin` (`AdminUsersPage`, `adminService`) lists users
+(`GET /api/users`), search, deactivate/reactivate on the existing endpoints,
+own account disabled; Navbar shows a shield link only for admins. Added a
+real 404 (`NotFoundPage`, `path="*"`).
+
+**Boundaries.** New `ErrorBoundary` (class, `resetKeys`) and `ErrorState`
+("We couldn't complete this action" + Try Again). Placed around
+`PersonaRenderer` (compact, keeps the rest of the builder usable),
+`UploadFlow` (modal-styled: Start Over / Close), the routed page in
+`MainLayout` (resets on navigation; retry + Go home), and app-wide in
+`main.tsx` (Reload). Boundaries only catch render errors, so async failures
+are handled separately:
+
+- Stores: `updateItem/removeItem`, `updateOutfit/removeOutfit/duplicateOutfit`,
+  `renameCollection/deleteCollection/removeItem/removeOutfit` now rethrow
+  after setting `error` (like `addItem`/`saveOutfit` already did).
+- Call sites: new `useSafeAction` hook (toast on failure) used in
+  `OutfitCard`, `CategoryDetailPage`, `FlatOutfitBuilderPage`;
+  `CategoriesPage` rename and `OutfitBuilderPage` save get try/catch + toast.
+  Delete confirmations stay open on failure so the user can retry.
+- Load failures: `ClosetPage`, `FlatOutfitBuilderPage`, `SavedOutfitsPage`,
+  `CategoriesPage`, `OutfitShowcasePage` show an ErrorState with Try Again
+  when the fetch failed and there is no data (fetches swallow errors into
+  the store, so pages read the store's `error` back after each attempt).
+- Dead button: `ClosetSection`'s "N ITEMS" `<button>` with no handler is now
+  plain text.
+
+**Verified** (own backend :8081 + throwaway Vite :5199; user's servers
+untouched): `tsc -b --force` + `vite build` clean. Live: non-admin hitting
+`/admin` -> `/` with no admin icon; unknown URL -> 404 page; forced render
+throws (temporary, reverted) contained by the page boundary (Try Again
+recovers), `PersonaRenderer` boundary (rest of builder intact, retry
+recovers), `UploadFlow` boundary (Start Over/Close, closet intact) and the
+app-level boundary (Reload); backend stopped -> all five data pages show the
+load-failure state and Try Again recovers once it is back; with backend down
+a category delete shows "Failed to delete category", the row stays and the
+modal stays open, then succeeds on retry. A forged `isAdmin` in localStorage
+passes the guard but the backend 403s and the page shows its own error state
+(confirms the backend is the real gate).
+
+**Not verified live:** the admin user list itself with a real admin
+(needs an account promoted with SQL, which was left to the user).
+Test account deactivated; test collection deleted.
