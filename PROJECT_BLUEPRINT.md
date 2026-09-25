@@ -5655,3 +5655,29 @@ directory. **Not verified:** the workflow itself has not run on GitHub (no way
 to run Actions locally). Likeliest first-run surprises: the native `canvas`
 package's prebuilt binary on Linux/Node 24, and the size/time of installing
 `rembg[cpu]` in the Python job.
+
+### Follow-ups after Task 23 (2026-09-24)
+
+**CI action versions.** The first CI run passed but warned about actions on
+deprecated Node 20 and `setup-java@v4`. `ci.yml` now uses the latest majors
+(looked up with `gh api`): `checkout@v7`, `setup-java@v6`, `setup-node@v7`,
+`setup-python@v7`, `upload-artifact@v7`. Only a real run can verify a major
+bump, so it is checked after push; if a job breaks, pin that action back one major.
+
+**Closet page: category chips cut off.** User: in the Closet tab the
+category options next to the search bar (ALL, BOTTOM, SHOES...) showed only
+partly. Root cause, measured live: the seven chips lived in one column of a
+`lg:grid-cols-4` grid (search = 2 cols) inside a `flex justify-center
+overflow-x-auto no-scrollbar` strip. The strip was 286px wide but the chips
+needed ~664px; with `justify-center` the overflow spilled equally off both
+edges and the hidden scrollbar made the left part unreachable (ALL/TOP/BOTTOM
+started 189px left of the box, JACKET/DRESS ended 189px right of it). Fix
+(`ClosetPage.tsx` only): search (3 cols) + Favorites Only stay on the first
+row; the chips get their own full-width row under the search bar,
+`flex flex-wrap justify-center`, no overflow. Verified live: all 7 chips fully
+inside their container at 1280px (one row) and 390px (wraps to 3 rows), and each
+chip filters the list (TOP/SHOES/ALL checked with temporary items, since
+deleted). New regression test `closetCategoryFilter.test.tsx` (4; total
+frontend tests now 46). Not touched: the Persona Filter row below is wider
+than a 390px screen (page scrolls horizontally on phones) - pre-existing,
+noted, not fixed.
