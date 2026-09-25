@@ -5,6 +5,7 @@ import os
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from PIL import Image
 from rembg import remove
 import uvicorn
 
@@ -47,6 +48,15 @@ async def remove_background(file: UploadFile = File(...)):
 
     if len(input_image) == 0:
         raise HTTPException(status_code=400, detail="Uploaded file is empty")
+
+    # The Content-Type header is just a claim the client makes. Check the bytes
+    # really decode as an image (Pillow also refuses decompression bombs) so
+    # garbage is a clean 400 instead of an error deep inside the model (500).
+    try:
+        with Image.open(io.BytesIO(input_image)) as candidate:
+            candidate.verify()
+    except Exception:
+        raise HTTPException(status_code=400, detail="File is not a valid image")
 
     try:
         output_image = remove(input_image)

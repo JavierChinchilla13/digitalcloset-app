@@ -521,10 +521,10 @@ Render
 
 ### 7. Python AI
 
-- [ ] Valid image → PNG
-- [ ] PNG contains alpha channel
-- [ ] Non-image → 4xx
-- [ ] No leaked exception text
+- [x] Valid image → PNG (Task 23c)
+- [x] PNG contains alpha channel (Task 23c, real model)
+- [x] Non-image → 4xx (Task 23c)
+- [x] No leaked exception text (Task 23c)
 
 ### 🏁 Definition of Done
 
@@ -1162,7 +1162,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 ### Phase 5 *(deferred)*
 
-- [ ] **23** Implement regression/test suite
+- [x] **23** Implement regression/test suite (backend 36 + frontend 42 + Python 19 tests; CI wiring not done - see Task 23c note)
 
 ### Phase 6 *(deferred)*
 
@@ -1297,6 +1297,7 @@ TASK 02
 41    Back-button copy + Saved Outfits stale-link fix (out of order, see Master Task List note)
 21    Resolve Forgot Password (Phase 4; the list above predates Phases 8-10)
 22    Add route guards + error boundaries (Phase 4)
+23    Implement regression/test suite (Phase 5)
 ```
 
 ## 🎉 PHASE 1 — SECURITY & CORRECTNESS: COMPLETE
@@ -5590,3 +5591,38 @@ form back with no explanation. It now shows the message (`role="alert"`).
 
 `npm audit --omit=dev` reports 9 vulnerabilities in the existing
 *production* dependencies (not introduced here; nothing was auto-fixed).
+
+### Task 23 - Regression test suite, part c: Python AI service (2026-09-24)
+
+`backend-ai/tests/` (pytest + httpx via `requirements-dev.txt`; run with
+`python -m pytest` in `backend-ai`, or from the repo root with the path):
+19 tests, all passing. FastAPI's TestClient drives the real `main.app`; the
+model is replaced by a stand-in that returns a transparent RGBA PNG and
+records what it was given, so most tests are fast and model-independent.
+- Contract: /health; valid image -> 200, `image/png`, PNG signature, the
+  uploaded bytes are what reach the model; PNG/JPEG/WEBP accepted.
+- Rejections (the model never runs on any of them): non-image Content-Type ->
+  415; empty -> 400; over 10MB -> 413; no file -> 422; bytes that are not an
+  image -> 400.
+- No leaks: a model failure whose message contains a path, CUDA text and the
+  exception class returns exactly `{"detail": "Failed to process image"}`,
+  while the real error is logged server-side.
+- CORS: configured origin allowed, other origins get no header, no credentials.
+- `TestRealModel`: the real U2-Net on a synthetic image returns a PNG in
+  RGBA mode at the same size. It is skipped unless `~/.u2net/u2net.onnx` is
+  already on disk (never downloads), so a clean CI machine skips it.
+
+**One real bug the tests found, fixed here:** `/remove-bg` trusted the
+Content-Type header. Garbage bytes sent as `image/png` went straight to the
+model and (with the real model) came back as a 500. `main.py` now opens the
+bytes with Pillow (`verify()`, which also refuses decompression bombs) after
+the size/empty checks and answers 400 "File is not a valid image".
+
+**Task 23 overall - what is and is not done.** Done: all 7 blueprint areas
+have tests (backend 36, frontend 42, Python 19 = 97). Not done: the
+blueprint's "CI" line - there is still no CI workflow (nothing runs these
+automatically); that fits Task 24 (production readiness) and needs a decision
+on where the repo is hosted/run. Known gaps: migrations are not exercised by
+the backend tests (H2 limitation, above), Fabric fitting paths are not
+covered on the frontend, and the frontend hits no real backend (the backend
+suite covers that side separately).
