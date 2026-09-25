@@ -1162,7 +1162,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 ### Phase 5 *(deferred)*
 
-- [x] **23** Implement regression/test suite (backend 36 + frontend 42 + Python 19 tests; CI wiring not done - see Task 23c note)
+- [x] **23** Implement regression/test suite (backend 36 + frontend 42 + Python 19 tests; CI workflow in `.github/workflows/ci.yml`, see Task 23d)
 
 ### Phase 6 *(deferred)*
 
@@ -5626,3 +5626,32 @@ on where the repo is hosted/run. Known gaps: migrations are not exercised by
 the backend tests (H2 limitation, above), Fabric fitting paths are not
 covered on the frontend, and the frontend hits no real backend (the backend
 suite covers that side separately).
+
+### Task 23 - part d: CI workflow (2026-09-24)
+
+User asked for a workflow that runs the tests automatically, before starting
+Task 24. `.github/workflows/ci.yml` (GitHub Actions; the remote is GitHub):
+runs on every push to any branch (the project is developed on feature
+branches and merged locally, so a PR-only trigger would never fire), on PRs to
+`main`, and manually (`workflow_dispatch`); a newer push cancels the older run.
+Three parallel, independent jobs, no secrets and no services needed:
+- **backend** - Temurin 21, Maven cache, `chmod +x mvnw` (the wrapper was
+  committed without its executable bit), `./mvnw -B -ntp test`; uploads
+  surefire reports if it fails.
+- **frontend** - Node 24 (matches the dev machine and satisfies Vite 8 /
+  Vitest 5 / jsdom 29 engine ranges), `npm ci`, `tsc -b --force`, `npm test`,
+  `vite build`.
+- **ai-service** - Python 3.12, `pip install -r requirements-dev.txt`,
+  `pytest`; the real-model test skips itself (no model file on the runner).
+Deliberately not included: `npm run lint` (not part of the project's
+verification so far) and any deploy step (Task 24).
+
+**Checked locally, as close to a clean runner as possible:** YAML parses with
+the expected triggers/jobs/steps; backend: 36 tests pass with
+`application-local.properties` moved aside and DB_PASSWORD/JWT_SECRET unset;
+frontend: `git archive` of the committed tree, fresh `npm ci`, then tsc + 42
+tests + build all pass; Python: 18 pass + 1 skipped with an empty home
+directory. **Not verified:** the workflow itself has not run on GitHub (no way
+to run Actions locally). Likeliest first-run surprises: the native `canvas`
+package's prebuilt binary on Linux/Node 24, and the size/time of installing
+`rembg[cpu]` in the Python job.
