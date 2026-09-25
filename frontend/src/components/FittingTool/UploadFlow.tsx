@@ -821,6 +821,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   />
                 </div>
 
+                {/* handleSkipSave sets `error` and returns here on failure; without
+                    this the user just saw the form again with no explanation. */}
+                {error && (
+                  <p role="alert" className="flex items-center justify-center gap-2 text-red-400 text-[10px] font-medium uppercase tracking-widest">
+                    <AlertCircle size={14} /> {error}
+                  </p>
+                )}
+
                 <div className="flex flex-col gap-4">
                   <button
                     onClick={handleSkipSave}

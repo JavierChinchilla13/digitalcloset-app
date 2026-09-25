@@ -485,11 +485,11 @@ Verify permissions
 
 ### 4. Frontend Delete Regression
 
-- [ ] Clicking delete opens confirmation
-- [ ] `removeItem()` is NOT called immediately
-- [ ] Confirming delete removes item
+- [x] Clicking delete opens confirmation (Task 23b)
+- [x] `removeItem()` is NOT called immediately (Task 23b)
+- [x] Confirming delete removes item (Task 23b)
 
-### 5. Upload Round Trip
+### 5. Upload Round Trip *(covered by Task 23b, `uploadRoundTrip.test.tsx`)*
 
 ```text
 Upload
@@ -505,7 +505,7 @@ Clothing Store
 PersonaLayer
 ```
 
-### 6. Outfit Round Trip
+### 6. Outfit Round Trip *(covered by Task 23b, `outfitRoundTrip.test.tsx`)*
 
 ```text
 Create
@@ -5536,3 +5536,57 @@ Each was seen to fail before the fixes below (real failures, not vacuous).
    the request unauthenticated (the normal 403 path), which is also what the
    frontend's "expired session -> back to login" handling depends on. (Stale
    tokens on `/api/auth/**` requests were affected too.)
+
+### Task 23 - Regression test suite, part b: frontend (2026-09-24)
+
+Vitest 5 + React Testing Library + jest-dom + user-event + jsdom added as
+**dev** dependencies (`npm test` = `vitest run`, `npm run test:watch`).
+`vite.config.ts` now imports `defineConfig` from `vitest/config` and has a
+`test` block (jsdom, `src/test/setup.ts`, `src/**/*.test.{ts,tsx}`). Setup
+unmounts and clears localStorage after each test (persisted zustand stores
+would otherwise leak between tests) and stubs the browser APIs jsdom lacks
+(IntersectionObserver, ResizeObserver, matchMedia, scrollTo). Tests only
+replace the network edge (the `api/*Service` modules, Cloudinary, background
+removal) and the Fabric.js editors; pages, stores, modals, router and guards
+are the real ones.
+
+**Tests (42, all passing; `npm test`) in `src/__tests__/`:**
+- `deleteRegression` (4) - real `ClosetPage`: delete opens the confirmation and
+  does **not** call `deleteClothingItem`; cancel keeps the item; confirm deletes
+  exactly that id and removes it; a failed delete keeps item + dialog and
+  toasts (Task 22).
+- `uploadRoundTrip` (6) - real `UploadFlow` driven through the UI: file ->
+  Cloudinary -> backend -> store on the keep-original path (hosted URL, never
+  `blob:`, INELIGIBLE_NO_CUTOUT) and on the AI path (removal result is what
+  is uploaded, NOT_FITTED); Cloudinary and backend failures save nothing and
+  show a message; the stored item is drawn by the real `PersonaRenderer`
+  from its hosted URL, and an item of the other persona type is not.
+  The Fabric fitting paths (FITTING, shoes, jackets) are not covered - they
+  need a real canvas.
+- `outfitRoundTrip` (5) - stateful in-memory fake backend: equip state <->
+  request items is lossless; create -> reload -> render on the persona; edit;
+  duplicate; remove (including after reload).
+- `storeFailures` (15) - Task 22's rule for the clothing/outfit/collection
+  stores: mutations reject and leave data untouched, fetches swallow and
+  record `error`.
+- `routeGuards` (7) - whole `App`: signed-out -> /login on protected pages
+  incl. /admin; user can open /closet; normal user bounced from /admin; admin
+  sees /admin accounts; admin link only in an admin's navbar; 404 page; failed
+  admin load shows retry.
+- `errorBoundary` (6) - fallback + Try Again, onReset, custom fallback,
+  resetKeys, and a real crash inside `PersonaRenderer` contained.
+
+**Checked the tests can fail:** temporarily making delete skip the
+confirmation broke 3 of 4 delete tests; removing the admin check in
+`ProtectedRoute` broke the bounce test. One test I wrote first (a
+"broken persona" that did not actually make PersonaRenderer throw) passed
+vacuously and was caught only because I asserted the fallback text - it now
+corrupts the store so the renderer really throws.
+
+**One real bug the tests found, fixed here:** in `UploadFlow`, a failed
+"Save to Closet" (Cloudinary or backend error) set `error` and returned to
+the SKIP_PERSONA form, but that step never displayed `error` - the user got the
+form back with no explanation. It now shows the message (`role="alert"`).
+
+`npm audit --omit=dev` reports 9 vulnerabilities in the existing
+*production* dependencies (not introduced here; nothing was auto-fixed).
