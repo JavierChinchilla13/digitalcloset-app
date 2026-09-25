@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Layers } from 'lucide-react';
 import type { ClothingItem } from '../types';
 import CroppedThumbnail from './CroppedThumbnail';
+import PersonaBadge from './PersonaBadge';
 
 interface ClothingDetailsModalProps {
   item: ClothingItem | null;
@@ -148,6 +149,17 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                       <div>
                         <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Category</p>
                         <p className="text-text-primary font-medium uppercase tracking-widest">{item.category}</p>
+                      </div>
+                    </div>
+
+                    {/* Task 77: which persona this garment is for (or Not fitted / Unassigned). */}
+                    <div className="flex items-center gap-4 text-xs">
+                      <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center text-text-secondary">
+                        <Layers size={14} />
+                      </div>
+                      <div>
+                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Persona</p>
+                        <PersonaBadge item={item} positioned={false} />
                       </div>
                     </div>
                   </div>
