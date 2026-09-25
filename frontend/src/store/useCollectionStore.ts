@@ -59,6 +59,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 
@@ -72,6 +73,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 
@@ -95,6 +97,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
     } catch (err: any) {
       set({ error: err.message });
+      throw err;
     }
   },
 
@@ -118,6 +121,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       }));
     } catch (err: any) {
       set({ error: err.message });
+      throw err;
     }
   },
 }));

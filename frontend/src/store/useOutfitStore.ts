@@ -50,6 +50,7 @@ export const useOutfitStore = create<OutfitState>((set) => ({
       }));
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 
@@ -63,6 +64,7 @@ export const useOutfitStore = create<OutfitState>((set) => ({
       }));
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 
@@ -80,6 +82,7 @@ export const useOutfitStore = create<OutfitState>((set) => ({
       set((state) => ({ outfits: [...state.outfits, newOutfit], isLoading: false }));
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
+      throw err;
     }
   },
 }));

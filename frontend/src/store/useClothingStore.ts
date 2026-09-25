@@ -69,6 +69,7 @@ export const useClothingStore = create<ClothingState>()(
           });
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
+          throw err;
         }
       },
 
@@ -83,6 +84,7 @@ export const useClothingStore = create<ClothingState>()(
           });
         } catch (err: any) {
           set({ error: err.message, isLoading: false });
+          throw err;
         }
       },
 

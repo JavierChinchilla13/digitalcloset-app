@@ -28,6 +28,8 @@ import ShoeFittingEditor from './ShoeFittingEditor';
 import JacketSegmentationTool from './JacketSegmentationTool';
 import JacketFittingEditor from './JacketFittingEditor';
 import GarmentCleanup from './GarmentCleanup';
+import ErrorBoundary from '../ErrorBoundary';
+import ErrorState from '../ErrorState';
 
 interface UploadFlowProps {
   isOpen: boolean;
@@ -45,7 +47,7 @@ const CATEGORY_ICONS: Record<ClothingCategory, React.ElementType> = {
   [ClothingCategory.DRESS]: Layers,
 };
 
-const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
+const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   const [step, setStep] = useState<Step>('UPLOAD');
   const [file, setFile] = useState<File | null>(null);
   
@@ -865,5 +867,35 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     </div>
   );
 };
+
+// Task 22: the upload flow runs image processing, Fabric canvases and several
+// network calls - a render error anywhere in it used to blank the whole page
+// with the modal stuck open. The boundary keeps the modal frame, says what
+// happened, and offers Try Again (restarts the flow from step 1) or Close. It
+// also resets whenever the modal is reopened.
+const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => (
+  <ErrorBoundary
+    resetKeys={[isOpen]}
+    fallback={({ reset }) =>
+      isOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+          <div className="absolute inset-0 bg-background-main/90 backdrop-blur-2xl" onClick={onClose} />
+          <div className="relative w-full max-w-2xl bg-background-secondary border border-ink/5 rounded-[3rem] shadow-2xl">
+            <ErrorState
+              title="The upload hit a problem"
+              message="Nothing was saved. You can start over, or close this and try again later."
+              onRetry={reset}
+              retryLabel="Start Over"
+              secondaryLabel="Close"
+              onSecondary={onClose}
+            />
+          </div>
+        </div>
+      ) : null
+    }
+  >
+    <UploadFlowContent isOpen={isOpen} onClose={onClose} />
+  </ErrorBoundary>
+);
 
 export default UploadFlow;

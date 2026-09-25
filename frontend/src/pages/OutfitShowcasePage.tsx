@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -16,6 +16,7 @@ import { buildOutfitPersona } from "../utils/personaEligibility";
 import { buildShowcaseRows } from "../utils/selectionDisplay";
 import PersonaRenderer from "../components/PersonaRenderer";
 import CroppedThumbnail from "../components/CroppedThumbnail";
+import ErrorState from "../components/ErrorState";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
 
 // Outfit Showcase (Task 75, Phase 9.7) - reachable by clicking the navbar
@@ -490,11 +491,21 @@ const OutfitShowcasePage = () => {
   const navigate = useNavigate();
 
   const [ready, setReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  useEffect(() => {
-    Promise.all([fetchOutfits(), fetchItems()]).finally(() => setReady(true));
+  // Task 22: both fetches swallow their errors into the stores, so read them
+  // back to tell "no outfits yet" apart from "couldn't load".
+  const loadShowcase = useCallback(async () => {
+    setLoadFailed(false);
+    await Promise.all([fetchOutfits(), fetchItems()]);
+    setLoadFailed(!!useOutfitStore.getState().error || !!useClothingStore.getState().error);
+    setReady(true);
   }, [fetchOutfits, fetchItems]);
+
+  useEffect(() => {
+    loadShowcase();
+  }, [loadShowcase]);
 
   // Scoped to the active persona type, same as SavedOutfitsPage's own
   // `filteredOutfits` - without this, an outfit saved for the other
@@ -582,6 +593,18 @@ const OutfitShowcasePage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />
+      </div>
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <ErrorState
+          title="We couldn't load your outfits"
+          message="Check your connection and try again."
+          onRetry={loadShowcase}
+        />
       </div>
     );
   }

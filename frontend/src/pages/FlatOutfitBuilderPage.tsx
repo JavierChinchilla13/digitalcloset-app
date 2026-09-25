@@ -18,6 +18,8 @@ import CategoryPicker from '../components/CategoryPicker';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import PersonaTypeSwitcher, { type PersonaFilterValue } from '../components/PersonaTypeSwitcher';
 import { useToast } from '../components/Toast';
+import { useSafeAction } from '../hooks/useSafeAction';
+import ErrorState from '../components/ErrorState';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -114,7 +116,8 @@ const FlatOutfitBuilderPage = () => {
   // still the correct affordance.
   const { pathname, state: navState } = useLocation();
   const isLandingRoute = pathname === '/';
-  const { items, isLoading, fetchItems, markItemAsFitted } = useClothingStore();
+  const { items, isLoading, error: itemsError, fetchItems, markItemAsFitted } = useClothingStore();
+  const runSafely = useSafeAction();
   // Used as the outfit's avatarType default (open question #6's
   // recommendation - the backend's Outfit.avatarType is NOT NULL and this
   // page has no single persona type of its own to draw from) AND drives
@@ -219,10 +222,10 @@ const FlatOutfitBuilderPage = () => {
       clearDraft();
       navigate('/outfits');
     } catch (err: any) {
-      // saveOutfit/updateOutfit used to swallow their own errors (store
-      // just recorded them), so this catch never used to fire - now that
-      // they throw, without this the draft would silently clear and
-      // navigate away even on a failed save.
+      // The outfit store's mutations rethrow on failure (updateOutfit
+      // used to swallow its errors - fixed in Task 22 - so an edit that
+      // failed to save still cleared the draft and navigated away). A
+      // failed save now lands here instead.
       showToast(err.message || 'Failed to save outfit', 'error');
     } finally {
       setIsSaving(false);
@@ -505,6 +508,13 @@ const FlatOutfitBuilderPage = () => {
                   <Loader2 className="animate-spin text-accent" size={24} />
                   <p className="text-[10px] font-medium uppercase tracking-widest">Syncing Wardrobe...</p>
                 </div>
+              ) : itemsError && items.length === 0 ? (
+                <ErrorState
+                  compact
+                  title="We couldn't load your closet"
+                  message="Check your connection and try again."
+                  onRetry={fetchItems}
+                />
               ) : browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                   <Shirt size={32} className="text-text-secondary" />
@@ -631,7 +641,7 @@ const FlatOutfitBuilderPage = () => {
                           <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
                             <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
-                              onClick={() => markItemAsFitted(item.itemId)}
+                              onClick={() => runSafely(() => markItemAsFitted(item.itemId), "Couldn't update this item")}
                               className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
                               Mark as Fitted

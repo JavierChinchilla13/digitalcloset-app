@@ -14,12 +14,14 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, outfitItemsFromEquipped, equippedFromOutfitItems } from '../store/useOutfitStore';
 import type { OutfitRequest } from '../types';
 import CroppedThumbnail from '../components/CroppedThumbnail';
+import { useToast } from '../components/Toast';
 import { ClothingCategory } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 
 const OutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { fetchItems, isLoading: loadingCloset, items: closetItems } = useClothingStore();
   const { persona, updatePersona, setEquippedItem, clearEquipped } = usePersonaStore();
   const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
@@ -61,6 +63,10 @@ const OutfitBuilderPage = () => {
         await saveOutfit(outfitData);
       }
       navigate('/outfits');
+    } catch (err: any) {
+      // The store's mutations rethrow on failure (Task 22) - stay on the page with
+      // the look intact and say so, instead of failing silently.
+      showToast(err.message || 'Failed to save outfit', 'error');
     } finally {
       setIsSaving(false);
     }

@@ -5,13 +5,15 @@ import { PersonaType, type PersonaState, type ModularJacketData } from '../types
 import PersonaLayer, { type PersonaLayerProps } from './PersonaLayer';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
+import ErrorBoundary from './ErrorBoundary';
+import ErrorState from './ErrorState';
 
 interface PersonaRendererProps {
   persona?: PersonaState;
   className?: string;
 }
 
-const PersonaRenderer: React.FC<PersonaRendererProps> = ({ 
+const PersonaRendererContent: React.FC<PersonaRendererProps> = ({ 
   persona: customPersona,
   className = "h-[600px] md:h-[800px]"
 }) => {
@@ -216,5 +218,27 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
     </div>
   );
 };
+
+// Task 22: a render error in any layer (a malformed transform, a corrupt
+// modularData blob, ...) used to unmount the whole page. Wrapping at the
+// source covers every place the persona is shown; it retries by itself when
+// the persona being shown changes, and offers Try Again otherwise.
+const PersonaRenderer: React.FC<PersonaRendererProps> = (props) => (
+  <ErrorBoundary
+    resetKeys={[props.persona]}
+    fallback={({ reset }) => (
+      <div className={`flex items-center justify-center ${props.className ?? "h-[600px] md:h-[800px]"}`}>
+        <ErrorState
+          compact
+          title="Couldn't show this preview"
+          message="Something went wrong drawing the persona. Your items are safe."
+          onRetry={reset}
+        />
+      </div>
+    )}
+  >
+    <PersonaRendererContent {...props} />
+  </ErrorBoundary>
+);
 
 export default PersonaRenderer;
