@@ -7,3 +7,17 @@ DB_PASSWORD=your_local_postgres_password
 
 # Generate with: openssl rand -base64 64
 JWT_SECRET=replace_with_a_real_base64_secret
+
+# --- Password reset emails (optional) ---
+# By default (app.mail.mode=log) the reset link is only PRINTED in the backend
+# console. To send real email, uncomment and fill these in your own
+# application-local.properties (never commit real values).
+#
+# Gmail example: turn on 2-Step Verification for the account, then create an
+# "App password" (Google Account -> Security -> App passwords) and use THAT
+# 16-character value below - not your normal Google password.
+#
+# app.mail.mode=smtp
+# spring.mail.host=smtp.gmail.com
+# spring.mail.username=you@gmail.com
+# spring.mail.password=your_16_char_app_password

@@ -1157,7 +1157,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 ### Phase 4 *(deferred — runs after Phase 10)*
 
-- [ ] **21** Resolve Forgot Password (next - Phase 4 in progress)
+- [x] **21** Resolve Forgot Password (built: token reset flow, dev-mail first)
 - [ ] **22** Add route guards + error boundaries
 
 ### Phase 5 *(deferred)*
@@ -5299,3 +5299,133 @@ post-merge with `tsc -b --force` + `vite build` on the frontend and
 `./mvnw compile` on the backend (all clean), pushed; `phase-4-auth-and-guards`
 cut from the updated `main` and pushed. Phase 4 (Task 21 Forgot Password,
 Task 22 route guards + error boundaries) starts on that branch.
+
+### Task 21 - Forgot Password (2026-09-24)
+
+Found: the login page's "Forgot?" was a dead `<button>` (no handler, no
+page), and the backend had no reset endpoint, no mail dependency, no mail
+config. Decision (user): build it for real, with a dev-only mailer first so
+the whole flow is testable without an email account; SMTP is a deployment
+(Task 24) concern.
+
+**Backend**
+- `V5__add_password_reset_tokens.sql` + `PasswordResetToken` entity +
+  repository. Only a SHA-256 hash of the token is stored (a leaked table
+  can't be turned into working links); 32 random bytes from `SecureRandom`,
+  URL-safe Base64 in the link; expires (30 min, `app.password-reset.
+  expiration-minutes`); single use (all of a user's tokens are deleted on a
+  successful reset); a new request replaces the old token.
+- `PasswordResetService.requestReset(email)`: never reveals whether an
+  account exists - unknown, deactivated, throttled (one mail per account per
+  60s, `app.password-reset.min-interval-seconds`) and mail-failure cases all
+  return the same quiet 200. `resetPassword(token, password)`: unknown /
+  expired / used / deactivated-account all throw one
+  `InvalidResetTokenException` -> 400 with a single generic message
+  (`GlobalExceptionHandler`).
+- `POST /api/auth/forgot-password` and `POST /api/auth/reset-password`
+  (`AuthController`, already covered by the `/api/auth/**` permitAll rule);
+  new DTOs validate email format and the same 8-char minimum as
+  registration.
+- `PasswordResetMailer` interface + `LoggingPasswordResetMailer`: DEV ONLY,
+  prints the reset link at WARN to the backend console
+  (`app.mail.mode=log`, the default). The link is a credential, so this must
+  never be the active mailer in a deployed environment - **a real SMTP
+  mailer has to be added and selected via `app.mail.mode` before deploying
+  (Task 24).** New `app.frontend-url` (`FRONTEND_URL`) builds the link.
+
+**Frontend**
+- `ForgotPasswordPage` (`/forgot-password`) and `ResetPasswordPage`
+  (`/reset-password?token=...`), styled like the login page; the login
+  page's "Forgot?" is now a real link. The forgot page shows the same
+  generic confirmation regardless of the email; the reset page validates
+  length/match client-side, handles a missing token, and only offers
+  "Request a new link" when the *server* rejected the token. It sends the
+  user to sign in rather than signing them in.
+
+**Verified live** (own backend on :8081 + throwaway Vite on :5199, so the
+user's :8080/:5173 servers were untouched; the V5 migration did run on the
+shared dev DB): identical 200 body for a real and an unknown email; second
+request within the throttle window produced no second mail; bogus token ->
+400; short password / bad email format -> 400 validation; real token +
+new password -> 200, then the old password gets 401 and the new one logs
+in; reusing the token -> 400; a deactivated account requested a reset and no
+mail was logged; with `expiration-minutes=0` a fresh token was rejected as
+expired and the password was unchanged. UI: "Forgot?" navigates to the
+page, forgot form shows the generic confirmation, reset page handles no
+token / mismatch / too short / server-rejected token / success. A CORS
+quirk from testing on a non-allowed origin (403 -> the existing axios
+interceptor treats any 401/403 as an expired session and redirects to
+/login) cost some time - not a bug in this feature, but worth remembering
+that origin mismatches look like a login redirect. `tsc -b --force`,
+`vite build`, `./mvnw compile` clean. Test accounts deactivated; all test
+processes/files removed.
+
+**Known limits:** JWTs are stateless, so sessions issued before a reset stay
+valid until they expire on their own; no rate limit beyond the per-account
+60s throttle (no per-IP limit); no automated tests yet (Phase 5).
+
+**Task 21 follow-up - real SMTP mailer (2026-09-24):** user tried the flow
+and reported no email arrived - correct, because `app.mail.mode=log` (the
+default) only prints the link to the backend console; and their running
+backend was still the pre-Task-21 build. Added the real sender now:
+`spring-boot-starter-mail` + `SmtpPasswordResetMailer` (active when
+`app.mail.mode=smtp`; sends a multipart text+HTML message, subject "Reset your
+VYSVI password", From = `app.mail.from`, defaulting to the SMTP username -
+Gmail requires that). The SMTP account is the standard `spring.mail.host` /
+`username` / `password` (port 587 + STARTTLS defaults, 10s timeouts), kept
+out of the repo: documented in `application-local.properties.example` (Gmail
+app-password instructions) for the user's own gitignored
+`application-local.properties`; env vars (`MAIL_MODE`, `MAIL_PORT`,
+`MAIL_FROM`, plus the `spring.mail.*` ones) for deployment. Verified without
+needing real credentials by pointing a test backend at a local SMTP capture
+server (Node `smtp-server`): the backend sent a real SMTP message with the
+right From/To/Subject and text + HTML bodies containing the reset link, and
+in smtp mode nothing is logged to the console. Not verified: delivery
+through Gmail itself (needs the user's app password - not something to be
+pasted into chat). Mail failures are still swallowed and logged
+(`PasswordResetService`), so a wrong SMTP password shows up in the backend
+log ("Could not send password reset email") rather than in the UI.
+
+**Task 21 follow-up - branded email (2026-09-24):** user confirmed real
+delivery works (Gmail SMTP through their own gitignored
+`application-local.properties`) and asked for a classy, on-brand HTML email
+including the owner's name and email. The reset email is now the template
+`backend/src/main/resources/mail/password-reset.html`, loaded once by
+`SmtpPasswordResetMailer` with every substituted value HTML-escaped: VYSVI's
+graphite/silver palette taken from `index.css` (`#0B0B0C` / `#131315`,
+silver `#C7CBD1`, muted `#9A9CA3`), letter-spaced "VYSVI / DIGITAL WARDROBE"
+wordmark in Cormorant Garamond (Georgia fallback), a short silver accent
+rule, a pill "RESET PASSWORD" button, expiry + "if this wasn't you" note, a
+copy-paste fallback link, a signature block (owner name, title, contact
+email as a `mailto:` link) and a footer naming the recipient. Built as a
+table layout with inline styles (what mail clients actually support), with
+a hidden preheader line, dark/light `color-scheme` meta, and a
+multipart plain-text alternative that carries the same sign-off. Also sets
+`Reply-To` to the contact address. Owner details are config, not
+hard-coded: `app.brand.owner-name` = Javier Chinchilla Lugo,
+`app.brand.owner-title` = "Creator of VYSVI" (a placeholder title I chose -
+change it if you prefer another), `app.brand.contact-email` =
+javidilugo@gmail.com. No phone/website was added (none known - add
+properties + template placeholders if wanted). Verified by sending through
+the local SMTP capture server and rendering the captured HTML at desktop
+(700px) and phone (400px) widths: all placeholders filled, layout holds on
+both; one design fix from the first render (the full-width silver hairline
+overshot the card's rounded corners, replaced by a short accent rule).
+Not verified: rendering in Gmail/Outlook/Apple Mail themselves (Gmail dark
+mode can re-color emails; explicit background colors are set everywhere to
+limit that). While testing, a test backend picked up the user's real SMTP
+credentials from their local file and tried to authenticate against the fake
+local server (nothing left the machine); test runs now blank
+`spring.mail.username/password` explicitly.
+
+**Task 21 follow-up - confirmation shows the entered email (2026-09-24):**
+user asked that the "reset link has been sent" confirmation show the address
+that was typed, so a typo is visible. `ForgotPasswordPage` now keeps the
+trimmed submitted address and shows it in a "You entered" box under the
+(unchanged, still generic) server message, plus a "Wrong email? Try again"
+link that returns to the form with the address kept for editing. Safe
+because it only echoes the user's own input - it says nothing about whether
+an account exists. Verified live against the running servers with an unknown
+address (no mail sent, nothing written): surrounding spaces trimmed,
+address shown, "Try again" returns to the form with it prefilled.
+`tsc -b --force` + `vite build` clean.

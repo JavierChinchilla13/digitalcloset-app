@@ -40,6 +40,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
+    // Password reset link that can't be used (unknown/expired/used) - a client
+    // error the user can act on (request a new link), so 400 with the message.
+    @ExceptionHandler(InvalidResetTokenException.class)
+    public ResponseEntity<Object> handleInvalidResetToken(InvalidResetTokenException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     // Thrown by @Valid when a request body fails its DTO's constraints. Doesn't
     // extend RuntimeException, so without this handler it would fall through to
     // the generic Exception handler below and incorrectly return 500 instead of
