@@ -1155,6 +1155,11 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
       (3x3 mesh warp on tops, baked to PNG, original + points kept in
       `modularData`)
 
+### Phase 4.5 — User-requested features after Task 23 *(added 2026-09-24)*
+
+- [x] **77** Persona sign on every garment card (persona name / Not fitted / Unassigned)
+- [ ] **78** Main outfit on the account (Showcase "set as main" + "Edit outfit", Attire opens it, "New outfit" button)
+
 ### Phase 4 *(deferred — runs after Phase 10)*
 
 - [x] **21** Resolve Forgot Password (built: token reset flow, dev-mail first)
@@ -1298,6 +1303,7 @@ TASK 02
 21    Resolve Forgot Password (Phase 4; the list above predates Phases 8-10)
 22    Add route guards + error boundaries (Phase 4)
 23    Implement regression/test suite (Phase 5)
+77    Persona sign on every garment card (Phase 4.5)
 ```
 
 ## 🎉 PHASE 1 — SECURITY & CORRECTNESS: COMPLETE
@@ -5681,3 +5687,38 @@ deleted). New regression test `closetCategoryFilter.test.tsx` (4; total
 frontend tests now 46). Not touched: the Persona Filter row below is wider
 than a 390px screen (page scrolls horizontally on phones) - pre-existing,
 noted, not fixed.
+
+### Task 77 - Persona sign on every garment (2026-09-24, `/plan`ned first)
+
+User: everywhere clothes are added/listed (Closet, Attire, the other tabs) there
+must always be a sign saying which persona the garment is for, or that it is
+unassigned; "remember there is an option to not use persona at all". Findings:
+every garment already has a required `personaType` and a `personaStatus`
+(FITTED / NOT_FITTED from "Skip Persona Fitting" / INELIGIBLE_NO_CUTOUT from
+"Skip Background Removal - Keep Original, No Persona"), so no schema change.
+Before: a raw MALE/FEMALE pill on Attire's browse cards and the category
+picker; nothing on the Closet cards, Attire's "Your Selection", the
+persona-first builder or the category page's item tiles.
+
+New `utils/personaSign.ts` (pure rules) and `components/PersonaBadge.tsx`
+(always visible, top-left of the thumbnail, dark glass pill with a colour dot):
+FITTED (or legacy/no status) -> the persona's display name ("M Persona" or the
+user's custom name); NOT_FITTED -> "Not fitted" (tooltip names the persona);
+INELIGIBLE_NO_CUTOUT -> "Unassigned". `ItemPersonaBadge` looks a garment up in
+the closet store by id for tiles that only carry an itemId (a category's item
+lists). Used in: `ClothingCard` (Closet, dashboard section; replaces the small
+category tag - the category is already the caption below), Attire browse cards
+(replaces the raw pill) and `SelectionCard`, `CategoryDetailPage` (picker tiles
+and both "in this category" lists), the persona-first `OutfitBuilderPage`
+picker, and a "Persona" row in `ClothingDetailsModal`. `App.tsx` now also loads
+the persona display names once after login (`fetchDisplayNames`), so custom
+names are ready on every page instead of only the Closet.
+
+**Verified.** `tsc -b --force`, `vite build`, ESLint clean; 56 frontend tests
+pass (10 new in `personaSign.test.tsx`: the wording rules incl. legacy status
+and custom names, the badge, id lookup, and the three signs on the Closet page,
+the Attire browse grid and the Attire selection panel). Live on own servers
+(8081/5199, throwaway account with one garment per status): Closet, Attire
+(browse + selection), the persona-first builder and a category page all show
+the right sign; every badge measured fully inside its card at a 390px width.
+Test garments/category deleted, account deactivated, servers stopped.

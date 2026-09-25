@@ -5,6 +5,7 @@ import type { ClothingItem, PersonaState } from '../types';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import CroppedThumbnail from './CroppedThumbnail';
+import PersonaBadge from './PersonaBadge';
 
 interface ClothingCardProps {
   item: ClothingItem;
@@ -150,12 +151,11 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
           </div>
         </div>
 
-        {/* Category Tag (Mini) */}
-        <div className="absolute top-2 left-2">
-          <span className="px-2 py-0.5 bg-black/40 backdrop-blur-md text-white text-[10px] font-medium tracking-widest uppercase rounded-full border border-white/10">
-            {item.category}
-          </span>
-        </div>
+        {/* Task 77: persona sign (which persona this garment is for, or
+            "Not fitted" / "Unassigned"). Replaces the small category tag that
+            used to sit here - the category is already the caption under the
+            card. */}
+        <PersonaBadge item={item} />
       </div>
 
       <div className="px-1">

@@ -9,6 +9,7 @@ import { useToast } from '../components/Toast';
 import { useSafeAction } from '../hooks/useSafeAction';
 import SectionWrapper from '../components/SectionWrapper';
 import CroppedThumbnail from '../components/CroppedThumbnail';
+import PersonaBadge, { ItemPersonaBadge } from '../components/PersonaBadge';
 import { ClothingCategory, PersonaType } from '../types';
 import type { ClothingItem, Collection, Outfit } from '../types';
 
@@ -119,6 +120,7 @@ const CategoryDetailPage = () => {
                   {collection.items.map((item) => (
                     <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
                       <img src={item.imageUrl} alt={item.itemName} className="w-full h-full object-cover" />
+                      <ItemPersonaBadge itemId={item.itemId} compact />
                       <button
                         onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
                         className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -432,9 +434,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                               className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 hover:border-accent/50 transition-all group disabled:opacity-50"
                             >
                               <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-                              <div className="absolute top-1.5 left-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                                <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
-                              </div>
+                              <PersonaBadge item={item} compact />
                               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 {isAdding ? (
                                   <Loader2 size={18} className="text-white animate-spin" />
@@ -463,6 +463,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                         {collection.items.map((item) => (
                           <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
                             <img src={item.imageUrl} alt={item.itemName} className="w-full h-full object-cover opacity-70" />
+                            <ItemPersonaBadge itemId={item.itemId} compact />
                             <button
                               onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
                               className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"

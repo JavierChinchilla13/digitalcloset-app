@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { useClothingStore } from './store/useClothingStore';
+import { usePersonaSettingsStore } from './store/usePersonaSettingsStore';
 import MainLayout from './layouts/MainLayout';
 
 // Real Pages
@@ -44,13 +45,17 @@ const ProtectedRoute = ({
 function App() {
   const { isAuthenticated } = useAuthStore();
   const { fetchItems } = useClothingStore();
+  const fetchDisplayNames = usePersonaSettingsStore((state) => state.fetchDisplayNames);
 
   // Load clothing items globally on mount to ensure persistent visibility across all components
   useEffect(() => {
     if (isAuthenticated) {
       fetchItems();
+      // Task 77: the persona sign on every garment card uses the user's custom
+      // persona names, so load them once here rather than page by page.
+      fetchDisplayNames();
     }
-  }, [isAuthenticated, fetchItems]);
+  }, [isAuthenticated, fetchItems, fetchDisplayNames]);
 
   return (
     <Router>

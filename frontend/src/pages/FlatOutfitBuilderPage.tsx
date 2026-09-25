@@ -20,6 +20,7 @@ import PersonaTypeSwitcher, { type PersonaFilterValue } from '../components/Pers
 import { useToast } from '../components/Toast';
 import { useSafeAction } from '../hooks/useSafeAction';
 import ErrorState from '../components/ErrorState';
+import PersonaBadge from '../components/PersonaBadge';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -67,6 +68,7 @@ const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (item
     className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
   >
     <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
+    <PersonaBadge item={item} compact />
     <button
       onClick={() => onRemove(item.itemId)}
       className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -541,9 +543,9 @@ const FlatOutfitBuilderPage = () => {
                             `}
                           >
                             <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-                            <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                              <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
-                            </div>
+                            {/* Task 77: was a raw MALE/FEMALE pill; now the shared
+                                persona sign (persona name / Not fitted / Unassigned). */}
+                            <PersonaBadge item={item} />
                             <div className={`
                               absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                               ${active ? 'opacity-100' : 'opacity-0'}

@@ -14,6 +14,7 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, outfitItemsFromEquipped, equippedFromOutfitItems } from '../store/useOutfitStore';
 import type { OutfitRequest } from '../types';
 import CroppedThumbnail from '../components/CroppedThumbnail';
+import PersonaBadge from '../components/PersonaBadge';
 import { useToast } from '../components/Toast';
 import { ClothingCategory } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
@@ -200,6 +201,7 @@ const OutfitBuilderPage = () => {
                         `}
                       >
                         <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
+                        <PersonaBadge item={item} compact />
                         <div className={`
                           absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                           ${active ? 'opacity-100' : 'opacity-0'}
