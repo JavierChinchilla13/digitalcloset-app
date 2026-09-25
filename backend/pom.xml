@@ -62,6 +62,13 @@
 			<artifactId>spring-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Task 23: in-memory database for integration tests (PostgreSQL mode),
+		     so the suite needs no installed database or credentials. -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- JWT -->
 		<dependency>

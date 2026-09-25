@@ -456,16 +456,16 @@ Testing should prioritize the bugs and security issues already identified.
 
 ### 1. Backend Security
 
-- [ ] Clothing ownership tests
-- [ ] Outfit ownership tests
-- [ ] Registration role escalation test
+- [x] Clothing ownership tests (Task 23a)
+- [x] Outfit ownership tests (Task 23a)
+- [x] Registration role escalation test (Task 23a)
 
 ### 2. JWT
 
-- [ ] Token generation
-- [ ] Token validation
-- [ ] Token expiration
-- [ ] Secret handling
+- [x] Token generation (Task 23a)
+- [x] Token validation (Task 23a)
+- [x] Token expiration (Task 23a)
+- [x] Secret handling (Task 23a)
 
 ### 3. Backend Integration
 
@@ -5486,3 +5486,53 @@ passes the guard but the backend 403s and the page shows its own error state
 **Not verified live:** the admin user list itself with a real admin
 (needs an account promoted with SQL, which was left to the user).
 Test account deactivated; test collection deleted.
+
+### Task 23 - Regression test suite, part a: backend (2026-09-24)
+
+Plan agreed with the user: all 7 blueprint areas, one layer at a time
+(backend -> frontend/Vitest -> Python/pytest), stopping for review after each;
+backend tests use in-memory H2 (no install, no credentials, CI-friendly).
+There were no tests, no Docker and no CI before this. Task 23 stays open in
+the master list until all layers land.
+
+**Setup.** `h2` (test scope) added to `pom.xml`; `src/test/resources/
+application-test.properties`; tests use `@ActiveProfiles("test")`, which
+replaces main's `spring.profiles.active=local`, so `application-local.properties`
+(real DB password, JWT secret, SMTP login) is never loaded by the suite.
+Test-only Base64 JWT secret, in-memory H2 in PostgreSQL mode.
+
+**Known limitation (H2).** Flyway is disabled for the tests and Hibernate
+builds the schema from the entities (`create-drop`): `V3__add_collections.sql`
+uses a Postgres-only functional index (`lower(name)`) that H2 cannot parse.
+So the suite does not exercise the migration scripts themselves (the dev
+database still runs them with `ddl-auto=validate` as the entity/schema
+check), and the case-insensitive unique collection name index is absent in
+tests. Real Postgres in CI (a service container) would close this.
+
+**Tests (36, all passing; `./mvnw test`).**
+- `ContextLoadsTest` - app boots on the test profile.
+- `OwnershipSecurityTest` (10) - clothing/outfit lists scoped to owner;
+  another user's update/delete -> 403 and data unchanged; unknown id -> 404;
+  cannot build an outfit from someone else's items; anonymous callers
+  rejected; admin endpoints forbidden for normal users.
+- `AuthenticationSecurityTest` (10) - register always ROLE_USER, a smuggled
+  `role`/`admin` field is ignored (and the token is not admin), BCrypt-hashed
+  password, duplicate email rejected, validation 400s, login success/failure,
+  garbage and forged tokens rejected, deactivated user cannot log in.
+- `JwtServiceTest` (12, plain unit tests) - subject/claims, valid vs other
+  user, tampered payload, wrong secret, malformed and `alg=none` tokens,
+  expired token, configured lifetime, non-Base64 and too-short secrets.
+- `WardrobeFlowIntegrationTest` (3) - register -> login -> clothing ->
+  outfit -> delete clothing -> permissions; outfit create/reload/edit/delete
+  round trip; invalid payloads -> 400.
+Each was seen to fail before the fixes below (real failures, not vacuous).
+
+**Two real bugs the new tests found and this task fixed:**
+1. `GlobalExceptionHandler`: `AccessDeniedException` (a normal user on an
+   `@PreAuthorize("hasRole('ADMIN')")` endpoint) fell into the generic
+   RuntimeException handler and returned **500**; now **403**.
+2. `JwtAuthenticationFilter`: an expired, tampered, malformed or
+   unknown-user token threw out of the filter -> **500**. It now just leaves
+   the request unauthenticated (the normal 403 path), which is also what the
+   frontend's "expired session -> back to login" handling depends on. (Stale
+   tokens on `/api/auth/**` requests were affected too.)

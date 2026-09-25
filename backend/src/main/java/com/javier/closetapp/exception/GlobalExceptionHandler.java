@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -80,6 +81,19 @@ public class GlobalExceptionHandler {
         body.put("message", "Invalid email or password");
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
+    }
+
+    // A signed-in user calling something their role doesn't allow (e.g. a normal
+    // user on an @PreAuthorize("hasRole('ADMIN')") endpoint). AccessDeniedException
+    // is a RuntimeException, so without this handler it fell through to the
+    // generic handler below and came back as a 500 instead of a 403.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", "You do not have permission to do this");
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
     // Fallback for anything else (unexpected RuntimeExceptions, NPEs, DB errors,
