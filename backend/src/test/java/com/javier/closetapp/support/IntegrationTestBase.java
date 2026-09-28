@@ -9,6 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import com.javier.closetapp.common.enums.Role;
+import com.javier.closetapp.user.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,12 +34,24 @@ public abstract class IntegrationTestBase {
 
     @Autowired protected MockMvc mockMvc;
     @Autowired protected ObjectMapper objectMapper;
+    @Autowired protected UserRepository userRepository;
 
     /** A registered user's identity, as returned by /api/auth/register. */
     public record TestUser(long userId, String email, String token) {
         public String bearer() {
             return "Bearer " + token;
         }
+    }
+
+    // Promotes an already-registered user straight to ROLE_ADMIN, bypassing
+    // the API (there's deliberately no self-service way to do this - only an
+    // existing admin can create one, Task 79). The user's existing token still
+    // works afterward: JwtAuthenticationFilter loads authorities fresh from
+    // the database on every request, not from the token itself.
+    protected void promoteToAdmin(TestUser user) {
+        var entity = userRepository.findByEmail(user.email()).orElseThrow();
+        entity.setRole(Role.ROLE_ADMIN);
+        userRepository.save(entity);
     }
 
     protected String uniqueEmail() {

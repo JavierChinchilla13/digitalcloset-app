@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Loader2, Search, ShieldCheck, UserCheck, UserX } from 'lucide-react';
+import { Loader2, Plus, Search, ShieldCheck, UserCheck, UserX } from 'lucide-react';
 import { adminService } from '../api/adminService';
 import { useAuthStore } from '../store/useAuthStore';
 import { useToast } from '../components/Toast';
 import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
+import CreateUserModal from '../components/CreateUserModal';
 import { Role, type User } from '../types';
 
 // Admin-only account management (Task 22): list every user and deactivate or
@@ -20,6 +21,7 @@ const AdminUsersPage = () => {
   const [loadFailed, setLoadFailed] = useState(false);
   const [search, setSearch] = useState('');
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
@@ -75,9 +77,19 @@ const AdminUsersPage = () => {
           <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
             USER <span className="text-accent">ACCOUNTS</span>
           </h1>
-          <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">
-            {users.length} {users.length === 1 ? 'account' : 'accounts'}
-          </p>
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">
+              {users.length} {users.length === 1 ? 'account' : 'accounts'}
+            </p>
+            {/* Task 79: the only way to create an admin account - an existing
+                admin explicitly picks the role in the modal. */}
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-on-accent text-[10px] font-medium tracking-widest uppercase transition-all"
+            >
+              <Plus size={14} /> Create User
+            </button>
+          </div>
         </div>
 
         {isLoading ? (
@@ -171,6 +183,15 @@ const AdminUsersPage = () => {
           </>
         )}
       </SectionWrapper>
+
+      <CreateUserModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreated={(created) => {
+          setUsers((prev) => [created, ...prev]);
+          showToast(`${created.email} created`, 'success');
+        }}
+      />
     </div>
   );
 };

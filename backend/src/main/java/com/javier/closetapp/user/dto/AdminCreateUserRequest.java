@@ -1,10 +1,18 @@
-package com.javier.closetapp.auth.dto;
+package com.javier.closetapp.user.dto;
 
+import com.javier.closetapp.common.enums.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public class RegisterRequest {
+// Body of POST /api/users (admin-only): an admin creating an account with a
+// role of their choosing. This is the whole "only admins can create admins"
+// control - the endpoint itself is @PreAuthorize("hasRole('ADMIN')"), and
+// whatever role an admin picks here is trusted, same as the admin
+// deactivate/reactivate endpoints already trust the caller's role.
+public class AdminCreateUserRequest {
+
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be a valid email address")
     private String email;
@@ -13,18 +21,13 @@ public class RegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
-    // Optional: the signup form has always collected these, but this DTO had
-    // no fields for them, so they were silently discarded (found while adding
-    // the email-uniqueness check below).
     private String firstName;
     private String lastName;
 
-    public RegisterRequest() {}
+    @NotNull(message = "Role is required")
+    private Role role;
 
-    public RegisterRequest(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
+    public AdminCreateUserRequest() {}
 
     public String getEmail() {
         return email;
@@ -56,5 +59,13 @@ public class RegisterRequest {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public void setRole(Role role) {
+        this.role = role;
     }
 }

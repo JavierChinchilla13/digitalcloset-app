@@ -23,6 +23,7 @@ import PersonaPage from './pages/PersonaPage';
 import CategoriesPage from './pages/CategoriesPage';
 import CategoryDetailPage from './pages/CategoryDetailPage';
 import OutfitShowcasePage from './pages/OutfitShowcasePage';
+import SettingsPage from './pages/SettingsPage';
 
 // Task 22: role-aware route guard. Signed-out visitors go to /login; with
 // requireAdmin, signed-in non-admins are sent home instead (they have no
@@ -95,6 +96,8 @@ function App() {
           <Route path="/showcase" element={<ProtectedRoute><OutfitShowcasePage /></ProtectedRoute>} />
           {/* Task 22: admin-only account management. */}
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
+          {/* Task 79: name/email/password/deactivate, reached from UserMenu. */}
+          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
           {/* Task 22: anything unmatched gets a real 404 page. */}
           <Route path="*" element={<NotFoundPage />} />
         </Route>

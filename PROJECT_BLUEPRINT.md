@@ -1159,6 +1159,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 - [x] **77** Persona sign on every garment card (persona name / Not fitted / Unassigned)
 - [x] **78** Main outfit on the account (Showcase "set as main" + "Edit outfit", Attire opens it, "New outfit" button)
+- [x] **79** Declutter navbar into a user menu + Settings page + email uniqueness + admin "create user"
 
 ### Phase 4 *(deferred — runs after Phase 10)*
 
@@ -1305,6 +1306,7 @@ TASK 02
 23    Implement regression/test suite (Phase 5)
 77    Persona sign on every garment card (Phase 4.5)
 78    Main outfit on the account (Phase 4.5)
+79    User menu + Settings page + email uniqueness + admin create-user (Phase 4.5)
 ```
 
 ## 🎉 PHASE 1 — SECURITY & CORRECTNESS: COMPLETE
@@ -5810,3 +5812,220 @@ own servers (8081/5199, the user's real 8080 running and untouched
 throughout): tooltips present with the full explanation on all three
 surfaces; Saved Outfits screenshot confirms the main outfit's card visibly
 stands out (ring + solid tag) next to a plain one.
+
+### Task 79 - User menu, Settings page, email uniqueness, admin create-user (2026-09-28, `/plan`ned first)
+
+Four related requests: the navbar felt cluttered (keep only Attire/Closet/
+Outfits + the avatar visible, hover the avatar for everything else); a real
+Settings page for name/email/password; check and fix email uniqueness with a
+clear message; only admins can create admins, with an option to create a
+normal user too.
+
+**Findings before writing code:** the `users.email` column already had a DB
+unique constraint, but nothing checked it first - a duplicate fell into the
+generic 500 handler, not a clear message. Incidental bug found while reading
+`AuthService`: `SignupPage` already sent `firstName`/`lastName` on register,
+but the backend's `RegisterRequest` DTO had no such fields - silently
+discarded on every signup until now. `PUT /api/users/me` (name) already
+existed but no frontend code called it. No change-password/change-email
+endpoint existed for a signed-in user. No admin create-user endpoint existed.
+
+**Backend.** New `DuplicateEmailException` -> 409 (`GlobalExceptionHandler`).
+`AuthService.register` now checks for the email first and persists
+first/last name (the incidental fix above). `UserService` gained
+`changePassword` (verifies the current password, 403 if wrong),
+`changeEmail` (verifies password, checks the new email against every
+*other* user, returns a fresh `AuthResponse`/JWT since email is the JWT
+subject), and `createUser` (admin-only route is the entire "only admins can
+create admins" control - it sets whatever role the admin picked). New
+endpoints: `PUT /me/password`, `PUT /me/email`, `POST /` (admin,
+`@PreAuthorize hasRole('ADMIN')`). No migration - every touched column
+already existed.
+
+**Frontend.** New `UserMenu.tsx`: the avatar opens a dropdown (hover, with a
+150ms close delay, and click for touch; closes on outside click via the same
+overlay pattern `ClothingCategoryFilter` already uses) holding Theme,
+Persona, Categories, Admin (admin-only), **Settings**, Logout - replacing the
+five separate always-visible icons `Navbar.tsx` used to render. New
+`SettingsPage.tsx` (`/settings`): four independent cards - Profile (name),
+Email (+ current password, reissues the token), Password (+ current
+password), Account (read-only info + a "Deactivate my account" button wired
+to the Task-22 endpoint that had never had a UI). New
+`CreateUserModal.tsx` + a "Create User" button on `AdminUsersPage`: name,
+email, password, a User/Admin role pill-picker (styled like `UploadFlow`'s
+Male/Female picker).
+
+**A real bug the live check caught, fixed here:** `SettingsPage`'s email-
+change handler called `authService.getCurrentUser()` to refresh the profile
+*before* updating the store's token - so that request still carried the old
+(now-dead) token, got a 401, and the axios interceptor force-logged the user
+out immediately after a successful email change. Backend data was correct
+throughout (confirmed via API - the account's email had genuinely changed);
+only the frontend's follow-up request was broken. Fixed by calling the
+store's `setToken` first, same order `SignupPage` already uses for exactly
+this reason. The mocked-service frontend test for this path didn't catch it
+(it bypasses the real axios interceptor) - only the live browser run did.
+
+**Verified.** Backend: 61 tests (13 new `SettingsIntegrationTest`: duplicate
+email on register incl. the original account surviving, name now persists,
+change-password success/wrong-current/too-short, change-email success incl.
+the *old* token going dead and the *new* one working, duplicate/no-op/wrong-
+password cases, admin create-user for both roles incl. the new admin
+actually working, non-admin forbidden, duplicate email, missing role). New
+`IntegrationTestBase.promoteToAdmin` helper (updates the H2 test DB directly
+- there's deliberately no self-service way to do this over the API).
+Frontend: 96 tests (25 new: `UserMenu`, `SettingsPage`, admin create-user);
+`routeGuards.test.tsx`'s admin-link test updated to open the menu first,
+since the link is genuinely not in the DOM until then. `tsc -b --force`,
+`vite build` clean.
+
+Live on my own throwaway servers (8081/5199; the user's real 8080/5173 left
+running, untouched): the dropdown's real contents confirmed via the DOM;
+register-duplicate-email gave the clear 409 message against the real
+backend; a full Settings session - rename (confirmed via `/me`), email
+change (caught the bug above, fixed, then re-verified: logged in with the
+new email, no forced logout), password change (confirmed old password now
+rejected, new one accepted), deactivate (redirected to `/login`, session
+cleared). Both throwaway accounts left deactivated afterward.
+
+**Not live-verified:** the admin "Create User" browser flow specifically -
+it needs an existing admin account, and promoting one requires either SQL
+against the shared dev database (declined - not my data to write to
+directly, same standing rule as Task 22's admin verification) or a fully
+separate throwaway database, which wasn't worth the extra setup given the
+feature is already covered by 13 real backend integration tests (through
+the actual Spring Security filter chain) and 4 frontend interaction tests.
+If you want this specific path clicked through live too, promoting a test
+account is one SQL statement, same as Task 22:
+`UPDATE users SET role='ROLE_ADMIN' WHERE email='<test email>';`
+
+### Task 79 follow-up - dropdown/Settings polish + code-confirmed email/password changes (2026-09-28)
+
+Three pieces of feedback after Task 79 shipped (uncommitted):
+
+**1. Account dropdown "looks weird."** First pass measured its position live
+(DOM rects) and found it already below-right of the avatar (`right-0
+top-full mt-3`), so added a caret to visually tie panel to trigger.
+User follow-up: it should be *centered* under the avatar, not right-aligned
+to it. Changed `right-0` -> `left-1/2 -translate-x-1/2` (menu and caret both);
+confirmed live at a real desktop width (1440px): avatar center 923px, menu
+spans 819-1027px - centered exactly, and fully on-screen.
+
+**2. Settings cards "look weird" - not centered.** The inner grid had
+`max-w-4xl` but no `mx-auto`, so it sat flush left inside the page's
+already-centered, wider container. One class added (`SettingsPage.tsx`).
+
+**3. "For more security," changing email or password should require
+confirming a code sent to email.** Real feature, `/plan`ned first. Shape:
+**request -> emailed code -> confirm**, mirroring the existing password-
+reset flow (`PasswordResetService`/`PasswordResetToken`/mailer pattern)
+rather than inventing a new one. The code always goes to the account's
+*current*, already-verified email - never the new one being requested -
+so a hijacked session (e.g. a stolen JWT) can no longer silently take over
+the account or change its password; the real owner's inbox has to agree.
+
+**Backend.** `V7__add_pending_account_changes.sql`: one table for both
+change types (discriminator column, same reuse as `persona_display_names`)
+- staged new email / already-bcrypt-hashed new password, a hashed 6-digit
+code, an attempt counter, expiry. New `AccountChangeType` enum,
+`PendingAccountChange` entity, `PendingAccountChangeRepository`. New
+`VerificationCodeMailer` interface + `Logging`/`Smtp` implementations,
+mirroring `PasswordResetMailer` exactly (same `app.mail.mode` bean
+selection, so it automatically uses real SMTP wherever that's already
+configured); new branded template `mail/verification-code.html`. New
+`app.account-verification.{expiration-minutes=10, min-interval-seconds=60,
+max-attempts=5}`. `UserService`'s just-built `changeEmail`/`changePassword`
+replaced in place with `request*`/`confirm*` pairs (nothing was committed
+yet, so no deprecation needed). New `InvalidVerificationCodeException`
+(400, one message for unknown/expired/used/wrong - a guesser learns
+nothing) and `TooManyRequestsException` (429, the resend throttle).
+`UserController`: `PUT /me/email`+`/me/password` became
+`POST /me/{email,password}/{request,confirm}`.
+
+**A real bug found while wiring up the tests, fixed here:** confirming a
+wrong code is supposed to count against the attempt limit, but
+`confirmPasswordChange`/`confirmEmailChange` are `@Transactional`, and
+Spring rolls back the *whole* method on the `RuntimeException` it throws
+for a wrong code - silently undoing the attempt-count increment (and the
+eventual lockout-delete) right along with it every single time. New
+`VerificationAttemptTracker` (a separate bean, `@Transactional(REQUIRES_NEW)`)
+records the failed attempt in its own transaction that commits regardless
+of the caller's outcome - self-invocation of a `REQUIRES_NEW` method on
+the same class would have silently skipped the proxy and done nothing,
+which is why this is a separate small service rather than a method on
+`UserService`. Caught by a test that runs 5 wrong attempts then expects
+even the *correct* code to be locked out on the 6th - it wasn't, until
+this fix.
+
+**Frontend.** `userService.ts`:
+`request/confirmEmailChange`, `request/confirmPasswordChange`. The Email
+and Password cards each get a small `'form' | 'code'` step: submitting
+the form sends the code and switches to a "we sent a code to
+`{user.email}`" view with a single numeric input (no multi-box OTP
+widget - this app avoids fussy/oversized UI) plus Confirm, Resend, and
+Cancel. Email's confirm still updates the store the same way as before
+(`setToken` then `getCurrentUser` then `login`, in that order so the
+refresh call authenticates with the new token) - simpler now, since the
+token only ever changes once, at the very end, not mid-flow.
+
+**Verified.** Backend: 68 tests (20 in `SettingsIntegrationTest`, up from
+13: added wrong code, expired code, max-attempts lockout, second request
+invalidates the first code, confirm-without-request, resend-too-soon,
+account only actually changes after confirm not after request). New
+`@MockBean VerificationCodeMailer` + `ArgumentCaptor` in the test to
+capture the code that would otherwise only exist in the outgoing email;
+`setExpiresAt`/`setCreatedAt` added to the entity so tests can backdate
+past expiry/the resend throttle without a real wait (`created_at`'s
+`updatable=false` - copied from `PasswordResetToken` - had to be dropped
+for this one entity specifically, since it now has a real, intentional
+setter). Frontend: 103 tests (16 in `settingsPage.test.tsx`, up from 9).
+`tsc -b --force`, `vite build` clean.
+
+Live on my own throwaway servers (8081/5199, forced `--app.mail.mode=log`
+so codes print to the console instead of going out for real; the user's
+8080/5173 left running, untouched): full email-change and password-change
+round trips through the actual Settings UI, reading the real logged code
+each time - request, a deliberate wrong code (rejected, nothing changed),
+then the real code (applied; old token/password rejected afterward, new
+one works). The very first password-change request, made before
+discovering the backend had picked up the user's real Gmail SMTP config
+from `application-local.properties` (their "local" profile is active by
+default) instead of dev-log mode, went out as one real email to a fake,
+nonexistent test address (`verify79tester@example.com`) - harmless (no
+real inbox involved, Gmail simply bounces undeliverable mail), but real,
+so noted here rather than glossed over. Every request after that forced
+`--app.mail.mode=log` explicitly. Test account deactivated after.
+### Task 79 follow-up 2 - dropdown truly centered + show/hide on every password field (2026-09-28)
+
+Two more requests after the above shipped (still uncommitted):
+
+1. The account dropdown still wasn't centered under the avatar - see the
+   corrected note above (this session's second attempt at the same feedback,
+   this time actually centering it rather than just adding a caret to a
+   right-aligned panel).
+2. Every password field in the app should let the user see what they typed.
+
+**New `components/PasswordInput.tsx`**: wraps a password `<input>` with a
+show/hide eye toggle (`type="button"`, so it can't accidentally submit the
+form it sits in); each instance owns its own visibility state, so e.g.
+Settings' "current" and "new" password fields toggle independently. Optional
+`icon` prop reproduces the left-aligned Lock icon the auth pages already had
+inline. Callers keep their own `className` (this app's password fields
+aren't all styled alike - auth pages vs. Settings vs. the admin modal), just
+with the right padding bumped (`pr-6`/`pr-5` -> `pr-12`) to leave room for
+the toggle.
+
+Wired into all five places a password is typed: `LoginPage`, `SignupPage`,
+`ResetPasswordPage`, `SettingsPage` (all 4 password fields - email card's
+current password, password card's current/new/confirm), `CreateUserModal`.
+
+**Verified.** New `passwordInput.test.tsx` (5 tests): hidden by default,
+toggles to visible and back, renders the optional icon, two instances toggle
+independently, the toggle button is `type="button"`. All existing tests
+(103 total, unaffected - `PasswordInput` still renders a plain `<input>`
+with the same placeholder/value props, so the query patterns already in use
+kept working) plus the 5 new ones all pass. `tsc -b --force`, `vite build`
+clean. Live on my own throwaway servers: on the real Login page, typed a
+password, clicked Show, confirmed the field's DOM `type` flipped to
+`"text"` and the real typed value was readable. Test account deactivated,
+servers stopped after.
