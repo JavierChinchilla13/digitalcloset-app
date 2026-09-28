@@ -27,6 +27,8 @@ export interface User {
   role: Role;
   active: boolean;
   createdAt: string;
+  // The outfit the Showcase opens on and Attire edits (Task 78); null/absent = none.
+  mainOutfitId?: number | null;
 }
 
 export interface AuthResponse {

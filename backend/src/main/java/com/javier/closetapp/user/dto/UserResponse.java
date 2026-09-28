@@ -11,10 +11,12 @@ public class UserResponse {
     private Role role;
     private boolean active;
     private LocalDateTime createdAt;
+    // Null when the user has no main outfit (Task 78).
+    private Long mainOutfitId;
 
     public UserResponse() {}
 
-    public UserResponse(Long userId, String email, String firstName, String lastName, Role role, boolean active, LocalDateTime createdAt) {
+    public UserResponse(Long userId, String email, String firstName, String lastName, Role role, boolean active, LocalDateTime createdAt, Long mainOutfitId) {
         this.userId = userId;
         this.email = email;
         this.firstName = firstName;
@@ -22,6 +24,7 @@ public class UserResponse {
         this.role = role;
         this.active = active;
         this.createdAt = createdAt;
+        this.mainOutfitId = mainOutfitId;
     }
 
     public Long getUserId() {
@@ -78,5 +81,13 @@ public class UserResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Long getMainOutfitId() {
+        return mainOutfitId;
+    }
+
+    public void setMainOutfitId(Long mainOutfitId) {
+        this.mainOutfitId = mainOutfitId;
     }
 }

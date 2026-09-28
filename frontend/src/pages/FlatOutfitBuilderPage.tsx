@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown, Plus, Star } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
@@ -129,7 +129,7 @@ const FlatOutfitBuilderPage = () => {
   // the persona *equip* state (topIds/bottomIds/etc.) still isn't touched
   // here, only which type it targets.
   const { persona, setPersonaType } = usePersonaStore();
-  const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
+  const { outfits, mainOutfitId, fetchOutfits, fetchMainOutfit, saveOutfit, updateOutfit } = useOutfitStore();
   const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
   const { collections, fetchCollections, createCollection } = useCollectionStore();
   const { showToast } = useToast();
@@ -139,6 +139,22 @@ const FlatOutfitBuilderPage = () => {
   const [outfitName, setOutfitName] = useState('New Style');
   const [isSaving, setIsSaving] = useState(false);
   const [outfitsReady, setOutfitsReady] = useState(false);
+
+  // Task 78: which outfit this page is editing. On the /outfits/flat/edit/:id
+  // route that is :id. On "/" (Attire's home) it is the account's main outfit,
+  // when there is one - so Attire opens the outfit the user picked as their
+  // main one. Two cases stay in "new outfit" mode: no main outfit (or one that
+  // no longer exists), and arriving from an outfit card's WEAR STYLE, which
+  // brings its own draft (and must not overwrite the main outfit on save).
+  const cameFromWearStyle = !!(navState as { showPersonaPreview?: boolean } | null)?.showPersonaPreview;
+  const mainOutfitExists = mainOutfitId != null && outfits.some((o) => o.outfitId === mainOutfitId);
+  const editId: string | undefined =
+    id ?? (isLandingRoute && !cameFromWearStyle && mainOutfitExists ? String(mainOutfitId) : undefined);
+  // Follow-up: with no indicator at all, opening "/" and finding an outfit
+  // already selected looked like stuck/leftover state - user feedback,
+  // 2026-09-28. This is true whenever the outfit being edited (whichever
+  // route got us here) actually is the main one, not just on "/".
+  const isEditingMainOutfit = editId != null && mainOutfitId != null && editId === String(mainOutfitId);
 
   // Second follow-up to Task 76: the persona switcher now also filters the
   // browse grid by gender ("only garments of that gender should appear"),
@@ -171,8 +187,9 @@ const FlatOutfitBuilderPage = () => {
   useEffect(() => {
     fetchItems();
     fetchOutfits().finally(() => setOutfitsReady(true));
+    fetchMainOutfit();
     fetchCollections();
-  }, [fetchItems, fetchOutfits, fetchCollections]);
+  }, [fetchItems, fetchOutfits, fetchMainOutfit, fetchCollections]);
 
   const toggleSelectedCollection = (id: number) => {
     setSelectedCollectionIds((prev) => (
@@ -193,13 +210,21 @@ const FlatOutfitBuilderPage = () => {
   // store once outfits have loaded. Mirrors OutfitBuilderPage's equivalent
   // effect, using draftFromOutfitItems instead of equippedFromOutfitItems.
   useEffect(() => {
-    if (!outfitsReady || !id) return;
-    const existing = outfits.find((o) => String(o.outfitId) === id);
+    if (!outfitsReady || !editId) return;
+    const existing = outfits.find((o) => String(o.outfitId) === editId);
     if (existing) {
       setOutfitName(existing.name);
       setDraft(draftFromOutfitItems(existing.items));
     }
-  }, [id, outfits, outfitsReady, setDraft]);
+  }, [editId, outfits, outfitsReady, setDraft]);
+
+  // Leaves the outfit being edited and starts an empty one. Goes to the "new"
+  // route (not "/") so the main outfit is not loaded straight back in.
+  const handleNewOutfit = () => {
+    clearDraft();
+    setOutfitName('New Style');
+    navigate('/outfits/flat/new');
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -211,8 +236,8 @@ const FlatOutfitBuilderPage = () => {
     };
 
     try {
-      if (id) {
-        await updateOutfit(Number(id), outfitData);
+      if (editId) {
+        await updateOutfit(Number(editId), outfitData);
       } else {
         const newOutfit = await saveOutfit(outfitData);
         // Task 51: saveOutfit now returns the created outfit (previously
@@ -421,14 +446,34 @@ const FlatOutfitBuilderPage = () => {
               className="bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"
             />
-            <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
-              {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
+                {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
+              </p>
+              {isEditingMainOutfit && (
+                <span
+                  title="This is your main outfit - it's the one shown first on Showcase. Saving here updates it; use New Outfit to start a different one instead."
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-on-accent text-[9px] font-medium tracking-[0.2em] uppercase"
+                >
+                  <Star size={10} fill="currentColor" /> Main outfit
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {!id && (
+          {/* Task 78: while editing an existing outfit (the main one on "/", or
+              via the edit route), a way to start a brand-new outfit instead. */}
+          {editId && (
+            <button
+              onClick={handleNewOutfit}
+              className="px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
+            >
+              <Plus size={14} /> New outfit
+            </button>
+          )}
+          {!editId && (
             <CategoryPicker
               collections={collections}
               selectedIds={selectedCollectionIds}
@@ -455,7 +500,7 @@ const FlatOutfitBuilderPage = () => {
             className="px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {id ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
+            {editId ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
           </button>
         </div>
       </header>

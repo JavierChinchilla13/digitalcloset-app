@@ -13,6 +13,10 @@ import { ClothingCategory, PersonaType } from '../types';
 import type { Outfit, OutfitRequest, PersonaState } from '../types';
 import { makeItem } from '../test/fixtures';
 
+// Saving an outfit re-reads the account's main outfit (Task 78); keep that off the network.
+vi.mock('../api/userService', () => ({
+  userService: { getMe: vi.fn(async () => ({ mainOutfitId: null })), setMainOutfit: vi.fn(), clearMainOutfit: vi.fn() },
+}));
 vi.mock('../api/outfitService', () => ({
   outfitService: {
     getOutfits: vi.fn(),

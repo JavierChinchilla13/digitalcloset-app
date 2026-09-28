@@ -64,6 +64,15 @@ public class OutfitService {
 
         outfit.setItems(items);
         Outfit saved = outfitRepository.save(outfit);
+
+        // A user's first outfit becomes their main outfit automatically (Task
+        // 78), so the Showcase and Attire have something sensible to open on.
+        // Later outfits never replace it - that is an explicit choice.
+        if (user.getMainOutfitId() == null) {
+            user.setMainOutfitId(saved.getOutfitId());
+            userRepository.save(user);
+        }
+
         return mapToResponse(saved);
     }
 
@@ -121,6 +130,14 @@ public class OutfitService {
 
         if (!outfit.getOwner().getUserId().equals(user.getUserId())) {
             throw new ForbiddenOperationException("Unauthorized to delete this outfit");
+        }
+
+        // Deleting the main outfit leaves the user with none (the FK's ON DELETE
+        // SET NULL does the same in Postgres; clearing it here keeps the entity
+        // in step and works on any database).
+        if (id.equals(user.getMainOutfitId())) {
+            user.setMainOutfitId(null);
+            userRepository.save(user);
         }
 
         outfitRepository.delete(outfit);
