@@ -1,5 +1,6 @@
 package com.javier.closetapp.user.controller;
 
+import com.javier.closetapp.user.dto.MainOutfitRequest;
 import com.javier.closetapp.user.dto.UserResponse;
 import com.javier.closetapp.user.dto.UserUpdateRequest;
 import com.javier.closetapp.user.service.UserService;
@@ -28,6 +29,17 @@ public class UserController {
     @PutMapping("/me")
     public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(userService.updateCurrentUser(request));
+    }
+
+    // Main outfit (Task 78): the outfit the Showcase opens on and Attire edits.
+    @PutMapping("/me/main-outfit")
+    public ResponseEntity<UserResponse> setMainOutfit(@Valid @RequestBody MainOutfitRequest request) {
+        return ResponseEntity.ok(userService.setMainOutfit(request.getOutfitId()));
+    }
+
+    @DeleteMapping("/me/main-outfit")
+    public ResponseEntity<UserResponse> clearMainOutfit() {
+        return ResponseEntity.ok(userService.clearMainOutfit());
     }
 
     @PatchMapping("/me/deactivate")

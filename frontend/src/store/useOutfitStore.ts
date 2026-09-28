@@ -1,22 +1,55 @@
 import { create } from 'zustand';
 import type { Outfit, OutfitItem, OutfitRequest } from '../types';
 import { outfitService } from '../api/outfitService';
+import { userService } from '../api/userService';
 
 interface OutfitState {
   outfits: Outfit[];
+  // Task 78: the account's main outfit (null = none). Stored on the account,
+  // mirrored here so every page can read it synchronously.
+  mainOutfitId: number | null;
   isLoading: boolean;
   error: string | null;
   fetchOutfits: () => Promise<void>;
+  fetchMainOutfit: () => Promise<void>;
+  setMainOutfit: (outfitId: number) => Promise<void>;
   saveOutfit: (data: OutfitRequest) => Promise<Outfit>;
   updateOutfit: (outfitId: number, data: OutfitRequest) => Promise<void>;
   removeOutfit: (outfitId: number) => Promise<void>;
   duplicateOutfit: (outfit: Outfit) => Promise<void>;
 }
 
-export const useOutfitStore = create<OutfitState>((set) => ({
+export const useOutfitStore = create<OutfitState>((set, get) => ({
   outfits: [],
+  mainOutfitId: null,
   isLoading: false,
   error: null,
+
+  // Reads the main outfit id off the account. Failures are swallowed on
+  // purpose (the pages that use it still work without it - they just don't
+  // highlight/open a main outfit) and must not raise the outfit list's own
+  // error state.
+  fetchMainOutfit: async () => {
+    try {
+      const me = await userService.getMe();
+      set({ mainOutfitId: me.mainOutfitId ?? null });
+    } catch (err) {
+      console.error('Failed to load main outfit:', err);
+    }
+  },
+
+  // Optimistic: the UI switches immediately and is put back if the server
+  // refuses. Rethrows so the caller can tell the user (Task 22's rule).
+  setMainOutfit: async (outfitId) => {
+    const previous = get().mainOutfitId;
+    set({ mainOutfitId: outfitId });
+    try {
+      await userService.setMainOutfit(outfitId);
+    } catch (err) {
+      set({ mainOutfitId: previous });
+      throw err;
+    }
+  },
 
   fetchOutfits: async () => {
     set({ isLoading: true, error: null });
@@ -33,6 +66,9 @@ export const useOutfitStore = create<OutfitState>((set) => ({
     try {
       const newOutfit = await outfitService.createOutfit(data);
       set((state) => ({ outfits: [...state.outfits, newOutfit], isLoading: false }));
+      // The backend makes a user's first outfit their main one; re-read it so
+      // this store agrees without duplicating that rule here.
+      void get().fetchMainOutfit();
       return newOutfit;
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -60,6 +96,9 @@ export const useOutfitStore = create<OutfitState>((set) => ({
       await outfitService.deleteOutfit(outfitId);
       set((state) => ({
         outfits: state.outfits.filter((o) => o.outfitId !== outfitId),
+        // Deleting the main outfit leaves the account with none (the backend
+        // clears it the same way).
+        mainOutfitId: state.mainOutfitId === outfitId ? null : state.mainOutfitId,
         isLoading: false,
       }));
     } catch (err: any) {

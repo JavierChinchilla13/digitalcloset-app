@@ -9,7 +9,7 @@ import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
 
 const SavedOutfitsPage = () => {
-  const { outfits, fetchOutfits } = useOutfitStore();
+  const { outfits, fetchOutfits, fetchMainOutfit } = useOutfitStore();
   const [loadFailed, setLoadFailed] = useState(false);
   const { persona } = usePersonaStore();
   const navigate = useNavigate();
@@ -19,10 +19,11 @@ const SavedOutfitsPage = () => {
   // after each attempt to tell "empty" apart from "couldn't load".
   const loadOutfits = useCallback(async () => {
     setLoadFailed(false);
-    await fetchOutfits();
+    // Task 78: the main outfit is marked on its card, so read it alongside.
+    await Promise.all([fetchOutfits(), fetchMainOutfit()]);
     setLoadFailed(!!useOutfitStore.getState().error);
     setShowContent(true);
-  }, [fetchOutfits]);
+  }, [fetchOutfits, fetchMainOutfit]);
 
   const filteredOutfits = outfits.filter(o => o.avatarType === persona.type);
 

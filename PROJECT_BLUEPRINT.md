@@ -1158,7 +1158,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 ### Phase 4.5 — User-requested features after Task 23 *(added 2026-09-24)*
 
 - [x] **77** Persona sign on every garment card (persona name / Not fitted / Unassigned)
-- [ ] **78** Main outfit on the account (Showcase "set as main" + "Edit outfit", Attire opens it, "New outfit" button)
+- [x] **78** Main outfit on the account (Showcase "set as main" + "Edit outfit", Attire opens it, "New outfit" button)
 
 ### Phase 4 *(deferred — runs after Phase 10)*
 
@@ -1304,6 +1304,7 @@ TASK 02
 22    Add route guards + error boundaries (Phase 4)
 23    Implement regression/test suite (Phase 5)
 77    Persona sign on every garment card (Phase 4.5)
+78    Main outfit on the account (Phase 4.5)
 ```
 
 ## 🎉 PHASE 1 — SECURITY & CORRECTNESS: COMPLETE
@@ -5722,3 +5723,90 @@ the Attire browse grid and the Attire selection panel). Live on own servers
 (browse + selection), the persona-first builder and a category page all show
 the right sign; every badge measured fully inside its card at a 390px width.
 Test garments/category deleted, account deactivated, servers stopped.
+
+### Task 78 - Main outfit on the account (2026-09-24, `/plan`ned first)
+
+User: one outfit is the "main outfit" for the whole app - shown on the landing
+page, changeable while browsing outfits, the one Attire opens (editable), with a
+"create new outfit" button in Attire and an "Edit outfit" button on the landing
+page. Decisions (asked): stored **on the account** (database); "landing page" =
+the Outfit Showcase carousel opened by the navbar logo (the signed-out marketing
+page is unchanged).
+
+**Backend.** `V6__add_main_outfit.sql`: `users.main_outfit_id` nullable, FK to
+`outfits` `ON DELETE SET NULL`. `User.mainOutfitId` is a plain id column (no JPA
+relation - avoids a users<->outfits cycle); `UserResponse.mainOutfitId`.
+`PUT /api/users/me/main-outfit {outfitId}` (404 unknown, 403 someone else's,
+400 missing id) and `DELETE /api/users/me/main-outfit`, both returning the
+updated user. `OutfitService.saveOutfit`: a user's first outfit becomes main
+automatically (later ones never replace it); `deleteOutfit` clears it when the
+main outfit is deleted (belt-and-braces with the FK).
+
+**Frontend.** New `api/userService.ts`. `useOutfitStore`: `mainOutfitId`,
+`fetchMainOutfit` (failures swallowed, never sets the list's error),
+`setMainOutfit` (optimistic, reverts + rethrows on failure - Task 22's rule),
+`removeOutfit` clears it locally, `saveOutfit` re-reads it (the backend picks the
+first outfit). **Showcase:** opens on the main outfit (index computed in the same
+batch as `ready`, so no flash of the first outfit); under the title either a
+"MAIN OUTFIT" tag or a "Set as main outfit" button (toast on failure), plus
+"Edit outfit" -> `/outfits/flat/edit/<shown outfit>`. **Attire at "/":**
+`editId = id ?? (main outfit, on "/", if it exists and not arriving from WEAR
+STYLE)` drives the existing load / update / label logic, so "/" opens the main
+outfit ("UPDATE STYLE"); a "New outfit" button (whenever an existing outfit is
+being edited) clears the draft and goes to `/outfits/flat/new` (not "/", or the
+main outfit would load straight back). No main outfit, a stale main id, or WEAR
+STYLE's own draft -> "/" behaves as before. **Saved Outfits:** "MAIN" tag and a
+"Set as main outfit" star on each card.
+
+**Verified.** Backend: 48 tests (12 new `MainOutfitIntegrationTest`: none by
+default, first outfit auto-main, later ones don't replace it, change, other
+user's outfit 403, unknown 404 / missing 400, delete main clears it, delete
+other keeps it, explicit clear, per user, auth required). Frontend: 76 tests (20
+new `mainOutfit.test.tsx` across store, Showcase, Attire, cards); two
+deliberate breakages (Showcase always opening on index 0; WEAR STYLE guard
+removed) each made 1-4 tests fail. `tsc -b --force`, `vite build` clean. Live on
+my own backend (8081, against the real dev Postgres so **Flyway applied V6 to the
+dev database** - additive, one nullable column) and Vite (5199), throwaway
+account: first outfit auto-main; Showcase opens on it; "Set as main" on another
+persisted server-side and survived a reload; "Edit outfit" opened
+`/outfits/flat/edit/<id>`; "/" loaded the main outfit with "UPDATE STYLE" +
+"New outfit"; "New outfit" gave an empty "SAVE TO COLLECTION" page at
+`/outfits/flat/new`; Saved Outfits tagged exactly one card; deleting the main
+outfit cleared it on Postgres. Test data deleted, account deactivated, my
+servers stopped. **The user's already-running backend (8080) must be restarted
+to get the new endpoints** (its schema already has V6).
+Known/unchanged: a main outfit built for the other persona type isn't shown
+(Showcase/Saved filter by the active persona) until the user switches persona;
+saving an edited outfit still stamps the *current* persona type as its
+avatarType (existing behaviour of the edit route).
+
+### Task 78 follow-up - main outfit was confusing (2026-09-28)
+
+User tried it live and said it was confusing; asked what specifically -
+answer: no explanation of what "main outfit" means (wanted a tooltip), and
+"when an outfit is the main one is not that distinctive". Also: their own
+backend (8080) failed to start - root cause had nothing to do with this
+task, PostgreSQL itself (`postgresql-x64-18`) wasn't running on their
+machine; confirmed by compiling clean and reproducing the exact same
+failure on my own throwaway backend (connection refused on 5432).
+
+Fixed, one `MAIN_OUTFIT_EXPLAINER` string reused everywhere: "Your main
+outfit is the one shown first on Showcase and the one Attire opens
+automatically so you can keep refining it." Added as a `title` tooltip on
+the Showcase tag/button, the Saved Outfits star button, and a new indicator
+in Attire itself. The Showcase tag and the Saved Outfits "MAIN" tag both
+went from a lightly-tinted pill (the same visual weight as an ordinary
+button) to solid accent-filled with a glow; the Saved Outfits card also
+gets an accent ring around the whole thumbnail now, the same treatment
+`ClothingCard` already uses for "equipped". Biggest gap: Attire itself had
+**no indicator at all** that the outfit it silently opened was the main
+one - added a small "Main outfit" pill next to the item count, with a
+tooltip explaining what saving there does and pointing at "New Outfit" as
+the way out.
+
+Verified: 76 frontend tests still pass (existing main-outfit tests updated
+for the new tooltip text); `tsc -b --force`, `vite build` clean. Live on my
+own servers (8081/5199, the user's real 8080 running and untouched
+throughout): tooltips present with the full explanation on all three
+surfaces; Saved Outfits screenshot confirms the main outfit's card visibly
+stands out (ring + solid tag) next to a plain one.

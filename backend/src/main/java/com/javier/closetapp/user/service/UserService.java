@@ -1,6 +1,10 @@
 package com.javier.closetapp.user.service;
 
 import com.javier.closetapp.common.enums.Role;
+import com.javier.closetapp.exception.ForbiddenOperationException;
+import com.javier.closetapp.exception.ResourceNotFoundException;
+import com.javier.closetapp.outfit.entity.Outfit;
+import com.javier.closetapp.outfit.repository.OutfitRepository;
 import com.javier.closetapp.user.dto.UserResponse;
 import com.javier.closetapp.user.dto.UserUpdateRequest;
 import com.javier.closetapp.user.entity.User;
@@ -16,9 +20,11 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final OutfitRepository outfitRepository;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, OutfitRepository outfitRepository) {
         this.userRepository = userRepository;
+        this.outfitRepository = outfitRepository;
     }
 
     public User getAuthenticatedUser() {
@@ -44,6 +50,30 @@ public class UserService {
         
         User updatedUser = userRepository.save(user);
         return mapToResponse(updatedUser);
+    }
+
+    // Makes one of the caller's own outfits their main outfit (Task 78). Same
+    // 404 / 403 split as the other outfit operations: unknown id vs someone
+    // else's outfit.
+    @Transactional
+    public UserResponse setMainOutfit(Long outfitId) {
+        User user = getAuthenticatedUser();
+        Outfit outfit = outfitRepository.findById(outfitId)
+                .orElseThrow(() -> new ResourceNotFoundException("Outfit not found"));
+
+        if (!outfit.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ForbiddenOperationException("Unauthorized to use this outfit");
+        }
+
+        user.setMainOutfitId(outfitId);
+        return mapToResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse clearMainOutfit() {
+        User user = getAuthenticatedUser();
+        user.setMainOutfitId(null);
+        return mapToResponse(userRepository.save(user));
     }
 
     @Transactional
@@ -84,7 +114,8 @@ public class UserService {
                 user.getLastName(),
                 user.getRole(),
                 user.isActive(),
-                user.getCreatedAt()
+                user.getCreatedAt(),
+                user.getMainOutfitId()
         );
     }
 }
