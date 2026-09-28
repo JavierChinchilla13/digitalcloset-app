@@ -4,10 +4,11 @@ import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
 import BrandMark from './BrandMark';
-import { LogOut, Shirt, LayoutPanelTop, PlayCircle, UserCircle, Tag, ShieldCheck } from 'lucide-react';
+import UserMenu from './UserMenu';
+import { Shirt, LayoutPanelTop, PlayCircle, UserCircle } from 'lucide-react';
 
 const Navbar = () => {
-  const { isAuthenticated, isAdmin, user, logout } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const location = useLocation();
 
   // "Attire" points at / (Task 40, Phase 8 pivot) - the flat outfit builder
@@ -80,56 +81,18 @@ const Navbar = () => {
             before the toggle even existed) so the pill fits a phone screen
             without hiding any of the icon links. */}
         <div className="flex items-center gap-1 sm:gap-3 md:gap-4 border-l border-ink/10 pl-2 sm:pl-6 md:pl-8">
-          {/* Task 67: light / dark / system toggle - shown logged in or out. */}
-          <ThemeToggle />
           {isAuthenticated ? (
-            <div className="flex items-center gap-1 sm:gap-2 md:gap-4">
-              {/* Task 47: persona-type entry point - Attire (Task 40) no
-                  longer points at /persona, so this is now the only
-                  discoverable path back to the persona-type picker. A
-                  small icon-button here rather than a new center nav item,
-                  keeping Attire/Closet/Outfits as the only primary links. */}
-              <Link
-                to="/persona"
-                className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
-                title="Persona"
-              >
-                <UserCircle size={16} />
-              </Link>
-              {/* Task 49: categories management entry point - a secondary
-                  icon-button here, same reasoning as the persona icon above
-                  (Task 47's own comment) - keeps Attire/Closet/Outfits as
-                  the only primary center links rather than adding a 4th. */}
-              <Link
-                to="/categories"
-                className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
-                title="Categories"
-              >
-                <Tag size={16} />
-              </Link>
-              {/* Task 22: account management - only rendered for admins. */}
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
-                  title="Admin"
-                >
-                  <ShieldCheck size={16} />
-                </Link>
-              )}
-              <button
-                onClick={logout}
-                className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
-              >
-                <LogOut size={16} />
-              </button>
-              <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent text-[10px] font-medium">
-                {user?.email[0].toUpperCase()}
-              </div>
-            </div>
+            // Task 79: Persona/Categories/Admin/Logout/Theme used to be
+            // separate always-visible icons here - "too cluttered." They
+            // (plus the new Settings page) now live in one dropdown off the
+            // avatar; see UserMenu.tsx.
+            <UserMenu />
           ) : (
             <>
-              <Link 
+              {/* Task 67: light / dark / system toggle - shown logged out;
+                  logged in, it moved into UserMenu's dropdown. */}
+              <ThemeToggle />
+              <Link
                 to="/login" 
                 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
               >

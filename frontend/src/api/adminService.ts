@@ -1,5 +1,13 @@
 import api from './axios';
-import type { User } from '../types';
+import type { Role, User } from '../types';
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
+  role: Role;
+}
 
 // Admin-only endpoints (UserController). The backend enforces the role with
 // @PreAuthorize("hasRole('ADMIN')"); the frontend's own admin guard is only a
@@ -7,6 +15,14 @@ import type { User } from '../types';
 export const adminService = {
   getUsers: async (): Promise<User[]> => {
     const response = await api.get<User[]>('/users');
+    return response.data;
+  },
+
+  // Task 79: the only way to create an admin account - an existing admin
+  // explicitly picks the role. Also just a normal "create a user" for when
+  // an admin needs to hand someone an account directly.
+  createUser: async (data: CreateUserRequest): Promise<User> => {
+    const response = await api.post<User>('/users', data);
     return response.data;
   },
 

@@ -31,6 +31,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
+    // Email already taken (register / change-email / admin create-user).
+    @ExceptionHandler(DuplicateEmailException.class)
+    public ResponseEntity<Object> handleDuplicateEmail(DuplicateEmailException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
     // Ownership checks that failed - same reasoning as ResourceNotFoundException.
     @ExceptionHandler(ForbiddenOperationException.class)
     public ResponseEntity<Object> handleForbiddenOperation(ForbiddenOperationException ex) {
@@ -50,6 +60,28 @@ public class GlobalExceptionHandler {
         body.put("message", ex.getMessage());
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // Verification code that can't be used (unknown/expired/used/wrong) - a
+    // client error the user can act on (request a new code), so 400. Same
+    // one-message-for-every-case reasoning as InvalidResetTokenException.
+    @ExceptionHandler(InvalidVerificationCodeException.class)
+    public ResponseEntity<Object> handleInvalidVerificationCode(InvalidVerificationCodeException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // A verification code was requested again too soon (the "Resend" abuse guard).
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.TOO_MANY_REQUESTS);
     }
 
     // Thrown by @Valid when a request body fails its DTO's constraints. Doesn't

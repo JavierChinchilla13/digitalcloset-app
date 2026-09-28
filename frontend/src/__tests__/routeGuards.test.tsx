@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import App from '../App';
 import { ToastProvider } from '../components/Toast';
@@ -95,15 +96,21 @@ describe('route guards', () => {
     expect(adminService.getUsers).toHaveBeenCalledTimes(1);
   });
 
-  it('the navbar shows the admin link only to admins', () => {
+  it('the user menu shows the admin link only to admins', async () => {
+    // Task 79: Admin (like Persona/Categories/Settings/Logout) now lives in
+    // the avatar dropdown rather than as an always-visible navbar icon, so
+    // it must be opened before the link is even in the DOM.
+    const user = userEvent.setup();
     signIn(Role.ROLE_USER);
     const normal = renderAt('/closet');
+    await user.click(screen.getByRole('button', { name: /account menu/i }));
     expect(normal.container.querySelector('a[href="/admin"]')).toBeNull();
     normal.unmount();
 
     useAuthStore.getState().logout();
     signIn(Role.ROLE_ADMIN);
     const admin = renderAt('/closet');
+    await user.click(screen.getByRole('button', { name: /account menu/i }));
     expect(admin.container.querySelector('a[href="/admin"]')).not.toBeNull();
   });
 

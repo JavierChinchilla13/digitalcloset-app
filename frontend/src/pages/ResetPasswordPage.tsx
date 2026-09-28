@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useSearchParams } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -49,7 +50,7 @@ const ResetPasswordPage = () => {
   };
 
   const inputClass =
-    'w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all';
+    'w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-12 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all';
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center p-6">
@@ -112,36 +113,30 @@ const ResetPasswordPage = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">New Password</label>
-                <div className="relative group">
-                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
-                  <input
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 8 characters"
-                    className={inputClass}
-                    disabled={isLoading}
-                  />
-                </div>
+                <PasswordInput
+                  icon={Lock}
+                  required
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  className={inputClass}
+                  disabled={isLoading}
+                />
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Confirm Password</label>
-                <div className="relative group">
-                  <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
-                  <input
-                    type="password"
-                    required
-                    autoComplete="new-password"
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    placeholder="Repeat your new password"
-                    className={inputClass}
-                    disabled={isLoading}
-                  />
-                </div>
+                <PasswordInput
+                  icon={Lock}
+                  required
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="Repeat your new password"
+                  className={inputClass}
+                  disabled={isLoading}
+                />
               </div>
 
               <button
