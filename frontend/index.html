@@ -10,9 +10,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>VYSVI — Digital Wardrobe</title>
-    <!-- Task 67: apply the saved / device theme before first paint so the
-         page never flashes the wrong one. Same key + rule as
-         src/store/useThemeStore.ts, which takes over once the app boots. -->
+    <!-- Task 67: apply the saved theme - or, if the user never picked one,
+         the device's - before first paint so the page never flashes the wrong
+         one. Same key + rule as src/store/useThemeStore.ts, which takes over
+         once the app boots. -->
     <script>
       (function () {
         try {
