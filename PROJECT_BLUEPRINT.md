@@ -6078,3 +6078,34 @@ separately (a clip, TBD). `PersonaRenderer` is unchanged.
 no API", `featureCard.test.tsx`). Checked live on `/demo` and the landing
 page. Known: `closet-browsing-demo.gif` is 2.7 MB - worth compressing before
 deploy.
+
+### Task 82 - Theme opens in the device's setting; no "computer" state (2026-09-29, branch `phase-4.7-studio-and-layers`)
+
+Requested: the app should first open in whatever the user's PC has selected,
+but never show the computer icon - only light or dark.
+
+- `store/useThemeStore.ts`: `ThemePreference` is now `'light' | 'dark'` (the
+  `'system'` state and the 3-way cycle are gone; `cyclePreference` became
+  `togglePreference`). With nothing saved, the theme is the device's and keeps
+  following it live (e.g. OS dark mode at sunset). The first click saves an
+  explicit choice, after which the device is ignored. An old saved `'system'`
+  from before this change counts as "never chose", so those users simply get
+  their device theme - no migration.
+- `components/ThemeToggle.tsx`: the icon is the theme on screen (Sun / Moon);
+  `Monitor` is no longer used anywhere.
+- `index.html`'s pre-paint script already resolved "saved light/dark, else
+  device" and needed only a comment update, as did `Navbar.tsx`.
+- New `__tests__/themeStore.test.tsx` (7): device dark / light defaults, saved
+  choice wins, legacy `'system'` ignored, toggle flips and saves (never yields
+  `'system'`), live device-following stops after a choice, toggle renders no
+  monitor icon.
+
+Verified: `tsc -b --force`, `vite build` clean; 129 frontend tests pass (122 + 7 new). Live
+on the landing page with the browser pane's emulated OS scheme: OS dark and
+nothing saved opened dark, OS light opened light, a stored `'system'` fell
+back to the device, and clicking flipped light/dark/light/dark with no
+monitor icon at any point.
+
+Note: `public/marketing/theme-toggle-demo.gif` was recorded with the old
+3-way cycle and may show the System state - to be re-recorded once the
+studio UI work (Tasks 83-86) settles.

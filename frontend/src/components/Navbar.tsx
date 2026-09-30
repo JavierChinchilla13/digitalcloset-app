@@ -89,7 +89,7 @@ const Navbar = () => {
             <UserMenu />
           ) : (
             <>
-              {/* Task 67: light / dark / system toggle - shown logged out;
+              {/* Task 67: light / dark toggle - shown logged out;
                   logged in, it moved into UserMenu's dropdown. */}
               <ThemeToggle />
               <Link
