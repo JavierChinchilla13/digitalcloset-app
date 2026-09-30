@@ -41,7 +41,11 @@ const CroppedThumbnail: React.FC<CroppedThumbnailProps> = ({ imageUrl, transform
         aria-label={alt}
         className={className}
         style={{
-          backgroundImage: `url(${imageUrl})`,
+          // Quoted: an unquoted CSS url() breaks on a raw space (or other
+          // CSS-significant character) in the path - real for local /public
+          // assets with spaces in their filename (Task 81's demo garments),
+          // silently rendering nothing rather than erroring.
+          backgroundImage: `url("${imageUrl}")`,
           backgroundSize: fit,
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -68,7 +72,7 @@ const CroppedThumbnail: React.FC<CroppedThumbnailProps> = ({ imageUrl, transform
         style={{
           aspectRatio: crop.aspectRatio,
           width: `min(${pct}cqw, calc(${pct}cqh * ${crop.aspectRatio}))`,
-          backgroundImage: `url(${imageUrl})`,
+          backgroundImage: `url("${imageUrl}")`,
           backgroundSize: crop.backgroundSize,
           backgroundPosition: crop.backgroundPosition,
           backgroundRepeat: 'no-repeat',

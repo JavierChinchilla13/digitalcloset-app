@@ -1,7 +1,17 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shirt, LayoutPanelTop, UserCircle, Zap } from 'lucide-react';
+import { Shirt, LayoutPanelTop, UserCircle, Star } from 'lucide-react';
 import SectionWrapper from '../components/SectionWrapper';
+import FeatureCard from '../components/FeatureCard';
+
+// Real, in-app captures used as marketing material (Task 80) - not stock
+// footage or mockups. See PROJECT_BLUEPRINT.md for how these were recorded.
+const OUTFIT_BUILDER_GIF = '/marketing/outfit-builder-demo.gif';
+const CLOSET_BROWSING_GIF = '/marketing/closet-browsing-demo.gif';
+const THEME_TOGGLE_GIF = '/marketing/theme-toggle-demo.gif';
+// Not recorded yet - the feature cards skip the preview until these exist.
+const PERSONA_GIF = '/marketing/persona-demo.gif';
+const MAIN_OUTFIT_GIF = '/marketing/main-outfit-demo.gif';
 
 const LandingPage = () => {
   return (
@@ -57,8 +67,12 @@ const LandingPage = () => {
           transition={{ delay: 0.5, duration: 2 }}
           className="relative w-full max-w-5xl mx-auto mt-20 aspect-[21/9] rounded-t-[4rem] overflow-hidden border-x border-t border-ink/10 bg-gradient-to-b from-ink/5 to-transparent p-1"
         >
-          <div className="w-full h-full rounded-t-[3.8rem] overflow-hidden bg-background-secondary flex items-center justify-center">
-             <div className="text-accent/20 font-medium text-9xl tracking-tighter select-none">PREMIUM</div>
+          <div className="w-full h-full rounded-t-[3.8rem] overflow-hidden bg-background-secondary">
+             <img
+               src={OUTFIT_BUILDER_GIF}
+               alt="Building an outfit in VYSVI: selecting garments and previewing them on a digital persona"
+               className="w-full h-full object-cover"
+             />
           </div>
         </motion.div>
       </section>
@@ -66,27 +80,63 @@ const LandingPage = () => {
       {/* Features Section */}
       <SectionWrapper className="py-40">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+          {/* Hover/tap a card to see that feature in action. The persona and
+              main-outfit clips don't exist yet - drop files with these names
+              into public/marketing and they light up with no code change. */}
           {[
-            { icon: Shirt, title: "VIRTUAL INVENTORY", desc: "Digitalize your physical closet with high-definition categorization." },
-            { icon: LayoutPanelTop, title: "OUTFIT BUILDER", desc: "Experiment with layers and styles in our futuristic canvas." },
-            { icon: UserCircle, title: "PERSONA TECH", desc: "Represent your style with a customizable digital twin." },
-            { icon: Zap, title: "STYLE ANALYTICS", desc: "Gain insights into your most worn pieces and style patterns." },
+            { icon: Shirt, title: "VIRTUAL INVENTORY", desc: "Digitalize your physical closet with high-definition categorization.", media: CLOSET_BROWSING_GIF },
+            { icon: LayoutPanelTop, title: "OUTFIT BUILDER", desc: "Experiment with layers and styles in our futuristic canvas.", media: OUTFIT_BUILDER_GIF },
+            { icon: UserCircle, title: "PERSONA TECH", desc: "Represent your style with a customizable digital twin.", media: PERSONA_GIF },
+            { icon: Star, title: "MAIN OUTFIT", desc: "Pin a go-to look as your main outfit and showcase it across the app.", media: MAIN_OUTFIT_GIF },
           ].map((feature, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="premium-card p-10 group hover:border-accent/30"
-            >
-              <div className="w-14 h-14 rounded-2xl bg-ink/5 flex items-center justify-center mb-8 group-hover:bg-accent group-hover:text-on-accent transition-all">
-                <feature.icon size={28} />
-              </div>
-              <h3 className="text-lg font-bold tracking-widest mb-4 uppercase">{feature.title}</h3>
-              <p className="text-text-secondary text-sm leading-relaxed">{feature.desc}</p>
-            </motion.div>
+            <FeatureCard key={feature.title} {...feature} delay={idx * 0.1} />
           ))}
+        </div>
+      </SectionWrapper>
+
+      {/* How It Works - Digital Closet */}
+      <SectionWrapper className="py-32">
+        <div className="flex flex-col lg:flex-row items-center gap-20">
+          <div className="lg:w-1/2">
+            <span className="text-accent text-[10px] font-medium tracking-[0.4em] mb-6 block uppercase">Step One</span>
+            <h2 className="text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
+              YOUR DIGITAL <br />
+              <span className="italic text-accent">CLOSET</span>
+            </h2>
+            <p className="text-text-secondary text-lg font-light leading-relaxed">
+              Upload photos of your clothes and VYSVI removes the background automatically, turning them into clean, categorized pieces in your wardrobe. Filter by category or by which persona a piece is fitted to, favorite the ones you reach for most, and keep everything organized in one place.
+            </p>
+          </div>
+          <div className="lg:w-1/2 w-full aspect-video glass-panel rounded-2xl overflow-hidden border border-ink/10">
+            <img
+              src={CLOSET_BROWSING_GIF}
+              alt="Browsing the digital closet in VYSVI, filtering clothes by category and persona"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+      </SectionWrapper>
+
+      {/* How It Works - Outfit Builder & Persona */}
+      <SectionWrapper className="py-32">
+        <div className="flex flex-col lg:flex-row-reverse items-center gap-20">
+          <div className="lg:w-1/2">
+            <span className="text-accent text-[10px] font-medium tracking-[0.4em] mb-6 block uppercase">Step Two</span>
+            <h2 className="text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
+              BUILD & <br />
+              <span className="italic text-accent">PREVIEW</span>
+            </h2>
+            <p className="text-text-secondary text-lg font-light leading-relaxed">
+              Select pieces from your closet to assemble an outfit, then preview it instantly on your male or female digital persona to see exactly how it comes together - with or without a persona at all. Save the combinations you love and set your favorite as your main outfit.
+            </p>
+          </div>
+          <div className="lg:w-1/2 w-full aspect-video glass-panel rounded-2xl overflow-hidden border border-ink/10">
+            <img
+              src={OUTFIT_BUILDER_GIF}
+              alt="Building an outfit in VYSVI and previewing it on a digital persona"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
       </SectionWrapper>
 
@@ -112,12 +162,12 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="lg:w-1/2 w-full aspect-square glass-panel rounded-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-             <div className="w-full h-full flex items-center justify-center p-20">
-                <div className="w-full h-full border border-dashed border-ink/10 rounded-2xl flex items-center justify-center">
-                  <span className="text-ink/10 font-medium text-6xl tracking-tighter">PREVIEW</span>
-                </div>
-             </div>
+             <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none z-10" />
+             <img
+               src={THEME_TOGGLE_GIF}
+               alt="Switching VYSVI between light and dark theme"
+               className="w-full h-full object-cover"
+             />
           </div>
         </div>
       </SectionWrapper>

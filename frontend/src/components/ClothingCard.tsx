@@ -167,6 +167,12 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
         </h3>
         <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase opacity-40 mt-0.5">
           {item.category}
+          {/* A shoe pair is saved as two items sharing a name (side: left/
+              right) - without this, both cards read as identical, looking
+              like an accidental duplicate rather than one matching pair.
+              Still two independently equippable items on purpose (a
+              mismatched pair is a legitimate choice), just labeled clearly. */}
+          {item.category === 'SHOES' && item.side && ` · ${item.side}`}
         </p>
       </div>
     </motion.div>

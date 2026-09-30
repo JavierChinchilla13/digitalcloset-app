@@ -7,7 +7,6 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useCollectionStore } from '../store/useCollectionStore';
-import { pairShoesForDisplay } from '../utils/selectionDisplay';
 import { computePersonaEligibility } from '../utils/personaEligibility';
 import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
@@ -21,6 +20,7 @@ import { useToast } from '../components/Toast';
 import { useSafeAction } from '../hooks/useSafeAction';
 import ErrorState from '../components/ErrorState';
 import PersonaBadge from '../components/PersonaBadge';
+import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -41,72 +41,6 @@ import PersonaBadge from '../components/PersonaBadge';
 // gender now surfaces a toast instead of only being noticeable later in
 // Persona Preview (which can still only ever render FITTED items
 // matching one persona type, unchanged).
-
-// Selection panel card (Task 43). Task 76 follow-up: this used to be
-// noticeably smaller/denser than the browse grid's own cards (a 4/5/6-
-// column grid of aspect-[4/5] tiles vs. browse's 2-column aspect-[3/4]),
-// so the instant an item was selected, the right panel visibly "shrank"
-// next to the left one - confirmed as a real, reported bug, not just a
-// style preference. Matched to browse's own aspect-[3/4] here.
-// Task 76 second follow-up: switched from a CSS-grid layout (fixed
-// column count, cards sized by the grid's own track width) to a fixed
-// card width here, with the containers below using `flex flex-wrap
-// justify-center` instead of `grid`. A grid with more columns than
-// selected items packs everything into the left-most tracks and leaves
-// the rest of the row visibly empty - reported as items sitting "to the
-// side" instead of centered. `flex-wrap` + `justify-center` centers
-// however many cards actually exist, in any row, regardless of count.
-// Third follow-up: trimmed w-36/w-40 (144/160px) down to w-32/w-36
-// (128/144px) as part of the "see the whole outfit without scrolling"
-// fix - a modest step down (not back to the old, too-small pre-Task-76
-// size), traded off against row count/spacing reductions elsewhere so no
-// single change had to carry the whole fix on its own.
-const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (itemId: number) => void }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
-  >
-    <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-    <PersonaBadge item={item} compact />
-    <button
-      onClick={() => onRemove(item.itemId)}
-      className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-      title="Remove"
-    >
-      <X size={10} />
-    </button>
-    <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-      <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
-    </div>
-  </motion.div>
-);
-
-// Shoes get their own 2-up sub-row (left/right paired via
-// pairShoesForDisplay) instead of the generic grid; any unpaired items (no
-// recorded side, or an extra pair) fall back to the same denser grid used
-// elsewhere, in a secondary row underneath - mirrors the simplification
-// documented on pairShoesForDisplay itself.
-const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (itemId: number) => void }) => {
-  const { left, right, unpaired } = pairShoesForDisplay(items);
-  return (
-    <div className="space-y-1.5">
-      {(left || right) && (
-        <div className="flex gap-4 justify-center">
-          {left && <SelectionCard item={left} onRemove={onRemove} />}
-          {right && <SelectionCard item={right} onRemove={onRemove} />}
-        </div>
-      )}
-      {unpaired.length > 0 && (
-        <div className="flex flex-wrap gap-4 justify-center">
-          {unpaired.map((item) => (
-            <SelectionCard key={item.itemId} item={item} onRemove={onRemove} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const FlatOutfitBuilderPage = () => {
   const { id } = useParams();
@@ -600,7 +534,16 @@ const FlatOutfitBuilderPage = () => {
                               </div>
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">
+                                {item.name}
+                                {/* A shoe pair is saved as two items sharing a name
+                                    (side: left/right) - without this both cards read
+                                    as an accidental duplicate rather than one pair.
+                                    Still independently equippable on purpose. */}
+                                {item.category === ClothingCategory.SHOES && item.side && (
+                                  <span className="text-accent"> · {item.side}</span>
+                                )}
+                              </p>
                             </div>
                           </motion.div>
                         );
