@@ -6029,3 +6029,52 @@ clean. Live on my own throwaway servers: on the real Login page, typed a
 password, clicked Show, confirmed the field's DOM `type` flipped to
 `"text"` and the real typed value was readable. Test account deactivated,
 servers stopped after.
+
+### Task 80 + 81 - Landing page redesign and interactive Demo (2026-09-28/29, branch `phase-4.6-landing-and-demo`)
+
+Requested together: explain the app properly to signed-out visitors, and let
+them try it before signing up, with nothing stored server-side.
+
+**Landing page (Task 80)** - `pages/LandingPage.tsx`. The hero's "PREMIUM"
+placeholder and the Experience section's "PREVIEW" placeholder are now real
+looping captures of the app (`public/marketing/*.gif`, recorded from `/demo`
+with Claude in Chrome). The never-built "STYLE ANALYTICS" card became "MAIN
+OUTFIT"; two alternating "Your Digital Closet" / "Build & Preview" sections
+were added. New `components/FeatureCard.tsx`: hovering (or tapping) a
+feature card swaps it for a clip of that feature. A card whose clip is
+missing or fails to load simply has no preview and no "Hover to preview"
+hint, so `persona-demo.gif` and `main-outfit-demo.gif` (not recorded yet) can
+be dropped into `public/marketing/` later with no code change.
+
+**Demo (Task 81)** - `pages/DemoPage.tsx`, rewritten. The old `/demo` called
+real auth-required endpoints as an anonymous visitor, so the axios interceptor
+bounced it to `/login`. Now: Attire tab (browse grid + selection panel,
+mirroring the real builder) and Closet tab (inventory grid with category
+filters), reading a preset closet from the new in-memory, non-persisted
+`store/useDemoStore.ts` (negative ids; the owner's own background-removed
+photos in `public/marketing/garments/`). Free: browse, filter, select,
+deselect. Gated (opens `components/DemoSignupModal.tsx`, no store or API
+touched): Save Outfit, Add, Edit, Delete. The demo shares the global
+`useOutfitDraftStore` with the real builder, so it clears the draft on mount
+and unmount.
+
+**Persona removed from the demo.** It was built (persona preview, switcher,
+badges, an unlocked Fabric Studio, left/right shoe pairs) and then pulled:
+jackets never fit convincingly on the mannequin. Edit is gated again because
+Fabric Studio draws the persona. The persona will be introduced in the demo
+separately (a clip, TBD). `PersonaRenderer` is unchanged.
+
+**Real-app fixes found along the way**
+- `CroppedThumbnail` built an unquoted CSS `url()`, so any image path with a
+  space silently rendered nothing; now quoted.
+- `SelectionCard` / `ShoeSubRow` extracted from `FlatOutfitBuilderPage` into
+  `components/OutfitSelectionCards.tsx` (shared with the demo).
+- Shoe cards in the Closet and Attire browse grids show "· left" / "· right",
+  so a saved pair no longer looks like an accidental duplicate (each side is
+  still independently pickable, so mismatched pairs remain possible).
+
+**Verified.** `tsc -b --force`, `vite build` clean; 122 frontend tests pass
+(new: `demoPage.test.tsx` incl. "no persona anywhere" and "gated actions touch
+no API", `featureCard.test.tsx`). Checked live on `/demo` and the landing
+page. Known: `closet-browsing-demo.gif` is 2.7 MB - worth compressing before
+deploy.
