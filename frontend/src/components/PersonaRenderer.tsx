@@ -7,11 +7,30 @@ import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import ErrorBoundary from './ErrorBoundary';
 import ErrorState from './ErrorState';
+import { useOcclusionMasks } from '../hooks/useOcclusionMasks';
 
 interface PersonaRendererProps {
   persona?: PersonaState;
   className?: string;
 }
+
+// The persona's layers, each with the mask (Task 85) that stops a garment
+// from showing where another one above it would really cover it. A component
+// of its own because hooks can't sit after the renderer's early return.
+const PersonaLayerStack: React.FC<{ layers: PersonaLayerProps[] }> = ({ layers }) => {
+  const masks = useOcclusionMasks(layers);
+  return (
+    <>
+      {layers.map((layer) => (
+        <PersonaLayer
+          key={`${layer.id}-${layer.imageUrl || 'none'}`}
+          {...layer}
+          occlusionMask={masks[layer.id]}
+        />
+      ))}
+    </>
+  );
+};
 
 const PersonaRendererContent: React.FC<PersonaRendererProps> = ({ 
   persona: customPersona,
@@ -146,6 +165,7 @@ const PersonaRendererContent: React.FC<PersonaRendererProps> = ({
           if (segment) {
             layers.push({
               id: `jacket-${item.itemId}-${partName}`,
+              group: `jacket-${item.itemId}`,
               imageUrl: segment.imageUrl,
               zIndex: 400 + (index * 10) + partIndex,
               transform: { 
@@ -206,12 +226,7 @@ const PersonaRendererContent: React.FC<PersonaRendererProps> = ({
             exit={{ opacity: 0, scale: 1.02 }}
             className="relative h-full aspect-[3/4] flex items-center justify-center overflow-visible"
           >
-            {layers.map((layer) => (
-              <PersonaLayer 
-                key={`${layer.id}-${layer.imageUrl || 'none'}`}
-                {...layer}
-              />
-            ))}
+            <PersonaLayerStack layers={layers} />
           </motion.div>
         </AnimatePresence>
       </div>

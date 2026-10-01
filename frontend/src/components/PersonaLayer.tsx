@@ -1,7 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { type ClothingTransform, ClothingCategory, PersonaType } from '../types';
-import { DEFAULT_TRANSFORMS, SHOE_PAIR_PRESETS } from './FittingTool/Presets';
+import {
+  VIRTUAL_HEIGHT,
+  VIRTUAL_WIDTH,
+  cropInsets,
+  jacketOpening,
+  resolveFinalTransform,
+} from '../utils/layerGeometry';
 
 export interface PersonaLayerProps {
   id: string;
@@ -13,6 +19,12 @@ export interface PersonaLayerProps {
   category?: ClothingCategory;
   personaType?: PersonaType;
   side?: 'left' | 'right';
+  // Task 85: the pictures of one garment (a modular jacket's torso, sleeves,
+  // ...) share a group; a single-picture garment is its own group.
+  group?: string;
+  // A mask (image URL) hiding the parts of this layer a garment above it would
+  // really cover, e.g. a shirt's sides and hem beyond the jacket over it.
+  occlusionMask?: string;
 }
 
 const PersonaLayer: React.FC<PersonaLayerProps> = ({ 
@@ -23,7 +35,8 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
   alt = "",
   category,
   personaType = PersonaType.MALE,
-  side
+  side,
+  occlusionMask
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -41,20 +54,10 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
     }
   }, []);
 
-  const VIRTUAL_HEIGHT = 1000;
-  const VIRTUAL_WIDTH = 750;
   const viewScale = containerHeight / VIRTUAL_HEIGHT;
 
   // Determination of final transform
-  let finalTransform = transform?.width ? transform : null;
-  
-  if (!finalTransform && category) {
-    if (category === ClothingCategory.SHOES && side) {
-      finalTransform = SHOE_PAIR_PRESETS[personaType][side];
-    } else if (DEFAULT_TRANSFORMS[personaType][category]) {
-      finalTransform = DEFAULT_TRANSFORMS[personaType][category];
-    }
-  }
+  const finalTransform = resolveFinalTransform(transform, category, personaType, side);
 
   if (!imageUrl) return null;
 
@@ -81,50 +84,17 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
     const offsetX = (finalTransform.x - VIRTUAL_WIDTH / 2) * viewScale;
     const offsetY = (finalTransform.y - VIRTUAL_HEIGHT / 2) * viewScale;
 
-    // Mask Calculation
-    let clipPath = 'none';
-    if (finalTransform.maskWidth && finalTransform.maskHeight) {
-      const gW = finalTransform.width || 450;
-      const gH = finalTransform.height || 450;
-      const gLeft = finalTransform.x - gW / 2;
-      const gTop = finalTransform.y - gH / 2;
-
-      // maskLeft/maskTop are the crop's CENTER, not its edge - they come
-      // straight from Fabric's clipPath.left/top with originX/Y: 'center'
-      // (same convention as x/y above), but were being used here as if
-      // they were the crop's left/top edge. That silently shifted every
-      // inset by half the mask's own width/height - e.g. a mask
-      // maskWidth=228 wide reads insetRight as if the crop's right edge
-      // were a full extra maskWidth further right than it really is,
-      // clamping to 0% (flush right) far too often and showing a much
-      // narrower, wrongly-positioned sliver of the image than was
-      // actually cropped. Found live while verifying Task 54's un-crop
-      // button: cropped to the right half of a test image, and the
-      // numbers this produced (before this fix) implied a right edge
-      // ~180 virtual units past the garment's own right edge - clamped
-      // away entirely - instead of the ~2-unit overshoot the actual
-      // Fabric clip geometry has.
-      const maskLeftEdge = finalTransform.maskLeft! - finalTransform.maskWidth / 2;
-      const maskTopEdge = finalTransform.maskTop! - finalTransform.maskHeight / 2;
-      const maskRightEdge = finalTransform.maskLeft! + finalTransform.maskWidth / 2;
-      const maskBottomEdge = finalTransform.maskTop! + finalTransform.maskHeight / 2;
-
-      const insetLeft = ((maskLeftEdge - gLeft) / gW) * 100;
-      const insetTop = ((maskTopEdge - gTop) / gH) * 100;
-      const insetRight = 100 - ((maskRightEdge - gLeft) / gW) * 100;
-      const insetBottom = 100 - ((maskBottomEdge - gTop) / gH) * 100;
-
-      clipPath = `inset(${Math.max(0, insetTop)}% ${Math.max(0, insetRight)}% ${Math.max(0, insetBottom)}% ${Math.max(0, insetLeft)}%)`;
-    }
+    // Crop (see cropInsets for how the numbers are read).
+    const insets = cropInsets(finalTransform);
+    const clipPath = insets
+      ? `inset(${insets.top}% ${insets.right}% ${insets.bottom}% ${insets.left}%)`
+      : 'none';
 
     // Center Opening Mask (for Jackets)
-    let maskImage = 'none';
-    if (category === ClothingCategory.JACKET && finalTransform.openness) {
-       const openness = finalTransform.openness;
-       const holeStart = (50 - (openness * 100) / 2);
-       const holeEnd = (50 + (openness * 100) / 2);
-       maskImage = `linear-gradient(to right, black 0%, black ${holeStart}%, transparent ${holeStart}%, transparent ${holeEnd}%, black ${holeEnd}%, black 100%)`;
-    }
+    const opening = jacketOpening(finalTransform, category);
+    const maskImage = opening
+      ? `linear-gradient(to right, black 0%, black ${opening.start}%, transparent ${opening.start}%, transparent ${opening.end}%, black ${opening.end}%, black 100%)`
+      : 'none';
 
     return {
       position: 'absolute' as const,
@@ -154,7 +124,20 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className={`absolute inset-0 flex items-center justify-center pointer-events-none overflow-visible ${className}`}
-      style={{ zIndex }}
+      // Task 85: the occlusion mask goes on this wrapper, which is exactly the
+      // persona's 3:4 box, so it needs no placing - the picture's own crop and
+      // jacket-opening masks stay on the <img> underneath.
+      style={{
+        zIndex,
+        ...(occlusionMask && {
+          maskImage: `url("${occlusionMask}")`,
+          WebkitMaskImage: `url("${occlusionMask}")`,
+          maskSize: '100% 100%',
+          WebkitMaskSize: '100% 100%',
+          maskRepeat: 'no-repeat',
+          WebkitMaskRepeat: 'no-repeat',
+        }),
+      }}
     >
       <img 
         src={imageUrl} 
