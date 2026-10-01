@@ -17,11 +17,24 @@ import { Canvas, Circle, Group, Image as FabricImage, PencilBrush, Point, util, 
 import { useFabricCanvas, measureContainerWithRetry } from '../../hooks/useFabricCanvas';
 import { getStageAccentHex } from '../../utils/themeColors';
 import { rescaleObjects } from '../editor/CanvasUtils';
+import { alphaBounds, padBox } from '../../utils/alphaBounds';
+
+// What the edit flow ('image-bounds' export) reports besides the picture.
+export interface CleanupResult {
+  // Whether anything was erased or restored.
+  edited: boolean;
+  // Set when the picture was cropped to the garment: where the crop sits inside
+  // the full (untrimmed) picture, in the exported pixel size. The garment's
+  // saved fit refers to the full picture, so the caller must retarget it.
+  trim: { x: number; y: number; width: number; height: number; fullWidth: number; fullHeight: number } | null;
+}
 
 interface GarmentCleanupProps {
   imageUrl: string;
-  onComplete: (cleanedImageUrl: string) => void;
-  onSkip: () => void;
+  onComplete: (cleanedImageUrl: string, result?: CleanupResult) => void;
+  // Without it there is no Skip button (the edit flow has none: finishing is
+  // how a picture gets trimmed to the garment, even with nothing erased).
+  onSkip?: () => void;
   onBack: () => void;
   // 'canvas' (the upload flow's original behavior): the PNG is the whole
   // canvas, transparent margins included. 'image-bounds' (Task 83, the edit
@@ -39,6 +52,10 @@ type ToolMode = 'erase' | 'restore' | 'pan';
 // Largest side (px) of an 'image-bounds' export - a very large photo is scaled
 // down rather than risking the browser's canvas size limit.
 const MAX_EXPORT_SIDE = 4096;
+
+// An edit export is only cropped to the garment when that drops at least this
+// much of the picture (a picture already framed tightly is left alone).
+const TRIM_MAX_AREA = 0.95;
 
 // How much of the canvas the garment fills when the studio opens.
 const FIT_FRACTION = 0.92;
@@ -62,28 +79,38 @@ const opaqueBounds = (
     const ctx = scratch.getContext('2d');
     if (!ctx) return whole;
     ctx.drawImage(source, 0, 0, w, h);
-    const data = ctx.getImageData(0, 0, w, h).data;
-    let minX = w, minY = h, maxX = -1, maxY = -1;
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (data[(y * w + x) * 4 + 3] > 16) {
-          if (x < minX) minX = x;
-          if (x > maxX) maxX = x;
-          if (y < minY) minY = y;
-          if (y > maxY) maxY = y;
-        }
-      }
-    }
-    if (maxX < minX || maxY < minY) return whole; // fully transparent
+    const box = alphaBounds(ctx.getImageData(0, 0, w, h).data, w, h);
+    if (!box) return whole; // fully transparent
     return {
-      x: minX / shrink,
-      y: minY / shrink,
-      width: (maxX - minX + 1) / shrink,
-      height: (maxY - minY + 1) / shrink,
+      x: box.x / shrink,
+      y: box.y / shrink,
+      width: box.width / shrink,
+      height: box.height / shrink,
     };
   } catch {
     // e.g. a tainted canvas (image without CORS headers)
     return whole;
+  }
+};
+
+// The add-garment export used to be the whole canvas: a wide picture with big
+// transparent margins, so the studio's selection box and warp points sat on the
+// picture's edges, far from the garment. Crop to what is actually visible
+// (plus a small margin). Falls back to the untrimmed canvas if it can't be read.
+const trimToGarment = (source: HTMLCanvasElement): string => {
+  try {
+    const ctx = source.getContext('2d');
+    if (!ctx) return source.toDataURL('image/png');
+    const box = alphaBounds(ctx.getImageData(0, 0, source.width, source.height).data, source.width, source.height);
+    if (!box) return source.toDataURL('image/png');
+    const crop = padBox(box, source.width, source.height);
+    const out = document.createElement('canvas');
+    out.width = crop.width;
+    out.height = crop.height;
+    out.getContext('2d')!.drawImage(source, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    return out.toDataURL('image/png');
+  } catch {
+    return source.toDataURL('image/png');
   }
 };
 
@@ -487,6 +514,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
   };
 
   const handleFinish = () => {
+    let result: CleanupResult | undefined;
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
     setIsProcessing(true);
@@ -516,19 +544,42 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
       const out = document.createElement('canvas');
       out.width = outWidth;
       out.height = outHeight;
-      out.getContext('2d')!.drawImage(region, 0, 0, outWidth, outHeight);
-      dataUrl = out.toDataURL('image/png');
+      const outCtx = out.getContext('2d')!;
+      outCtx.drawImage(region, 0, 0, outWidth, outHeight);
+
+      // Crop to the visible garment when the picture has real margins: the
+      // studio's selection box and the warp points sit on the picture's edges,
+      // so a loose picture leaves them far from the garment.
+      let trim: CleanupResult['trim'] = null;
+      try {
+        const box = alphaBounds(outCtx.getImageData(0, 0, outWidth, outHeight).data, outWidth, outHeight);
+        if (box) {
+          const crop = padBox(box, outWidth, outHeight);
+          if (crop.width * crop.height < outWidth * outHeight * TRIM_MAX_AREA) {
+            trim = { ...crop, fullWidth: outWidth, fullHeight: outHeight };
+          }
+        }
+      } catch {
+        // Unreadable pixels: export untrimmed.
+      }
+
+      if (trim) {
+        const cropped = document.createElement('canvas');
+        cropped.width = trim.width;
+        cropped.height = trim.height;
+        cropped.getContext('2d')!.drawImage(out, trim.x, trim.y, trim.width, trim.height, 0, 0, trim.width, trim.height);
+        dataUrl = cropped.toDataURL('image/png');
+      } else {
+        dataUrl = out.toDataURL('image/png');
+      }
+      result = { edited: historyIndex.current > 0, trim };
     } else {
-      dataUrl = canvas.toDataURL({
-        format: 'png',
-        multiplier: 2,
-        enableRetinaScaling: true
-      });
+      dataUrl = trimToGarment(canvas.toCanvasElement(2));
     }
 
     if (vpt) canvas.setViewportTransform(vpt);
     
-    onComplete(dataUrl);
+    onComplete(dataUrl, result);
     setIsProcessing(false);
   };
 
@@ -596,8 +647,10 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
               <span>Finalize & Next</span>
             </button>
             <div className="grid grid-cols-2 gap-4">
-              <button onClick={onBack} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl font-medium text-[10px] tracking-[0.3em] uppercase transition-all">Back</button>
-              <button onClick={onSkip} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-xl font-medium text-[10px] uppercase transition-all">{skipLabel}</button>
+              <button onClick={onBack} className={`py-5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl font-medium text-[10px] tracking-[0.3em] uppercase transition-all ${onSkip ? '' : 'col-span-2'}`}>Back</button>
+              {onSkip && (
+                <button onClick={onSkip} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-xl font-medium text-[10px] uppercase transition-all">{skipLabel}</button>
+              )}
             </div>
           </div>
         </aside>

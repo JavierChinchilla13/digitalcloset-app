@@ -26,6 +26,9 @@ interface ClothingCanvasProps {
   onTransformChange: (transform: ClothingTransform) => void;
   onCanvasReady?: (canvas: Canvas) => void;
   activeTool?: string;
+  // Task 84: rendered over the canvas, exactly covering it (stage + the handle margin),
+  // with the stage's size in px. Used by the warp tool.
+  overlay?: (stage: { width: number; height: number }) => React.ReactNode;
 }
 
 const ClothingCanvas: React.FC<ClothingCanvasProps> = ({ 
@@ -34,7 +37,8 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   transform, 
   onTransformChange,
   onCanvasReady,
-  activeTool = 'select'
+  activeTool = 'select',
+  overlay
 }) => {
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
@@ -311,8 +315,13 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       cropBox.on('moving', updateCrop);
       cropBox.on('scaling', updateCrop);
 
+    } else if (activeToolRef.current === 'warp') {
+      // The warp overlay draws the garment while this tool is active; the
+      // Fabric one is hidden and inert, with no selection box left behind.
+      garment.set({ selectable: false, evented: false, visible: false });
+      canvas.discardActiveObject();
     } else {
-      garment.set({ selectable: true, evented: true });
+      garment.set({ selectable: true, evented: true, visible: true });
       canvas.setActiveObject(garment);
     }
 
@@ -553,6 +562,24 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
           in it and overflows it by exactly that margin on every side. */}
       <div ref={containerRef} className="relative w-full h-full flex items-center justify-center">
         <canvas ref={canvasRef} />
+        {/* Task 84: the overlay covers the padded canvas exactly - the same
+            size, centered on the same point (the container can be wider or
+            taller than the stage, so it is centered, not inset) - so its
+            coordinates line up with the Fabric stage underneath. */}
+        {overlay && hasSize && (
+          <div
+            className="absolute z-10"
+            style={{
+              left: '50%',
+              top: '50%',
+              width: canvasSize.width + 2 * CANVAS_PAD,
+              height: canvasSize.height + 2 * CANVAS_PAD,
+              transform: 'translate(-50%, -50%)',
+            }}
+          >
+            {overlay({ width: canvasSize.width, height: canvasSize.height })}
+          </div>
+        )}
       </div>
       {/* Task 71: text-primary/accent would follow the site theme and turn
           near-black in light mode - invisible on this stage, which stays
