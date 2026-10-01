@@ -19,14 +19,23 @@ vi.mock('../components/FittingTool/GarmentCleanup', () => ({
   default: (props: {
     imageUrl: string;
     exportMode?: string;
-    skipLabel?: string;
-    onComplete: (url: string) => void;
-    onSkip: () => void;
+    onComplete: (url: string, result?: unknown) => void;
+    onSkip?: () => void;
     onBack: () => void;
   }) => (
-    <div data-testid="cleanup" data-src={props.imageUrl} data-export={props.exportMode}>
-      <button onClick={() => props.onComplete('data:image/png;base64,AAAA')}>finalize</button>
-      <button onClick={props.onSkip}>{props.skipLabel}</button>
+    <div data-testid="cleanup" data-src={props.imageUrl} data-export={props.exportMode} data-has-skip={String(!!props.onSkip)}>
+      <button onClick={() => props.onComplete('data:image/png;base64,AAAA', { edited: true, trim: null })}>finalize</button>
+      <button onClick={() => props.onComplete('data:image/png;base64,AAAA', { edited: false, trim: null })}>finalize-unchanged</button>
+      <button
+        onClick={() =>
+          props.onComplete('data:image/png;base64,AAAA', {
+            edited: false,
+            trim: { x: 200, y: 50, width: 200, height: 300, fullWidth: 800, fullHeight: 400 },
+          })
+        }
+      >
+        finalize-cropped
+      </button>
       <button onClick={props.onBack}>cleanup-back</button>
     </div>
   ),
@@ -36,10 +45,16 @@ vi.mock('../components/FittingTool/FittingEditor', () => ({
   default: (props: {
     imageUrl: string;
     initialWarp: unknown;
+    initialTransform?: unknown;
     onBack: () => void;
     onSave: (d: { name: string; description: string; transform: unknown; imageUrl?: string; modularData?: string }) => void;
   }) => (
-    <div data-testid="studio" data-src={props.imageUrl} data-warp={String(props.initialWarp)}>
+    <div
+      data-testid="studio"
+      data-src={props.imageUrl}
+      data-warp={String(props.initialWarp)}
+      data-transform={JSON.stringify(props.initialTransform)}
+    >
       <button onClick={() => props.onSave({ name: 'Tee', description: '', transform: { x: 1 } })}>studio-save</button>
       <button
         onClick={() =>
@@ -130,11 +145,11 @@ describe('edit garment: cleanup first, then Fabric Studio', () => {
 
     const cleanup = screen.getByTestId('cleanup');
     expect(cleanup).toHaveAttribute('data-src', ORIGINAL);
-    // The edit flow keeps the picture's framing (only the image rectangle).
+    // The edit flow exports just the picture's own rectangle.
     expect(cleanup).toHaveAttribute('data-export', 'image-bounds');
     expect(screen.queryByTestId('studio')).not.toBeInTheDocument();
-    // An existing garment has no AI step to skip.
-    expect(screen.getByRole('button', { name: 'Skip' })).toBeInTheDocument();
+    // No Skip: finishing is how a loose picture gets cropped to the garment.
+    expect(cleanup).toHaveAttribute('data-has-skip', 'false');
   });
 
   it('Finalize & Next uploads the cleaned image and opens Fabric Studio on it', async () => {
@@ -182,13 +197,13 @@ describe('edit garment: cleanup first, then Fabric Studio', () => {
     );
   });
 
-  it('Skip goes to Fabric Studio unchanged and uploads nothing', async () => {
+  it('finishing with nothing erased or cropped uploads nothing and keeps the image', async () => {
     const user = userEvent.setup();
     renderModal(makeItem());
 
     await user.click(screen.getByRole('button', { name: /open studio/i }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    expect(screen.getByTestId('studio')).toHaveAttribute('data-src', ORIGINAL);
+    await user.click(screen.getByRole('button', { name: 'finalize-unchanged' }));
+    expect(await screen.findByTestId('studio')).toHaveAttribute('data-src', ORIGINAL);
     await user.click(screen.getByRole('button', { name: 'studio-save' }));
 
     await waitFor(() => expect(updateItem).toHaveBeenCalled());
@@ -196,6 +211,29 @@ describe('edit garment: cleanup first, then Fabric Studio', () => {
     const payload = updateItem.mock.calls[0][1];
     expect(payload.imageUrl).toBe(ORIGINAL);
     expect(payload).not.toHaveProperty('modularData');
+  });
+
+  it('a crop to the garment uploads the trimmed picture and retargets the saved fit', async () => {
+    const user = userEvent.setup();
+    // The picture is shown 400 x 400 (virtual units) centered at (375, 500).
+    renderModal(makeItem());
+
+    await user.click(screen.getByRole('button', { name: /open studio/i }));
+    await user.click(screen.getByRole('button', { name: 'finalize-cropped' }));
+
+    const studio = await screen.findByTestId('studio');
+    expect(studio).toHaveAttribute('data-src', CLEANED);
+    expect(uploadImage).toHaveBeenCalledTimes(1);
+    // The crop is a quarter of the width (200 of 800 px) and 3/4 of the height
+    // (300 of 400 px): the garment keeps its on-screen size, so the picture's
+    // virtual size shrinks by the same ratios...
+    const transform = JSON.parse(studio.getAttribute('data-transform')!);
+    expect(transform.width).toBeCloseTo(100);
+    expect(transform.height).toBeCloseTo(300);
+    // ...and its center moves to the crop's center: 400 -> 300 px across
+    // (-100 px of 800 = -50 virtual) and 200 -> 200 px down (no move).
+    expect(transform.x).toBeCloseTo(375 - 50 + 0);
+    expect(transform.y).toBeCloseTo(500);
   });
 
   it('stays on the cleanup screen with an error when the upload fails', async () => {
@@ -237,15 +275,16 @@ describe('edit garment: cleanup first, then Fabric Studio', () => {
     expect(screen.queryByTestId('studio')).not.toBeInTheDocument();
   });
 
-  it('skipping cleanup on a jacket still splits it into sections', async () => {
+  it('a jacket with nothing changed is split from its existing picture, without an upload', async () => {
     const user = userEvent.setup();
     renderModal(makeItem({ category: ClothingCategory.JACKET }));
 
     await user.click(screen.getByRole('button', { name: /open studio/i }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
+    await user.click(screen.getByRole('button', { name: 'finalize-unchanged' }));
 
     expect(await screen.findByTestId('jacket-studio')).toBeInTheDocument();
     expect(segmentJacket).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(fetch)).toHaveBeenCalledWith(ORIGINAL);
   });
 
   it('saving from the jacket studio stores the sections and keeps the closet thumbnail', async () => {
@@ -282,8 +321,8 @@ describe('edit garment: cleanup first, then Fabric Studio', () => {
     renderModal(makeItem());
 
     await user.click(screen.getByRole('button', { name: /open studio/i }));
-    await user.click(screen.getByRole('button', { name: 'Skip' }));
-    await user.click(screen.getByRole('button', { name: 'studio-back' }));
+    await user.click(screen.getByRole('button', { name: 'finalize-unchanged' }));
+    await user.click(await screen.findByRole('button', { name: 'studio-back' }));
 
     expect(screen.getByText('Edit Garment')).toBeInTheDocument();
   });

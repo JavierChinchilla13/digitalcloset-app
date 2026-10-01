@@ -243,19 +243,27 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
                   onTransformChange={setTransform}
                   onCanvasReady={(canvas) => { fabricCanvasRef.current = canvas; }}
                   activeTool={activeTool}
+                  // Task 84: the warp points are drawn over the studio canvas
+                  // itself (the Fabric garment hides while they are up), not
+                  // on a separate screen.
+                  overlay={
+                    allowWarp && activeTool === 'warp'
+                      ? (stage) => (
+                          <WarpPanel
+                            sourceUrl={warp?.originalImageUrl ?? currentImageUrl}
+                            warp={warp}
+                            stageWidth={stage.width}
+                            stageHeight={stage.height}
+                            transform={transform}
+                            hasCrop={!!transform.maskWidth}
+                            onApply={handleWarpApply}
+                            onCancel={() => setActiveTool('select')}
+                          />
+                        )
+                      : undefined
+                  }
                 />
              </div>
-             {allowWarp && activeTool === 'warp' && (
-               <WarpPanel
-                 sourceUrl={warp?.originalImageUrl ?? currentImageUrl}
-                 warp={warp}
-                 personaType={personaType}
-                 transform={transform}
-                 hasCrop={!!transform.maskWidth}
-                 onApply={handleWarpApply}
-                 onCancel={() => setActiveTool('select')}
-               />
-             )}
           </div>
         </main>
 

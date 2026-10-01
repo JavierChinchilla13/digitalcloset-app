@@ -20,7 +20,8 @@ import type { ClothingItem } from '../types';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
 import FittingEditor from './FittingTool/FittingEditor';
-import GarmentCleanup from './FittingTool/GarmentCleanup';
+import GarmentCleanup, { type CleanupResult } from './FittingTool/GarmentCleanup';
+import { retargetForTrim } from '../utils/alphaBounds';
 import JacketFittingEditor from './FittingTool/JacketFittingEditor';
 import { segmentationService } from '../utils/segmentationService';
 import { parseWarpData } from '../utils/warpData';
@@ -122,25 +123,31 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
     return true;
   };
 
-  // Cleanup's "Finalize & Next" (dataUrl = the cleaned PNG) and "Skip" (no
-  // dataUrl = the image as it is). Jackets are split into sections; anything
-  // else uploads the cleaned image and opens Fabric Studio on it. It is
-  // uploaded now (not on save) because a warp made in the studio records this
-  // image's URL as its "original", which must be a real URL, not a data URL.
-  const handleCleanupDone = async (dataUrl?: string) => {
+  // Cleanup's "Finalize & Next" (dataUrl = the picture as exported). The
+  // export is also how a loose picture gets cropped to the garment, so the
+  // studio's selection box and warp points sit on the garment instead of far
+  // out on a wide margin; since the saved fit describes the whole picture, a
+  // crop retargets it so the garment looks exactly as before. Nothing to
+  // upload when nothing was erased and nothing was cropped. Jackets are split
+  // into sections; anything else uploads the picture and opens Fabric Studio on
+  // it - uploaded now (not on save) because a warp made in the studio records
+  // this image's URL as its "original", which must be a real URL.
+  const handleCleanupDone = async (dataUrl: string, result?: CleanupResult) => {
     setCleanupError('');
     try {
+      const changed = result ? result.edited || !!result.trim : true;
       if (category === ClothingCategory.JACKET) {
         setCleanupBusy('Preparing the jacket...');
-        const source = dataUrl ?? cleanedImageUrl ?? item?.imageUrl ?? '';
+        const source = changed ? dataUrl : cleanedImageUrl ?? item?.imageUrl ?? '';
         const blob = await (await fetch(source)).blob();
         if (await splitJacket(blob)) return;
         // Nothing to split: carry on with a single image below.
       }
-      if (dataUrl) {
-        setCleanupBusy('Saving cleaned image...');
+      if (changed) {
+        setCleanupBusy('Saving image...');
         const blob = await (await fetch(dataUrl)).blob();
         setCleanedImageUrl(await cloudinaryService.uploadImage(blob));
+        if (result?.trim && transform) setTransform(retargetForTrim(transform, result.trim));
       }
       setView('studio');
     } catch (err: any) {
@@ -397,9 +404,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 <GarmentCleanup
                   imageUrl={cleanedImageUrl ?? item?.imageUrl ?? ''}
                   exportMode="image-bounds"
-                  skipLabel="Skip"
                   onComplete={handleCleanupDone}
-                  onSkip={() => handleCleanupDone()}
                   onBack={() => setView('form')}
                 />
                 {(cleanupBusy || cleanupError) && (

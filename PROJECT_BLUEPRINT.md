@@ -6187,3 +6187,75 @@ with every handle (including rotate) inside the canvas. Layout checked at
 Known: the studio's WarpPanel still draws its own full-cover overlay with its
 own margin math (Task 84 replaces it). At very short windows (~500px) the canvas
 scrolls into view rather than shrinking below ~320px.
+
+### Task 84 - Warp points drawn directly on the garment (2026-09-30, branch `phase-4.7-studio-and-layers`)
+
+Requested: with the warp tool the points should be directly on the item, which
+is easier for the user.
+
+Before, "Warp" replaced the whole studio with a separate screen: its own
+canvas, its own persona drawing, its own size maths. Now it works on the studio
+canvas itself.
+- `ClothingCanvas` has a new `overlay` slot: a layer exactly the size of the
+  padded canvas (stage + `CANVAS_PAD`), centered on it. (First version insetted
+  it by the margin, which was ~29px off horizontally whenever the stage was
+  height-limited and the container wider - found live and fixed by centering.)
+- While the warp tool is active the Fabric garment is hidden and inert (no
+  selection box left behind); the mannequin stays, so the garment is shaped in
+  context on the persona the studio already draws. Leaving the tool shows it
+  again.
+- `WarpPanel.tsx` is now just that overlay: it draws the warped garment (same
+  3x3 mesh maths, `meshWarp.ts`/`warpData.ts` untouched) with the control net
+  and the 9 points on top, at device resolution. The persona drawing, its own
+  stage fitting (`CHROME_HEIGHT`, min/max stage height, ...) and the
+  full-screen backdrop are gone. Apply / Reset Points / Cancel moved to a small
+  floating bar at the bottom of the canvas, with a hint at the top.
+- Points can be dragged up to ~43px past the stage edge (`POINT_MARGIN`), where
+  the handle still fits inside the canvas margin, so every point stays
+  grabbable (shares `CANVAS_PAD` with the Task 83 handle fix).
+- The placement maths moved out of the component into exported pure helpers
+  `garmentToStageMatrix` and `clampStagePoint`, with tests.
+
+**Verified.** `tsc -b --force`, `vite build` clean; 164 frontend tests pass
+(new: `warpPanel.test.ts` x6, `alphaBounds.test.ts` x10). Live on my own throwaway servers (test account,
+Cloudinary upload stubbed in the page; cleaned up after): the 9 points sit on
+the garment at the same place the Fabric selection box was; dragging a corner
+and the center point bent the shirt under them; Apply returned to the studio
+with the bent garment and a "Restore Original" button; re-entering Warp showed
+the same points over the baked garment; resizing the window with the tool open
+kept the overlay aligned. Not exercised live: pointer capture with a real mouse
+(my drags were dispatched as pointer events), and warping a rotated/flipped
+garment (covered by the matrix tests only).
+
+**Follow-up (same task): points far from the garment when ADDING a shirt.**
+Reported: when adding a new garment the points on the right were far away from
+the shirt in Fabric Studio / Warp (editing was fine). Cause: the add-garment
+Cleanup Studio exported its whole (wide) canvas, so the cleaned picture had big
+transparent margins and everything that sits on the picture's edges - the
+studio's selection box, the warp net - landed far from the visible garment. The
+edit flow exports at the original picture's own framing, so it never showed it.
+Now the add-flow export is trimmed to the visible garment plus a 2% margin
+(`utils/alphaBounds.ts`: `alphaBounds` / `padBox`, also used for the cleanup's
+fit-to-canvas). Checked live through the real add flow (in-browser background
+removal -> cleanup -> Finalize): the exported picture has a 25px margin on all
+sides and the warp net hugs the shirt. Not changed: the "Skip AI" path in the
+add flow uploads the background-removed picture as it is, so its margins are
+whatever the source photo had.
+
+**Follow-up 2 (same task): the same tightening when EDITING.** Reported: the
+change was not there when clicking Edit. It wasn't - the edit cleanup exported
+the picture at its original framing, so already-added garments kept their wide
+margins. Now the edit export is also cropped to the visible garment (+2%),
+when that drops at least 5% of the picture. Because a garment's saved fit
+(`transform`: size + center) describes its WHOLE picture, the crop retargets it
+(`retargetForTrim` in `utils/alphaBounds.ts`, built on `retargetTransform`):
+the size shrinks by the crop ratio and the center moves to the crop's center,
+rotated with the garment and mirrored when flipped, so the garment does not
+move or change size. A crop mask, if any, is dropped (framed against the old
+picture). The edit cleanup has no Skip button any more: finishing is what
+crops, and it uploads nothing when nothing was erased and nothing needed
+cropping (`CleanupResult { edited, trim }`). Checked live on a test tee whose
+500x500 picture had ~15% margins: exported 384x364, the saved fit became
+399x379 (predicted 399x379), the selection box hugs the shirt, and the shirt
+stays where it was on the persona. Jackets: split from the trimmed picture;
+their fit comes from the sections, so nothing is retargeted.
