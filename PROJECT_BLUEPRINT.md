@@ -6109,3 +6109,81 @@ monitor icon at any point.
 Note: `public/marketing/theme-toggle-demo.gif` was recorded with the old
 3-way cycle and may show the System state - to be re-recorded once the
 studio UI work (Tasks 83-86) settles.
+
+### Task 83 - Edit flow order, studio layout on resize, unreachable handles (2026-09-29, branch `phase-4.7-studio-and-layers`)
+
+Requested: editing a garment and pressing "Open Studio" should open the Cleanup
+Studio first and the Fabric Studio after "Next"; the studio looked wrong when
+the window was resized; and once a garment was dragged to an edge its
+resize/rotate/crop points could not be reached.
+
+**Edit flow** - `EditClothingModal.tsx`: the `isStudioOpen` boolean became
+`view: 'form' | 'cleanup' | 'studio'`. "Open Studio" -> `GarmentCleanup` on the
+item's image -> "Finalize & Next" -> Fabric Studio (same order as adding a
+garment; "Skip" goes straight to the studio). The cleaned PNG is uploaded at
+"Finalize & Next" (not on save) because a warp made afterwards records that
+image's URL, which must be a real URL. Saving uses the cleaned image; an old
+warp record (`modularData`) is cleared because it pointed at the pre-cleanup
+picture. Every garment goes through cleanup except shoes (nothing to clean; they open
+Fabric Studio directly). Jackets are then split into their sections (torso /
+sleeves) with the same in-browser segmentation the add-garment flow uses, and
+open the Modular Jacket Studio; saving stores `isModular` + `modularData` and
+leaves the closet thumbnail alone (a first version sent modular jackets
+straight to Fabric Studio, which read as "still goes straight to Fabric Studio"
+for jackets). If the model finds nothing to split, the jacket falls back to
+Fabric Studio on the cleaned image. An upload failure keeps the user on the cleanup screen with the error.
+
+**GarmentCleanup fixes found on the way**
+- New `exportMode="image-bounds"` (edit flow only): exports just the garment's
+  rectangle at exactly the source's pixel size instead of the whole canvas, so
+  the item's saved fit (`transform`) still matches the cleaned image. The upload
+  flow keeps its old whole-canvas export.
+- Restore did nothing (the `path:created` handler was frozen on the initial
+  mode, so every stroke erased). Now a ref feeds the handler, and a Restore
+  stroke becomes a clip (filled circles along the stroke - Fabric ignores a
+  clip's stroke) over a fresh copy of the untouched image.
+- The garment now fills the canvas when the studio opens (it is fitted by its
+  visible pixels, not by the whole picture with its transparent margin) and is
+  re-fitted whenever the canvas changes size - the dialog is still growing when
+  it first opens, which had left it small.
+- Undo/redo snapshots now keep the `isBaseImage` / `isEraserPath` flags; the
+  sidebar zoom buttons actually zoom; key listeners are released on unmount
+  (they leaked); the canvas follows its container on resize; "Skip AI" reads
+  "Skip" when editing an existing garment.
+
+**Studio layout** - `FittingEditor.tsx`: the canvas column now has `min-w-0` /
+`min-h-0` and the canvas is absolutely filled inside it, so it can no longer
+prop the layout open at its largest size. Side-by-side from `lg`, stacked
+below it (canvas first, panels scrolling underneath). Sidebars are 224 / 288 /
+320px at lg / xl / 2xl instead of a fixed 320px each (two fixed 320px columns
+left ~200px for the canvas at 1024px). The shell is `max-w-7xl` (was 6xl), the
+toolbar wraps, and the old 500px minimum canvas height (which clipped the
+bottom of the stage in short windows) is gone. `ClothingCanvas` no longer
+clears and reloads every image on each resize tick: the objects are rescaled
+with the stage (`rescaleObjects` / `resizeStageKeepingObjects` in
+`CanvasUtils.ts`), and a collapsed (0px) container keeps the last real size.
+
+**Handles at the edges** - `CANVAS_PAD` 36 -> 56, selection padding 10 -> 6,
+rotate handle offset -20 -> -16 (handles reach ~30px past the garment,
+`HANDLE_REACH`), and the garment (also each shoe in `ShoeCanvas`) is clamped
+while dragging and on release so its bounding box stays within the stage plus a
+26px overhang (`STAGE_OVERSHOOT`; presets like trousers/dresses deliberately
+overhang a little) - `clampAxisDelta` / `clampDeltaToStage` /
+`keepHandlesReachable`. Oversized garments are pinned to cover the stage
+instead of jittering. `JacketCanvas` gets the bigger margin and closer handles
+but no clamp (its virtual grouping moves several parts at once).
+
+**Verified.** `tsc -b --force`, `vite build` clean; 147 frontend tests pass
+(new: `editGarmentFlow.test.tsx` x12, `canvasClamp.test.ts` x6). Live on my own
+throwaway servers with a test account (Cloudinary upload stubbed in the page so
+nothing hit the real account; account deactivated, items deleted, servers
+stopped): Open Studio shows Cleanup first with "Skip"; erase + restore + finalize
+exported a PNG of exactly the source size (500x500) with 12,170 restored pixels
+inside the erased band and zero wrong colors; Fabric Studio then opened on the
+cleaned image. Dragging the garment past the top, bottom and left edges stops it
+with every handle (including rotate) inside the canvas. Layout checked at
+1024x700, 1440x900, 820x900 (stacked) and 1280x520.
+
+Known: the studio's WarpPanel still draws its own full-cover overlay with its
+own margin math (Task 84 replaces it). At very short windows (~500px) the canvas
+scrolls into view rather than shrinking below ~320px.

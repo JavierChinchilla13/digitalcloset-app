@@ -167,7 +167,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
   return (
     <div className="flex flex-col h-full bg-background-main/50">
       {/* Top Navigation / Toolbar */}
-      <div className="flex flex-col md:flex-row gap-6 items-center justify-between mb-8">
+      <div className="shrink-0 flex flex-col md:flex-row gap-4 md:gap-6 items-center justify-between mb-4 md:mb-6">
         <div className="flex items-center gap-6">
           <button 
             onClick={onBack}
@@ -198,11 +198,17 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         </div>
       </div>
 
-      <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-hidden">
+      {/* Task 83 layout: side-by-side from `lg` up, stacked below it (canvas
+          first, panels underneath, the whole body scrolling) - three columns
+          at tablet widths left the canvas ~200px wide. `min-h-0` / `min-w-0`
+          on the flex children matter: without them the canvas column can't
+          shrink below its current content, so the layout stuck at whatever
+          size the window had been at its largest. */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row gap-6 lg:gap-8 overflow-y-auto no-scrollbar">
         {/* Left Sidebar: Advanced Controls */}
-        <aside className="w-full md:w-80 flex flex-col gap-8 order-2 md:order-1 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-8 space-y-10">
-            <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
+        <aside className="w-full lg:w-56 xl:w-72 2xl:w-80 shrink-0 flex flex-col gap-6 order-2 lg:order-1 lg:overflow-y-auto no-scrollbar pb-6 lg:pb-10">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-5 xl:p-8 space-y-8 xl:space-y-10">
+            <div className="flex items-center gap-3 border-b border-ink/5 pb-5 xl:pb-6">
               <div className="w-2 h-2 bg-accent rounded-full" />
               <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">Geometric Calibration</h3>
             </div>
@@ -224,17 +230,21 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         </aside>
 
         {/* Main Canvas Area */}
-        <main className="flex-1 flex flex-col gap-6 order-1 md:order-2">
-          <div className="flex-grow relative min-h-[500px]">
-             <ClothingCanvas
-                imageUrl={currentImageUrl}
-                category={category}
-                personaType={personaType}
-                transform={transform}
-                onTransformChange={setTransform}
-                onCanvasReady={(canvas) => { fabricCanvasRef.current = canvas; }}
-                activeTool={activeTool}
-              />
+        <main className="order-1 lg:order-2 lg:flex-1 min-w-0 shrink-0 lg:shrink flex flex-col h-[62vh] min-h-[380px] lg:h-auto lg:min-h-[320px]">
+          <div className="flex-1 relative min-h-0">
+             {/* Absolutely filled, so the Fabric canvas inside can never
+                 push this column's size around. */}
+             <div className="absolute inset-0">
+               <ClothingCanvas
+                  imageUrl={currentImageUrl}
+                  category={category}
+                  personaType={personaType}
+                  transform={transform}
+                  onTransformChange={setTransform}
+                  onCanvasReady={(canvas) => { fabricCanvasRef.current = canvas; }}
+                  activeTool={activeTool}
+                />
+             </div>
              {allowWarp && activeTool === 'warp' && (
                <WarpPanel
                  sourceUrl={warp?.originalImageUrl ?? currentImageUrl}
@@ -250,9 +260,9 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         </main>
 
         {/* Right Sidebar: Identity */}
-        <aside className="w-full md:w-80 flex flex-col gap-8 order-3 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-8 space-y-8">
-            <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
+        <aside className="w-full lg:w-56 xl:w-72 2xl:w-80 shrink-0 flex flex-col gap-6 order-3 lg:overflow-y-auto no-scrollbar pb-6 lg:pb-10">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-5 xl:p-8 space-y-8">
+            <div className="flex items-center gap-3 border-b border-ink/5 pb-5 xl:pb-6">
               <div className="w-2 h-2 bg-emerald-400 rounded-full" />
               <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">Garment Identity</h3>
             </div>
