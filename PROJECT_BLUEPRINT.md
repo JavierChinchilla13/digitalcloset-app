@@ -6259,3 +6259,103 @@ cropping (`CleanupResult { edited, trim }`). Checked live on a test tee whose
 399x379 (predicted 399x379), the selection box hugs the shirt, and the shirt
 stays where it was on the persona. Jackets: split from the trimmed picture;
 their fit comes from the sections, so nothing is retargeted.
+
+### Task 85 - Realistic layer clipping (2026-09-30, branch `phase-4.7-studio-and-layers`)
+
+Requested: layered garments should look like real life - a shirt under a
+jacket that is bigger than the jacket must not stick out at the sides or below
+the hem; it should only be seen through the jacket's opening. Same idea for
+pants and the other layers.
+
+Rule (chosen with the user, "hybrid"): each garment that has another garment
+above it gets a mask built from the garments above it.
+- Across the rows an upper garment covers, the lower one is only visible
+  between the upper one's left and right edges (its outline).
+- A top or dress under a JACKET is hidden completely outside the jacket's
+  outline, rows above and below it included - it is only seen through the
+  opening.
+- Any other pair (pants over a shirt, a shirt over pants, pants over shoes) is
+  clipped only across the rows the upper garment covers, so what hangs beyond it
+  stays visible (e.g. trousers below a shirt's hem).
+- Accessories never clip or get clipped; shoes never clip what is under them
+  (trousers over shoes may be wider than the shoes). Several garments above:
+  a pixel must be allowed by all of them.
+
+How: the "outline" is each pixel row's leftmost-to-rightmost extent
+(`rowSpans`), NOT a filled silhouette - an open jacket front stays inside the
+span, which is what lets the shirt show through it.
+- `utils/occlusion.ts` (pure): `rowSpans`, `unionSpans` (a modular jacket's
+  pictures are one garment), `clipMode`, `buildMask`. 13 tests on synthetic
+  pixel data.
+- `utils/layerGeometry.ts`: the placement logic (final transform, crop insets,
+  jacket opening) extracted from `PersonaLayer`, which now uses it too, so the
+  CSS layer and the offscreen redraw can't disagree. 8 tests.
+- `hooks/useOcclusionMasks.ts`: redraws each garment offscreen at 375x500 with
+  its transform (rotate/flip/crop/jacket opening), measures it, builds the
+  masks and returns a PNG data URL per layer. Skips quietly when there is no
+  canvas (jsdom) or an image can't be read (no CORS headers -> that garment is
+  just not masked, i.e. the old behaviour).
+- `PersonaLayer` applies the mask as a CSS mask-image on its wrapper (exactly
+  the persona's 3:4 box, so no placing is needed; the picture's own crop and
+  opening masks stay on the <img>). `PersonaRenderer` computes the masks in a
+  small `PersonaLayerStack` component (hooks can't follow its early return)
+  and tags a modular jacket's pictures with a shared `group`.
+- Layers are compared by their z-index, so when Task 86 lets the user reorder
+  layers the masks follow the new order with no further change.
+
+Verified live (throwaway servers, test account; cleaned up): an oversized tee
+(700 wide) under a 520-wide denim jacket in the Attire persona preview. Without
+the masks (A/B by removing them in the page) the tee pokes out beside the
+sleeves and below the hem; with them it shows only through the jacket's opening.
+`tsc -b --force`, `vite build` clean; 185 frontend tests pass (new:
+`occlusion.test.ts`, `layerGeometry.test.ts`).
+
+**Follow-up (same task): the bottom.** Reported: at the bottom of the jacket
+the shirt / dress was still visible. Sleeves can hang lower than the jacket's
+body, and the span between the cuffs counted as "inside the jacket". The
+'full' clip (top / dress under a jacket) now stops at the bottom of the jacket's
+BODY (`RowSpans.bodyBottom`: the last row with anything in the central half of
+the garment's width); below it the shirt / dress is hidden. The 'rows' clips
+(pants etc.) are unchanged. A modular jacket's pictures are now merged by alpha
+and measured as one garment (so `unionSpans` is gone). Re-checked live on the
+same outfit: the wide dark patch under the jacket is gone, only the pants show
+below the body. 188 frontend tests pass (occlusion tests 16).
+
+**Follow-up 2 (same task): a stray gray line at the pants.** Reported with a
+screenshot: a weird line at the top of the pants under the jacket. Two causes.
+(1) A thin strip of shirt still showed under the higher side of a slanted jacket
+hem (the cut was at the lowest point of the body): the cut now follows the
+jacket's own bottom edge column by column (`columnLimits`; an open front
+interpolates between its two panels). (2) The gray line was the persona's own
+waistband: trousers have an open area at the crotch that the long shirt used to
+hide, and once the shirt was cut at the hem the persona showed through it.
+Decision (asked, "show shirt in the gap"): below the jacket's hem the shirt /
+dress shows again, but only inside the outline of the trousers in the outfit
+(`Occluder.tuck`, built in the hook from all BOTTOM garments) - a tucked-in look
+with no stray line and nothing hanging beside the pants; with no trousers it
+stays hidden. Checked live on an outfit with the pants placed low: dark shirt
+band under the hem, exactly as wide as the pants, then the pants; no gray line.
+194 frontend tests pass (occlusion tests 22).
+
+**Follow-up 3 (same task): the line was still there - found by looking at the
+real outfit.** With the user's own Chrome (their logged-in session on :5173) the
+real outfit (purple "?" tee, denim jacket, black pants) showed a thin gray line
+under the shirt hem. Magnified 5x, with the masks toggled off (gone) and the
+pants mask extracted and read row by row (4 rows with only a sliver visible),
+the cause was the pants being clipped on the rows below the jacket's body: the
+jacket's sleeve cuffs hang unevenly (one cuff ends 4 rows above the other), and
+on those last rows only one sleeve exists, so its "outline" was a narrow sliver
+that hid the body of the pants - the persona's waistband showed through. Two
+fixes in `buildMask`: (1) every clip stops at the bottom of the garment's BODY
+(`bodyBottom`), never at the sleeve cuffs below it; (2) in 'rows' mode, pixels
+below the garment's own bottom edge within its overall width are not clipped
+(a curved hem narrows the outline near its bottom, and the pants beside that
+narrowing are below the hem, not beside the shirt). Re-checked on the same
+outfit: the pants meet the shirt hem directly, identical to the unmasked look.
+196 frontend tests pass (occlusion tests 24).
+
+Known limits: the outline is per row, so a gap between a flared sleeve and the
+body (above the jacket's bottom edge, inside its overall width) can still show
+the shirt as a dark patch beside the torso; a shirt collar that rises above the
+jacket's collar is hidden. Only the Attire preview was checked live (the
+Outfits/Showcase pages use the same renderer).
