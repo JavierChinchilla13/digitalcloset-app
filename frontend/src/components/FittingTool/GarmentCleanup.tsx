@@ -13,26 +13,168 @@ import {
   Info,
   Loader2
 } from 'lucide-react';
-import { Canvas, Image as FabricImage, PencilBrush, Point } from 'fabric';
+import { Canvas, Circle, Group, Image as FabricImage, PencilBrush, Point, util, type FabricObject } from 'fabric';
 import { useFabricCanvas, measureContainerWithRetry } from '../../hooks/useFabricCanvas';
 import { getStageAccentHex } from '../../utils/themeColors';
+import { rescaleObjects } from '../editor/CanvasUtils';
 
 interface GarmentCleanupProps {
   imageUrl: string;
   onComplete: (cleanedImageUrl: string) => void;
   onSkip: () => void;
   onBack: () => void;
+  // 'canvas' (the upload flow's original behavior): the PNG is the whole
+  // canvas, transparent margins included. 'image-bounds' (Task 83, the edit
+  // flow): only the garment's own rectangle, at the source image's pixel
+  // size, so the cleaned image keeps the aspect ratio and framing the item's
+  // saved fit was made for.
+  exportMode?: 'canvas' | 'image-bounds';
+  // The upload flow skips the AI cutout ("Skip AI"); an existing garment has
+  // no AI step to skip, so the edit flow just says "Skip".
+  skipLabel?: string;
 }
 
 type ToolMode = 'erase' | 'restore' | 'pan';
 
-const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, onSkip, onBack }) => {
+// Largest side (px) of an 'image-bounds' export - a very large photo is scaled
+// down rather than risking the browser's canvas size limit.
+const MAX_EXPORT_SIDE = 4096;
+
+// How much of the canvas the garment fills when the studio opens.
+const FIT_FRACTION = 0.92;
+
+// Bounding box (in the image's own pixels) of everything that isn't
+// transparent. Falls back to the whole image if the pixels can't be read.
+const opaqueBounds = (
+  source: CanvasImageSource,
+  width: number,
+  height: number
+): { x: number; y: number; width: number; height: number } => {
+  const whole = { x: 0, y: 0, width, height };
+  try {
+    // Scan a reduced copy: a phone photo is millions of pixels.
+    const shrink = Math.min(1, 512 / Math.max(width, height));
+    const w = Math.max(1, Math.round(width * shrink));
+    const h = Math.max(1, Math.round(height * shrink));
+    const scratch = document.createElement('canvas');
+    scratch.width = w;
+    scratch.height = h;
+    const ctx = scratch.getContext('2d');
+    if (!ctx) return whole;
+    ctx.drawImage(source, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (data[(y * w + x) * 4 + 3] > 16) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < minX || maxY < minY) return whole; // fully transparent
+    return {
+      x: minX / shrink,
+      y: minY / shrink,
+      width: (maxX - minX + 1) / shrink,
+      height: (maxY - minY + 1) / shrink,
+    };
+  } catch {
+    // e.g. a tainted canvas (image without CORS headers)
+    return whole;
+  }
+};
+
+const findBaseImage = (canvas: Canvas) =>
+  canvas.getObjects().find((obj) => (obj as FabricObject & { isBaseImage?: boolean }).isBaseImage) as
+    | FabricImage
+    | undefined;
+
+// A brush stroke as a filled shape. Fabric uses only the FILL of a clip path
+// (never its stroke), and a freehand line has no fill area, so the stroke is
+// rebuilt as a run of filled circles the brush's width, in scene coordinates.
+const strokeToBand = (path: FabricObject): Group => {
+  const { path: commands, pathOffset } = path as unknown as {
+    path: Array<Array<string | number>>;
+    pathOffset: Point;
+  };
+  const matrix = path.calcTransformMatrix();
+  const points: Point[] = [];
+  commands.forEach((command) => {
+    if (command.length < 3) return; // 'Z' has no point
+    const x = Number(command[command.length - 2]);
+    const y = Number(command[command.length - 1]);
+    points.push(util.transformPoint(new Point(x - pathOffset.x, y - pathOffset.y), matrix));
+  });
+
+  const radius = Math.max(0.5, ((path.strokeWidth ?? 1) * Math.abs(path.scaleX ?? 1)) / 2);
+  // Circles closer than half a radius overlap enough to read as a solid line.
+  let step = radius / 2;
+  const length = points.slice(1).reduce((sum, p, i) => sum + p.distanceFrom(points[i]), 0);
+  step = Math.max(step, length / 3000); // bound the circle count on huge strokes
+
+  const centers: Point[] = points.length ? [points[0]] : [];
+  for (let i = 1; i < points.length; i++) {
+    const from = points[i - 1];
+    const to = points[i];
+    const steps = Math.max(1, Math.ceil(from.distanceFrom(to) / step));
+    for (let k = 1; k <= steps; k++) {
+      centers.push(new Point(from.x + ((to.x - from.x) * k) / steps, from.y + ((to.y - from.y) * k) / steps));
+    }
+  }
+
+  return new Group(
+    centers.map(
+      (c) =>
+        new Circle({
+          left: c.x,
+          top: c.y,
+          radius,
+          originX: 'center',
+          originY: 'center',
+          fill: 'black',
+          strokeWidth: 0,
+        })
+    ),
+    { absolutePositioned: true }
+  );
+};
+
+// Restore brush: paints the garment's ORIGINAL pixels back. The stroke becomes
+// the clip of a fresh copy of the untouched base image, stacked above whatever
+// was erased before it (and below whatever is erased after). Before Task 83
+// Restore just behaved as a second Erase.
+const restoreStroke = async (canvas: Canvas, path: FabricObject) => {
+  const base = findBaseImage(canvas);
+  if (!base) return;
+  const original = await base.clone();
+  const band = strokeToBand(path);
+  canvas.remove(path);
+  original.set({ selectable: false, evented: false, clipPath: band });
+  canvas.add(original);
+};
+
+const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
+  imageUrl,
+  onComplete,
+  onSkip,
+  onBack,
+  exportMode = 'canvas',
+  skipLabel = 'Skip AI',
+}) => {
   // No aspectRatio passed - this editor sizes its canvas once at creation
   // (see measureContainerWithRetry below) and never resizes it afterward,
   // unlike the other editors, so it doesn't use the hook's resize-fitting.
   const { canvasRef, fabricCanvasRef, containerRef } = useFabricCanvas();
 
   const [mode, setMode] = useState<ToolMode>('erase');
+  // The canvas event handlers below are registered once (the init effect only
+  // re-runs for a new image), so they read the current tool through a ref -
+  // a plain `mode` there stays frozen at 'erase' forever.
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
   const [brushSize, setBrushSize] = useState(30);
   const [zoom, setZoom] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -53,7 +195,9 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
 
-    const json = JSON.stringify(canvas.toObject());
+    // The custom flags must be listed or they're dropped from the snapshot
+    // (and Undo/Redo would lose track of the base image and eraser strokes).
+    const json = JSON.stringify(canvas.toObject(['isBaseImage', 'isEraserPath']));
     
     if (historyIndex.current < history.current.length - 1) {
       history.current = history.current.slice(0, historyIndex.current + 1);
@@ -109,6 +253,11 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
 
     let canvas: Canvas;
     let isDisposed = false;
+    // Everything registered outside the canvas (window key listeners, the
+    // resize observer) - released when the effect is torn down.
+    const disposers: Array<() => void> = [];
+    // Set once the picture has loaded (see the fit code below).
+    let fitFor: ((width: number, height: number) => { scale: number; left: number; top: number }) | null = null;
 
     const init = async () => {
       const dimensions = await measureContainerWithRetry(containerRef.current);
@@ -131,16 +280,26 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
         
         if (isDisposed) return;
 
-        const scale = Math.min(
-          (canvas.width! * 0.8) / img.width!,
-          (canvas.height! * 0.8) / img.height!
-        );
-        
+        // Fit the garment itself (not the whole picture, which often carries
+        // a wide transparent margin) into the canvas, and center it.
+        const box = opaqueBounds(img.getElement() as CanvasImageSource, img.width!, img.height!);
+        // Where the picture must sit (center point + scale) for the garment
+        // to fill a canvas of the given size. Also used on every resize.
+        fitFor = (width, height) => {
+          const scale = Math.min((width * FIT_FRACTION) / box.width, (height * FIT_FRACTION) / box.height);
+          return {
+            scale,
+            left: width / 2 - (box.x + box.width / 2 - img.width! / 2) * scale,
+            top: height / 2 - (box.y + box.height / 2 - img.height! / 2) * scale,
+          };
+        };
+        const start = fitFor(canvas.width!, canvas.height!);
+
         img.set({
-          scaleX: scale,
-          scaleY: scale,
-          left: canvas.width! / 2,
-          top: canvas.height! / 2,
+          scaleX: start.scale,
+          scaleY: start.scale,
+          left: start.left,
+          top: start.top,
           originX: 'center',
           originY: 'center',
           selectable: false,
@@ -162,15 +321,17 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
         setIsReady(true);
       }
 
-      canvas.on('path:created', (opt) => {
+      canvas.on('path:created', async (opt) => {
         const path = opt.path;
-        if (mode === 'erase') {
-           // EXPLICITLY set the composite operation on the path itself
-           path.set({
-             globalCompositeOperation: 'destination-out',
-             // @ts-ignore
-             isEraserPath: true
-           });
+        if (modeRef.current === 'restore') {
+          await restoreStroke(canvas, path);
+        } else {
+          // EXPLICITLY set the composite operation on the path itself
+          path.set({
+            globalCompositeOperation: 'destination-out',
+            // @ts-ignore
+            isEraserPath: true
+          });
         }
         canvas.renderAll();
         saveHistory();
@@ -204,6 +365,41 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
       };
       window.addEventListener('keydown', handleKeyDown);
       window.addEventListener('keyup', handleKeyUp);
+      disposers.push(() => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+      });
+
+      // Task 83: this canvas was sized once and never again, so resizing the
+      // window (or the dialog still growing when it first opened) left it the
+      // wrong size, or the garment tiny / cut off. Now it follows its
+      // container and re-fits the garment to it; everything drawn on top
+      // (erase / restore strokes) moves and scales with the picture.
+      let lastWidth = dimensions.width;
+      let lastHeight = dimensions.height;
+      const observer = new ResizeObserver(() => {
+        const el = containerRef.current;
+        if (!el || isDisposed) return;
+        const width = el.offsetWidth;
+        const height = el.offsetHeight;
+        if (width === 0 || height === 0 || (width === lastWidth && height === lastHeight)) return;
+        canvas.setDimensions({ width, height });
+        const base = findBaseImage(canvas);
+        if (fitFor && base) {
+          const next = fitFor(width, height);
+          rescaleObjects(
+            canvas,
+            next.scale / (base.scaleX ?? 1),
+            { x: base.left ?? 0, y: base.top ?? 0 },
+            { x: next.left, y: next.top }
+          );
+        }
+        lastWidth = width;
+        lastHeight = height;
+        canvas.requestRenderAll();
+      });
+      if (containerRef.current) observer.observe(containerRef.current);
+      disposers.push(() => observer.disconnect());
 
       let isPanning = false;
       canvas.on('mouse:down', (opt) => {
@@ -231,17 +427,13 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
         }
       });
       canvas.on('mouse:up', () => { isPanning = false; });
-
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-        window.removeEventListener('keyup', handleKeyUp);
-      };
     };
 
     init();
 
     return () => {
       isDisposed = true;
+      disposers.forEach((dispose) => dispose());
       if (canvas) canvas.dispose();
     };
   }, [imageUrl]);
@@ -263,8 +455,10 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
       // @ts-ignore
       brush.globalCompositeOperation = 'destination-out';
     } else {
-      // Restore uses source-over to paint back (assuming white/light mannequin bg)
-      brush.color = 'white'; 
+      // Only the live preview stroke: on release it becomes a clip of the
+      // original image (see restoreStroke), so the color never ends up in
+      // the result.
+      brush.color = 'white';
       // @ts-ignore
       brush.globalCompositeOperation = 'source-over';
     }
@@ -282,6 +476,16 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
     }
   }, [mode, brushSize, isReady]);
 
+  // Sidebar zoom buttons (only the mouse wheel used to zoom): zoom about the
+  // center of the canvas.
+  const zoomBy = (factor: number) => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+    const next = Math.min(10, Math.max(0.5, canvas.getZoom() * factor));
+    canvas.zoomToPoint(new Point(canvas.getWidth() / 2, canvas.getHeight() / 2), next);
+    setZoom(next);
+  };
+
   const handleFinish = () => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;
@@ -290,12 +494,37 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
     // Snapshot with proper scale
     const vpt = canvas.viewportTransform;
     canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-    
-    const dataUrl = canvas.toDataURL({
-      format: 'png',
-      multiplier: 2,
-      enableRetinaScaling: true
-    });
+
+    const base = findBaseImage(canvas);
+    let dataUrl: string;
+    if (exportMode === 'image-bounds' && base) {
+      // Just the garment's rectangle, at (up to) its source pixel size.
+      const bounds = base.getBoundingRect();
+      const naturalWidth = base.width ?? bounds.width;
+      const naturalHeight = base.height ?? bounds.height;
+      const shrink = Math.min(1, MAX_EXPORT_SIDE / Math.max(naturalWidth, naturalHeight));
+      // Exact pixel size (the bounds are fractional, so a plain toDataURL
+      // region can come out a pixel short and slightly change the aspect).
+      const outWidth = Math.round(naturalWidth * shrink);
+      const outHeight = Math.round(naturalHeight * shrink);
+      const region = canvas.toCanvasElement(outWidth / bounds.width, {
+        left: bounds.left,
+        top: bounds.top,
+        width: bounds.width,
+        height: bounds.height,
+      });
+      const out = document.createElement('canvas');
+      out.width = outWidth;
+      out.height = outHeight;
+      out.getContext('2d')!.drawImage(region, 0, 0, outWidth, outHeight);
+      dataUrl = out.toDataURL('image/png');
+    } else {
+      dataUrl = canvas.toDataURL({
+        format: 'png',
+        multiplier: 2,
+        enableRetinaScaling: true
+      });
+    }
 
     if (vpt) canvas.setViewportTransform(vpt);
     
@@ -331,8 +560,8 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
           <button disabled={!canUndo} onClick={handleUndo} className={`p-4 rounded-2xl transition-all ${canUndo ? 'text-text-primary hover:bg-ink/5' : 'text-ink/10 cursor-not-allowed'}`}><Undo2 size={20} /></button>
           <button disabled={!canRedo} onClick={handleRedo} className={`p-4 rounded-2xl transition-all ${canRedo ? 'text-text-primary hover:bg-ink/5' : 'text-ink/10 cursor-not-allowed'}`}><Redo2 size={20} /></button>
           <div className="h-px w-10 bg-ink/5 my-2" />
-          <button onClick={() => setZoom(z => Math.min(z + 0.2, 5))} className="p-4 rounded-2xl text-text-secondary hover:text-text-primary transition-all"><ZoomIn size={20} /></button>
-          <button onClick={() => setZoom(z => Math.max(z - 0.2, 0.5))} className="p-4 rounded-2xl text-text-secondary hover:text-text-primary transition-all"><ZoomOut size={20} /></button>
+          <button onClick={() => zoomBy(1.25)} className="p-4 rounded-2xl text-text-secondary hover:text-text-primary transition-all"><ZoomIn size={20} /></button>
+          <button onClick={() => zoomBy(0.8)} className="p-4 rounded-2xl text-text-secondary hover:text-text-primary transition-all"><ZoomOut size={20} /></button>
           <button onClick={handleReset} className="p-4 rounded-2xl text-red-400/40 hover:text-red-400 transition-all mt-auto"><RotateCcw size={20} /></button>
         </aside>
 
@@ -340,7 +569,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
             a dark backdrop in both site themes (see index.css). The dot
             grid now matches the accent the other 3 canvas stages use,
             instead of this one alone using plain white. */}
-        <main ref={containerRef} className="flex-1 relative bg-stage rounded-2xl border border-white/10 overflow-hidden group">
+        <main ref={containerRef} className="flex-1 min-w-0 relative bg-stage rounded-2xl border border-white/10 overflow-hidden group">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
           <canvas ref={canvasRef} />
           <div className="absolute bottom-8 left-8 flex items-center gap-4">
@@ -368,7 +597,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({ imageUrl, onComplete, o
             </button>
             <div className="grid grid-cols-2 gap-4">
               <button onClick={onBack} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl font-medium text-[10px] tracking-[0.3em] uppercase transition-all">Back</button>
-              <button onClick={onSkip} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-xl font-medium text-[10px] uppercase transition-all">Skip AI</button>
+              <button onClick={onSkip} className="py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-xl font-medium text-[10px] uppercase transition-all">{skipLabel}</button>
             </div>
           </div>
         </aside>

@@ -529,7 +529,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         className={`relative bg-background-secondary border border-ink/5 rounded-[3rem] shadow-2xl overflow-hidden transition-all duration-700 ${
-          step === 'FITTING' || step === 'SHOE_FITTING' || step === 'JACKET_FITTING' || step === 'GARMENT_CLEANUP' ? 'w-full max-w-6xl h-[90vh]' : 'w-full max-w-2xl'
+          step === 'FITTING' || step === 'SHOE_FITTING' || step === 'JACKET_FITTING' || step === 'GARMENT_CLEANUP' ? 'w-full max-w-7xl h-[90vh]' : 'w-full max-w-2xl'
         }`}
         onClick={(e) => e.stopPropagation()}
       >

@@ -11,7 +11,8 @@ import {
   CANVAS_PAD,
   stageWidth,
   stageHeight,
-  applyStagePadding
+  resizeStageKeepingObjects,
+  keepHandlesReachable
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
@@ -38,11 +39,28 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
-      if (canvas) applyStagePadding(canvas, size);
+      // A collapsed container (mid-transition, or a window shrunk to nothing)
+      // measures 0: keep the last real size instead of squashing everything
+      // to nothing - the next real measurement rescales from it.
+      if (canvas && size.width > 0 && size.height > 0) {
+        // Task 83: resizing used to clear the canvas and reload every image
+        // on each tick of a window drag. The stage keeps its 3:4 shape, so
+        // the objects on it are simply scaled with it.
+        resizeStageKeepingObjects(canvas, size);
+        // The mask-follows-garment refs below hold canvas-pixel positions
+        // and scales; rebase them on the rescaled garment so the next drag
+        // doesn't see the resize as a huge move.
+        const garment = canvas.getObjects().find(obj => obj.name === 'garment');
+        if (garment) {
+          lastGarmentPosRef.current = { left: garment.left ?? 0, top: garment.top ?? 0 };
+          lastGarmentScaleRef.current = { scaleX: garment.scaleX ?? 1, scaleY: garment.scaleY ?? 1 };
+        }
+      }
       canvas?.requestRenderAll();
     },
   });
   const isUpdatingRef = useRef(false);
+  const hasSize = canvasSize.height > 0;
 
   // Task 53 (stale closure fix): `handleModified` below is registered once
   // in an effect with `[]` deps, and `updateCrop` (in the crop effect) is
@@ -181,6 +199,18 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       }
     };
 
+    // Task 83: keep the garment where its selection handles stay inside the
+    // canvas. Registered before handleModified on purpose - listeners run in
+    // registration order, so handleModified records the clamped position.
+    // Only the garment: the crop box moves through its own 'moving' handler,
+    // which has already recorded its position by the time this runs.
+    const keepReachable = (e: { target?: { name?: string } }) => {
+      const target = canvas.getActiveObject();
+      if (e.target?.name === 'garment' && target) keepHandlesReachable(canvas, target);
+    };
+    canvas.on('object:moving', keepReachable);
+    canvas.on('object:modified', keepReachable);
+
     canvas.on('object:modified', handleModified);
     canvas.on('object:scaling', handleModified);
     canvas.on('object:moving', handleModified);
@@ -300,7 +330,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
 
     const initObjects = async () => {
       const canvas = fabricCanvasRef.current;
-      if (!canvas || canvasSize.height === 0) return;
+      if (!canvas || !hasSize) return;
 
       try {
         const [mannequin, garment] = await Promise.all([
@@ -391,7 +421,10 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
 
     initObjects();
     return () => { cancelled = true; };
-  }, [imageUrl, mannequinUrl, canvasSize]);
+    // canvasSize is deliberately not a dependency (Task 83): a resize rescales
+    // the objects in place (see onResize above) instead of reloading them.
+    // Only "did the canvas get its first real size yet" matters here.
+  }, [imageUrl, mannequinUrl, hasSize]);
 
   // Sync Transform updates from props
   useEffect(() => {
@@ -506,7 +539,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
 
   return (
     <div
-      className="relative w-full h-full min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
+      className="relative w-full h-full bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
       style={{ padding: CANVAS_PAD }}
     >
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"

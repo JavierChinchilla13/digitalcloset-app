@@ -17,6 +17,9 @@ import { exportCanvasToImage, CANVAS_PAD, stageWidth, stageHeight } from '../edi
 interface JacketFittingEditorProps {
   segments: Record<string, string>;
   personaType: PersonaType;
+  // Editing an existing garment starts with its current name / description.
+  initialName?: string;
+  initialDescription?: string;
   onSave: (data: { name: string; description: string; modularData: string; previewUrl: string }) => void;
   onBack: () => void;
 }
@@ -24,11 +27,13 @@ interface JacketFittingEditorProps {
 const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({ 
   segments, 
   personaType, 
+  initialName = '',
+  initialDescription = '',
   onSave, 
   onBack 
 }) => {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(initialName);
+  const [description, setDescription] = useState(initialDescription);
   const [activePart, setActivePart] = useState<string>('torso');
   const [isGroupMode, setIsGroupMode] = useState(true);
   
