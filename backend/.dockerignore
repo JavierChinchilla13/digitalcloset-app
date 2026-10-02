@@ -1,0 +1,9 @@
+target/
+.git
+.idea
+.vscode
+*.iml
+# Local secrets must never be baked into an image.
+src/main/resources/application-local.properties
+HELP.md
+IMPLEMENTATION_SUMMARY.md

@@ -2,10 +2,11 @@
 # project has on each push, so a regression is caught without anyone having to
 # remember to run three separate test commands.
 #
-# Three independent jobs (they run in parallel and one failing does not hide
-# the others). Everything is self-contained: no database, no secrets, no
-# network services - the tests use an in-memory H2 database (backend), mocked
-# API modules (frontend) and a stand-in for the AI model (Python).
+# Four independent jobs (they run in parallel and one failing does not hide
+# the others). Everything is self-contained: no secrets, no external services -
+# the tests use an in-memory H2 database (backend), mocked API modules
+# (frontend) and a stand-in for the AI model (Python); the docker-stack job
+# builds the production images and runs them with throwaway credentials.
 name: CI
 
 on:
@@ -106,3 +107,59 @@ jobs:
       # the model file is not on the runner (and it never downloads it).
       - name: Test
         run: python -m pytest -v
+
+  # Task 24: the production images (backend/Dockerfile, frontend/Dockerfile) and
+  # docker-compose.yml are not covered by any unit test, and the machine the
+  # project is developed on has no Docker - so this job is what proves they build
+  # and work together: real PostgreSQL (the Flyway migrations run from scratch),
+  # the backend on the production profile, and the Caddy web tier in front.
+  docker-stack:
+    name: Docker stack (build + smoke test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      # A throwaway .env: random passwords, a mail host that is never contacted
+      # (the app only connects to it when it sends an email).
+      - name: Write a throwaway .env
+        run: |
+          cat > .env <<EOF
+          SITE_ADDRESS=:80
+          PUBLIC_URL=http://localhost
+          DB_PASSWORD=ci-$(openssl rand -hex 12)
+          JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')
+          SPRING_MAIL_HOST=localhost
+          SPRING_MAIL_USERNAME=ci@example.com
+          SPRING_MAIL_PASSWORD=unused
+          EOF
+
+      # --wait returns once every service with a health check is healthy (the
+      # database, then the backend, which runs the migrations on start).
+      - name: Build and start
+        run: docker compose up -d --build --wait --wait-timeout 420
+
+      - name: Smoke test
+        run: |
+          set -eu
+          # The React app is served, including a deep link a refresh would hit.
+          curl -fsS http://localhost/ | grep -q 'id="root"'
+          curl -fsS http://localhost/closet | grep -q 'id="root"'
+          # The backend's health endpoint is not exposed to the public.
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost/actuator/health)" = 404
+          # The API is reachable through the web tier: register a user...
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost/api/auth/register             -H 'Content-Type: application/json'             -d '{"email":"ci@example.com","password":"Sup3r-secret-pw","firstName":"C","lastName":"I"}')
+          test "$code" = 200
+          # ...broken JSON is a 400 (not a 500)...
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost/api/auth/register             -H 'Content-Type: application/json' -d '{bad')
+          test "$code" = 400
+          # ...and a protected endpoint turns an anonymous caller away.
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/api/clothing)
+          test "$code" = 403
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail 200
+
+      - name: Stop
+        if: always()
+        run: docker compose down -v
