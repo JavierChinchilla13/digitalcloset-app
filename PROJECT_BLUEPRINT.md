@@ -1179,7 +1179,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 *(renumbered 2026-09-01 from 49–50 to 57–58, same reason as Phase 9/10 above)*
 
 - [ ] **57** Comment the codebase thoroughly
-- [ ] **58** Write `PROJECT_STRUCTURE.md`
+- [x] **58** Write `PROJECT_STRUCTURE.md`
 
 > **Execution order is NOT task-number order.** Run
 > **25–28 → 29–48 → 21–24 → 49–50**. Phase numbers 7–11 continue after the
@@ -3117,8 +3117,8 @@ Phase 9/10 above.)*
 ### Tasks
 
 - [ ] **57** Comment the codebase thoroughly (per-file, per-function)
-- [ ] **58** Write `PROJECT_STRUCTURE.md` — every file/module, its purpose,
-      and how the project is organised
+- [x] **58** Write `PROJECT_STRUCTURE.md` — every file/module, its purpose,
+      and how the project is organised *(done 2026-10-01)*
 
 ### 🏁 Definition of Done
 
@@ -6635,3 +6635,22 @@ clock), `RateLimitIntegrationTest` x2 (the real chain returns 429 after the limi
 plus a `ProductionProfileTest` line for the forwarded-address setting.
 Limits: per address only (not a defence against a distributed attack), resets on a
 restart, not shared across several instances.
+
+### Task 58 - `PROJECT_STRUCTURE.md` (2026-10-01, branch `phase-11-docs`)
+
+New root document: what the app is and its architecture, the repository layout,
+then the frontend (entry points, every route, every page, components grouped by
+role, the stores and what each persists in the browser, the API layer, utils / hooks /
+background-removal lib, types, tests), the backend (packages, the full HTTP API, the
+security filter chain, the database tables and Flyway migrations V1-V8, config files
+and profiles, tests), `backend-ai`, a short "how the main things work" (upload,
+outfit building, main outfit, persona eligibility, auth, theme), conventions, and how
+to run things. Built from the actual file tree and the files' own header comments,
+then spot-checked against the code (store persistence, enum values, where the error
+boundaries live). It also lists the legacy/orphaned code that is still in the tree
+(`DashboardPage` + `sections/*`, `OutfitBuilderPage`, `PersonaSelector`,
+`useLocalOutfitStore`) and the older notes that are out of date (`frontend/README.md`,
+`FRONTEND_CHANGES.md`, `backend/HELP.md`, `IMPLEMENTATION_SUMMARY.md`, the feature
+list in the root `README.md`). Docs-only change; nothing to build or test. Maintain it
+when a route, store, package or migration is added.
+Task 57 (comment the codebase thoroughly) remains open.

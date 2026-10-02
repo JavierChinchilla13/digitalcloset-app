@@ -62,3 +62,7 @@ The whole app (PostgreSQL + Spring Boot API + Caddy web server with automatic
 HTTPS) runs on one machine with `docker compose`. See [DEPLOYMENT.md](DEPLOYMENT.md)
 for the step-by-step guide, the settings reference, backups, and a free hosting
 option.
+
+## Project structure
+
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for a map of every directory and module, the API, the database and how the main features work.
