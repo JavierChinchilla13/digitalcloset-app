@@ -3,6 +3,7 @@ package com.javier.closetapp.outfit.service;
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
 import com.javier.closetapp.exception.ForbiddenOperationException;
+import com.javier.closetapp.exception.InvalidOutfitException;
 import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.outfit.dto.*;
 import com.javier.closetapp.outfit.entity.Outfit;
@@ -37,8 +38,20 @@ public class OutfitService {
         return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // One shoe per foot (Task 86): an outfit may name at most one leftShoe and
+    // one rightShoe. Shoes saved without a side have no slot and can't be
+    // checked here (the app treats such a shoe as a pair and keeps one).
+    private void validateShoeSlots(OutfitRequest request) {
+        long left = request.getItems().stream().filter(i -> "leftShoe".equals(i.getSlot())).count();
+        long right = request.getItems().stream().filter(i -> "rightShoe".equals(i.getSlot())).count();
+        if (left > 1 || right > 1) {
+            throw new InvalidOutfitException("An outfit can have only one shoe per foot.");
+        }
+    }
+
     @Transactional
     public OutfitResponse saveOutfit(OutfitRequest request) {
+        validateShoeSlots(request);
         User user = getAuthenticatedUser();
         Outfit outfit = new Outfit();
         outfit.setName(request.getName());
@@ -59,6 +72,7 @@ public class OutfitService {
             item.setClothingItem(clothing);
             item.setSlot(itemReq.getSlot());
             item.setItemOrder(itemReq.getItemOrder());
+            item.setLayerOrder(itemReq.getLayerOrder());
             return item;
         }).collect(Collectors.toList());
 
@@ -78,6 +92,7 @@ public class OutfitService {
 
     @Transactional
     public OutfitResponse updateOutfit(Long id, OutfitRequest request) {
+        validateShoeSlots(request);
         User user = getAuthenticatedUser();
         Outfit outfit = outfitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Outfit not found"));
@@ -106,6 +121,7 @@ public class OutfitService {
             item.setClothingItem(clothing);
             item.setSlot(itemReq.getSlot());
             item.setItemOrder(itemReq.getItemOrder());
+            item.setLayerOrder(itemReq.getLayerOrder());
             return item;
         }).collect(Collectors.toList());
 
@@ -157,6 +173,7 @@ public class OutfitService {
             itemRes.setImageUrl(item.getClothingItem().getImageUrl());
             itemRes.setSlot(item.getSlot());
             itemRes.setItemOrder(item.getItemOrder());
+            itemRes.setLayerOrder(item.getLayerOrder());
             return itemRes;
         }).collect(Collectors.toList()));
         return res;

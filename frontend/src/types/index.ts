@@ -17,6 +17,9 @@ export interface PersonaState {
   accessoryIds: number[];
   jacketIds: number[];
   dressIds: number[];
+  // Task 86: a custom stacking order, item ids from the bottom layer up. Absent
+  // = the default stacking by category.
+  layerOrder?: number[];
 }
 
 export interface User {
@@ -114,6 +117,9 @@ export interface OutfitItem {
   imageUrl?: string;
   slot?: string;
   itemOrder?: number;
+  // Task 86: stacking position on the persona (0 = bottom-most); null/absent =
+  // the default stacking.
+  layerOrder?: number | null;
 }
 
 export interface ShoePair {
@@ -148,6 +154,7 @@ export interface OutfitRequest {
     itemId: number;
     slot?: string;
     itemOrder?: number;
+    layerOrder?: number;
   }[];
 }
 

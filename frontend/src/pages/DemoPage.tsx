@@ -8,6 +8,7 @@ import CroppedThumbnail from '../components/CroppedThumbnail';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import DemoSignupModal from '../components/DemoSignupModal';
 import { SelectionCard } from '../components/OutfitSelectionCards';
+import { toggleWithShoeRule } from '../utils/shoeSelection';
 
 // Task 81: a genuinely-working outfit builder for signed-out visitors,
 // mirroring FlatOutfitBuilderPage's browse-grid-left / selection-panel-right
@@ -29,7 +30,17 @@ const SECTIONS: { label: string; categories: ClothingCategory[] }[] = [
 
 const DemoPage = () => {
   const { items } = useDemoStore();
-  const { selectedItemIds, toggleItem, removeItem, clearDraft } = useOutfitDraftStore();
+  const { selectedItemIds, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
+  // Task 86: one shoe per foot - choosing another shoe swaps it, and says so.
+  const [swapNote, setSwapNote] = useState<string | null>(null);
+  const toggleItem = (itemId: number) => {
+    const { ids, replaced } = toggleWithShoeRule(selectedItemIds, items, itemId);
+    setDraft(ids);
+    const incoming = items.find((item) => item.itemId === itemId);
+    setSwapNote(
+      replaced.length > 0 && incoming ? `Replaced ${replaced.map((r) => r.name).join(' and ')} with ${incoming.name}` : null
+    );
+  };
 
   // Both this page and the real builder read the same global
   // useOutfitDraftStore, so a signed-out visit must not leave a selection a
@@ -100,6 +111,11 @@ const DemoPage = () => {
           <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase whitespace-nowrap">
             {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
           </p>
+          {swapNote && (
+            <p role="status" className="text-[10px] font-medium text-text-secondary tracking-widest uppercase">
+              {swapNote}
+            </p>
+          )}
         </div>
 
         <div className="flex items-center gap-4">

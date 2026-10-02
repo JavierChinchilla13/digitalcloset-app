@@ -116,7 +116,12 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
         name: `${outfit.name} (Copy)`,
         description: outfit.description,
         avatarType: outfit.avatarType,
-        items: outfit.items.map(({ itemId, slot, itemOrder }) => ({ itemId, slot, itemOrder })),
+        items: outfit.items.map(({ itemId, slot, itemOrder, layerOrder }) => ({
+          itemId,
+          slot,
+          itemOrder,
+          ...(layerOrder != null && { layerOrder }),
+        })),
       });
       set((state) => ({ outfits: [...state.outfits, newOutfit], isLoading: false }));
     } catch (err: any) {

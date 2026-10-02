@@ -6359,3 +6359,91 @@ body (above the jacket's bottom edge, inside its overall width) can still show
 the shirt as a dark patch beside the torso; a shirt collar that rises above the
 jacket's collar is hidden. Only the Attire preview was checked live (the
 Outfits/Showcase pages use the same renderer).
+
+### Task 86 - Layer order on the persona + one shoe per foot (2026-09-30, branch `phase-4.7-studio-and-layers`)
+
+Requested: while layering, let the user choose what goes on top of what (pants
+over a shirt or the reverse, pants over shoes), changed on the persona view by
+clicking each item and only saved when the outfit is saved / updated; and let a
+user add only one shoe per foot.
+
+**Layer order**
+- Backend: `V8__add_outfit_item_layer_order.sql` adds nullable
+  `outfit_items.layer_order` (0 = bottom-most; NULL = no custom order, so every
+  outfit saved before this keeps stacking by category). Deliberately not
+  `item_order`, which means click / category order and would flip old outfits.
+  `OutfitItem`, `OutfitItemRequest/Response` and `OutfitService` (save, update,
+  response) carry it. Applied to Postgres by Flyway on boot (7 -> 8; additive,
+  an older backend keeps working against it).
+- Frontend: `OutfitItem.layerOrder`, `OutfitRequest.items[].layerOrder`,
+  `PersonaState.layerOrder` (item ids, bottom first). `useOutfitDraftStore`
+  holds `layerOrder` in the DRAFT only (cleared with it, pruned when a piece
+  leaves) until Save / Update; `outfitItemsFromDraft` sends each piece's
+  position only when an order was set; `computePersonaEligibility` /
+  `buildOutfitPersona` carry it; editing an outfit and "Wear style" load it;
+  duplicating keeps it. `utils/layerOrder.ts`: `defaultStack`, `resolveStack`
+  (a piece the order doesn't mention - added later - is slotted where its
+  category would put it), `moveInStack`, `layerOrderFromOutfitItems`.
+- `PersonaRenderer`: with a custom order every piece gets a slot of ten in the
+  stack (a modular jacket's parts / a left-right pair keep their relative order
+  inside it); without one the category ranges apply, unchanged. Click-to-pick:
+  `onLayerPick` + `pickLayerAt` (reads the same offscreen alpha as the
+  occlusion masks, top-most visible layer under the click); `highlightItemId`
+  glows the selected piece. The realistic-clipping masks follow the new order
+  automatically (they compare z), so pants over a shirt clips correctly.
+- UI: new `components/LayerPanel.tsx` beside the Persona Preview in
+  `FlatOutfitBuilderPage` (front first; move forward / back; Reset order once it
+  differs from the default). Click a piece on the persona or in the panel,
+  then move it.
+
+**One shoe per foot**
+- `utils/shoeSelection.ts`: a sided shoe takes its foot, an unsided shoe is a
+  pair and takes both. Choosing a shoe for an occupied foot swaps it and shows
+  "Replaced X with Y" (`FlatOutfitBuilderPage` toast; an inline note on the
+  toast-less `/demo`). `normalizeShoes` cleans an outfit that already broke the
+  rule (later shoe wins) when it loads and when it is saved
+  (`outfitItemsFromDraft`). `usePersonaStore.setEquippedItem` follows the same
+  rule (a sideless shoe now takes both feet; before it took one and a full
+  pair silently replaced the left).
+- Backend: `OutfitService` rejects more than one `leftShoe` or `rightShoe` slot
+  with 400 "An outfit can have only one shoe per foot." (new
+  `InvalidOutfitException`), on save and on update.
+
+**Verified.** `tsc -b --force`, `vite build` clean; 242 frontend tests (new:
+`shoeSelection`, `layerOrder`, `layersAndShoes`, a demo shoe-swap test) and 74
+backend tests (new: `OutfitLayerOrderIntegrationTest` x6: layerOrder round
+trip, null by default, update replaces it, one per foot OK, two left shoes 400
+on save, two right shoes 400 on update) pass. Live on throwaway servers (test
+account; cleaned up): choosing a second left shoe swapped it with the toast and
+kept one shoe; with a tee, jacket, pants and boot, the Layers panel listed them
+front first, moving the pants forward twice changed their z (pants above tee and
+boot, below the jacket) and showed "Reset order"; clicking the jacket / a pants
+leg on the persona selected the matching row (and the jacket glowed); saving
+stored layerOrder boot 0, tee 1, pants 2, jacket 3, and reloading Attire (main
+outfit, "Update style") restored that order.
+
+**Follow-up (same task).**
+- *Drag and drop in the Layers panel.* Each row has a grip and is draggable;
+  dropping a piece on a row gives it that row's place in the stack (a dashed
+  accent border marks the target). `moveToIndex` in `utils/layerOrder.ts`; the
+  arrows stay (touch screens have no HTML5 drag). Tested with fired drag events.
+- *Jacket below the shirt.* Checked in the user's own Chrome (their outfit,
+  reordering in the draft only - nothing saved): with the jacket under the tee
+  the 'rows' clip cut the jacket down to the tee's outline and removed its
+  sleeves. Upper-body pieces under another upper-body piece (jacket under a
+  shirt, shirt under a dress, two shirts) now just stack (`clipMode` returns
+  null); the sleeves and collar show beside the shirt. Top/dress under a jacket
+  keeps the 'full' clip, and pants / shoes keep 'rows'.
+- *Update saves the order.* Verified live on a throwaway account: an outfit saved
+  without an order, opened in edit mode ("Update style"), the jacket dragged to
+  the back, Update pressed - the API returned layerOrder Jacket 0, Pants 1, Tee 2.
+  (Same code path as Save: `handleSave` -> `outfitItemsFromDraft(..., layerOrder)`
+  -> `updateOutfit`; the backend update replaces the items with their order.)
+248 frontend tests pass (new: moveToIndex, drag-and-drop panel, clipMode for
+upper-body pairs).
+
+Known limits: the Layers panel is only in the Attire persona preview (the
+Outfits / Showcase pages draw a saved order but don't edit it); a shoe saved
+with no side has no slot, so the backend can't check it (the app keeps one);
+the click-to-pick reads a piece's pixels without its occlusion mask, so a
+hidden part of a shirt beyond a jacket's edge would still pick the shirt.

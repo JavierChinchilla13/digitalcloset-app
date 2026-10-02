@@ -74,6 +74,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    // An outfit that breaks a rule (e.g. two shoes for one foot) - fixable by
+    // the caller, so 400 with the message.
+    @ExceptionHandler(InvalidOutfitException.class)
+    public ResponseEntity<Object> handleInvalidOutfit(InvalidOutfitException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     // A verification code was requested again too soon (the "Resend" abuse guard).
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {

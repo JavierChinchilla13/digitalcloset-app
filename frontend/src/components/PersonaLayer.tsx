@@ -25,6 +25,11 @@ export interface PersonaLayerProps {
   // A mask (image URL) hiding the parts of this layer a garment above it would
   // really cover, e.g. a shirt's sides and hem beyond the jacket over it.
   occlusionMask?: string;
+  // Task 86: which closet item this layer shows (a modular jacket's pictures
+  // share one), so a click on the persona can be traced back to its item.
+  itemId?: number;
+  // Draws a glow around the garment - the piece selected for reordering.
+  highlight?: boolean;
 }
 
 const PersonaLayer: React.FC<PersonaLayerProps> = ({ 
@@ -36,7 +41,8 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
   category,
   personaType = PersonaType.MALE,
   side,
-  occlusionMask
+  occlusionMask,
+  highlight
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -114,7 +120,10 @@ const PersonaLayer: React.FC<PersonaLayerProps> = ({
       WebkitMaskImage: maskImage,
       maskImage,
       imageRendering: 'crisp-edges' as const,
-      transformOrigin: 'center center'
+      transformOrigin: 'center center',
+      ...(highlight && {
+        filter: 'drop-shadow(0 0 2px var(--color-accent, #5B8CFF)) drop-shadow(0 0 7px var(--color-accent, #5B8CFF))',
+      }),
     };
   };
 

@@ -8,6 +8,9 @@ import { useOutfitStore } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useCollectionStore } from '../store/useCollectionStore';
 import { computePersonaEligibility } from '../utils/personaEligibility';
+import { toggleWithShoeRule, normalizeShoes } from '../utils/shoeSelection';
+import { resolveStack, moveInStack, moveToIndex, layerOrderFromOutfitItems } from '../utils/layerOrder';
+import LayerPanel from '../components/LayerPanel';
 import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
@@ -64,7 +67,7 @@ const FlatOutfitBuilderPage = () => {
   // here, only which type it targets.
   const { persona, setPersonaType } = usePersonaStore();
   const { outfits, mainOutfitId, fetchOutfits, fetchMainOutfit, saveOutfit, updateOutfit } = useOutfitStore();
-  const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
+  const { selectedItemIds, layerOrder, removeItem, clearDraft, setDraft, setLayerOrder } = useOutfitDraftStore();
   const { collections, fetchCollections, createCollection } = useCollectionStore();
   const { showToast } = useToast();
 
@@ -148,7 +151,7 @@ const FlatOutfitBuilderPage = () => {
     const existing = outfits.find((o) => String(o.outfitId) === editId);
     if (existing) {
       setOutfitName(existing.name);
-      setDraft(draftFromOutfitItems(existing.items));
+      setDraft(draftFromOutfitItems(existing.items), layerOrderFromOutfitItems(existing.items));
     }
   }, [editId, outfits, outfitsReady, setDraft]);
 
@@ -166,7 +169,7 @@ const FlatOutfitBuilderPage = () => {
     const outfitData: OutfitRequest = {
       name: outfitName,
       avatarType: persona.type,
-      items: outfitItemsFromDraft(selectedItemIds, items),
+      items: outfitItemsFromDraft(selectedItemIds, items, layerOrder),
     };
 
     try {
@@ -306,15 +309,53 @@ const FlatOutfitBuilderPage = () => {
   // saved adjustment also flips it to FITTED.
   const [fitModalItem, setFitModalItem] = useState<ClothingItem | null>(null);
 
+  // Task 86: a click on a card toggles the piece, under the one-shoe-per-foot
+  // rule: choosing a shoe for a foot that already has one swaps it, and says so.
+  const handleToggle = (itemId: number) => {
+    const { ids, replaced } = toggleWithShoeRule(selectedItemIds, items, itemId);
+    setDraft(ids, layerOrder);
+    if (replaced.length > 0) {
+      const incoming = items.find((item) => item.itemId === itemId);
+      const label = (item: ClothingItem | undefined) =>
+        item ? `${item.name}${item.side ? ` (${item.side})` : ''}` : 'shoe';
+      showToast(`Replaced ${replaced.map(label).join(' and ')} with ${label(incoming)}`, 'info');
+    }
+  };
+
+  // An outfit loaded from before the rule may name two shoes for one foot: keep
+  // the later one, as saving would. Waits for the closet (the rule needs each
+  // item's category and side).
+  useEffect(() => {
+    if (items.length === 0) return;
+    const cleaned = normalizeShoes(selectedItemIds, items);
+    if (cleaned.length !== selectedItemIds.length) {
+      setDraft(cleaned, layerOrder);
+      showToast('A foot can only have one shoe - kept the latest', 'info');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedItemIds, items]);
+
+  // Task 86: the piece picked for reordering (clicked on the persona or in the
+  // Layers panel). Cleared when it leaves the outfit.
+  const [selectedLayerId, setSelectedLayerId] = useState<number | null>(null);
+  useEffect(() => {
+    if (selectedLayerId != null && !selectedItemIds.includes(selectedLayerId)) setSelectedLayerId(null);
+  }, [selectedItemIds, selectedLayerId]);
+
   // Persona preview (Task 38) + per-reason exclusion split (Task 46): the
   // filtering itself now lives in utils/personaEligibility (Task 61) so
   // OutfitCard can share it - see that file for the rules. Reuses
   // equippedFromOutfitItems (Task 16) and PersonaRenderer unchanged.
   const eligibility = useMemo(
-    () => computePersonaEligibility(selectedItems, items, persona.type),
-    [selectedItems, items, persona.type]
+    () => computePersonaEligibility(selectedItems, items, persona.type, layerOrder),
+    [selectedItems, items, persona.type, layerOrder]
   );
   const { previewPersona } = eligibility;
+  // Task 86: only what is drawn can be layered.
+  const layerStack = useMemo(
+    () => resolveStack(eligibility.eligibleItems.map((item) => item.itemId), items, layerOrder),
+    [eligibility.eligibleItems, items, layerOrder]
+  );
   const notFittedExcluded = eligibility.notFittedItems;
   const noCutoutExcluded = eligibility.noCutoutItems;
   const excludedIneligibleCount = eligibility.ineligibleItems.length;
@@ -515,7 +556,7 @@ const FlatOutfitBuilderPage = () => {
                             key={item.itemId}
                             whileHover={{ y: -4 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => toggleItem(item.itemId)}
+                            onClick={() => handleToggle(item.itemId)}
                             className={`
                               relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
@@ -666,8 +707,26 @@ const FlatOutfitBuilderPage = () => {
                     )}
                   </div>
                 )}
-                <div className="w-full h-[50vh]">
-                  <PersonaRenderer persona={previewPersona} />
+                <div className="flex flex-col md:flex-row items-start gap-6">
+                  <div className="w-full md:flex-1 h-[50vh]">
+                    <PersonaRenderer
+                      persona={previewPersona}
+                      onLayerPick={setSelectedLayerId}
+                      highlightItemId={selectedLayerId}
+                    />
+                  </div>
+                  {layerStack.length > 1 && (
+                    <LayerPanel
+                      stack={layerStack}
+                      items={items}
+                      selectedId={selectedLayerId}
+                      onSelect={setSelectedLayerId}
+                      onMove={(itemId, direction) => setLayerOrder(moveInStack(layerStack, itemId, direction))}
+                      onReorder={(itemId, toIndex) => setLayerOrder(moveToIndex(layerStack, itemId, toIndex))}
+                      isCustom={layerOrder != null}
+                      onReset={() => setLayerOrder(null)}
+                    />
+                  )}
                 </div>
               </div>
             ) : (

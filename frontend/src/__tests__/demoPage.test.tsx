@@ -70,6 +70,18 @@ describe('DemoPage', () => {
     expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
   });
 
+  it('one shoe per foot: picking another shoe swaps it and says so', async () => {
+    const user = userEvent.setup();
+    renderDemo();
+
+    await user.click(cardFor('University Blue Sneaker'));
+    expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
+
+    await user.click(cardFor('Black Chukka Boot'));
+    expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Replaced University Blue Sneaker with Black Chukka Boot');
+  });
+
   it('Save Outfit opens the sign-up gate instead of saving anything', async () => {
     const user = userEvent.setup();
     renderDemo();

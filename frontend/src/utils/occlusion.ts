@@ -141,11 +141,13 @@ function bodyBottomRow(
 //  'full': the lower garment is only visible inside the upper one's outline,
 //          rows above and below it included (top / dress under a jacket);
 //  'rows': only the rows the upper garment covers are clipped;
-//  null:   no clipping.
+//  null:   no clipping (plain stacking).
 // Accessories never clip or get clipped (a watch or a scarf is allowed to sit
 // over or poke out of anything), and shoes never clip what is under them
 // (trousers hanging over the shoes are allowed to be wider than the shoes).
 export type ClipMode = 'full' | 'rows' | null;
+
+const UPPER_BODY = new Set<ClothingCategory>([ClothingCategory.TOP, ClothingCategory.DRESS, ClothingCategory.JACKET]);
 
 export function clipMode(lower: ClothingCategory | undefined, upper: ClothingCategory | undefined): ClipMode {
   if (!lower || !upper) return null;
@@ -154,6 +156,11 @@ export function clipMode(lower: ClothingCategory | undefined, upper: ClothingCat
   if (upper === ClothingCategory.JACKET && (lower === ClothingCategory.TOP || lower === ClothingCategory.DRESS)) {
     return 'full';
   }
+  // Upper-body pieces under another upper-body piece (a jacket under a shirt, a
+  // shirt under a dress, two shirts) just stack: the sleeves come out beside
+  // the piece on top, so clipping the lower one to the upper one's outline
+  // would wrongly cut its sleeves off.
+  if (UPPER_BODY.has(lower) && UPPER_BODY.has(upper)) return null;
   return 'rows';
 }
 
