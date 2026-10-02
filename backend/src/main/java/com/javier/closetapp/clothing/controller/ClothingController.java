@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// HTTP layer of /api/clothing: a thin wrapper, the rules and ownership checks are in ClothingService.
 @RestController
 @RequestMapping("/api/clothing")
 public class ClothingController {

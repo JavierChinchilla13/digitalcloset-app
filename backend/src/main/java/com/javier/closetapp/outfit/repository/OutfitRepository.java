@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+// Outfits by owner.
 @Repository
 public interface OutfitRepository extends JpaRepository<Outfit, Long> {
     List<Outfit> findByOwner(User owner);

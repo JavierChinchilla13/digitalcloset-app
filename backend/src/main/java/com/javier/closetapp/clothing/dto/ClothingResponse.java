@@ -5,6 +5,7 @@ import com.javier.closetapp.common.enums.ClothingCategory;
 import com.javier.closetapp.common.enums.AvatarType;
 import com.javier.closetapp.common.enums.PersonaStatus;
 
+// A garment as the frontend receives it, with its placement nested in `transform`.
 public class ClothingResponse {
     private Long itemId;
     private String name;

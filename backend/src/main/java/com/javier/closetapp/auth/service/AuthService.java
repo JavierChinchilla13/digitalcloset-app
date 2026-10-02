@@ -13,6 +13,9 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+// Registration and login. Both return a signed JWT (JwtService) plus the user's id and
+// email. Registering always creates a normal user (ROLE_USER) - the request cannot
+// choose a role, which is what stops anyone making themselves an admin.
 @Service
 public class AuthService {
 
@@ -29,6 +32,7 @@ public class AuthService {
         this.authenticationManager = authenticationManager;
     }
 
+    // Creates the account (BCrypt-hashed password) and signs it in at once. A taken email is a 409 (DuplicateEmailException).
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new DuplicateEmailException("An account with this email already exists");
@@ -49,6 +53,8 @@ public class AuthService {
         return new AuthResponse(jwtToken, savedUser.getUserId(), savedUser.getEmail());
     }
 
+    // Checks the credentials with Spring Security's AuthenticationManager (bad password, unknown
+    // email and a deactivated account all fail the same way and become one 401) and issues a token.
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(

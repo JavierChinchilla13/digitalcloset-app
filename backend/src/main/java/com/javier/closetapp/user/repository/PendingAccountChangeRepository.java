@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+// The newest staged email/password change of a user, and clearing them once confirmed or replaced.
 @Repository
 public interface PendingAccountChangeRepository extends JpaRepository<PendingAccountChange, Long> {
 

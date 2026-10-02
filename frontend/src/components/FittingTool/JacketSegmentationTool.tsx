@@ -10,6 +10,10 @@ interface JacketSegmentationToolProps {
   onBack: () => void;
 }
 
+// Splits a jacket photo into parts (torso, sleeves, collar...) so the parts can be
+// fitted separately and the jacket can open. Runs the segmentation model in the
+// browser as soon as it mounts, lets the user pick which parts to keep, uploads
+// those to Cloudinary and reports { partName: url } through `onComplete`.
 const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ originalFile, onComplete, onBack }) => {
   const [segments, setSegments] = useState<Map<string, Blob>>(new Map());
   const [segmentUrls, setSegmentUrls] = useState<Map<string, string>>(new Map()); // Preview URLs
@@ -18,6 +22,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
   const [selectedSegments, setSelectedSegments] = useState<Set<string>>(new Set(['torso', 'leftSleeve', 'rightSleeve']));
 
   useEffect(() => {
+    // Runs the model on the original photo and makes a preview URL for every part it found. Failure just ends the loading state (the user can go back).
     const runSegmentation = async () => {
       try {
         const results = await segmentationService.segmentJacket(originalFile);
@@ -43,6 +48,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
     };
   }, [originalFile]);
 
+  // Uploads each selected part (one at a time, showing which) and returns the URLs; an upload failure keeps the tool open.
   const handleFinish = async () => {
     setUploadingStatus('Uploading segments to cloud...');
     const finalUrls: Record<string, string> = {};
@@ -63,6 +69,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
     }
   };
 
+  // Adds or removes a part from the set that will be kept.
   const toggleSegment = (name: string) => {
     const next = new Set(selectedSegments);
     if (next.has(name)) next.delete(name);

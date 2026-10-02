@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+// Categories by owner.
 @Repository
 public interface CollectionRepository extends JpaRepository<Collection, Long> {
     List<Collection> findByOwner(User owner);

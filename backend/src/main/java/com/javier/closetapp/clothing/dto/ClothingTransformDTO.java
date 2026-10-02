@@ -1,5 +1,8 @@
 package com.javier.closetapp.clothing.dto;
 
+// A garment's placement on the persona: position (x, y), scale, rotation, size, opacity and
+// flips, plus the optional crop rectangle (mask*) made in the fitting studio. All numbers are
+// in the 750 x 1000 virtual canvas the editors use.
 public class ClothingTransformDTO {
     private Double x;
     private Double y;

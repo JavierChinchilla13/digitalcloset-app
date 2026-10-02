@@ -12,6 +12,7 @@ import ClothingDetailsModal from '../components/ClothingDetailsModal';
 import EditClothingModal from '../components/EditClothingModal';
 import DeleteConfirmationModal from '../components/DeleteConfirmationModal';
 
+// LEGACY dashboard section: a horizontal strip of the closet's garments for the active persona, with the same view/edit/delete/upload modals as ClosetPage. Used only by DashboardPage.
 const ClosetSection = () => {
   const { items, isLoading, fetchItems } = useClothingStore();
   const { persona } = usePersonaStore();

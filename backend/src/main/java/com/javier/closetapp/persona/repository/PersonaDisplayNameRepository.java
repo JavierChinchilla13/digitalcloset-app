@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+// A user's custom persona names, all of them or one by persona type.
 @Repository
 public interface PersonaDisplayNameRepository extends JpaRepository<PersonaDisplayName, Long> {
     List<PersonaDisplayName> findByOwner(User owner);

@@ -3,6 +3,7 @@ package com.javier.closetapp.auth.dto;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+// Login body: a valid email and a non-blank password.
 public class LoginRequest {
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be a valid email address")

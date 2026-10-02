@@ -5,6 +5,7 @@ import { authService } from '../api/authService';
 import { Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 
+// Same minimum the server enforces on reset (ResetPasswordRequest).
 const MIN_PASSWORD_LENGTH = 8;
 
 // Step 2 of password reset (Task 21): the page the emailed link opens
@@ -23,6 +24,7 @@ const ResetPasswordPage = () => {
   const [linkRejected, setLinkRejected] = useState(false);
   const [doneMessage, setDoneMessage] = useState<string | null>(null);
 
+  // Checks length and confirmation locally, then sends the token and new password; a server rejection means the link is bad.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

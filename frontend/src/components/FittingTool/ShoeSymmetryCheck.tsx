@@ -6,6 +6,10 @@ interface ShoeSymmetryCheckProps {
   onSelect: (isDifferent: boolean) => void;
 }
 
+// The shoe upload's first question: is the other shoe different? `onSelect(false)` =
+// no, mirror this picture for the other foot (one image, flipped); `onSelect(true)` =
+// yes, the user will upload a second picture. Either way each foot can still be
+// positioned separately in the fitting step.
 const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
   return (
     <motion.div 

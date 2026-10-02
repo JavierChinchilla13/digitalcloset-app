@@ -8,6 +8,8 @@ interface SectionWrapperProps {
   delay?: number;
 }
 
+// A landing-page section: centered, padded, and fades/slides in once as it scrolls
+// into view. `delay` staggers neighbouring sections; `className` extends the layout.
 const SectionWrapper = ({ children, className, delay = 0 }: SectionWrapperProps) => {
   return (
     <motion.section

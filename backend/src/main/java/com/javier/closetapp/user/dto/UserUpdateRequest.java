@@ -2,6 +2,7 @@ package com.javier.closetapp.user.dto;
 
 import jakarta.validation.constraints.Size;
 
+// Body to change the signed-in user's own name (each at most 50 characters).
 public class UserUpdateRequest {
     
     @Size(max = 50, message = "First name must be at most 50 characters")
