@@ -8,6 +8,9 @@ interface PersonaSelectorProps {
   onTypeChange: (type: PersonaType) => void;
 }
 
+// Male/Female pill switch with a sliding highlight. NOT USED anywhere any more -
+// PersonaTypeSwitcher (a dropdown) replaced it in the outfit builder. Kept only until
+// the legacy pages are cleaned out (see PROJECT_STRUCTURE.md, "legacy code").
 const PersonaSelector: React.FC<PersonaSelectorProps> = ({ currentType, onTypeChange }) => {
   const options = [
     { type: PersonaType.MALE, label: 'MALE', icon: UserRound },

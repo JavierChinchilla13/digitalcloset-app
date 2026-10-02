@@ -1,3 +1,6 @@
+// A dark "studio" backdrop (gradient, vignette, faint grid) for the persona. Only the
+// legacy dashboard's AvatarSection uses it; the current builder draws on the theme's
+// own background instead.
 const PersonaSpotlight = () => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

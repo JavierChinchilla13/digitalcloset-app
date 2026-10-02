@@ -22,6 +22,10 @@ import EditClothingModal from "../components/EditClothingModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 import ErrorState from '../components/ErrorState';
 
+// The closet: every garment as a card grid with search, category / persona filters and
+// a favourites-only switch. Adding opens the upload wizard; each card can be viewed,
+// edited or deleted through its own modal (one modal open at a time, for
+// `selectedItem`). Items come from useClothingStore; a failed load shows ErrorState.
 const ClosetPage = () => {
   const { items, isLoading, error, fetchItems } = useClothingStore();
   const { persona } = usePersonaStore();
@@ -51,16 +55,19 @@ const ClosetPage = () => {
     fetchItems();
   }, [fetchItems]);
 
+  // Opens the details modal for `item`.
   const handleViewDetails = (item: ClothingItem) => {
     setSelectedItem(item);
     setIsDetailsModalOpen(true);
   };
 
+  // Opens the edit modal (the Fabric studio) for `item`.
   const handleEdit = (item: ClothingItem) => {
     setSelectedItem(item);
     setIsEditModalOpen(true);
   };
 
+  // Opens the delete confirmation for `item`; nothing is deleted until it is confirmed.
   const handleDelete = (item: ClothingItem) => {
     setSelectedItem(item);
     setIsDeleteModalOpen(true);

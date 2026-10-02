@@ -1178,7 +1178,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 *(renumbered 2026-09-01 from 49–50 to 57–58, same reason as Phase 9/10 above)*
 
-- [ ] **57** Comment the codebase thoroughly
+- [x] **57** Comment the codebase thoroughly
 - [x] **58** Write `PROJECT_STRUCTURE.md`
 
 > **Execution order is NOT task-number order.** Run
@@ -3116,7 +3116,7 @@ Phase 9/10 above.)*
 
 ### Tasks
 
-- [ ] **57** Comment the codebase thoroughly (per-file, per-function)
+- [x] **57** Comment the codebase thoroughly (per-file, per-function)
 - [x] **58** Write `PROJECT_STRUCTURE.md` — every file/module, its purpose,
       and how the project is organised *(done 2026-10-01)*
 
@@ -6654,3 +6654,36 @@ boundaries live). It also lists the legacy/orphaned code that is still in the tr
 list in the root `README.md`). Docs-only change; nothing to build or test. Maintain it
 when a route, store, package or migration is added.
 Task 57 (comment the codebase thoroughly) remains open.
+
+### Task 57 - Comment the codebase (targeted pass) (2026-10-01, branch `phase-11.1-comments`)
+
+Scope agreed with the user: not all ~210 files, but every source file that had no
+purpose comment. A scan (header comment above the first declaration; comment density)
+found 108 of 193 non-test source files without one; trivial ones aside, ~75 files were
+commented: a purpose comment on every module/class/component, and comments on the
+non-obvious functions in them (what it does and why, not a restatement of the code).
+- **Frontend (37 files):** API services (`clothingService`, `cloudinaryService`,
+  `authService`), background-removal layer, `useAuthStore`, `useClothingStore`,
+  `Toast`, `SectionWrapper`, `cn`, `MainLayout`, `main.tsx`, the shoe/jacket editors,
+  `TransformPanel`, `CanvasToolbar`, `LoginPage`, `SignupPage`, `ResetPasswordPage`,
+  `ClosetPage`, `SavedOutfitsPage`, `PersonaPage`, `ClothingDetailsModal`,
+  `CreateUserModal`, `DeleteConfirmationModal`, and the legacy modules (marked
+  LEGACY/UNUSED so nobody mistakes them for the live flow: `OutfitBuilderPage`,
+  `DashboardPage` + `sections/*`, `PersonaSelector`, `PersonaSpotlight`,
+  `useLocalOutfitStore`).
+- **Backend (38 files):** `ClosetAppApplication`, `AuthService`, `JwtService`,
+  `ApplicationConfig`, `ClothingService`, the entities (`ClothingItem`, `Outfit`,
+  `OutfitItem`, `User`), controllers, repositories, DTOs, enums.
+- **Comments only:** the change adds 224 lines and deletes none (checked with
+  `git diff --numstat`); `tsc -b --force`, `vite build`, 273 frontend tests and 100
+  backend tests all pass unchanged.
+- **Things the pass surfaced (documented in the comments, not changed):**
+  `clothingService.getClothingItem` is unused and the backend has no
+  `GET /clothing/{id}`; `getClothingItems(category)` sends `?category=` but
+  `ClothingController.getAllItems` ignores it (the client filters); `ClothingService.updateItem`
+  never updates `side` (set at creation only); favourites live only in the browser
+  (`closet-favorites`) and the closet is cached in localStorage, not per account;
+  `OutfitItem`'s position/scale/rotation columns are no longer written.
+- Not touched: files that already had a real header (the large editors, `UploadFlow`,
+  `PersonaRenderer`, `OutfitShowcasePage`, ...) - a function-by-function pass over
+  those is the remaining nice-to-have if ever wanted.

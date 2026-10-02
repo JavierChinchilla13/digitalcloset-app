@@ -19,6 +19,10 @@ import { useToast } from '../components/Toast';
 import { ClothingCategory } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 
+// LEGACY persona-first outfit builder (/outfits/new, /outfits/edit/:id): you equip
+// garments straight onto the persona, category by category (usePersonaStore). The
+// current builder is FlatOutfitBuilderPage (select first, preview on the persona
+// afterwards); this page is no longer linked from the app, only still routable.
 const OutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -48,6 +52,7 @@ const OutfitBuilderPage = () => {
     }
   }, [id, outfits, outfitsReady, updatePersona]);
 
+  // Saves or updates the outfit from what is equipped on the persona, then goes to /outfits; on failure it stays here and toasts the error.
   const handleSave = async () => {
     setIsSaving(true);
 
@@ -73,10 +78,12 @@ const OutfitBuilderPage = () => {
     }
   };
 
+  // Takes everything off the persona.
   const clearLook = () => {
     clearEquipped();
   };
 
+  // True if the garment is currently on the persona, in any slot.
   const isEquipped = (itemId: number) => {
     if (!persona) return false;
     return (
@@ -90,6 +97,7 @@ const OutfitBuilderPage = () => {
     );
   };
 
+  // Equips the garment, or takes it off if it is already worn (the persona store applies the shoe and category rules).
   const toggleItem = (item: any) => {
     setEquippedItem(item);
   };

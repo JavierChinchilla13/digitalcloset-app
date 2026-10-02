@@ -24,6 +24,10 @@ interface JacketFittingEditorProps {
   onBack: () => void;
 }
 
+// The jacket's fitting studio: the segmented parts (torso, sleeves, collar) are laid
+// out on the persona and moved together ("group mode") or one at a time, with an
+// "openness" slider that parts the front. Saving flattens the result into a preview
+// image and returns the parts' placement as `modularData` (a ModularJacketData JSON).
 const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({ 
   segments, 
   personaType, 
@@ -56,10 +60,12 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
 
   const fabricCanvasRef = useRef<Canvas | null>(null);
 
+  // Stores the parts' placement as reported by the canvas after a drag/scale/rotate.
   const handleDataChange = (newData: ModularJacketData) => {
     setModularData(newData);
   };
 
+  // Applies a numeric change from the panel to every part (group mode) or only the active part.
   const handleTransformChange = (updates: Partial<ClothingTransform>) => {
     if (isGroupMode) {
       // Apply same transform offset/updates to all segments
@@ -96,14 +102,19 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
     }
   };
 
+  // How far the jacket is open (0 = closed); anything above 0 marks it as open.
   const handleOpennessChange = (val: number) => {
     setModularData(prev => ({ ...prev, isOpen: val > 0, openness: val }));
   };
 
+  // Puts the selected part(s) back to the default position and size.
   const handleReset = () => {
     handleTransformChange({ x: 375, y: 300, scaleX: 1, scaleY: 1, rotation: 0, width: 450, height: 450 });
   };
 
+  // Exports a clean transparent preview of the fitted jacket (mannequin, helper
+  // markers and highlight outlines are hidden for the export and restored right after),
+  // then hands the name, description, modularData and preview to `onSave`.
   const handleFinish = async () => {
     const canvas = fabricCanvasRef.current;
     if (!canvas) return;

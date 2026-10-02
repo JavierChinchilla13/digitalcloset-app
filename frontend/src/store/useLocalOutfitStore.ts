@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { PersonaType } from '../types';
 
+// LEGACY, UNUSED: the browser-only outfit store from before outfits moved to the
+// database (useOutfitStore). It is still persisted under "saved-outfits-storage", so
+// old data may sit in a user's browser, but nothing reads it any more.
 export interface LocalOutfit {
   id: string;
   name: string;
@@ -29,6 +32,7 @@ interface LocalOutfitStore {
   duplicateOutfit: (id: string) => void;
 }
 
+// Zustand store with save / update / delete / duplicate of local outfits.
 export const useLocalOutfitStore = create<LocalOutfitStore>()(
   persist(
     (set) => ({

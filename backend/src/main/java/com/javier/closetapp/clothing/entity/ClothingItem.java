@@ -9,6 +9,11 @@ import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
+// A garment in a user's closet, one row of clothing_items. The picture lives on Cloudinary
+// (imageUrl); the row stores where it sits on the persona (the transform_* columns and the
+// crop mask_* columns), which persona type it is for, whether it can be shown on the
+// persona at all (personaStatus), shoe side, optional jacket/warp data (modularData),
+// and a soft-delete flag (isActive).
 @Entity
 @Table(name = "clothing_items")
 @DynamicUpdate

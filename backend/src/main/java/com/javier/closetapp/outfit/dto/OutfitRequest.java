@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
+// Body to create or replace an outfit: a name, the persona type and the list of pieces.
 public class OutfitRequest {
     @NotBlank(message = "Name is required")
     private String name;

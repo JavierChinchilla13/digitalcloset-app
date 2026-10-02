@@ -29,6 +29,10 @@ interface ShoeFittingEditorProps {
   onBack: () => void;
 }
 
+// "Shoe Studio": positions a left and a right shoe picture on the persona's feet. Each
+// foot has its own transform (starting from the per-persona SHOE_PAIR_PRESETS) and can
+// be skipped, so a single shoe can be saved. `onSave` hands back both transforms; the
+// upload flow turns them into two garments (side 'left' / 'right').
 const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({ 
   leftImageUrl, 
   rightImageUrl,
@@ -46,6 +50,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
   const [skipLeft, setSkipLeft] = useState(false);
   const [skipRight, setSkipRight] = useState(false);
 
+  // Merges `updates` into the transform of the given foot only.
   const handleTransformChange = (side: 'left' | 'right', updates: Partial<ClothingTransform>) => {
     if (side === 'left') {
       setLeftTransform(prev => ({ ...prev, ...updates }));
@@ -54,6 +59,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
     }
   };
 
+  // Puts the foot being edited back to its preset position (the other foot is untouched).
   const handleReset = () => {
     if (activeSide === 'left') setLeftTransform(SHOE_PAIR_PRESETS[personaType].left);
     else setRightTransform(SHOE_PAIR_PRESETS[personaType].right);

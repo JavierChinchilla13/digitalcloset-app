@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// A saved outfit (outfits table): name, which persona type it was made for, and its pieces
+// (OutfitItem rows, deleted together with the outfit). Owned by one user.
 @Entity
 @Table(name = "outfits")
 public class Outfit {

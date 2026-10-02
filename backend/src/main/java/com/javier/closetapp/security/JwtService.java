@@ -14,6 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+// Creates and checks the login tokens (JWT, HS256). The signing key is the Base64 secret
+// in app.jwt.secret (never committed - it comes from JWT_SECRET); tokens carry the email
+// as subject and expire after app.jwt.expiration-ms (24 h). No server-side session exists:
+// a token is valid exactly as long as its signature and expiry check out.
 @Service
 public class JwtService {
 
@@ -47,6 +51,7 @@ public class JwtService {
                 .compact();
     }
 
+    // A token is valid when it names this user and has not expired. A bad signature or malformed token throws JwtException (JwtAuthenticationFilter turns that into 'not signed in').
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
@@ -69,6 +74,7 @@ public class JwtService {
                 .getPayload();
     }
 
+    // Derives the HMAC key from the Base64 secret; a secret that is not valid Base64 (or too short) fails here at the first token.
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);

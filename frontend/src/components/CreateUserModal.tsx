@@ -23,6 +23,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreated }: CreateUserModalProps) =
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Clears the form back to its defaults.
   const reset = () => {
     setFirstName('');
     setLastName('');
@@ -32,12 +33,14 @@ const CreateUserModal = ({ isOpen, onClose, onCreated }: CreateUserModalProps) =
     setError(null);
   };
 
+  // Closing is ignored while a save is in flight, so a half-sent request can't be abandoned.
   const handleClose = () => {
     if (isSaving) return;
     reset();
     onClose();
   };
 
+  // Creates the account through the admin endpoint and hands it back to the page's user list.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
