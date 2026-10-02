@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { ClothingCategory } from '../types';
 import type { ClothingItem, OutfitItem, OutfitRequest } from '../types';
+import { normalizeShoes } from '../utils/shoeSelection';
 
 // Flat, item-first outfit selection (Phase 8 pivot, Task 35). Deliberately
 // NOT the persona equip representation (usePersonaStore's category-bucketed
@@ -10,21 +11,32 @@ import type { ClothingItem, OutfitItem, OutfitRequest } from '../types';
 // represent at all.
 interface OutfitDraftState {
   selectedItemIds: number[];
+  // Task 86: a custom stacking order (item ids, bottom layer first), or null =
+  // the default stacking by category. Lives in the draft only until the outfit
+  // is saved / updated.
+  layerOrder: number[] | null;
   toggleItem: (itemId: number) => void;
   addItem: (itemId: number) => void;
   removeItem: (itemId: number) => void;
-  setDraft: (itemIds: number[]) => void;
+  setDraft: (itemIds: number[], layerOrder?: number[] | null) => void;
+  setLayerOrder: (layerOrder: number[] | null) => void;
   clearDraft: () => void;
 }
 
+// A custom order only ever mentions pieces that are still selected.
+const prune = (layerOrder: number[] | null, selected: number[]) =>
+  layerOrder ? layerOrder.filter((id) => selected.includes(id)) : null;
+
 export const useOutfitDraftStore = create<OutfitDraftState>((set) => ({
   selectedItemIds: [],
+  layerOrder: null,
 
-  toggleItem: (itemId) => set((state) => ({
-    selectedItemIds: state.selectedItemIds.includes(itemId)
+  toggleItem: (itemId) => set((state) => {
+    const selectedItemIds = state.selectedItemIds.includes(itemId)
       ? state.selectedItemIds.filter((id) => id !== itemId)
-      : [...state.selectedItemIds, itemId],
-  })),
+      : [...state.selectedItemIds, itemId];
+    return { selectedItemIds, layerOrder: prune(state.layerOrder, selectedItemIds) };
+  }),
 
   addItem: (itemId) => set((state) =>
     state.selectedItemIds.includes(itemId)
@@ -32,13 +44,19 @@ export const useOutfitDraftStore = create<OutfitDraftState>((set) => ({
       : { selectedItemIds: [...state.selectedItemIds, itemId] }
   ),
 
-  removeItem: (itemId) => set((state) => ({
-    selectedItemIds: state.selectedItemIds.filter((id) => id !== itemId),
-  })),
+  removeItem: (itemId) => set((state) => {
+    const selectedItemIds = state.selectedItemIds.filter((id) => id !== itemId);
+    return { selectedItemIds, layerOrder: prune(state.layerOrder, selectedItemIds) };
+  }),
 
-  setDraft: (itemIds) => set({ selectedItemIds: itemIds }),
+  setDraft: (itemIds, layerOrder = null) => set({
+    selectedItemIds: itemIds,
+    layerOrder: prune(layerOrder, itemIds),
+  }),
 
-  clearDraft: () => set({ selectedItemIds: [] }),
+  setLayerOrder: (layerOrder) => set((state) => ({ layerOrder: prune(layerOrder, state.selectedItemIds) })),
+
+  clearDraft: () => set({ selectedItemIds: [], layerOrder: null }),
 }));
 
 // --- Pure conversion between the flat draft selection and the backend's
@@ -69,10 +87,20 @@ const CATEGORY_TO_SLOT: Partial<Record<ClothingCategory, string>> = {
 // Shoes without a recorded side (legacy single-image pairs) get no slot here -
 // they stay valid in the flat list. The persona preview places them anyway via
 // applyLegacyShoeFallback in utils/personaEligibility.ts (Task 66).
-export function outfitItemsFromDraft(itemIds: number[], items: ClothingItem[]): OutfitRequest['items'] {
+export function outfitItemsFromDraft(
+  itemIds: number[],
+  items: ClothingItem[],
+  // Task 86: the custom stacking order, if the user set one. Each piece it
+  // mentions is saved with its position in it; without one, no layerOrder is
+  // sent and the outfit keeps stacking by category.
+  layerOrder?: number[] | null
+): OutfitRequest['items'] {
   const itemsById = new Map(items.map((item) => [item.itemId, item]));
+  // Task 86: one shoe per foot, whatever the draft says (an outfit loaded from
+  // before the rule may hold two for a foot) - the later one wins.
+  const ids = normalizeShoes(itemIds, items);
 
-  return itemIds.reduce<OutfitRequest['items']>((acc, itemId, index) => {
+  return ids.reduce<OutfitRequest['items']>((acc, itemId, index) => {
     const item = itemsById.get(itemId);
     if (!item) return acc;
 
@@ -80,7 +108,8 @@ export function outfitItemsFromDraft(itemIds: number[], items: ClothingItem[]): 
       ? (item.side === 'left' ? 'leftShoe' : item.side === 'right' ? 'rightShoe' : undefined)
       : CATEGORY_TO_SLOT[item.category];
 
-    acc.push({ itemId, slot, itemOrder: index });
+    const position = layerOrder ? layerOrder.indexOf(itemId) : -1;
+    acc.push({ itemId, slot, itemOrder: index, ...(position >= 0 && { layerOrder: position }) });
     return acc;
   }, []);
 }

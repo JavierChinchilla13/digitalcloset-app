@@ -8,6 +8,7 @@ import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitDraftStore, draftFromOutfitItems } from '../store/useOutfitDraftStore';
+import { layerOrderFromOutfitItems } from '../utils/layerOrder';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
 import CroppedThumbnail from './CroppedThumbnail';
@@ -101,7 +102,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   //    persona switches to it and the preview isn't for the wrong persona.
   const handleApply = () => {
     updatePersona(outfitPersona);
-    setDraft(draftFromOutfitItems(outfit.items));
+    setDraft(draftFromOutfitItems(outfit.items), layerOrderFromOutfitItems(outfit.items));
     navigate('/', { state: { showPersonaPreview: true } });
   };
 

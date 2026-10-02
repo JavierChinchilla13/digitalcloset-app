@@ -116,6 +116,24 @@ function maskToUrl(mask: Uint8ClampedArray): string | null {
   }
 }
 
+// The closet item whose garment is drawn at (nx, ny) - both 0..1 across the
+// persona's box - picking the top-most layer that has something visible there.
+// Null when only the persona (or nothing readable) is there.
+export async function pickLayerAt(layers: PersonaLayerProps[], nx: number, ny: number): Promise<number | null> {
+  if (!canvasAvailable()) return null;
+  const px = Math.min(MASK_W - 1, Math.max(0, Math.floor(nx * MASK_W)));
+  const py = Math.min(MASK_H - 1, Math.max(0, Math.floor(ny * MASK_H)));
+  const candidates = layers
+    .filter((l): l is MaskLayer & { itemId: number } => l.id !== 'base' && !!l.imageUrl && !!l.category && l.itemId != null)
+    .sort((a, b) => b.zIndex - a.zIndex);
+  for (const layer of candidates) {
+    const img = await loadImage(layer.imageUrl);
+    const alpha = img && layerAlpha(layer, img);
+    if (alpha && alpha[py * MASK_W + px] > 16) return layer.itemId;
+  }
+  return null;
+}
+
 interface Garment {
   key: string;
   category: ClothingCategory;

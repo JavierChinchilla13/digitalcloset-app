@@ -96,6 +96,14 @@ describe('clipMode', () => {
     expect(clipMode(C.BOTTOM, C.JACKET)).toBe('rows');
   });
 
+  it('upper-body pieces under another upper-body piece are not clipped: a jacket under a shirt keeps its sleeves', () => {
+    expect(clipMode(C.JACKET, C.TOP)).toBeNull();
+    expect(clipMode(C.JACKET, C.DRESS)).toBeNull();
+    expect(clipMode(C.TOP, C.TOP)).toBeNull();
+    expect(clipMode(C.DRESS, C.TOP)).toBeNull();
+    expect(clipMode(C.JACKET, C.JACKET)).toBeNull();
+  });
+
   it('shoes never clip what is under them, and accessories never take part', () => {
     expect(clipMode(C.BOTTOM, C.SHOES)).toBeNull();
     expect(clipMode(C.TOP, C.ACCESSORY)).toBeNull();

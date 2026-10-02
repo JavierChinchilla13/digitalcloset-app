@@ -11,6 +11,8 @@ public class OutfitItemRequest {
     private Long itemId;
     private String slot;
     private Integer itemOrder;
+    // Stacking position on the persona (0 = bottom-most); null = default order.
+    private Integer layerOrder;
 
     public OutfitItemRequest() {}
 
@@ -22,4 +24,7 @@ public class OutfitItemRequest {
 
     public Integer getItemOrder() { return itemOrder; }
     public void setItemOrder(Integer itemOrder) { this.itemOrder = itemOrder; }
+
+    public Integer getLayerOrder() { return layerOrder; }
+    public void setLayerOrder(Integer layerOrder) { this.layerOrder = layerOrder; }
 }
