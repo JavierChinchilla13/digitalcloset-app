@@ -8,6 +8,8 @@ import OutfitCard from '../components/OutfitCard';
 import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
 
+// All saved outfits of the active persona type as cards (wear, edit, duplicate, delete,
+// set as main). Separates "no outfits yet" from "couldn't load" and offers a retry.
 const SavedOutfitsPage = () => {
   const { outfits, fetchOutfits, fetchMainOutfit } = useOutfitStore();
   const [loadFailed, setLoadFailed] = useState(false);

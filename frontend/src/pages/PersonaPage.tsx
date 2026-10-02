@@ -7,6 +7,8 @@ import { usePersonaSettingsStore } from '../store/usePersonaSettingsStore';
 import { PersonaType } from '../types';
 import SectionWrapper from '../components/SectionWrapper';
 
+// Pick the active persona (male / female) and rename them (display names are stored on
+// the account and shown across the app). Reachable from the user menu.
 const PersonaPage = () => {
   const navigate = useNavigate();
   const { persona, setPersonaType } = usePersonaStore();
@@ -23,11 +25,13 @@ const PersonaPage = () => {
     fetchDisplayNames();
   }, [fetchDisplayNames]);
 
+  // Starts editing a persona's name, pre-filled with the current one.
   const startRename = (type: PersonaType) => {
     setRenamingType(type);
     setRenameValue(getDisplayName(type));
   };
 
+  // Saves the new name (the store ignores a blank one) and leaves edit mode.
   const confirmRename = async () => {
     if (renamingType == null) return;
     await setDisplayName(renamingType, renameValue);

@@ -20,6 +20,9 @@ interface CanvasToolbarProps {
   onRestoreWarp?: () => void;
 }
 
+// The tool picker above a garment canvas: Select, Crop & Mask and (for garment types
+// that support it) Warp, plus export, undo-crop and restore-warp actions. It only
+// reports what was chosen; the editor decides what each tool does.
 const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   activeTool,
   onToolChange,

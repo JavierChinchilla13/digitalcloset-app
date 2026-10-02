@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+// Lookup of reset tokens by their hash, the newest token of a user (for the resend throttle), and clearing a user's old tokens.
 @Repository
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
 

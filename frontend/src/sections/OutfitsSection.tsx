@@ -6,6 +6,7 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useNavigate } from 'react-router-dom';
 import OutfitCard from '../components/OutfitCard';
 
+// LEGACY dashboard section: the saved outfits of the active persona type as cards. Used only by DashboardPage.
 const OutfitsSection = () => {
   const { outfits, fetchOutfits } = useOutfitStore();
   const { persona } = usePersonaStore();

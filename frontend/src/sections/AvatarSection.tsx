@@ -8,12 +8,14 @@ import type { OutfitRequest } from "../types";
 import PersonaRenderer from "../components/PersonaRenderer";
 import PersonaSpotlight from "../components/PersonaSpotlight";
 
+// LEGACY dashboard section: the persona on a studio backdrop with a quick "save this look" button (named by the current time). Used only by DashboardPage.
 const AvatarSection = () => {
   const { persona } = usePersonaStore();
   const { saveOutfit } = useOutfitStore();
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Saves what is equipped as a new outfit named "Style hh:mm" and flashes a success state.
   const handleSaveOutfit = async () => {
     if (!persona) return;
     setIsSaving(true);

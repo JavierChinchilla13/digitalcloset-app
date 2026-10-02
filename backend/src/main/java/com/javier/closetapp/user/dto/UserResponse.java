@@ -3,6 +3,7 @@ package com.javier.closetapp.user.dto;
 import com.javier.closetapp.common.enums.Role;
 import java.time.LocalDateTime;
 
+// An account as the frontend sees it - never includes the password hash.
 public class UserResponse {
     private Long userId;
     private String email;

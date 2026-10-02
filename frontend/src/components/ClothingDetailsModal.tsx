@@ -11,9 +11,13 @@ interface ClothingDetailsModalProps {
   onClose: () => void;
 }
 
+// Read-only details of one garment: picture, category, persona sign, description and when it was added.
 const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpen, onClose }) => {
   if (!item) return null;
 
+  // Turns the upload date into "May 20, 2026". The backend has sent the date in several
+  // shapes over time (ISO string, a Jackson [y, m, d, ...] array, a Postgres timestamp
+  // with a space), so every one is handled; anything unreadable shows "Date not available".
   const formatDate = (dateValue?: any) => {
     // 1. Exhaustive search for the date field in the item object
     const findDate = (val: any) => {

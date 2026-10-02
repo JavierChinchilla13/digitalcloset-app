@@ -3,6 +3,9 @@ import { ApiBgRemover } from "./api";
 import type { BgRemoverMode, BgRemoverOptions, BgRemoverResult } from "./types";
 import imageCompression from 'browser-image-compression';
 
+// Entry point of background removal: picks the method by VITE_BG_REMOVER_MODE
+// (default 'hybrid') and never leaves the user stuck - if every method fails the
+// original picture is returned so the upload can continue.
 const DEFAULT_MODE: BgRemoverMode = (import.meta.env.VITE_BG_REMOVER_MODE as BgRemoverMode) || 'hybrid';
 
 /**
@@ -22,6 +25,7 @@ export const optimizeImage = async (file: File): Promise<File> => {
   }
 };
 
+// Tries the configured removers in order (browser, then API) and falls back to the original image.
 export class BackgroundRemovalService {
   private browserRemover = new BrowserBgRemover();
   private apiRemover = new ApiBgRemover();

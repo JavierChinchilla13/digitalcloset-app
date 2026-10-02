@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+// Garment CRUD for the signed-in user. Every method works on the caller's own rows only:
+// reading is limited to the owner, and changing or deleting someone else's item is a 403.
 @Service
 public class ClothingService {
 
@@ -29,11 +31,13 @@ public class ClothingService {
         this.userRepository = userRepository;
     }
 
+    // The account behind the current request's token (set by JwtAuthenticationFilter).
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // Saves a new garment owned by the caller; an omitted persona status defaults to FITTED, an omitted modular flag to false.
     @Transactional
     public ClothingResponse createItem(ClothingRequest request) {
         User user = getAuthenticatedUser();
@@ -80,6 +84,9 @@ public class ClothingService {
                 .collect(Collectors.toList());
     }
 
+    // Partial update: only the fields present in the request change. A transform, if sent, replaces
+    // the whole stored transform and mask. Note that `side` is set at creation only and is not
+    // updatable here.
     @Transactional
     public ClothingResponse updateItem(Long id, ClothingRequest request) {
         User user = getAuthenticatedUser();
@@ -152,6 +159,7 @@ public class ClothingService {
         clothingRepository.save(item);
     }
 
+    // Entity -> response, rebuilding the nested transform object the frontend expects.
     private ClothingResponse mapToResponse(ClothingItem item) {
         LocalDateTime createdAt = item.getCreatedAt();
         if (createdAt == null) {

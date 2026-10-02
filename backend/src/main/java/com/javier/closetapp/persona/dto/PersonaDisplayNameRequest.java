@@ -2,6 +2,7 @@ package com.javier.closetapp.persona.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
+// Body to set a persona's display name (must not be blank).
 public class PersonaDisplayNameRequest {
     @NotBlank(message = "Display name is required")
     private String displayName;

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+// Garments by owner; the app reads through findByOwnerAndIsActiveTrue so soft-deleted ones never show.
 @Repository
 public interface ClothingRepository extends JpaRepository<ClothingItem, Long> {
     List<ClothingItem> findByOwner(User owner);

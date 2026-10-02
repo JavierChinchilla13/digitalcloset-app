@@ -3,6 +3,9 @@ package com.javier.closetapp.outfit.entity;
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import jakarta.persistence.*;
 
+// One garment inside an outfit: which item, the slot it occupies (top, bottom, leftShoe,
+// rightShoe, ...), its order in the list, and the optional layerOrder. The position/scale/
+// rotation columns are from the older persona-first builder and are no longer written.
 @Entity
 @Table(name = "outfit_items")
 public class OutfitItem {

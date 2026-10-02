@@ -6,6 +6,7 @@ import { authService } from '../api/authService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 
+// Sign-in form. On success the user lands on / (the outfit builder); a failure shows the server's message.
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +17,7 @@ const LoginPage = () => {
   const setToken = useAuthStore(state => state.setToken);
   const navigate = useNavigate();
 
+  // Logs in, fetches the user profile (for role and name), stores both, and navigates home.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

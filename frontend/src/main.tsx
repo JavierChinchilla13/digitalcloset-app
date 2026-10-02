@@ -8,6 +8,9 @@ import ErrorState from './components/ErrorState.tsx'
 import { initTheme } from './store/useThemeStore.ts'
 
 // Task 67: apply the saved/device theme and keep following the device.
+// Entry point of the app. Order matters: the theme is applied first (so the first paint
+// is right), then the whole app is rendered inside the last-resort error boundary and
+// the toast provider.
 initTheme()
 
 createRoot(document.getElementById('root')!).render(

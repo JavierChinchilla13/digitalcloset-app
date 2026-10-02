@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ErrorState from '../components/ErrorState';
 
+// The frame of every page: navbar on top, the routed page in the middle, footer below.
 const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
