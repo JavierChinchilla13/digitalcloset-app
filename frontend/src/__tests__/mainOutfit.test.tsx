@@ -164,7 +164,8 @@ describe('Showcase (landing) and the main outfit', () => {
     renderShowcase();
 
     // "Office" (id 11) is main and second in the list.
-    expect(await screen.findByRole('heading', { level: 1, name: 'Office' })).toBeInTheDocument();
+    // (Generous timeout: this is the suite's first Showcase render, which can be slow on a loaded machine.)
+    expect(await screen.findByRole('heading', { level: 1, name: 'Office' }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByTestId('main-outfit-tag')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /set as main outfit/i })).not.toBeInTheDocument();
   });
@@ -193,6 +194,23 @@ describe('Showcase (landing) and the main outfit', () => {
     await waitFor(() => expect(users.setMainOutfit).toHaveBeenCalledWith(12));
     expect(await screen.findByTestId('main-outfit-tag')).toBeInTheDocument();
     expect(useOutfitStore.getState().mainOutfitId).toBe(12);
+  });
+
+  it('stays in persona view when switching between outfits', async () => {
+    const user = userEvent.setup();
+    renderShowcase();
+    await screen.findByRole('heading', { level: 1, name: 'Office' });
+
+    await user.click(screen.getByRole('button', { name: /view on persona/i }));
+    expect(screen.getByRole('button', { name: /show pieces/i })).toBeInTheDocument();
+
+    await user.click(screen.getByTitle('Next outfit'));
+    await screen.findByRole('heading', { level: 1, name: 'Evening' });
+    // Past the ~250ms crossfade the old code reset the view in.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(screen.getByRole('button', { name: /show pieces/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /view on persona/i })).not.toBeInTheDocument();
   });
 
   it('says so and keeps the old main outfit when setting it fails', async () => {

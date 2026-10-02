@@ -6447,3 +6447,45 @@ Outfits / Showcase pages draw a saved order but don't edit it); a shoe saved
 with no side has no slot, so the backend can't check it (the app keeps one);
 the click-to-pick reads a piece's pixels without its occlusion mask, so a
 hidden part of a shirt beyond a jacket's edge would still pick the shirt.
+
+### Task 87 - Thumbnails, Showcase persona view, random outfit (2026-10-01, branch `phase-4.8-polish`)
+
+**Thumbnails.** `CroppedThumbnail` draws CSS background images, so every call
+site's `object-cover` class was dead: uncropped garments were `cover`-zoomed and
+clipped (tightly trimmed pictures filled the card edge to edge), cropped ones
+were `contain` at 90%, and old pictures with wide transparent margins floated
+small. Now every garment is fitted whole into its card the same way:
+- `hooks/useVisibleBounds.ts` loads the picture (`crossOrigin='anonymous'`),
+  scans a <=128px copy with `alphaBounds` (alpha > 32) and caches the result per
+  URL. Not measurable (jsdom, a host without CORS) or not yet measured: the whole
+  picture, `contain`, with 5% padding - never a layout jump.
+- `getVisibleDisplay` (`utils/cropDisplay.ts`) turns the visible region into the
+  same display shape `getCropDisplay` returns, so there is one fit path at 90%
+  (`CROP_FILL`). Items with a Fabric crop keep their crop. `fit='cover'` still
+  gives the old full-bleed behaviour.
+- `CategoryDetailPage`'s three raw `<img object-cover>` now use
+  `CroppedThumbnail`; tile backgrounds (`bg-ink/5`) added on the Attire browse
+  card, the old builder, the demo grid and `SelectionCard`.
+
+**Showcase.** The "View on Persona" choice is no longer reset when another
+outfit becomes active (the reset effect in `ShowcaseSlot` is gone; the active slot
+stays mounted). Test: persona view survives "Next outfit" past the crossfade.
+
+**Create random outfit** (Attire, new and edit mode). `utils/randomOutfit.ts`
+`pickRandomOutfit(items, personaType, random, jacketChance = 0.5)` picks a shoe
+pair (a sideless shoe, or a left + right with the same name; mismatched only when
+no named pair exists), a bottom, a shirt and - by chance - a jacket, only from
+fitted, active pieces of the persona's type (`isFittedStatus` is now exported).
+It always starts a NEW outfit: from an open outfit (main outfit on "/" or the
+edit route) it moves to `/outfits/flat/new` with the name "New Style", so the
+open outfit is never written over; it replaces the draft (`setDraft(ids, null)`),
+opens the persona preview and toasts what the closet lacks.
+
+**Verified.** `tsc -b --force`, `vite build` clean; 269 frontend tests (new:
+`thumbnailFit`, `randomOutfit`, `randomOutfitButton`, a Showcase persona-view
+test; the first Showcase test got a 5s wait - it flaked under full-suite load).
+Live in the user's Chrome (nothing saved): Closet and Attire grids show garments
+at a consistent size, nothing clipped; 8 random clicks gave 4-5 pieces with the
+persona preview on; opening "Shoes" for editing and clicking the button moved to
+the new-outfit page ("New Style", "Save to collection") and left "Shoes" at 3
+pieces.

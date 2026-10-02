@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown, Plus, Star } from 'lucide-react';
+import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown, Plus, Star, Shuffle } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
@@ -9,6 +9,7 @@ import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from 
 import { useCollectionStore } from '../store/useCollectionStore';
 import { computePersonaEligibility } from '../utils/personaEligibility';
 import { toggleWithShoeRule, normalizeShoes } from '../utils/shoeSelection';
+import { pickRandomOutfit } from '../utils/randomOutfit';
 import { resolveStack, moveInStack, moveToIndex, layerOrderFromOutfitItems } from '../utils/layerOrder';
 import LayerPanel from '../components/LayerPanel';
 import { ClothingCategory } from '../types';
@@ -322,6 +323,30 @@ const FlatOutfitBuilderPage = () => {
     }
   };
 
+  // Task 87: "Create random outfit" - replaces the whole selection with shoes, a
+  // bottom and a shirt (and a jacket about half the time) for the current persona,
+  // and opens the persona preview to show it. It always makes a NEW outfit: if
+  // an existing outfit is open (the main one on "/", or the edit route) it is
+  // left untouched - we move to the new-outfit route with a fresh name, so the
+  // random pieces are saved with "Save", never written over the open outfit.
+  // A closet missing a category still gets what it can, with a note saying
+  // what to add.
+  const handleRandomOutfit = () => {
+    const { ids, missing } = pickRandomOutfit(items, persona.type);
+    if (ids.length === 0) {
+      showToast(`Add some ${persona.type.toLowerCase()} clothes to your closet first`, 'info');
+      return;
+    }
+    if (editId) {
+      setOutfitName('New Style');
+      navigate('/outfits/flat/new');
+    }
+    setDraft(ids, null);
+    setSelectedLayerId(null);
+    setShowPersonaPreview(true);
+    if (missing.length > 0) showToast(`No ${missing.join(', ')} in your closet for this persona yet`, 'info');
+  };
+
   // An outfit loaded from before the rule may name two shoes for one foot: keep
   // the later one, as saving would. Waits for the closet (the rule needs each
   // item's category and side).
@@ -440,6 +465,12 @@ const FlatOutfitBuilderPage = () => {
         <div className="flex items-center gap-4">
           {/* Task 78: while editing an existing outfit (the main one on "/", or
               via the edit route), a way to start a brand-new outfit instead. */}
+          <button
+            onClick={handleRandomOutfit}
+            className="px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
+          >
+            <Shuffle size={14} /> Create random outfit
+          </button>
           {editId && (
             <button
               onClick={handleNewOutfit}
@@ -558,7 +589,7 @@ const FlatOutfitBuilderPage = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handleToggle(item.itemId)}
                             className={`
-                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
+                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                             `}
                           >
