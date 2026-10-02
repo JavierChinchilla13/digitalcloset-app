@@ -54,6 +54,13 @@ class ProductionProfileTest {
     }
 
     @Test
+    @DisplayName("the connection pool is small and retires connections before a managed database drops them")
+    void smallPool() throws IOException {
+        assertEquals("${DB_POOL_SIZE:5}", prop("spring.datasource.hikari.maximum-pool-size").toString());
+        assertEquals("300000", prop("spring.datasource.hikari.max-lifetime").toString());
+    }
+
+    @Test
     @DisplayName("production does not silently adopt an unmanaged database")
     void flywayDoesNotBaseline() throws IOException {
         assertEquals("false", prop("spring.flyway.baseline-on-migrate").toString());
