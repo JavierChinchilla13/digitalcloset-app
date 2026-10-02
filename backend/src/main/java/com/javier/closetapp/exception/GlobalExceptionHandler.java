@@ -6,7 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -111,6 +118,46 @@ public class GlobalExceptionHandler {
         body.put("errors", fieldErrors);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // Task 24: mistakes in the REQUEST itself (broken JSON, wrong HTTP method,
+    // wrong content type, a missing or malformed parameter, too big an upload, an
+    // unknown path). These are framework exceptions that used to fall through to
+    // the catch-all handlers below and come back as a 500 "unexpected error",
+    // which misreports a client error as a server fault (and, in production, pages
+    // whoever watches the 5xx rate). Each now gets its proper 4xx with a short,
+    // fixed message - never the exception's own text.
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class})
+    public ResponseEntity<Object> handleMalformedRequest(Exception ex) {
+        return clientError(HttpStatus.BAD_REQUEST, "Malformed request");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Object> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
+        return clientError(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed");
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<Object> handleMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        return clientError(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported content type");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Object> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        return clientError(HttpStatus.PAYLOAD_TOO_LARGE, "File is too large");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Object> handleNoResource(NoResourceFoundException ex) {
+        return clientError(HttpStatus.NOT_FOUND, "Not found");
+    }
+
+    private static ResponseEntity<Object> clientError(HttpStatus status, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", message);
+        return new ResponseEntity<>(body, status);
     }
 
     // Bad credentials / unknown user from AuthenticationManager.authenticate()

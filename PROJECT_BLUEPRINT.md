@@ -571,22 +571,22 @@ CI
 
 ### Frontend
 
-- [ ] Production build succeeds
-- [ ] API URL configured
-- [ ] No localhost assumptions
+- [x] Production build succeeds *(Task 24: frontend image builds in CI)*
+- [x] API URL configured *(same-origin `/api` via Caddy; optional `VITE_API_URL`)*
+- [x] No localhost assumptions *(only the optional Python-service URL default, unused in browser mode)*
 
 ### Java Backend
 
 - [ ] CF3–CF10 complete
 - [ ] CF15 complete
-- [ ] Production profile
-- [ ] Environment secrets
+- [x] Production profile *(`application-prod.properties`)*
+- [x] Environment secrets
 
 ### PostgreSQL
 
 - [ ] Managed database
-- [ ] Flyway migrations
-- [ ] Automated backups
+- [x] Flyway migrations *(V1-V8 verified from scratch on an empty PostgreSQL 18)*
+- [ ] Automated backups *(script + cron line provided, `scripts/backup-db.sh`; the cron entry is set on the server)*
 
 ### Python
 
@@ -603,20 +603,20 @@ CI
 
 ### Secrets
 
-- [ ] DB password externalized
-- [ ] JWT secret externalized
-- [ ] Cloudinary credentials/config externalized
-- [ ] No secrets committed
+- [x] DB password externalized
+- [x] JWT secret externalized
+- [x] Cloudinary credentials/config externalized *(build args; public by design)*
+- [x] No secrets committed
 
 ### CORS
 
-- [ ] Production frontend domain allowed
+- [x] Production frontend domain allowed *(`CORS_ALLOWED_ORIGINS` / `PUBLIC_URL`)*
 
 ### Monitoring
 
-- [ ] Health checks
-- [ ] Python uptime check
-- [ ] Basic production logging
+- [x] Health checks *(`/actuator/health`, Docker health checks)*
+- [ ] Python uptime check *(Python service not deployed: browser-only background removal)*
+- [x] Basic production logging
 
 ---
 
@@ -1172,7 +1172,7 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
 
 ### Phase 6 *(deferred)*
 
-- [ ] **24** Production readiness + deployment
+- [ ] **24** Production readiness + deployment *(repo side done 2026-10-01, see Task 24 entry at the end: Docker + compose + prod profile + CI smoke test + DEPLOYMENT.md; **still to do: actually host it** - accounts, domain, first deploy)*
 
 ### Phase 11 — Documentation *(last)*
 
@@ -6518,3 +6518,68 @@ pieces.
 
 Still to do before deploy: `closet-browsing-demo.gif` is 2.7 MB (compress it);
 `main-outfit-demo.gif` is not recorded (its card skips the preview until it exists).
+
+### Task 24 - Production readiness (repo side) (2026-10-01, branch `phase-6-production-readiness`)
+
+Scope chosen with the user: make the repo deploy-ready (Docker, one machine,
+free hosting if possible), **browser-only background removal** (no Python service
+deployed), **Gmail app password** for email. The actual hosting (accounts, domain,
+first deploy) is the user's step - see `DEPLOYMENT.md`.
+
+**Audit findings that drove the work.** The frontend called a relative `/api` that
+only worked through the Vite dev proxy; the backend had no production profile
+(default profile `local`, SQL echo + DEBUG/TRACE logging on, the "log" mailer
+printing reset links), no health endpoint, no Dockerfiles; `DB_URL` was hardcoded
+to localhost; the 56 MB `dist/` is mostly two 23 MB ONNX wasm files (in-browser
+background removal); `VITE_REMOVE_BG_API_KEY` sits in the user's (gitignored)
+`.env` but nothing reads it - remove it (VITE_ values are public in the bundle).
+
+**Backend**
+- `spring-boot-starter-actuator`; only `/actuator/health` (+ liveness/readiness)
+  exposed, public, no details; the mail health check is off (a slow SMTP server
+  must not restart a healthy app); graceful shutdown.
+- `application-prod.properties` (selected by `SPRING_PROFILES_ACTIVE=prod`, which
+  replaces `local`): no SQL echo/format, INFO/WARN logging, `app.mail.mode`
+  defaults to `smtp` (a missing SMTP host fails startup rather than printing
+  credentials to the log), `server.forward-headers-strategy=framework` (behind
+  Caddy), `flyway.baseline-on-migrate=false`, no error messages/stack traces in
+  responses. `DB_URL` / `DB_USERNAME` are now env-configurable.
+- `GlobalExceptionHandler`: framework errors that were falling into the 500
+  catch-all now answer correctly - broken/empty JSON and bad parameters 400,
+  wrong method 405, wrong content type 415, upload too large 413, unknown path 404
+  (found by running the packaged jar: malformed JSON returned a 500).
+- Tests (+6 files' worth, 88 total): `HealthEndpointTest`, `ClientErrorResponsesTest`,
+  `ProductionProfileTest` (reads the prod properties so a careless edit fails the
+  build).
+
+**Frontend**: `API_BASE_URL` = `VITE_API_URL` or `/api` (`apiBaseUrl.test.ts`);
+`.env.example` documents it. 273 tests.
+
+**Packaging**: `backend/Dockerfile` (JDK build -> JRE run, non-root, health
+check), `frontend/Dockerfile` (node build with `VITE_*` build args -> Caddy),
+`frontend/Caddyfile` (automatic HTTPS for `SITE_ADDRESS`, `/api` -> backend,
+SPA fallback, cache + security headers, `/actuator` hidden), `docker-compose.yml`
+(postgres 17, backend, web; only 80/443 published), `.env.production.example`,
+`scripts/backup-db.sh` (+ cron/restore in the guide), `.dockerignore`s,
+`backups/` gitignored.
+
+**CI**: new `docker-stack` job builds the images and runs the whole stack with
+throwaway credentials, then smoke-tests: site + deep link served, `/actuator` 404
+publicly, register through the proxy 200, broken JSON 400, anonymous API 403.
+**Docker is not installed on the dev machine**, so this job is what proves the
+Dockerfiles/compose/Caddyfile - read its first run on GitHub.
+
+**Verified locally**: `tsc -b --force`, `vite build`, 273 frontend tests, 88
+backend tests; the packaged jar on the prod profile against a throwaway
+PostgreSQL 18 database (port 8082, dropped afterwards): all 8 Flyway migrations
+applied from scratch, `/actuator/health` UP, `/actuator/env` and anonymous API
+403, no SQL in the log, a user registered. Not verified locally: the Docker
+images, Caddy config, HTTPS issuance, real SMTP delivery.
+
+**Not done / known**: no rate limiting beyond the per-account email throttles; no
+CSP (the browser background remover loads models from a third-party CDN); no
+monitoring; JWT in the browser with no refresh/revocation; `closet-browsing-demo.gif`
+2.7 MB; Gmail limits daily sends. Free hosting: Oracle Cloud Always Free ARM VM is
+the one genuinely free machine (card required, capacity/reclaim caveats - check
+Oracle's page), Neon for a free managed Postgres; Render free sleeps and expires
+its DB; Fly.io has no free tier for new accounts.

@@ -43,3 +43,6 @@ Thumbs.db
 # Python
 __pycache__/
 .pytest_cache/
+
+# Database backups (scripts/backup-db.sh) - real user data, never commit
+backups/
