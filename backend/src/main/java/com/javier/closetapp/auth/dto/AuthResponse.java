@@ -1,5 +1,6 @@
 package com.javier.closetapp.auth.dto;
 
+// What login/register return: the JWT to send as `Authorization: Bearer <token>`, and who it belongs to.
 public class AuthResponse {
     private String token;
     private Long userId;

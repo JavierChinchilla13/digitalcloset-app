@@ -14,8 +14,12 @@ interface ToastContextType {
   showToast: (message: string, type?: ToastType) => void;
 }
 
+// App-wide toast notifications. Wrap the app in <ToastProvider> once, then call
+// `const { showToast } = useToast(); showToast('Saved')` from any component.
+// Toasts stack bottom-right and disappear after 4 s or when dismissed.
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+// Access to showToast(message, type = 'success' | 'error' | 'info'). Throws if used outside a ToastProvider.
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
@@ -27,6 +31,7 @@ export const useToast = () => {
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
+  // Adds a toast and removes it again after 4 seconds (the id is the creation time).
   const showToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Date.now();
     setToasts((prev) => [...prev, { id, message, type }]);

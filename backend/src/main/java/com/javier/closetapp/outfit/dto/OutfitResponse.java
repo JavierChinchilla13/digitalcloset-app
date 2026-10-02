@@ -3,6 +3,7 @@ package com.javier.closetapp.outfit.dto;
 import com.javier.closetapp.common.enums.AvatarType;
 import java.util.List;
 
+// An outfit as the frontend receives it, with its pieces.
 public class OutfitResponse {
     private Long outfitId;
     private String name;

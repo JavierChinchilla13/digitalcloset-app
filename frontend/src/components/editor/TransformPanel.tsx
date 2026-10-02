@@ -18,13 +18,18 @@ interface TransformPanelProps {
   onReset: () => void;
 }
 
+// The numeric controls beside a garment editor: width/height (optionally keeping the
+// aspect ratio), rotation, opacity, flip X/Y and reset. It only edits a
+// ClothingTransform and reports changes - the parent applies them to the canvas.
 const TransformPanel: React.FC<TransformPanelProps> = ({ 
   transform, 
   onTransformChange, 
   onReset 
 }) => {
+  // While locked, changing width or height scales the other one by the current ratio.
   const [isLocked, setIsLocked] = useState(true);
 
+  // One labelled range input with its current value shown.
   const Slider = ({ 
     label, 
     value, 

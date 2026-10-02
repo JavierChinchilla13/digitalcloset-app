@@ -6,6 +6,7 @@ import { authService } from '../api/authService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 
+// Account creation form. Registering signs the user in straight away (the backend returns a token).
 const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,6 +19,7 @@ const SignupPage = () => {
   const setToken = useAuthStore(state => state.setToken);
   const navigate = useNavigate();
 
+  // Registers, fetches the full profile, stores the session and navigates home.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);

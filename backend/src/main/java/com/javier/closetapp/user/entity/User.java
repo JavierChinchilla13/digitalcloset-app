@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+// An account (users table). It doubles as Spring Security's UserDetails: the email is the
+// username, the role gives the authority, and `active` is the 'enabled' flag, so a deactivated
+// account can't sign in. The password is only ever stored as a BCrypt hash.
 @Entity
 @Table(name = "users")
 public class User implements UserDetails {

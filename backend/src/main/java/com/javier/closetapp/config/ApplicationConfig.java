@@ -14,6 +14,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 
+// Wires up how Spring Security authenticates: users are looked up by email in the database,
+// passwords are checked with BCrypt, and the AuthenticationManager is exposed for AuthService.
 @Configuration
 public class ApplicationConfig {
 
@@ -23,6 +25,7 @@ public class ApplicationConfig {
         this.userRepository = userRepository;
     }
 
+    // Loads the account by email; a missing account is a UsernameNotFoundException (reported to the caller as a generic 401).
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> userRepository.findByEmail(username)

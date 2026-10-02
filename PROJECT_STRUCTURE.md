@@ -351,6 +351,7 @@ use single-use, expiring tokens/codes whose **hashes** are stored.
 - **Comments.** Files and functions carry a short comment saying *why* (the
   reason, the trade-off, the task that introduced it). "Task NN" refers to
   `PROJECT_BLUEPRINT.md`.
+  Every source file has a purpose comment; legacy modules say so (LEGACY / UNUSED).
 - **Don't duplicate; reuse.** Look for an existing component/util first (the
   persona rendering, thumbnails, eligibility and layer rules each have one home).
 - **Small tested changes.** Every change is checked with `npx tsc -b --force`,

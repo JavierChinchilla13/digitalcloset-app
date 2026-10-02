@@ -11,6 +11,9 @@ interface DeleteConfirmationModalProps {
   onClose: () => void;
 }
 
+// "Are you sure?" dialog for deleting a garment. Deleting goes through the closet
+// store (soft delete on the server) and reports the result as a toast; the dialog
+// stays open and re-enabled if the delete fails, so the user can retry.
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({ 
   itemId, 
   itemName, 
@@ -21,6 +24,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   const { removeItem } = useClothingStore();
   const { showToast } = useToast();
 
+  // Deletes the garment, then closes; on failure shows an error toast and keeps the dialog open.
   const handleDelete = async () => {
     if (itemId === null) return;
     

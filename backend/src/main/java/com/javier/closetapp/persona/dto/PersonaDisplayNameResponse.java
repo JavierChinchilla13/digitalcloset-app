@@ -2,6 +2,7 @@ package com.javier.closetapp.persona.dto;
 
 import com.javier.closetapp.common.enums.AvatarType;
 
+// A persona type and the user's custom name for it.
 public class PersonaDisplayNameResponse {
     private AvatarType personaType;
     private String displayName;

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// HTTP layer of /api/outfits: a thin wrapper, the rules (ownership, one shoe per foot) are in OutfitService.
 @RestController
 @RequestMapping("/api/outfits")
 public class OutfitController {

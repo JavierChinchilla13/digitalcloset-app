@@ -1,5 +1,6 @@
 package com.javier.closetapp.collection.dto;
 
+// One outfit's membership of a category (the join row's id plus the outfit's id and name).
 public class CollectionOutfitResponse {
     private Long collectionOutfitId;
     private Long outfitId;

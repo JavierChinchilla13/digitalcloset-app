@@ -5,6 +5,10 @@ import OutfitsSection from '../sections/OutfitsSection';
 import { motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
+// LEGACY one-page dashboard (/dashboard): persona, closet and outfits as scrolling
+// sections whose id is mirrored into the URL hash. No menu links to it any more (the
+// closet, outfits and builder have their own pages); kept routable, with its three
+// sections in sections/.
 const DashboardPage = () => {
   const location = useLocation();
 

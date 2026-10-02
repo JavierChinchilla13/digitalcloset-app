@@ -2,6 +2,7 @@ package com.javier.closetapp.collection.dto;
 
 import java.util.List;
 
+// A category as the frontend receives it: its name and the garments and outfits in it.
 public class CollectionResponse {
     private Long collectionId;
     private String name;

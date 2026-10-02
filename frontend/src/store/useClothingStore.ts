@@ -19,6 +19,12 @@ interface ClothingState {
   markItemAsFitted: (itemId: number) => Promise<void>;
 }
 
+// The closet: the user's garments, loaded from the API and cached in localStorage
+// ("clothing-closet-storage") so the page has something to show before the fetch
+// returns. Every mutating action talks to the API first and only then updates the
+// list, and rethrows on failure so callers can toast. Favourites are a purely local
+// feature (the id list is kept in this browser under "closet-favorites", not on the
+// server).
 export const useClothingStore = create<ClothingState>()(
   persist(
     (set, get) => ({
@@ -29,6 +35,7 @@ export const useClothingStore = create<ClothingState>()(
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
+      // Replaces the list with the server's (optionally one category) and marks each item with its local favourite flag.
       fetchItems: async (category) => {
         set({ isLoading: true, error: null });
         try {
@@ -45,6 +52,7 @@ export const useClothingStore = create<ClothingState>()(
         }
       },
 
+      // Creates the garment on the server and appends the saved version (with its new id).
       addItem: async (data) => {
         set({ isLoading: true, error: null });
         try {
@@ -58,6 +66,7 @@ export const useClothingStore = create<ClothingState>()(
         }
       },
 
+      // Partial update on the server, then swaps in the saved item, keeping its favourite flag.
       updateItem: async (itemId, data) => {
         set({ isLoading: true, error: null });
         try {
@@ -73,6 +82,7 @@ export const useClothingStore = create<ClothingState>()(
         }
       },
 
+      // Deletes on the server (a soft delete there) and drops it from the list.
       removeItem: async (itemId) => {
         set({ isLoading: true, error: null });
         try {
@@ -88,6 +98,7 @@ export const useClothingStore = create<ClothingState>()(
         }
       },
 
+      // Flips the local favourite flag; saved to localStorage immediately, no API call.
       toggleFavorite: (itemId) => {
         const { items, favorites } = get();
         const isFavorite = favorites.includes(itemId);
