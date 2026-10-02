@@ -9,6 +9,7 @@ public class OutfitItemResponse {
     private String imageUrl;
     private String slot;
     private Integer itemOrder;
+    private Integer layerOrder;
 
     public OutfitItemResponse() {}
 
@@ -29,4 +30,7 @@ public class OutfitItemResponse {
 
     public Integer getItemOrder() { return itemOrder; }
     public void setItemOrder(Integer itemOrder) { this.itemOrder = itemOrder; }
+
+    public Integer getLayerOrder() { return layerOrder; }
+    public void setLayerOrder(Integer layerOrder) { this.layerOrder = layerOrder; }
 }

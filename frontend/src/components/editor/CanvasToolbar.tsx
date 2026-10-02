@@ -37,8 +37,8 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   ];
 
   return (
-    <div className="flex items-center justify-between bg-background-secondary/40 backdrop-blur-xl border border-ink/5 p-2 rounded-2xl">
-      <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center justify-between gap-y-2 bg-background-secondary/40 backdrop-blur-xl border border-ink/5 p-2 rounded-2xl">
+      <div className="flex flex-wrap items-center gap-1">
         {tools.map((tool) => {
           const Icon = tool.icon;
           const isActive = activeTool === tool.id;

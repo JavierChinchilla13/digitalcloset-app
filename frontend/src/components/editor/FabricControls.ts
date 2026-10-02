@@ -17,7 +17,9 @@ export const customizeFabricControls = () => {
     cornerStyle: 'circle' as const,
     borderDashArray: [3, 3],
     borderScaleFactor: 2,
-    padding: 10,
+    // Task 83: 10 -> 6, so the handles sit closer to the garment and fit in
+    // the canvas margin (CANVAS_PAD) with room to spare.
+    padding: 6,
   };
 
   // Apply to the base Object prototype so all new objects get it
@@ -28,10 +30,11 @@ export const customizeFabricControls = () => {
   const mtrControl = FabricObject.prototype.controls?.mtr;
   if (mtrControl) {
     mtrControl.y = -0.5;
-    // Was -40. With the 10px object padding and the 12px handle, -20 puts the
-    // handle's outer edge ~36px above the object - within ClothingCanvas's
-    // CANVAS_PAD margin, so it stays visible at the top edge of the stage.
-    mtrControl.offsetY = -20;
+    // Was -40, then -20. With the 6px object padding and the 12px handle,
+    // -16 puts the handle's outer edge ~29px above the object (HANDLE_REACH
+    // in CanvasUtils) - within the CANVAS_PAD margin, so it stays visible
+    // at the top edge of the stage.
+    mtrControl.offsetY = -16;
   }
 };
 

@@ -43,6 +43,13 @@ public class User implements UserDetails {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    // The account's main outfit (Task 78). A plain id rather than a JPA
+    // relation: the users -> outfits link is only ever read/written by id, and
+    // outfits already point back at users, so a relation would add a cycle for
+    // nothing. The FK (V6) is ON DELETE SET NULL.
+    @Column(name = "main_outfit_id")
+    private Long mainOutfitId;
+
     public User() {}
 
     public User(String email, String password, Role role) {
@@ -132,6 +139,14 @@ public class User implements UserDetails {
 
     public boolean isActive() {
         return active;
+    }
+
+    public Long getMainOutfitId() {
+        return mainOutfitId;
+    }
+
+    public void setMainOutfitId(Long mainOutfitId) {
+        this.mainOutfitId = mainOutfitId;
     }
 
     public void setActive(boolean active) {

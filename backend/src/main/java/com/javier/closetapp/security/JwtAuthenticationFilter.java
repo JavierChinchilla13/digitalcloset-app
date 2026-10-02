@@ -3,12 +3,14 @@ package com.javier.closetapp.security;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -42,21 +44,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        userEmail = jwtService.extractUsername(jwt);
 
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        // An expired, tampered, malformed or unknown-user token must simply not
+        // authenticate the request (Task 23). Letting the exception escape the
+        // filter produced a 500 instead of the usual "not signed in" answer,
+        // which is what the frontend relies on to send an expired session back
+        // to the login page.
+        try {
+            userEmail = jwtService.extractUsername(jwt);
+
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+        } catch (JwtException | IllegalArgumentException | UsernameNotFoundException ex) {
+            logger.debug("Ignoring invalid JWT: " + ex.getMessage());
         }
         filterChain.doFilter(request, response);
     }

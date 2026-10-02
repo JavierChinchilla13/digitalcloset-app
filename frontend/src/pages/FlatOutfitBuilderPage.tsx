@@ -1,14 +1,17 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown } from 'lucide-react';
+import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown, Plus, Star, Shuffle } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore } from '../store/useOutfitStore';
 import { useOutfitDraftStore, outfitItemsFromDraft, draftFromOutfitItems } from '../store/useOutfitDraftStore';
 import { useCollectionStore } from '../store/useCollectionStore';
-import { pairShoesForDisplay } from '../utils/selectionDisplay';
 import { computePersonaEligibility } from '../utils/personaEligibility';
+import { toggleWithShoeRule, normalizeShoes } from '../utils/shoeSelection';
+import { pickRandomOutfit } from '../utils/randomOutfit';
+import { resolveStack, moveInStack, moveToIndex, layerOrderFromOutfitItems } from '../utils/layerOrder';
+import LayerPanel from '../components/LayerPanel';
 import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
@@ -18,6 +21,10 @@ import CategoryPicker from '../components/CategoryPicker';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import PersonaTypeSwitcher, { type PersonaFilterValue } from '../components/PersonaTypeSwitcher';
 import { useToast } from '../components/Toast';
+import { useSafeAction } from '../hooks/useSafeAction';
+import ErrorState from '../components/ErrorState';
+import PersonaBadge from '../components/PersonaBadge';
+import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -39,71 +46,6 @@ import { useToast } from '../components/Toast';
 // Persona Preview (which can still only ever render FITTED items
 // matching one persona type, unchanged).
 
-// Selection panel card (Task 43). Task 76 follow-up: this used to be
-// noticeably smaller/denser than the browse grid's own cards (a 4/5/6-
-// column grid of aspect-[4/5] tiles vs. browse's 2-column aspect-[3/4]),
-// so the instant an item was selected, the right panel visibly "shrank"
-// next to the left one - confirmed as a real, reported bug, not just a
-// style preference. Matched to browse's own aspect-[3/4] here.
-// Task 76 second follow-up: switched from a CSS-grid layout (fixed
-// column count, cards sized by the grid's own track width) to a fixed
-// card width here, with the containers below using `flex flex-wrap
-// justify-center` instead of `grid`. A grid with more columns than
-// selected items packs everything into the left-most tracks and leaves
-// the rest of the row visibly empty - reported as items sitting "to the
-// side" instead of centered. `flex-wrap` + `justify-center` centers
-// however many cards actually exist, in any row, regardless of count.
-// Third follow-up: trimmed w-36/w-40 (144/160px) down to w-32/w-36
-// (128/144px) as part of the "see the whole outfit without scrolling"
-// fix - a modest step down (not back to the old, too-small pre-Task-76
-// size), traded off against row count/spacing reductions elsewhere so no
-// single change had to carry the whole fix on its own.
-const SelectionCard = ({ item, onRemove }: { item: ClothingItem; onRemove: (itemId: number) => void }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
-  >
-    <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-    <button
-      onClick={() => onRemove(item.itemId)}
-      className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
-      title="Remove"
-    >
-      <X size={10} />
-    </button>
-    <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-      <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
-    </div>
-  </motion.div>
-);
-
-// Shoes get their own 2-up sub-row (left/right paired via
-// pairShoesForDisplay) instead of the generic grid; any unpaired items (no
-// recorded side, or an extra pair) fall back to the same denser grid used
-// elsewhere, in a secondary row underneath - mirrors the simplification
-// documented on pairShoesForDisplay itself.
-const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (itemId: number) => void }) => {
-  const { left, right, unpaired } = pairShoesForDisplay(items);
-  return (
-    <div className="space-y-1.5">
-      {(left || right) && (
-        <div className="flex gap-4 justify-center">
-          {left && <SelectionCard item={left} onRemove={onRemove} />}
-          {right && <SelectionCard item={right} onRemove={onRemove} />}
-        </div>
-      )}
-      {unpaired.length > 0 && (
-        <div className="flex flex-wrap gap-4 justify-center">
-          {unpaired.map((item) => (
-            <SelectionCard key={item.itemId} item={item} onRemove={onRemove} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
 const FlatOutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -114,7 +56,8 @@ const FlatOutfitBuilderPage = () => {
   // still the correct affordance.
   const { pathname, state: navState } = useLocation();
   const isLandingRoute = pathname === '/';
-  const { items, isLoading, fetchItems, markItemAsFitted } = useClothingStore();
+  const { items, isLoading, error: itemsError, fetchItems, markItemAsFitted } = useClothingStore();
+  const runSafely = useSafeAction();
   // Used as the outfit's avatarType default (open question #6's
   // recommendation - the backend's Outfit.avatarType is NOT NULL and this
   // page has no single persona type of its own to draw from) AND drives
@@ -124,8 +67,8 @@ const FlatOutfitBuilderPage = () => {
   // the persona *equip* state (topIds/bottomIds/etc.) still isn't touched
   // here, only which type it targets.
   const { persona, setPersonaType } = usePersonaStore();
-  const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
-  const { selectedItemIds, toggleItem, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
+  const { outfits, mainOutfitId, fetchOutfits, fetchMainOutfit, saveOutfit, updateOutfit } = useOutfitStore();
+  const { selectedItemIds, layerOrder, removeItem, clearDraft, setDraft, setLayerOrder } = useOutfitDraftStore();
   const { collections, fetchCollections, createCollection } = useCollectionStore();
   const { showToast } = useToast();
 
@@ -134,6 +77,22 @@ const FlatOutfitBuilderPage = () => {
   const [outfitName, setOutfitName] = useState('New Style');
   const [isSaving, setIsSaving] = useState(false);
   const [outfitsReady, setOutfitsReady] = useState(false);
+
+  // Task 78: which outfit this page is editing. On the /outfits/flat/edit/:id
+  // route that is :id. On "/" (Attire's home) it is the account's main outfit,
+  // when there is one - so Attire opens the outfit the user picked as their
+  // main one. Two cases stay in "new outfit" mode: no main outfit (or one that
+  // no longer exists), and arriving from an outfit card's WEAR STYLE, which
+  // brings its own draft (and must not overwrite the main outfit on save).
+  const cameFromWearStyle = !!(navState as { showPersonaPreview?: boolean } | null)?.showPersonaPreview;
+  const mainOutfitExists = mainOutfitId != null && outfits.some((o) => o.outfitId === mainOutfitId);
+  const editId: string | undefined =
+    id ?? (isLandingRoute && !cameFromWearStyle && mainOutfitExists ? String(mainOutfitId) : undefined);
+  // Follow-up: with no indicator at all, opening "/" and finding an outfit
+  // already selected looked like stuck/leftover state - user feedback,
+  // 2026-09-28. This is true whenever the outfit being edited (whichever
+  // route got us here) actually is the main one, not just on "/".
+  const isEditingMainOutfit = editId != null && mainOutfitId != null && editId === String(mainOutfitId);
 
   // Second follow-up to Task 76: the persona switcher now also filters the
   // browse grid by gender ("only garments of that gender should appear"),
@@ -166,8 +125,9 @@ const FlatOutfitBuilderPage = () => {
   useEffect(() => {
     fetchItems();
     fetchOutfits().finally(() => setOutfitsReady(true));
+    fetchMainOutfit();
     fetchCollections();
-  }, [fetchItems, fetchOutfits, fetchCollections]);
+  }, [fetchItems, fetchOutfits, fetchMainOutfit, fetchCollections]);
 
   const toggleSelectedCollection = (id: number) => {
     setSelectedCollectionIds((prev) => (
@@ -188,13 +148,21 @@ const FlatOutfitBuilderPage = () => {
   // store once outfits have loaded. Mirrors OutfitBuilderPage's equivalent
   // effect, using draftFromOutfitItems instead of equippedFromOutfitItems.
   useEffect(() => {
-    if (!outfitsReady || !id) return;
-    const existing = outfits.find((o) => String(o.outfitId) === id);
+    if (!outfitsReady || !editId) return;
+    const existing = outfits.find((o) => String(o.outfitId) === editId);
     if (existing) {
       setOutfitName(existing.name);
-      setDraft(draftFromOutfitItems(existing.items));
+      setDraft(draftFromOutfitItems(existing.items), layerOrderFromOutfitItems(existing.items));
     }
-  }, [id, outfits, outfitsReady, setDraft]);
+  }, [editId, outfits, outfitsReady, setDraft]);
+
+  // Leaves the outfit being edited and starts an empty one. Goes to the "new"
+  // route (not "/") so the main outfit is not loaded straight back in.
+  const handleNewOutfit = () => {
+    clearDraft();
+    setOutfitName('New Style');
+    navigate('/outfits/flat/new');
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -202,12 +170,12 @@ const FlatOutfitBuilderPage = () => {
     const outfitData: OutfitRequest = {
       name: outfitName,
       avatarType: persona.type,
-      items: outfitItemsFromDraft(selectedItemIds, items),
+      items: outfitItemsFromDraft(selectedItemIds, items, layerOrder),
     };
 
     try {
-      if (id) {
-        await updateOutfit(Number(id), outfitData);
+      if (editId) {
+        await updateOutfit(Number(editId), outfitData);
       } else {
         const newOutfit = await saveOutfit(outfitData);
         // Task 51: saveOutfit now returns the created outfit (previously
@@ -219,10 +187,10 @@ const FlatOutfitBuilderPage = () => {
       clearDraft();
       navigate('/outfits');
     } catch (err: any) {
-      // saveOutfit/updateOutfit used to swallow their own errors (store
-      // just recorded them), so this catch never used to fire - now that
-      // they throw, without this the draft would silently clear and
-      // navigate away even on a failed save.
+      // The outfit store's mutations rethrow on failure (updateOutfit
+      // used to swallow its errors - fixed in Task 22 - so an edit that
+      // failed to save still cleared the draft and navigated away). A
+      // failed save now lands here instead.
       showToast(err.message || 'Failed to save outfit', 'error');
     } finally {
       setIsSaving(false);
@@ -342,15 +310,77 @@ const FlatOutfitBuilderPage = () => {
   // saved adjustment also flips it to FITTED.
   const [fitModalItem, setFitModalItem] = useState<ClothingItem | null>(null);
 
+  // Task 86: a click on a card toggles the piece, under the one-shoe-per-foot
+  // rule: choosing a shoe for a foot that already has one swaps it, and says so.
+  const handleToggle = (itemId: number) => {
+    const { ids, replaced } = toggleWithShoeRule(selectedItemIds, items, itemId);
+    setDraft(ids, layerOrder);
+    if (replaced.length > 0) {
+      const incoming = items.find((item) => item.itemId === itemId);
+      const label = (item: ClothingItem | undefined) =>
+        item ? `${item.name}${item.side ? ` (${item.side})` : ''}` : 'shoe';
+      showToast(`Replaced ${replaced.map(label).join(' and ')} with ${label(incoming)}`, 'info');
+    }
+  };
+
+  // Task 87: "Create random outfit" - replaces the whole selection with shoes, a
+  // bottom and a shirt (and a jacket about half the time) for the current persona,
+  // and opens the persona preview to show it. It always makes a NEW outfit: if
+  // an existing outfit is open (the main one on "/", or the edit route) it is
+  // left untouched - we move to the new-outfit route with a fresh name, so the
+  // random pieces are saved with "Save", never written over the open outfit.
+  // A closet missing a category still gets what it can, with a note saying
+  // what to add.
+  const handleRandomOutfit = () => {
+    const { ids, missing } = pickRandomOutfit(items, persona.type);
+    if (ids.length === 0) {
+      showToast(`Add some ${persona.type.toLowerCase()} clothes to your closet first`, 'info');
+      return;
+    }
+    if (editId) {
+      setOutfitName('New Style');
+      navigate('/outfits/flat/new');
+    }
+    setDraft(ids, null);
+    setSelectedLayerId(null);
+    setShowPersonaPreview(true);
+    if (missing.length > 0) showToast(`No ${missing.join(', ')} in your closet for this persona yet`, 'info');
+  };
+
+  // An outfit loaded from before the rule may name two shoes for one foot: keep
+  // the later one, as saving would. Waits for the closet (the rule needs each
+  // item's category and side).
+  useEffect(() => {
+    if (items.length === 0) return;
+    const cleaned = normalizeShoes(selectedItemIds, items);
+    if (cleaned.length !== selectedItemIds.length) {
+      setDraft(cleaned, layerOrder);
+      showToast('A foot can only have one shoe - kept the latest', 'info');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedItemIds, items]);
+
+  // Task 86: the piece picked for reordering (clicked on the persona or in the
+  // Layers panel). Cleared when it leaves the outfit.
+  const [selectedLayerId, setSelectedLayerId] = useState<number | null>(null);
+  useEffect(() => {
+    if (selectedLayerId != null && !selectedItemIds.includes(selectedLayerId)) setSelectedLayerId(null);
+  }, [selectedItemIds, selectedLayerId]);
+
   // Persona preview (Task 38) + per-reason exclusion split (Task 46): the
   // filtering itself now lives in utils/personaEligibility (Task 61) so
   // OutfitCard can share it - see that file for the rules. Reuses
   // equippedFromOutfitItems (Task 16) and PersonaRenderer unchanged.
   const eligibility = useMemo(
-    () => computePersonaEligibility(selectedItems, items, persona.type),
-    [selectedItems, items, persona.type]
+    () => computePersonaEligibility(selectedItems, items, persona.type, layerOrder),
+    [selectedItems, items, persona.type, layerOrder]
   );
   const { previewPersona } = eligibility;
+  // Task 86: only what is drawn can be layered.
+  const layerStack = useMemo(
+    () => resolveStack(eligibility.eligibleItems.map((item) => item.itemId), items, layerOrder),
+    [eligibility.eligibleItems, items, layerOrder]
+  );
   const notFittedExcluded = eligibility.notFittedItems;
   const noCutoutExcluded = eligibility.noCutoutItems;
   const excludedIneligibleCount = eligibility.ineligibleItems.length;
@@ -416,14 +446,40 @@ const FlatOutfitBuilderPage = () => {
               className="bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"
             />
-            <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
-              {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
-            </p>
+            <div className="flex items-center gap-3">
+              <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
+                {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
+              </p>
+              {isEditingMainOutfit && (
+                <span
+                  title="This is your main outfit - it's the one shown first on Showcase. Saving here updates it; use New Outfit to start a different one instead."
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-on-accent text-[9px] font-medium tracking-[0.2em] uppercase"
+                >
+                  <Star size={10} fill="currentColor" /> Main outfit
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {!id && (
+          {/* Task 78: while editing an existing outfit (the main one on "/", or
+              via the edit route), a way to start a brand-new outfit instead. */}
+          <button
+            onClick={handleRandomOutfit}
+            className="px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
+          >
+            <Shuffle size={14} /> Create random outfit
+          </button>
+          {editId && (
+            <button
+              onClick={handleNewOutfit}
+              className="px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
+            >
+              <Plus size={14} /> New outfit
+            </button>
+          )}
+          {!editId && (
             <CategoryPicker
               collections={collections}
               selectedIds={selectedCollectionIds}
@@ -450,7 +506,7 @@ const FlatOutfitBuilderPage = () => {
             className="px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {id ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
+            {editId ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
           </button>
         </div>
       </header>
@@ -505,6 +561,13 @@ const FlatOutfitBuilderPage = () => {
                   <Loader2 className="animate-spin text-accent" size={24} />
                   <p className="text-[10px] font-medium uppercase tracking-widest">Syncing Wardrobe...</p>
                 </div>
+              ) : itemsError && items.length === 0 ? (
+                <ErrorState
+                  compact
+                  title="We couldn't load your closet"
+                  message="Check your connection and try again."
+                  onRetry={fetchItems}
+                />
               ) : browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                   <Shirt size={32} className="text-text-secondary" />
@@ -524,16 +587,16 @@ const FlatOutfitBuilderPage = () => {
                             key={item.itemId}
                             whileHover={{ y: -4 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => toggleItem(item.itemId)}
+                            onClick={() => handleToggle(item.itemId)}
                             className={`
-                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
+                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                             `}
                           >
                             <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-                            <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                              <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
-                            </div>
+                            {/* Task 77: was a raw MALE/FEMALE pill; now the shared
+                                persona sign (persona name / Not fitted / Unassigned). */}
+                            <PersonaBadge item={item} />
                             <div className={`
                               absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                               ${active ? 'opacity-100' : 'opacity-0'}
@@ -543,7 +606,16 @@ const FlatOutfitBuilderPage = () => {
                               </div>
                             </div>
                             <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">
+                                {item.name}
+                                {/* A shoe pair is saved as two items sharing a name
+                                    (side: left/right) - without this both cards read
+                                    as an accidental duplicate rather than one pair.
+                                    Still independently equippable on purpose. */}
+                                {item.category === ClothingCategory.SHOES && item.side && (
+                                  <span className="text-accent"> · {item.side}</span>
+                                )}
+                              </p>
                             </div>
                           </motion.div>
                         );
@@ -631,7 +703,7 @@ const FlatOutfitBuilderPage = () => {
                           <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
                             <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
-                              onClick={() => markItemAsFitted(item.itemId)}
+                              onClick={() => runSafely(() => markItemAsFitted(item.itemId), "Couldn't update this item")}
                               className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
                               Mark as Fitted
@@ -666,8 +738,26 @@ const FlatOutfitBuilderPage = () => {
                     )}
                   </div>
                 )}
-                <div className="w-full h-[50vh]">
-                  <PersonaRenderer persona={previewPersona} />
+                <div className="flex flex-col md:flex-row items-start gap-6">
+                  <div className="w-full md:flex-1 h-[50vh]">
+                    <PersonaRenderer
+                      persona={previewPersona}
+                      onLayerPick={setSelectedLayerId}
+                      highlightItemId={selectedLayerId}
+                    />
+                  </div>
+                  {layerStack.length > 1 && (
+                    <LayerPanel
+                      stack={layerStack}
+                      items={items}
+                      selectedId={selectedLayerId}
+                      onSelect={setSelectedLayerId}
+                      onMove={(itemId, direction) => setLayerOrder(moveInStack(layerStack, itemId, direction))}
+                      onReorder={(itemId, toIndex) => setLayerOrder(moveToIndex(layerStack, itemId, toIndex))}
+                      isCustom={layerOrder != null}
+                      onReset={() => setLayerOrder(null)}
+                    />
+                  )}
                 </div>
               </div>
             ) : (

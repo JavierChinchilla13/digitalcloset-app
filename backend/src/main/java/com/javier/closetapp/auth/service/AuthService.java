@@ -4,6 +4,7 @@ import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.auth.dto.LoginRequest;
 import com.javier.closetapp.auth.dto.RegisterRequest;
 import com.javier.closetapp.common.enums.Role;
+import com.javier.closetapp.exception.DuplicateEmailException;
 import com.javier.closetapp.security.JwtService;
 import com.javier.closetapp.user.entity.User;
 import com.javier.closetapp.user.repository.UserRepository;
@@ -29,12 +30,18 @@ public class AuthService {
     }
 
     public AuthResponse register(RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new DuplicateEmailException("An account with this email already exists");
+        }
+
         User user = new User(
                 request.getEmail(),
                 passwordEncoder.encode(request.getPassword()),
                 Role.ROLE_USER
         );
-        
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+
         User savedUser = userRepository.save(user);
         
         String jwtToken = jwtService.generateToken(savedUser);

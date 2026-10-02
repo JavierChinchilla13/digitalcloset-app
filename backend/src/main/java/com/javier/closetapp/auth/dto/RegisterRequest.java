@@ -13,6 +13,12 @@ public class RegisterRequest {
     @Size(min = 8, message = "Password must be at least 8 characters")
     private String password;
 
+    // Optional: the signup form has always collected these, but this DTO had
+    // no fields for them, so they were silently discarded (found while adding
+    // the email-uniqueness check below).
+    private String firstName;
+    private String lastName;
+
     public RegisterRequest() {}
 
     public RegisterRequest(String email, String password) {
@@ -34,5 +40,21 @@ public class RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 }

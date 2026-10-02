@@ -65,3 +65,14 @@ VITE_BG_REMOVER_API_URL=http://localhost:8000/remove-bg
 - **Accuracy**: `rembg` provides superior edge detection for complex clothing items (e.g., lace, semi-transparent fabrics) compared to most browser-based models.
 - **Latency**: First request might be slow as the model (U2-Net) is downloaded and loaded into memory. Subsequent requests are fast.
 - **Resources**: Uses ~500MB - 1GB of RAM depending on the image size.
+
+## Running the tests
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Most tests replace the model with a stand-in, so they are fast and need no model
+file. `TestRealModel` runs the real U2-Net model and is skipped automatically
+unless `~/.u2net/u2net.onnx` already exists (the tests never trigger the download).

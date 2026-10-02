@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -7,6 +7,8 @@ import {
   Loader2,
   User,
   LayoutList,
+  Star,
+  Pencil,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useOutfitStore } from "../store/useOutfitStore";
@@ -16,7 +18,11 @@ import { buildOutfitPersona } from "../utils/personaEligibility";
 import { buildShowcaseRows } from "../utils/selectionDisplay";
 import PersonaRenderer from "../components/PersonaRenderer";
 import CroppedThumbnail from "../components/CroppedThumbnail";
+import ErrorState from "../components/ErrorState";
+import { useToast } from "../components/Toast";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
+
+const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
 
 // Outfit Showcase (Task 75, Phase 9.7) - reachable by clicking the navbar
 // logo while signed in ("a landing page that is basically an outfit
@@ -343,14 +349,10 @@ const ShowcaseSlot = ({
   onSelect,
 }: ShowcaseSlotProps) => {
   const isActive = role === "active";
+  // The active slot stays mounted while you move between outfits, so this
+  // choice carries over: once "View on Persona" is on, every outfit you switch
+  // to is shown on the persona until you press "Show Pieces".
   const [showPersona, setShowPersona] = useState(false);
-
-  // Default view resets to the flat rows whenever a different outfit
-  // becomes active, rather than remembering "was showing persona" across
-  // outfits - each outfit starts on the same footing.
-  useEffect(() => {
-    setShowPersona(false);
-  }, [outfit.outfitId]);
 
   const outfitItems = useMemo(() => {
     const byId = new Map(items.map((item) => [item.itemId, item]));
@@ -484,17 +486,44 @@ const ShowcaseSlot = ({
 };
 
 const OutfitShowcasePage = () => {
-  const { outfits: allOutfits, fetchOutfits, isLoading } = useOutfitStore();
+  const {
+    outfits: allOutfits,
+    mainOutfitId,
+    fetchOutfits,
+    fetchMainOutfit,
+    setMainOutfit,
+    isLoading,
+  } = useOutfitStore();
+  const { showToast } = useToast();
   const { items, fetchItems } = useClothingStore();
   const { persona } = usePersonaStore();
   const navigate = useNavigate();
 
   const [ready, setReady] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Task 22: both fetches swallow their errors into the stores, so read them
+  // back to tell "no outfits yet" apart from "couldn't load".
+  const loadShowcase = useCallback(async () => {
+    setLoadFailed(false);
+    await Promise.all([fetchOutfits(), fetchItems(), fetchMainOutfit()]);
+    setLoadFailed(!!useOutfitStore.getState().error || !!useClothingStore.getState().error);
+
+    // Task 78: open on the account's main outfit. Worked out here, in the same
+    // batch as `ready`, so the very first render already shows it - doing it in
+    // a later effect would flash the first outfit and then fade to the main one.
+    const { outfits: loaded, mainOutfitId: mainId } = useOutfitStore.getState();
+    const personaType = usePersonaStore.getState().persona.type;
+    const visible = loaded.filter((o) => o.avatarType === personaType);
+    const mainIndex = visible.findIndex((o) => o.outfitId === mainId);
+    setActiveIndex(mainIndex >= 0 ? mainIndex : 0);
+    setReady(true);
+  }, [fetchOutfits, fetchItems, fetchMainOutfit]);
+
   useEffect(() => {
-    Promise.all([fetchOutfits(), fetchItems()]).finally(() => setReady(true));
-  }, [fetchOutfits, fetchItems]);
+    loadShowcase();
+  }, [loadShowcase]);
 
   // Scoped to the active persona type, same as SavedOutfitsPage's own
   // `filteredOutfits` - without this, an outfit saved for the other
@@ -575,6 +604,20 @@ const OutfitShowcasePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeOutfit?.outfitId]);
 
+  // Task 78: main-outfit controls for the outfit currently shown in the hero.
+  const isShownOutfitMain = !!displayedOutfit && displayedOutfit.outfitId === mainOutfitId;
+
+  const handleSetMain = async () => {
+    if (!displayedOutfit) return;
+    try {
+      await setMainOutfit(displayedOutfit.outfitId);
+      showToast(`"${displayedOutfit.name}" is now your main outfit`, "success");
+    } catch (err) {
+      console.error("Failed to set main outfit:", err);
+      showToast("Couldn't set your main outfit", "error");
+    }
+  };
+
   const goToPrev = () => setActiveIndex((i) => (n === 0 ? 0 : (i - 1 + n) % n));
   const goToNext = () => setActiveIndex((i) => (n === 0 ? 0 : (i + 1) % n));
 
@@ -582,6 +625,18 @@ const OutfitShowcasePage = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />
+      </div>
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6">
+        <ErrorState
+          title="We couldn't load your outfits"
+          message="Check your connection and try again."
+          onRetry={loadShowcase}
+        />
       </div>
     );
   }
@@ -636,6 +691,38 @@ const OutfitShowcasePage = () => {
         <h1 className="text-4xl sm:text-5xl font-display font-light tracking-tighter text-text-primary">
           {displayedOutfit?.name}
         </h1>
+
+        {/* Task 78 follow-up: the tag/button used to have no tooltip explaining what
+            "main outfit" even means, and the tag (a lightly-tinted pill, the same
+            weight as an ordinary button) didn't read as different enough from
+            "Set as main outfit" at a glance - user feedback, 2026-09-28. The tag is
+            now solid-accent with a glow so it pops, and both carry the explanation. */}
+        <div className="flex items-center justify-center gap-3 mt-5">
+          {isShownOutfitMain ? (
+            <span
+              data-testid="main-outfit-tag"
+              title={MAIN_OUTFIT_EXPLAINER}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-on-accent shadow-lg shadow-accent/30 text-[10px] font-medium tracking-[0.25em] uppercase"
+            >
+              <Star size={12} fill="currentColor" /> Main outfit
+            </span>
+          ) : (
+            <button
+              onClick={handleSetMain}
+              title={MAIN_OUTFIT_EXPLAINER}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-ink/15 text-text-secondary hover:text-text-primary hover:border-ink/30 text-[10px] font-medium tracking-[0.25em] uppercase transition-all"
+            >
+              <Star size={12} /> Set as main outfit
+            </button>
+          )}
+          <button
+            onClick={() => displayedOutfit && navigate(`/outfits/flat/edit/${displayedOutfit.outfitId}`)}
+            title="Open this outfit in Attire to change what it's wearing"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ink text-background-main text-[10px] font-medium tracking-[0.25em] uppercase transition-all hover:scale-105 active:scale-95"
+          >
+            <Pencil size={12} /> Edit outfit
+          </button>
+        </div>
       </div>
 
       {/* Task 75 follow-up: was `items-start` with a guessed `mt-24` offset

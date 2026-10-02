@@ -1,15 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle } from 'lucide-react';
+import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle, Star } from 'lucide-react';
 import type { ClothingItem, Outfit } from '../types';
+
+const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitDraftStore, draftFromOutfitItems } from '../store/useOutfitDraftStore';
+import { layerOrderFromOutfitItems } from '../utils/layerOrder';
 import { useNavigate } from 'react-router-dom';
 import PersonaRenderer from './PersonaRenderer';
 import CroppedThumbnail from './CroppedThumbnail';
 import { computePersonaEligibility, buildOutfitPersona } from '../utils/personaEligibility';
+import { useSafeAction } from '../hooks/useSafeAction';
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -18,7 +22,10 @@ interface OutfitCardProps {
 const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPersona, setShowPersona] = useState(false);
-  const { removeOutfit, duplicateOutfit } = useOutfitStore();
+  const { removeOutfit, duplicateOutfit, mainOutfitId, setMainOutfit } = useOutfitStore();
+  // Task 78: is this the account's main outfit?
+  const isMain = mainOutfitId === outfit.outfitId;
+  const runSafely = useSafeAction();
   const { items: closetItems } = useClothingStore();
   const { updatePersona } = usePersonaStore();
   const { setDraft } = useOutfitDraftStore();
@@ -95,7 +102,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   //    persona switches to it and the preview isn't for the wrong persona.
   const handleApply = () => {
     updatePersona(outfitPersona);
-    setDraft(draftFromOutfitItems(outfit.items));
+    setDraft(draftFromOutfitItems(outfit.items), layerOrderFromOutfitItems(outfit.items));
     navigate('/', { state: { showPersonaPreview: true } });
   };
 
@@ -108,8 +115,23 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
       whileHover={{ y: -8 }}
       className="group relative"
     >
-      <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-ink/5 bg-background-secondary shadow-md transition-all">
+      <div className={`relative aspect-[3/4] rounded-xl overflow-hidden bg-background-secondary shadow-md transition-all border ${
+        isMain ? 'border-accent ring-2 ring-accent/30' : 'border-ink/5'
+      }`}>
         
+        {/* Task 78 follow-up: was a small black-glass pill, the same weight as
+            every other overlay badge in the app - too easy to miss. Solid accent +
+            the card's own ring (below) make it unmistakable even before hovering. */}
+        {isMain && (
+          <span
+            data-testid="main-outfit-tag"
+            title={MAIN_OUTFIT_EXPLAINER}
+            className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-on-accent shadow-md text-[9px] font-medium tracking-[0.2em] uppercase"
+          >
+            <Star size={10} fill="currentColor" /> Main
+          </span>
+        )}
+
         {/* Main Content Area */}
         <div className="w-full h-full p-4 flex flex-col items-center justify-center">
           <AnimatePresence mode="wait">
@@ -162,7 +184,15 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <Info size={14} />
             </button>
             <button
-              onClick={() => duplicateOutfit(outfit)}
+              onClick={() => runSafely(() => setMainOutfit(outfit.outfitId), "Couldn't set your main outfit")}
+              disabled={isMain}
+              className={`p-2.5 rounded-xl transition-all border disabled:pointer-events-none ${isMain ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 hover:bg-ink/10 text-text-primary border-ink/5'}`}
+              title={isMain ? MAIN_OUTFIT_EXPLAINER : `Set as main outfit - ${MAIN_OUTFIT_EXPLAINER}`}
+            >
+              <Star size={14} fill={isMain ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              onClick={() => runSafely(() => duplicateOutfit(outfit), "Couldn't duplicate this outfit")}
               className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
               title="Duplicate"
             >
@@ -213,7 +243,13 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               </p>
               <div className="flex gap-4 w-full">
                 <button
-                  onClick={() => removeOutfit(outfit.outfitId)}
+                  onClick={async () => {
+                    // Only close the confirm prompt on success - on failure the
+                    // toast explains and the user can retry from here.
+                    if (await runSafely(() => removeOutfit(outfit.outfitId), "Couldn't delete this outfit")) {
+                      setIsDeleting(false);
+                    }
+                  }}
                   className="flex-grow py-3 bg-rose-500 text-white text-[10px] font-medium uppercase tracking-[0.2em] rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   DELETE

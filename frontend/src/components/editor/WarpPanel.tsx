@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { PersonaType, type ClothingTransform } from '../../types';
+import type { ClothingTransform } from '../../types';
 import {
   WARP_GRID,
   identityGrid,
@@ -13,7 +13,7 @@ import {
   type WarpPoint,
 } from '../../utils/meshWarp';
 import type { WarpData } from '../../utils/warpData';
-import { ASPECT_RATIO, toCanvasCoord, toCanvasX } from './CanvasUtils';
+import { CANVAS_PAD, toCanvasCoord, toCanvasX } from './CanvasUtils';
 import { getStageAccentHex } from '../../utils/themeColors';
 
 export interface WarpApplyResult {
@@ -30,10 +30,13 @@ interface WarpPanelProps {
   // The item's existing warp, if any: supplies the starting control points and
   // tells us the size/center of the baked image the transform currently refers to.
   warp: WarpData | null;
-  personaType: PersonaType;
-  // The garment's current placement in the studio - the panel draws the persona
-  // and the garment at exactly this position/size/rotation so the warp is
-  // shaped in context, the way it will sit on the persona.
+  // Size (px) of the studio's stage. Task 84: the panel is no longer a screen
+  // of its own - it is drawn over the studio canvas (ClothingCanvas's overlay
+  // slot, which covers the stage plus its CANVAS_PAD margin), so the garment
+  // is warped exactly where it sits, on the persona the studio already draws.
+  stageWidth: number;
+  stageHeight: number;
+  // The garment's current placement in the studio.
   transform: ClothingTransform;
   // Applying a warp drops any crop (it was framed against the old image).
   hasCrop: boolean;
@@ -42,40 +45,73 @@ interface WarpPanelProps {
 }
 
 const HANDLE_RADIUS = 9;
-const HIT_RADIUS = 16;
-// The canvas is this much bigger than the stage on every side. Points can sit
-// right on the stage's edge (that's how far they can be dragged) and a canvas
-// only draws inside its own bounds, so without a margin the handle circles
-// were cut in half or vanished at the top/bottom/sides.
-const EDGE_PAD = HANDLE_RADIUS + 8;
-// Space the panel's own chrome (hint text, buttons, gaps, padding) needs, so
-// the stage can take the rest of the available height.
-const CHROME_HEIGHT = 170;
-const MIN_STAGE_HEIGHT = 300;
-const MAX_STAGE_HEIGHT = 760;
+const HIT_RADIUS = 18;
+// How far past the stage edge a point may be dragged. The overlay canvas has a
+// CANVAS_PAD margin around the stage, so a handle (radius + its outline) that
+// far out still fits inside it - every point stays grabbable.
+const POINT_MARGIN = CANVAS_PAD - HANDLE_RADIUS - 4;
+
+// Warp-space (source px) -> stage px: places the image where the garment sits
+// in the studio - centered on its (x, y), scaled to its width/height, rotated
+// and flipped like the garment. When the item is already warped the transform
+// describes the *baked* image, whose center sits at the original's center plus
+// the recorded shift.
+export function garmentToStageMatrix(
+  source: { w: number; h: number },
+  warp: Pick<WarpData, 'bakedWidth' | 'bakedHeight' | 'shift'> | null,
+  transform: Pick<ClothingTransform, 'x' | 'y' | 'width' | 'height' | 'rotation' | 'flipX' | 'flipY'>,
+  stageW: number,
+  stageH: number
+): Affine {
+  const current = warp ? { w: warp.bakedWidth, h: warp.bakedHeight } : source;
+  const anchor = warp
+    ? { x: source.w / 2 + warp.shift.x, y: source.h / 2 + warp.shift.y }
+    : { x: source.w / 2, y: source.h / 2 };
+
+  const width = transform.width || 450;
+  const height = transform.height || (width * current.h) / current.w;
+  const s = stageH / 1000;
+  const kx = (width / current.w) * s * (transform.flipX ? -1 : 1);
+  const ky = (height / current.h) * s * (transform.flipY ? -1 : 1);
+  const theta = ((transform.rotation || 0) * Math.PI) / 180;
+
+  const a = kx * Math.cos(theta);
+  const b = kx * Math.sin(theta);
+  const c = -ky * Math.sin(theta);
+  const d = ky * Math.cos(theta);
+  const cx = toCanvasX(transform.x, stageW, stageH);
+  const cy = toCanvasCoord(transform.y, stageH);
+  return { a, b, c, d, e: cx - (a * anchor.x + c * anchor.y), f: cy - (b * anchor.x + d * anchor.y) };
+}
+
+// Keeps a dragged point where its handle still fits inside the overlay canvas
+// (the stage plus POINT_MARGIN on every side).
+export function clampStagePoint(p: WarpPoint, stageW: number, stageH: number): WarpPoint {
+  return {
+    x: Math.min(Math.max(p.x, -POINT_MARGIN), stageW + POINT_MARGIN),
+    y: Math.min(Math.max(p.y, -POINT_MARGIN), stageH + POINT_MARGIN),
+  };
+}
 
 const WarpPanel: React.FC<WarpPanelProps> = ({
   sourceUrl,
   warp,
-  personaType,
+  stageWidth: stageW,
+  stageHeight: stageH,
   transform,
   hasCrop,
   onApply,
   onCancel,
 }) => {
-  const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const mannequinRef = useRef<HTMLImageElement | null>(null);
   const dragIndexRef = useRef<number | null>(null);
 
   const [size, setSize] = useState<{ w: number; h: number } | null>(null);
-  const [mannequinReady, setMannequinReady] = useState(false);
   const [grid, setGrid] = useState<WarpPoint[]>(warp?.grid ?? []);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
-  const [available, setAvailable] = useState<{ w: number; h: number }>({ w: 600, h: 600 });
 
   // Garment image.
   useEffect(() => {
@@ -97,114 +133,50 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
     };
   }, [sourceUrl]);
 
-  // Persona (same base images the studio canvas uses).
-  useEffect(() => {
-    let cancelled = false;
-    setMannequinReady(false);
-    const img = new Image();
-    img.onload = () => {
-      if (cancelled) return;
-      mannequinRef.current = img;
-      setMannequinReady(true);
-    };
-    // A missing persona image shouldn't block warping - just draw without it.
-    img.onerror = () => {
-      if (!cancelled) {
-        mannequinRef.current = null;
-        setMannequinReady(true);
-      }
-    };
-    img.src = personaType === PersonaType.MALE ? '/personas/male-base.png' : '/personas/female-base.png';
-    return () => {
-      cancelled = true;
-    };
-  }, [personaType]);
+  const canvasW = stageW + 2 * CANVAS_PAD;
+  const canvasH = stageH + 2 * CANVAS_PAD;
+  // Crisp on high-DPI screens; capped so a large stage doesn't get huge.
+  const dpr = Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 2);
 
-  // Fit the stage to whatever room the panel has.
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    const measure = () => setAvailable({ w: el.clientWidth, h: el.clientHeight });
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
-  // The stage has the same 3:4 shape as the studio canvas, so a virtual
-  // coordinate lands in the same place in both.
-  const stageH = Math.round(
-    Math.min(
-      Math.max(available.h - CHROME_HEIGHT - 2 * EDGE_PAD, MIN_STAGE_HEIGHT),
-      MAX_STAGE_HEIGHT,
-      Math.max((available.w - 48 - 2 * EDGE_PAD) / ASPECT_RATIO, MIN_STAGE_HEIGHT)
-    )
+  const matrix: Affine | null = useMemo(
+    () => (size ? garmentToStageMatrix(size, warp, transform, stageW, stageH) : null),
+    [size, warp, transform.x, transform.y, transform.width, transform.height, transform.rotation, transform.flipX, transform.flipY, stageW, stageH]
   );
-  const stageW = Math.round(stageH * ASPECT_RATIO);
-  const canvasW = stageW + 2 * EDGE_PAD;
-  const canvasH = stageH + 2 * EDGE_PAD;
-
-  // Warp-space (source px) -> stage px, placing the image where the garment
-  // sits in the studio: centered on its (x, y), scaled to its width/height,
-  // rotated and flipped like the garment. When the item is already warped,
-  // the transform describes the *baked* image, whose center sits at the
-  // original's center plus the recorded shift.
-  const matrix: Affine | null = useMemo(() => {
-    if (!size) return null;
-    const current = warp ? { w: warp.bakedWidth, h: warp.bakedHeight } : size;
-    const anchor = warp
-      ? { x: size.w / 2 + warp.shift.x, y: size.h / 2 + warp.shift.y }
-      : { x: size.w / 2, y: size.h / 2 };
-
-    const width = transform.width || 450;
-    const height = transform.height || (width * current.h) / current.w;
-    const s = stageH / 1000;
-    const kx = (width / current.w) * s * (transform.flipX ? -1 : 1);
-    const ky = (height / current.h) * s * (transform.flipY ? -1 : 1);
-    const theta = ((transform.rotation || 0) * Math.PI) / 180;
-
-    const a = kx * Math.cos(theta);
-    const b = kx * Math.sin(theta);
-    const c = -ky * Math.sin(theta);
-    const d = ky * Math.cos(theta);
-    const cx = toCanvasX(transform.x, stageW, stageH);
-    const cy = toCanvasCoord(transform.y, stageH);
-    return { a, b, c, d, e: cx - (a * anchor.x + c * anchor.y), f: cy - (b * anchor.x + d * anchor.y) };
-  }, [size, warp, transform.x, transform.y, transform.width, transform.height, transform.rotation, transform.flipX, transform.flipY, stageW, stageH]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const img = imgRef.current;
-    if (!canvas || !img || !size || !matrix || !mannequinReady || grid.length !== WARP_GRID * WARP_GRID) return;
+    if (!canvas || !img || !size || !matrix || grid.length !== WARP_GRID * WARP_GRID) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // `matrix` maps to stage coordinates; everything is drawn EDGE_PAD in from
-    // the canvas's own corner. (Folded into the matrix rather than a context
-    // translate because renderWarpedMesh sets each triangle's transform
-    // absolutely.)
-    const drawMatrix: Affine = { ...matrix, e: matrix.e + EDGE_PAD, f: matrix.f + EDGE_PAD };
-
-    // The stage's own bounds - the area the points can be dragged within.
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(EDGE_PAD + 0.5, EDGE_PAD + 0.5, stageW, stageH);
-
-    // Persona, scaled to the stage height and centered, like the studio canvas.
-    const mannequin = mannequinRef.current;
-    if (mannequin) {
-      const k = stageH / mannequin.naturalHeight;
-      const mw = mannequin.naturalWidth * k;
-      ctx.drawImage(mannequin, EDGE_PAD + (stageW - mw) / 2, EDGE_PAD, mw, stageH);
-    }
+    // `matrix` maps to stage coordinates; the canvas also holds the handle
+    // margin, and is drawn at device resolution. Both are folded into the
+    // matrix (rather than a context transform) because renderWarpedMesh sets
+    // each triangle's transform absolutely.
+    const drawMatrix: Affine = {
+      a: matrix.a * dpr,
+      b: matrix.b * dpr,
+      c: matrix.c * dpr,
+      d: matrix.d * dpr,
+      e: (matrix.e + CANVAS_PAD) * dpr,
+      f: (matrix.f + CANVAS_PAD) * dpr,
+    };
+    // Everything else is drawn in css px.
+    const toCss = (p: WarpPoint): WarpPoint => {
+      const m = applyAffine(matrix, p);
+      return { x: m.x + CANVAS_PAD, y: m.y + CANVAS_PAD };
+    };
 
     // The warped garment, at the garment's own opacity.
     ctx.globalAlpha = transform.opacity ?? 1;
     renderWarpedMesh(ctx, img, size.w, size.h, grid, drawMatrix, 16);
     ctx.globalAlpha = 1;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Where the unwarped image sits, for reference.
     const corners = [
@@ -212,8 +184,8 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
       { x: size.w, y: 0 },
       { x: size.w, y: size.h },
       { x: 0, y: size.h },
-    ].map((p) => applyAffine(drawMatrix, p));
-    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ].map(toCss);
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
     ctx.lineWidth = 1;
     ctx.setLineDash([6, 6]);
     ctx.beginPath();
@@ -223,11 +195,11 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
     ctx.setLineDash([]);
 
     const accent = getStageAccentHex();
-    const pts = grid.map((p) => applyAffine(drawMatrix, p));
+    const pts = grid.map(toCss);
 
-    // Control net.
+    // Control net, drawn over the garment.
     ctx.strokeStyle = accent;
-    ctx.globalAlpha = 0.75;
+    ctx.globalAlpha = 0.85;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     for (let r = 0; r < WARP_GRID; r++) {
@@ -253,19 +225,18 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
       ctx.arc(p.x, p.y, HANDLE_RADIUS, 0, Math.PI * 2);
       ctx.fillStyle = '#ffffff';
       ctx.fill();
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5;
       ctx.strokeStyle = accent;
       ctx.stroke();
     }
-  }, [grid, size, matrix, mannequinReady, stageW, stageH, transform.opacity]);
+  }, [grid, size, matrix, canvasW, canvasH, dpr, transform.opacity]);
 
+  // Pointer position in stage px (the canvas also holds the margin).
   const toStagePoint = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    // Stage coordinates: canvas pixels minus the margin.
+    const rect = canvasRef.current!.getBoundingClientRect();
     return {
-      x: ((e.clientX - rect.left) * canvas.width) / rect.width - EDGE_PAD,
-      y: ((e.clientY - rect.top) * canvas.height) / rect.height - EDGE_PAD,
+      x: ((e.clientX - rect.left) * canvasW) / rect.width - CANVAS_PAD,
+      y: ((e.clientY - rect.top) * canvasH) / rect.height - CANVAS_PAD,
     };
   };
 
@@ -296,11 +267,8 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
     const index = dragIndexRef.current;
     if (index === null || !matrix) return;
     const pt = toStagePoint(e);
-    // Keep the point on the stage so its handle stays reachable.
-    const stagePt = {
-      x: Math.min(Math.max(pt.x, 0), stageW),
-      y: Math.min(Math.max(pt.y, 0), stageH),
-    };
+    // Keep the point where its handle still fits inside the canvas.
+    const stagePt = clampStagePoint(pt, stageW, stageH);
     const next = applyAffine(invertAffine(matrix), stagePt);
     setGrid((prev) => prev.map((p, i) => (i === index ? next : p)));
   };
@@ -328,66 +296,70 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
     }
   };
 
-  const ready = !!size && !!matrix && mannequinReady;
+  const ready = !!size && !!matrix;
+
+  // Fixed light colors, not theme tokens: the stage stays dark in both site
+  // themes (see index.css).
+  const pill = 'absolute left-1/2 -translate-x-1/2 w-max max-w-[calc(100%-1rem)] select-none rounded-2xl border border-white/10 bg-black/60 backdrop-blur-md';
+  const label = 'text-[10px] font-black uppercase tracking-widest';
 
   return (
-    <div
-      ref={rootRef}
-      className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-stage rounded-2xl p-6"
-    >
-      {loadError ? (
-        <p className="text-[10px] font-black uppercase tracking-widest text-red-400">{loadError}</p>
-      ) : !ready ? (
-        <Loader2 className="animate-spin text-accent" size={28} />
-      ) : (
-        <>
-          <p className="text-[10px] font-black uppercase tracking-widest text-text-secondary text-center">
-            Drag the points to bend the garment on the persona
-            {hasCrop ? ' - applying a warp clears the crop' : ''}
-          </p>
-          <canvas
-            ref={canvasRef}
-            width={canvasW}
-            height={canvasH}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            className="rounded-xl border border-ink/5 touch-none cursor-crosshair"
-            style={{ width: canvasW, height: canvasH, maxWidth: '100%' }}
-          />
-          {applyError && (
-            <p className="text-[10px] font-black uppercase tracking-widest text-red-400 text-center max-w-sm">
-              {applyError}
-            </p>
-          )}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onCancel}
-              disabled={busy}
-              className="px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-text-secondary hover:bg-ink/5 transition-all disabled:opacity-40"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => size && setGrid(identityGrid(size.w, size.h))}
-              disabled={busy}
-              className="px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-ink/5 hover:bg-ink/10 text-text-primary transition-all disabled:opacity-40"
-            >
-              Reset Points
-            </button>
-            <button
-              onClick={handleApply}
-              disabled={busy}
-              className="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-accent hover:bg-accent-hover text-on-accent shadow-lg transition-all disabled:opacity-60 flex items-center gap-2"
-            >
-              {busy && <Loader2 className="animate-spin" size={14} />}
-              {busy ? 'Applying...' : 'Apply Warp'}
-            </button>
-          </div>
-        </>
+    <>
+      {ready && (
+        <canvas
+          ref={canvasRef}
+          width={Math.round(canvasW * dpr)}
+          height={Math.round(canvasH * dpr)}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          className="absolute left-0 top-0 touch-none cursor-crosshair pointer-events-auto"
+          style={{ width: canvasW, height: canvasH }}
+        />
       )}
-    </div>
+
+      {loadError ? (
+        <p className={`${label} absolute inset-x-0 top-1/2 text-center text-red-400 pointer-events-none`}>{loadError}</p>
+      ) : !ready ? (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Loader2 className="animate-spin text-white/70" size={28} />
+        </div>
+      ) : (
+        <p className={`${pill} top-3 px-4 py-2 text-center text-white/70 pointer-events-none ${label}`}>
+          Drag the points to bend the garment
+          {hasCrop ? ' - applying a warp clears the crop' : ''}
+        </p>
+      )}
+
+      <div className={`${pill} bottom-3 flex flex-col items-center gap-2 p-1.5 pointer-events-auto`}>
+        {applyError && <p className={`${label} px-3 pt-1 text-center text-red-400`}>{applyError}</p>}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            className={`${label} px-4 py-2.5 rounded-xl text-white/70 hover:bg-white/10 transition-all disabled:opacity-40`}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => size && setGrid(identityGrid(size.w, size.h))}
+            disabled={busy || !ready}
+            className={`${label} px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all disabled:opacity-40`}
+          >
+            Reset Points
+          </button>
+          <button
+            onClick={handleApply}
+            disabled={busy || !ready}
+            className={`${label} px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-on-accent shadow-lg transition-all disabled:opacity-60 flex items-center gap-2`}
+          >
+            {busy && <Loader2 className="animate-spin" size={14} />}
+            {busy ? 'Applying...' : 'Apply Warp'}
+          </button>
+        </div>
+      </div>
+    </>
   );
 };
 
