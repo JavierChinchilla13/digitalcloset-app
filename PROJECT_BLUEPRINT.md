@@ -6613,3 +6613,25 @@ Neon (free, 0.5 GB, no expiry, scales to zero) and the API reaches it with
   `phase-9-categories-experience`, `a2f40cf`) but the boxes had been left open.
 - Still open on the roadmap: hosting for real (Task 24's user-side step),
   Task 57 (comment the codebase) and Task 58 (`PROJECT_STRUCTURE.md`).
+
+### Request limit on the public account endpoints (2026-10-01, branch `phase-6.1-prelaunch`)
+
+The gap listed under Task 24's "Not done": nothing slowed a script guessing
+passwords or flooding sign-ups. `RateLimitFilter` (`security/`): a fixed window per
+client address on `/api/auth/**` (the only endpoints an anonymous caller can reach) -
+default 30 requests / 60 s (`RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_ENABLED`), beyond
+which the answer is **429 + `Retry-After`** and the message "Too many attempts -
+please wait a minute and try again" (all three auth pages already display
+`response.data.message`). In-memory counts, swept when the map passes 10,000
+entries; CORS preflight and every other path are exempt; placed before the JWT
+filter in the security chain. The client address is `getRemoteAddr()`; the prod
+profile now uses `server.forward-headers-strategy=native` so behind Caddy / Render
+that is the visitor from `X-Forwarded-For` (Tomcat only trusts it from a
+private-network proxy), not one shared bucket for everyone. The test profile turns
+it off (the suite registers dozens of users from one address).
+**Tests (100 backend):** `RateLimitFilterTest` x8 (limit, shared budget, window
+reset, Retry-After countdown, per address, other paths, preflight, disabled - fake
+clock), `RateLimitIntegrationTest` x2 (the real chain returns 429 after the limit),
+plus a `ProductionProfileTest` line for the forwarded-address setting.
+Limits: per address only (not a defence against a distributed attack), resets on a
+restart, not shared across several instances.
