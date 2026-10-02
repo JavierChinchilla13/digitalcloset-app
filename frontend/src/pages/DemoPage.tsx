@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Shirt, LayoutGrid, Save, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Search, Shirt, LayoutGrid, Save, Plus, Pencil, Trash2, X, User } from 'lucide-react';
 import { useDemoStore } from '../store/useDemoStore';
 import { useOutfitDraftStore } from '../store/useOutfitDraftStore';
 import { ClothingCategory } from '../types';
@@ -17,9 +17,13 @@ import { toggleWithShoeRule } from '../utils/shoeSelection';
 // Closet tab (the inventory view). Gated (opens DemoSignupModal, touches no
 // store/API): adding, editing or deleting a garment, and saving the outfit.
 //
-// There is deliberately no persona here (preview, switcher, badges): dressing
-// the mannequin never looked right for jackets, so it was pulled from the demo
-// entirely - the persona is introduced separately instead.
+// There is deliberately no live persona here (preview, switcher, badges):
+// dressing the mannequin never looked right for jackets, so it was pulled from
+// the demo. "View on Persona" instead opens the sign-up modal with a recorded
+// clip of garments being put on the persona (Task 87) - the real thing, one
+// account away - and its Create Free Account button.
+const PERSONA_REASON = 'to see your outfit on your own persona';
+const PERSONA_GIF = '/marketing/persona-demo.gif';
 
 const SECTIONS: { label: string; categories: ClothingCategory[] }[] = [
   { label: 'Top', categories: [ClothingCategory.DRESS, ClothingCategory.TOP, ClothingCategory.JACKET] },
@@ -226,9 +230,18 @@ const DemoPage = () => {
           </aside>
 
           <main className="flex-grow relative bg-background-main overflow-y-auto no-scrollbar p-6">
-            <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50 mb-4">
-              Your Selection
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
+                Your Selection
+              </h3>
+              <button
+                onClick={() => setGateReason(PERSONA_REASON)}
+                disabled={selectedItems.length === 0}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20 disabled:opacity-20 disabled:pointer-events-none"
+              >
+                <User size={12} /> View on Persona
+              </button>
+            </div>
 
             {selectedItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
@@ -364,6 +377,10 @@ const DemoPage = () => {
         isOpen={gateReason !== null}
         onClose={() => setGateReason(null)}
         reason={gateReason ?? ''}
+        {...(gateReason === PERSONA_REASON && {
+          mediaSrc: PERSONA_GIF,
+          mediaAlt: 'Garments being put on the VYSVI persona one by one',
+        })}
       />
     </div>
   );

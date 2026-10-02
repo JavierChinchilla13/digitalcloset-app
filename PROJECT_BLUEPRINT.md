@@ -6489,3 +6489,32 @@ at a consistent size, nothing clipped; 8 random clicks gave 4-5 pieces with the
 persona preview on; opening "Shoes" for editing and clicking the button moved to
 the new-outfit page ("New Style", "Save to collection") and left "Shoes" at 3
 pieces.
+
+### Task 88 - Persona GIF, `/demo` "View on Persona", landing wiring (2026-10-01, branch `phase-4.8-polish`)
+
+- **`public/marketing/persona-demo.gif`** (880x495, ~1 MB, loops): real footage of
+  garments being put on the persona one by one (pants, tee, sneakers, denim jacket)
+  with the Layers panel updating, recorded in the user's own Chrome on a new-outfit
+  page (nothing saved). Replaces `theme-toggle-demo.gif` (deleted) in the landing
+  page's Experience section (container now `aspect-video`; bullets reworded to
+  "DRESS YOUR DIGITAL PERSONA" / "LAYER PIECES IN ANY ORDER"); the PERSONA TECH
+  card already pointed at this path, so it now shows it too.
+- **`/demo`**: a "View on Persona" button above the selection (disabled with
+  nothing selected) opens `DemoSignupModal` with the persona GIF and the reason
+  "to see your outfit on your own persona"; its Create Free Account button links
+  to `/signup`. Still no live persona and no API calls. `DemoSignupModal` takes
+  optional `mediaSrc` / `mediaAlt` (default: the outfit-builder clip).
+- **How the GIF was made** (for a re-record): the Claude-in-Chrome GIF recorder
+  captured 0 frames, so the stage screenshots were saved to disk
+  (`screenshot` with `save_to_disk`) and assembled with Pillow: crop the page
+  region to 16:9, short cross-fades between stages, a 256-colour palette per frame
+  (a shared palette bands the skin tones). Resizing the browser window leaves the
+  tab's capture region out of step with its viewport (the page fills ~80% of the
+  frame); open a fresh tab, and crop. The page repaints only when a screenshot
+  forces a frame, so take a throwaway screenshot, wait, then the kept one.
+- **Verified.** `tsc -b --force`, `vite build` clean; 271 frontend tests (new: demo
+  View on Persona opens the persona clip + signup link, other gates keep the old
+  clip). Landing Experience section and `/demo` modal checked in the browser.
+
+Still to do before deploy: `closet-browsing-demo.gif` is 2.7 MB (compress it);
+`main-outfit-demo.gif` is not recorded (its card skips the preview until it exists).
