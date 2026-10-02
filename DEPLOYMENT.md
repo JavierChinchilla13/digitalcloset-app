@@ -230,6 +230,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `MAIL_FROM` | no | From address (Gmail requires it to be the account itself - the default). |
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
+| `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags; e.g. `-Xmx512m` on a small machine. |
 
 Never put a secret in a `VITE_` variable: those end up in the public JavaScript.
@@ -247,8 +248,12 @@ Caddy answers 404 for it publicly).
 
 ## 8. Not done yet (worth knowing)
 
-- **No rate limiting** on login / register / forgot-password beyond the per-account
-  email throttles. Put Cloudflare (free) in front, or add a limiter, before real traffic.
+- **Rate limiting is basic.** `/api/auth/**` (login, register, forgot/reset password)
+  allows 30 requests per minute per visitor address (`RATE_LIMIT_AUTH_MAX`; counts are
+  in memory, so they reset on a restart). It stops password-guessing and sign-up
+  floods from one address, not a distributed attack - Cloudflare (free) in front
+  would add that. Behind Caddy/Render the visitor's address comes from
+  `X-Forwarded-For` (`server.forward-headers-strategy=native`).
 - **No Content-Security-Policy header** yet: the in-browser background remover
   loads its model files from a third-party CDN, so a CSP needs to be written and
   tested against it.

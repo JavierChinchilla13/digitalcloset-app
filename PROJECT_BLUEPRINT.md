@@ -1098,10 +1098,10 @@ Execute in this exact order.
 *(renumbered 2026-09-01 from 40–43 to 48–51 to avoid colliding with the
 Phase 8.5 tasks above — see Open Question #20 resolution)*
 
-- [ ] **48** Create `useCollectionStore` + `collectionService`
-- [ ] **49** Build categories management page
-- [ ] **50** Inline "add to category" in `UploadFlow`
-- [ ] **51** Inline "add to category" in outfit save
+- [x] **48** Create `useCollectionStore` + `collectionService`
+- [x] **49** Build categories management page
+- [x] **50** Inline "add to category" in `UploadFlow`
+- [x] **51** Inline "add to category" in outfit save
 
 ### Phase 9.5 — Categories polish + persona consistency *(planned 2026-09-03, before Phase 10)*
 
@@ -2293,7 +2293,7 @@ rendering logic, or any Fabric editor.
 - [x] **36** Build `FlatOutfitBuilderPage` (browse + multi-select, no persona)
 - [x] **37** Add save/update draft → backend outfit
 - [x] **38** Add optional persona preview toggle (eligible items only)
-- [ ] **39** Re-route post-login landing to the flat builder
+- [x] **39** Re-route post-login landing to the flat builder
 
 ### 🏁 Definition of Done
 
@@ -2330,10 +2330,10 @@ Question #20.)*
 
 ### Tasks
 
-- [ ] **48** Create `useCollectionStore` + `collectionService`
-- [ ] **49** Build categories management page (create/rename/delete/view)
-- [ ] **50** Add inline "add to category (existing or new)" to `UploadFlow`
-- [ ] **51** Add inline "add to category (existing or new)" to outfit save
+- [x] **48** Create `useCollectionStore` + `collectionService`
+- [x] **49** Build categories management page (create/rename/delete/view)
+- [x] **50** Add inline "add to category (existing or new)" to `UploadFlow`
+- [x] **51** Add inline "add to category (existing or new)" to outfit save
 
 ### 🏁 Definition of Done
 
@@ -6602,3 +6602,36 @@ Neon (free, 0.5 GB, no expiry, scales to zero) and the API reaches it with
   migrations on PostgreSQL 17, backend healthy, Caddy serves the site and proxies
   /api, `/actuator` hidden, register 200, broken JSON 400, anonymous 403), so the
   Docker route is proven; the Render route (render.yaml, Neon) has not been run.
+
+### Pre-launch tidy (2026-10-01, branch `phase-6.1-prelaunch`)
+
+- `closet-browsing-demo.gif` re-encoded 1400 -> 1000 px wide, per-frame 192-colour
+  palettes: 2.7 MB -> 1.3 MB, same look (the landing-page note "compress before
+  deploy" is done).
+- Master list / Phase 8-9 prose checkboxes for Tasks 39 and 48-51 ticked: they
+  shipped long ago (Task 39 has its own COMPLETE entry; 48-51 are in
+  `phase-9-categories-experience`, `a2f40cf`) but the boxes had been left open.
+- Still open on the roadmap: hosting for real (Task 24's user-side step),
+  Task 57 (comment the codebase) and Task 58 (`PROJECT_STRUCTURE.md`).
+
+### Request limit on the public account endpoints (2026-10-01, branch `phase-6.1-prelaunch`)
+
+The gap listed under Task 24's "Not done": nothing slowed a script guessing
+passwords or flooding sign-ups. `RateLimitFilter` (`security/`): a fixed window per
+client address on `/api/auth/**` (the only endpoints an anonymous caller can reach) -
+default 30 requests / 60 s (`RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_ENABLED`), beyond
+which the answer is **429 + `Retry-After`** and the message "Too many attempts -
+please wait a minute and try again" (all three auth pages already display
+`response.data.message`). In-memory counts, swept when the map passes 10,000
+entries; CORS preflight and every other path are exempt; placed before the JWT
+filter in the security chain. The client address is `getRemoteAddr()`; the prod
+profile now uses `server.forward-headers-strategy=native` so behind Caddy / Render
+that is the visitor from `X-Forwarded-For` (Tomcat only trusts it from a
+private-network proxy), not one shared bucket for everyone. The test profile turns
+it off (the suite registers dozens of users from one address).
+**Tests (100 backend):** `RateLimitFilterTest` x8 (limit, shared budget, window
+reset, Retry-After countdown, per address, other paths, preflight, disabled - fake
+clock), `RateLimitIntegrationTest` x2 (the real chain returns 429 after the limit),
+plus a `ProductionProfileTest` line for the forwarded-address setting.
+Limits: per address only (not a defence against a distributed attack), resets on a
+restart, not shared across several instances.

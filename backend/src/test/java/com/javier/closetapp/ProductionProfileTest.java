@@ -54,6 +54,12 @@ class ProductionProfileTest {
     }
 
     @Test
+    @DisplayName("production trusts the proxy forwarded address, so the request limit counts per visitor")
+    void forwardedAddress() throws IOException {
+        assertEquals("native", prop("server.forward-headers-strategy").toString());
+    }
+
+    @Test
     @DisplayName("the connection pool is small and retires connections before a managed database drops them")
     void smallPool() throws IOException {
         assertEquals("${DB_POOL_SIZE:5}", prop("spring.datasource.hikari.maximum-pool-size").toString());
