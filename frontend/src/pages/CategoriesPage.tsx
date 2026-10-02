@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -8,6 +8,7 @@ import { useCollectionStore } from '../store/useCollectionStore';
 import { useToast } from '../components/Toast';
 import SectionWrapper from '../components/SectionWrapper';
 import type { Collection } from '../types';
+import ErrorState from '../components/ErrorState';
 
 // Categories management page (Task 49, Phase 9; refined in the Phase 9
 // follow-up). Create/rename/delete a Collection (Task 48) and search the
@@ -24,6 +25,7 @@ const CategoriesPage = () => {
   const { showToast } = useToast();
 
   const [showContent, setShowContent] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Create-category form (Phase 9 follow-up, point 2): a same-slot toggle
@@ -47,9 +49,18 @@ const CategoriesPage = () => {
   const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchCollections().finally(() => setShowContent(true));
+  // Task 22: the fetch swallows its error into the store, so read it back after
+  // each attempt to tell "no categories yet" apart from "couldn't load".
+  const loadCollections = useCallback(async () => {
+    setLoadFailed(false);
+    await fetchCollections();
+    setLoadFailed(!!useCollectionStore.getState().error);
+    setShowContent(true);
   }, [fetchCollections]);
+
+  useEffect(() => {
+    loadCollections();
+  }, [loadCollections]);
 
   // Client-side, case-insensitive substring match - the full list is
   // already fetched once above, not re-fetched per keystroke.
@@ -89,8 +100,13 @@ const CategoriesPage = () => {
     if (renamingId == null) return;
     const name = renameValue.trim();
     if (!name) return;
-    await renameCollection(renamingId, name);
-    setRenamingId(null);
+    try {
+      await renameCollection(renamingId, name);
+      setRenamingId(null);
+    } catch {
+      // Keep the rename box open so the user can retry.
+      showToast("Couldn't rename this category", 'error');
+    }
   };
 
   const confirmDelete = async () => {
@@ -193,6 +209,13 @@ const CategoriesPage = () => {
               <Loader2 className="animate-spin text-accent mb-4" size={40} />
               <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">Synchronizing...</p>
             </motion.div>
+          ) : loadFailed && collections.length === 0 ? (
+            <ErrorState
+              key="error"
+              title="We couldn't load your categories"
+              message="Check your connection and try again."
+              onRetry={loadCollections}
+            />
           ) : collections.length === 0 ? (
             <motion.div
               key="empty"

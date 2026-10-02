@@ -6,8 +6,10 @@ import { useCollectionStore } from '../store/useCollectionStore';
 import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitStore } from '../store/useOutfitStore';
 import { useToast } from '../components/Toast';
+import { useSafeAction } from '../hooks/useSafeAction';
 import SectionWrapper from '../components/SectionWrapper';
 import CroppedThumbnail from '../components/CroppedThumbnail';
+import PersonaBadge, { ItemPersonaBadge } from '../components/PersonaBadge';
 import { ClothingCategory, PersonaType } from '../types';
 import type { ClothingItem, Collection, Outfit } from '../types';
 
@@ -21,6 +23,7 @@ const CategoryDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { collections, fetchCollections, removeItem, removeOutfit } = useCollectionStore();
+  const runSafely = useSafeAction();
   const { items, fetchItems } = useClothingStore();
   const { fetchOutfits } = useOutfitStore();
 
@@ -116,9 +119,10 @@ const CategoryDetailPage = () => {
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
                   {collection.items.map((item) => (
                     <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
-                      <img src={item.imageUrl} alt={item.itemName} className="w-full h-full object-cover" />
+                      <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5" />
+                      <ItemPersonaBadge itemId={item.itemId} compact />
                       <button
-                        onClick={() => removeItem(collection.collectionId, item.itemId)}
+                        onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
                         className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Remove from category"
                       >
@@ -147,7 +151,7 @@ const CategoryDetailPage = () => {
                     >
                       {outfit.outfitName}
                       <button
-                        onClick={() => removeOutfit(collection.collectionId, outfit.outfitId)}
+                        onClick={() => runSafely(() => removeOutfit(collection.collectionId, outfit.outfitId), "Couldn't remove this outfit")}
                         className="text-text-secondary hover:text-rose-400 transition-colors"
                         title="Remove from category"
                       >
@@ -226,7 +230,7 @@ const OutfitPreviewThumb = ({ outfit }: { outfit: Outfit }) => {
           key={item.outfitItemId}
           className={`relative overflow-hidden bg-ink/5 ${previewItems.length === 1 ? 'col-span-2 row-span-2' : ''}`}
         >
-          {item.imageUrl && <img src={item.imageUrl} alt={item.itemName ?? ''} className="w-full h-full object-cover" />}
+          {item.imageUrl && <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName ?? ''} className="w-full h-full" />}
           {idx === 3 && outfit.items.length > 4 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <span className="text-white text-[10px] font-medium">+{outfit.items.length - 3}</span>
@@ -240,6 +244,7 @@ const OutfitPreviewThumb = ({ outfit }: { outfit: Outfit }) => {
 
 const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategoryModalProps) => {
   const { addItem, removeItem, addOutfit, removeOutfit } = useCollectionStore();
+  const runSafely = useSafeAction();
   const { outfits } = useOutfitStore();
   const { showToast } = useToast();
 
@@ -429,9 +434,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                               className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 hover:border-accent/50 transition-all group disabled:opacity-50"
                             >
                               <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-                              <div className="absolute top-1.5 left-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm">
-                                <span className="text-[10px] font-medium text-white uppercase tracking-widest">{item.personaType}</span>
-                              </div>
+                              <PersonaBadge item={item} compact />
                               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                 {isAdding ? (
                                   <Loader2 size={18} className="text-white animate-spin" />
@@ -459,9 +462,10 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {collection.items.map((item) => (
                           <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
-                            <img src={item.imageUrl} alt={item.itemName} className="w-full h-full object-cover opacity-70" />
+                            <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5 opacity-70" />
+                            <ItemPersonaBadge itemId={item.itemId} compact />
                             <button
-                              onClick={() => removeItem(collection.collectionId, item.itemId)}
+                              onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
                               className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
                               title="Remove from category"
                             >
@@ -538,7 +542,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                             <div key={collectionOutfit.collectionOutfitId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
                               {fullOutfit ? <OutfitPreviewThumb outfit={fullOutfit} /> : <div className="w-full h-full bg-ink/5" />}
                               <button
-                                onClick={() => removeOutfit(collection.collectionId, collectionOutfit.outfitId)}
+                                onClick={() => runSafely(() => removeOutfit(collection.collectionId, collectionOutfit.outfitId), "Couldn't remove this outfit")}
                                 className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Remove from category"
                               >

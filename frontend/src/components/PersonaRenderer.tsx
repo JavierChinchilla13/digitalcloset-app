@@ -5,15 +5,48 @@ import { PersonaType, type PersonaState, type ModularJacketData } from '../types
 import PersonaLayer, { type PersonaLayerProps } from './PersonaLayer';
 import { useClothingStore } from '../store/useClothingStore';
 import { usePersonaStore } from '../store/usePersonaStore';
+import ErrorBoundary from './ErrorBoundary';
+import ErrorState from './ErrorState';
+import { useOcclusionMasks, pickLayerAt } from '../hooks/useOcclusionMasks';
+import { resolveStack } from '../utils/layerOrder';
 
 interface PersonaRendererProps {
   persona?: PersonaState;
   className?: string;
+  // Task 86: makes the garments clickable - called with the closet item under
+  // the click (nothing when the click lands on the bare persona).
+  onLayerPick?: (itemId: number) => void;
+  // The item to glow (the one selected for reordering).
+  highlightItemId?: number | null;
 }
 
-const PersonaRenderer: React.FC<PersonaRendererProps> = ({ 
+// The persona's layers, each with the mask (Task 85) that stops a garment
+// from showing where another one above it would really cover it. A component
+// of its own because hooks can't sit after the renderer's early return.
+const PersonaLayerStack: React.FC<{ layers: PersonaLayerProps[]; highlightItemId?: number | null }> = ({
+  layers,
+  highlightItemId,
+}) => {
+  const masks = useOcclusionMasks(layers);
+  return (
+    <>
+      {layers.map((layer) => (
+        <PersonaLayer
+          key={`${layer.id}-${layer.imageUrl || 'none'}`}
+          {...layer}
+          occlusionMask={masks[layer.id]}
+          highlight={highlightItemId != null && layer.itemId === highlightItemId}
+        />
+      ))}
+    </>
+  );
+};
+
+const PersonaRendererContent: React.FC<PersonaRendererProps> = ({ 
   persona: customPersona,
-  className = "h-[600px] md:h-[800px]"
+  className = "h-[600px] md:h-[800px]",
+  onLayerPick,
+  highlightItemId
 }) => {
   const { items, fetchItems } = useClothingStore();
   const { persona: storePersona } = usePersonaStore();
@@ -65,6 +98,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   bottoms.forEach((item, index) => {
     layers.push({
       id: `bottom-${item.itemId}`,
+      itemId: item.itemId,
       imageUrl: item.imageUrl,
       zIndex: 100 + index,
       transform: item.transform,
@@ -78,6 +112,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
     // Legacy behavior: Single image contains both shoes
     layers.push({
       id: `shoes-pair-${leftShoe.itemId}`,
+      itemId: leftShoe.itemId,
       imageUrl: leftShoe.imageUrl,
       zIndex: 200,
       transform: leftShoe.transform,
@@ -88,6 +123,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
     if (leftShoe) {
       layers.push({
         id: `left-shoe-${leftShoe.itemId}`,
+      itemId: leftShoe.itemId,
         imageUrl: leftShoe.imageUrl,
         zIndex: 200,
         transform: leftShoe.transform,
@@ -99,6 +135,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
     if (rightShoe) {
       layers.push({
         id: `right-shoe-${rightShoe.itemId}`,
+      itemId: rightShoe.itemId,
         imageUrl: rightShoe.imageUrl,
         zIndex: 201,
         transform: rightShoe.transform,
@@ -113,6 +150,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   dresses.forEach((item, index) => {
     layers.push({
       id: `dress-${item.itemId}`,
+      itemId: item.itemId,
       imageUrl: item.imageUrl,
       zIndex: 250 + index,
       transform: item.transform,
@@ -125,6 +163,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   tops.forEach((item, index) => {
     layers.push({
       id: `top-${item.itemId}`,
+      itemId: item.itemId,
       imageUrl: item.imageUrl,
       zIndex: 300 + index,
       transform: item.transform,
@@ -144,6 +183,8 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
           if (segment) {
             layers.push({
               id: `jacket-${item.itemId}-${partName}`,
+      itemId: item.itemId,
+              group: `jacket-${item.itemId}`,
               imageUrl: segment.imageUrl,
               zIndex: 400 + (index * 10) + partIndex,
               transform: { 
@@ -158,6 +199,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
       } catch (e) {
         layers.push({
           id: `jacket-${item.itemId}`,
+      itemId: item.itemId,
           imageUrl: item.imageUrl,
           zIndex: 400 + (index * 10),
           transform: item.transform,
@@ -168,6 +210,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
     } else {
       layers.push({
         id: `jacket-${item.itemId}`,
+      itemId: item.itemId,
         imageUrl: item.imageUrl,
         zIndex: 400 + (index * 10),
         transform: item.transform,
@@ -181,6 +224,7 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
   accessories.forEach((item, index) => {
     layers.push({
       id: `accessory-${item.itemId}`,
+      itemId: item.itemId,
       imageUrl: item.imageUrl,
       zIndex: 500 + index,
       transform: item.transform,
@@ -188,6 +232,32 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
       personaType: persona.type
     });
   });
+
+  // Task 86: a custom stacking order replaces the category ranges. Every piece
+  // gets a slot of ten in the stack (its pictures keep their relative order
+  // inside it - a modular jacket's parts, a left/right shoe), so the pieces
+  // the order doesn't mention still land where their category would put them.
+  if (persona.layerOrder && persona.layerOrder.length > 0) {
+    const renderedIds = Array.from(new Set(layers.map((l) => l.itemId).filter((id): id is number => id != null)));
+    const stack = resolveStack(renderedIds, items, persona.layerOrder);
+    const sub = new Map<number, number>();
+    [...layers]
+      .filter((l) => l.itemId != null)
+      .sort((a, b) => a.zIndex - b.zIndex)
+      .forEach((layer) => {
+        const n = sub.get(layer.itemId!) ?? 0;
+        sub.set(layer.itemId!, n + 1);
+        const position = stack.indexOf(layer.itemId!);
+        if (position >= 0) layer.zIndex = 100 + position * 10 + Math.min(n, 9);
+      });
+  }
+
+  const handlePick = async (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!onLayerPick) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const itemId = await pickLayerAt(layers, (e.clientX - rect.left) / rect.width, (e.clientY - rect.top) / rect.height);
+    if (itemId != null) onLayerPick(itemId);
+  };
 
   return (
     <div className={`relative w-full flex items-center justify-center overflow-visible ${className}`}>
@@ -202,19 +272,37 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = ({
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.02 }}
-            className="relative h-full aspect-[3/4] flex items-center justify-center overflow-visible"
+            className={`relative h-full aspect-[3/4] flex items-center justify-center overflow-visible ${onLayerPick ? 'cursor-pointer' : ''}`}
+            onClick={onLayerPick ? handlePick : undefined}
           >
-            {layers.map((layer) => (
-              <PersonaLayer 
-                key={`${layer.id}-${layer.imageUrl || 'none'}`}
-                {...layer}
-              />
-            ))}
+            <PersonaLayerStack layers={layers} highlightItemId={highlightItemId} />
           </motion.div>
         </AnimatePresence>
       </div>
     </div>
   );
 };
+
+// Task 22: a render error in any layer (a malformed transform, a corrupt
+// modularData blob, ...) used to unmount the whole page. Wrapping at the
+// source covers every place the persona is shown; it retries by itself when
+// the persona being shown changes, and offers Try Again otherwise.
+const PersonaRenderer: React.FC<PersonaRendererProps> = (props) => (
+  <ErrorBoundary
+    resetKeys={[props.persona]}
+    fallback={({ reset }) => (
+      <div className={`flex items-center justify-center ${props.className ?? "h-[600px] md:h-[800px]"}`}>
+        <ErrorState
+          compact
+          title="Couldn't show this preview"
+          message="Something went wrong drawing the persona. Your items are safe."
+          onRetry={reset}
+        />
+      </div>
+    )}
+  >
+    <PersonaRendererContent {...props} />
+  </ErrorBoundary>
+);
 
 export default PersonaRenderer;

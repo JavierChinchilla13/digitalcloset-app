@@ -11,7 +11,8 @@ import {
   CANVAS_PAD,
   stageWidth,
   stageHeight,
-  applyStagePadding
+  applyStagePadding,
+  keepHandlesReachable
 } from '../editor/CanvasUtils';
 import { customizeFabricControls, lockObject } from '../editor/FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
@@ -90,6 +91,17 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
         if (onSideSelect) onSideSelect(side);
       }
     };
+
+    // Task 83: keep each shoe where its selection handles stay inside the
+    // canvas (shoes sit at the bottom edge). Registered before handleModified
+    // so it records the clamped position.
+    const keepReachable = (e: { target?: { name?: string } }) => {
+      const name = e.target?.name;
+      const active = canvas.getActiveObject();
+      if ((name === 'leftShoe' || name === 'rightShoe') && active) keepHandlesReachable(canvas, active);
+    };
+    canvas.on('object:moving', keepReachable);
+    canvas.on('object:modified', keepReachable);
 
     canvas.on('object:modified', handleModified);
     canvas.on('object:scaling', handleModified);

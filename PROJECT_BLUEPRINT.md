@@ -413,13 +413,13 @@ Accessory rendering           ✅
 
 ### Tasks
 
-- [ ] **CF14** — Implement or remove Forgot Password
-- [ ] Add role-based route guard
-- [ ] Use existing `isAdmin`
-- [ ] Add error boundary around `PersonaRenderer`
-- [ ] Add error boundary around `UploadFlow`
-- [ ] Ensure failures display recoverable UI
-- [ ] Remove dead buttons
+- [x] **CF14** — Implement or remove Forgot Password (Task 21)
+- [x] Add role-based route guard (Task 22)
+- [x] Use existing `isAdmin` (Task 22)
+- [x] Add error boundary around `PersonaRenderer` (Task 22)
+- [x] Add error boundary around `UploadFlow` (Task 22)
+- [x] Ensure failures display recoverable UI (Task 22)
+- [x] Remove dead buttons (Task 22)
 
 ### UX Principle
 
@@ -456,16 +456,16 @@ Testing should prioritize the bugs and security issues already identified.
 
 ### 1. Backend Security
 
-- [ ] Clothing ownership tests
-- [ ] Outfit ownership tests
-- [ ] Registration role escalation test
+- [x] Clothing ownership tests (Task 23a)
+- [x] Outfit ownership tests (Task 23a)
+- [x] Registration role escalation test (Task 23a)
 
 ### 2. JWT
 
-- [ ] Token generation
-- [ ] Token validation
-- [ ] Token expiration
-- [ ] Secret handling
+- [x] Token generation (Task 23a)
+- [x] Token validation (Task 23a)
+- [x] Token expiration (Task 23a)
+- [x] Secret handling (Task 23a)
 
 ### 3. Backend Integration
 
@@ -485,11 +485,11 @@ Verify permissions
 
 ### 4. Frontend Delete Regression
 
-- [ ] Clicking delete opens confirmation
-- [ ] `removeItem()` is NOT called immediately
-- [ ] Confirming delete removes item
+- [x] Clicking delete opens confirmation (Task 23b)
+- [x] `removeItem()` is NOT called immediately (Task 23b)
+- [x] Confirming delete removes item (Task 23b)
 
-### 5. Upload Round Trip
+### 5. Upload Round Trip *(covered by Task 23b, `uploadRoundTrip.test.tsx`)*
 
 ```text
 Upload
@@ -505,7 +505,7 @@ Clothing Store
 PersonaLayer
 ```
 
-### 6. Outfit Round Trip
+### 6. Outfit Round Trip *(covered by Task 23b, `outfitRoundTrip.test.tsx`)*
 
 ```text
 Create
@@ -521,10 +521,10 @@ Render
 
 ### 7. Python AI
 
-- [ ] Valid image → PNG
-- [ ] PNG contains alpha channel
-- [ ] Non-image → 4xx
-- [ ] No leaked exception text
+- [x] Valid image → PNG (Task 23c)
+- [x] PNG contains alpha channel (Task 23c, real model)
+- [x] Non-image → 4xx (Task 23c)
+- [x] No leaked exception text (Task 23c)
 
 ### 🏁 Definition of Done
 
@@ -571,22 +571,22 @@ CI
 
 ### Frontend
 
-- [ ] Production build succeeds
-- [ ] API URL configured
-- [ ] No localhost assumptions
+- [x] Production build succeeds *(Task 24: frontend image builds in CI)*
+- [x] API URL configured *(same-origin `/api` via Caddy; optional `VITE_API_URL`)*
+- [x] No localhost assumptions *(only the optional Python-service URL default, unused in browser mode)*
 
 ### Java Backend
 
 - [ ] CF3–CF10 complete
 - [ ] CF15 complete
-- [ ] Production profile
-- [ ] Environment secrets
+- [x] Production profile *(`application-prod.properties`)*
+- [x] Environment secrets
 
 ### PostgreSQL
 
 - [ ] Managed database
-- [ ] Flyway migrations
-- [ ] Automated backups
+- [x] Flyway migrations *(V1-V8 verified from scratch on an empty PostgreSQL 18)*
+- [ ] Automated backups *(script + cron line provided, `scripts/backup-db.sh`; the cron entry is set on the server)*
 
 ### Python
 
@@ -603,20 +603,20 @@ CI
 
 ### Secrets
 
-- [ ] DB password externalized
-- [ ] JWT secret externalized
-- [ ] Cloudinary credentials/config externalized
-- [ ] No secrets committed
+- [x] DB password externalized
+- [x] JWT secret externalized
+- [x] Cloudinary credentials/config externalized *(build args; public by design)*
+- [x] No secrets committed
 
 ### CORS
 
-- [ ] Production frontend domain allowed
+- [x] Production frontend domain allowed *(`CORS_ALLOWED_ORIGINS` / `PUBLIC_URL`)*
 
 ### Monitoring
 
-- [ ] Health checks
-- [ ] Python uptime check
-- [ ] Basic production logging
+- [x] Health checks *(`/actuator/health`, Docker health checks)*
+- [ ] Python uptime check *(Python service not deployed: browser-only background removal)*
+- [x] Basic production logging
 
 ---
 
@@ -1155,18 +1155,24 @@ Phase 8.5 tasks above — see Open Question #20 resolution)*
       (3x3 mesh warp on tops, baked to PNG, original + points kept in
       `modularData`)
 
+### Phase 4.5 — User-requested features after Task 23 *(added 2026-09-24)*
+
+- [x] **77** Persona sign on every garment card (persona name / Not fitted / Unassigned)
+- [x] **78** Main outfit on the account (Showcase "set as main" + "Edit outfit", Attire opens it, "New outfit" button)
+- [x] **79** Declutter navbar into a user menu + Settings page + email uniqueness + admin "create user"
+
 ### Phase 4 *(deferred — runs after Phase 10)*
 
-- [ ] **21** Resolve Forgot Password
-- [ ] **22** Add route guards + error boundaries
+- [x] **21** Resolve Forgot Password (built: token reset flow, dev-mail first)
+- [x] **22** Add route guards + error boundaries (built: `ProtectedRoute requireAdmin` + minimal `/admin` page, boundaries, ErrorState on load failures, silent-failure fixes)
 
 ### Phase 5 *(deferred)*
 
-- [ ] **23** Implement regression/test suite
+- [x] **23** Implement regression/test suite (backend 36 + frontend 42 + Python 19 tests; CI workflow in `.github/workflows/ci.yml`, see Task 23d)
 
 ### Phase 6 *(deferred)*
 
-- [ ] **24** Production readiness + deployment
+- [ ] **24** Production readiness + deployment *(repo side done 2026-10-01, see Task 24 entry at the end: Docker + compose + prod profile + CI smoke test + DEPLOYMENT.md; **still to do: actually host it** - accounts, domain, first deploy)*
 
 ### Phase 11 — Documentation *(last)*
 
@@ -1295,6 +1301,12 @@ TASK 02
 45    Add "Adjust & Fit" to EditClothingModal
 46    Toast + upgraded alert UI
 41    Back-button copy + Saved Outfits stale-link fix (out of order, see Master Task List note)
+21    Resolve Forgot Password (Phase 4; the list above predates Phases 8-10)
+22    Add route guards + error boundaries (Phase 4)
+23    Implement regression/test suite (Phase 5)
+77    Persona sign on every garment card (Phase 4.5)
+78    Main outfit on the account (Phase 4.5)
+79    User menu + Settings page + email uniqueness + admin create-user (Phase 4.5)
 ```
 
 ## 🎉 PHASE 1 — SECURITY & CORRECTNESS: COMPLETE
@@ -5289,3 +5301,1304 @@ into `main` cleanly (no conflicts), verified with `tsc -b --force` +
 clean) post-merge, then pushed; `phase-10-persona-fitting` cut from the
 updated `main` and pushed. Phase 10 (Tasks 52-56, crop-tool repair)
 starts fresh on that branch.
+
+**Phase 10 is now complete (Tasks 52-56, plus follow-ups: crop-mode drag
+fix, thumbnails showing the crop, mesh warp shown in context on the
+persona, and handle-clipping fixes across all three studios).**
+Checkpoint done 2026-09-24: `phase-10-persona-fitting` merged into `main`
+(`--no-ff`, no conflicts, `main` had no commits it lacked), verified
+post-merge with `tsc -b --force` + `vite build` on the frontend and
+`./mvnw compile` on the backend (all clean), pushed; `phase-4-auth-and-guards`
+cut from the updated `main` and pushed. Phase 4 (Task 21 Forgot Password,
+Task 22 route guards + error boundaries) starts on that branch.
+
+### Task 21 - Forgot Password (2026-09-24)
+
+Found: the login page's "Forgot?" was a dead `<button>` (no handler, no
+page), and the backend had no reset endpoint, no mail dependency, no mail
+config. Decision (user): build it for real, with a dev-only mailer first so
+the whole flow is testable without an email account; SMTP is a deployment
+(Task 24) concern.
+
+**Backend**
+- `V5__add_password_reset_tokens.sql` + `PasswordResetToken` entity +
+  repository. Only a SHA-256 hash of the token is stored (a leaked table
+  can't be turned into working links); 32 random bytes from `SecureRandom`,
+  URL-safe Base64 in the link; expires (30 min, `app.password-reset.
+  expiration-minutes`); single use (all of a user's tokens are deleted on a
+  successful reset); a new request replaces the old token.
+- `PasswordResetService.requestReset(email)`: never reveals whether an
+  account exists - unknown, deactivated, throttled (one mail per account per
+  60s, `app.password-reset.min-interval-seconds`) and mail-failure cases all
+  return the same quiet 200. `resetPassword(token, password)`: unknown /
+  expired / used / deactivated-account all throw one
+  `InvalidResetTokenException` -> 400 with a single generic message
+  (`GlobalExceptionHandler`).
+- `POST /api/auth/forgot-password` and `POST /api/auth/reset-password`
+  (`AuthController`, already covered by the `/api/auth/**` permitAll rule);
+  new DTOs validate email format and the same 8-char minimum as
+  registration.
+- `PasswordResetMailer` interface + `LoggingPasswordResetMailer`: DEV ONLY,
+  prints the reset link at WARN to the backend console
+  (`app.mail.mode=log`, the default). The link is a credential, so this must
+  never be the active mailer in a deployed environment - **a real SMTP
+  mailer has to be added and selected via `app.mail.mode` before deploying
+  (Task 24).** New `app.frontend-url` (`FRONTEND_URL`) builds the link.
+
+**Frontend**
+- `ForgotPasswordPage` (`/forgot-password`) and `ResetPasswordPage`
+  (`/reset-password?token=...`), styled like the login page; the login
+  page's "Forgot?" is now a real link. The forgot page shows the same
+  generic confirmation regardless of the email; the reset page validates
+  length/match client-side, handles a missing token, and only offers
+  "Request a new link" when the *server* rejected the token. It sends the
+  user to sign in rather than signing them in.
+
+**Verified live** (own backend on :8081 + throwaway Vite on :5199, so the
+user's :8080/:5173 servers were untouched; the V5 migration did run on the
+shared dev DB): identical 200 body for a real and an unknown email; second
+request within the throttle window produced no second mail; bogus token ->
+400; short password / bad email format -> 400 validation; real token +
+new password -> 200, then the old password gets 401 and the new one logs
+in; reusing the token -> 400; a deactivated account requested a reset and no
+mail was logged; with `expiration-minutes=0` a fresh token was rejected as
+expired and the password was unchanged. UI: "Forgot?" navigates to the
+page, forgot form shows the generic confirmation, reset page handles no
+token / mismatch / too short / server-rejected token / success. A CORS
+quirk from testing on a non-allowed origin (403 -> the existing axios
+interceptor treats any 401/403 as an expired session and redirects to
+/login) cost some time - not a bug in this feature, but worth remembering
+that origin mismatches look like a login redirect. `tsc -b --force`,
+`vite build`, `./mvnw compile` clean. Test accounts deactivated; all test
+processes/files removed.
+
+**Known limits:** JWTs are stateless, so sessions issued before a reset stay
+valid until they expire on their own; no rate limit beyond the per-account
+60s throttle (no per-IP limit); no automated tests yet (Phase 5).
+
+**Task 21 follow-up - real SMTP mailer (2026-09-24):** user tried the flow
+and reported no email arrived - correct, because `app.mail.mode=log` (the
+default) only prints the link to the backend console; and their running
+backend was still the pre-Task-21 build. Added the real sender now:
+`spring-boot-starter-mail` + `SmtpPasswordResetMailer` (active when
+`app.mail.mode=smtp`; sends a multipart text+HTML message, subject "Reset your
+VYSVI password", From = `app.mail.from`, defaulting to the SMTP username -
+Gmail requires that). The SMTP account is the standard `spring.mail.host` /
+`username` / `password` (port 587 + STARTTLS defaults, 10s timeouts), kept
+out of the repo: documented in `application-local.properties.example` (Gmail
+app-password instructions) for the user's own gitignored
+`application-local.properties`; env vars (`MAIL_MODE`, `MAIL_PORT`,
+`MAIL_FROM`, plus the `spring.mail.*` ones) for deployment. Verified without
+needing real credentials by pointing a test backend at a local SMTP capture
+server (Node `smtp-server`): the backend sent a real SMTP message with the
+right From/To/Subject and text + HTML bodies containing the reset link, and
+in smtp mode nothing is logged to the console. Not verified: delivery
+through Gmail itself (needs the user's app password - not something to be
+pasted into chat). Mail failures are still swallowed and logged
+(`PasswordResetService`), so a wrong SMTP password shows up in the backend
+log ("Could not send password reset email") rather than in the UI.
+
+**Task 21 follow-up - branded email (2026-09-24):** user confirmed real
+delivery works (Gmail SMTP through their own gitignored
+`application-local.properties`) and asked for a classy, on-brand HTML email
+including the owner's name and email. The reset email is now the template
+`backend/src/main/resources/mail/password-reset.html`, loaded once by
+`SmtpPasswordResetMailer` with every substituted value HTML-escaped: VYSVI's
+graphite/silver palette taken from `index.css` (`#0B0B0C` / `#131315`,
+silver `#C7CBD1`, muted `#9A9CA3`), letter-spaced "VYSVI / DIGITAL WARDROBE"
+wordmark in Cormorant Garamond (Georgia fallback), a short silver accent
+rule, a pill "RESET PASSWORD" button, expiry + "if this wasn't you" note, a
+copy-paste fallback link, a signature block (owner name, title, contact
+email as a `mailto:` link) and a footer naming the recipient. Built as a
+table layout with inline styles (what mail clients actually support), with
+a hidden preheader line, dark/light `color-scheme` meta, and a
+multipart plain-text alternative that carries the same sign-off. Also sets
+`Reply-To` to the contact address. Owner details are config, not
+hard-coded: `app.brand.owner-name` = Javier Chinchilla Lugo,
+`app.brand.owner-title` = "Creator of VYSVI" (a placeholder title I chose -
+change it if you prefer another), `app.brand.contact-email` =
+javidilugo@gmail.com. No phone/website was added (none known - add
+properties + template placeholders if wanted). Verified by sending through
+the local SMTP capture server and rendering the captured HTML at desktop
+(700px) and phone (400px) widths: all placeholders filled, layout holds on
+both; one design fix from the first render (the full-width silver hairline
+overshot the card's rounded corners, replaced by a short accent rule).
+Not verified: rendering in Gmail/Outlook/Apple Mail themselves (Gmail dark
+mode can re-color emails; explicit background colors are set everywhere to
+limit that). While testing, a test backend picked up the user's real SMTP
+credentials from their local file and tried to authenticate against the fake
+local server (nothing left the machine); test runs now blank
+`spring.mail.username/password` explicitly.
+
+**Task 21 follow-up - confirmation shows the entered email (2026-09-24):**
+user asked that the "reset link has been sent" confirmation show the address
+that was typed, so a typo is visible. `ForgotPasswordPage` now keeps the
+trimmed submitted address and shows it in a "You entered" box under the
+(unchanged, still generic) server message, plus a "Wrong email? Try again"
+link that returns to the form with the address kept for editing. Safe
+because it only echoes the user's own input - it says nothing about whether
+an account exists. Verified live against the running servers with an unknown
+address (no mail sent, nothing written): surrounding spaces trimmed,
+address shown, "Try again" returns to the form with it prefilled.
+`tsc -b --force` + `vite build` clean.
+
+### Task 22 - Route guards + error boundaries (2026-09-24)
+
+Investigation found the real gaps were broader than "add two boundaries":
+mutations in the stores swallowed their errors, so callers reported success
+after a failure (and drafts were cleared), and pages had no "couldn't load"
+state at all - a failed fetch looked like an empty account.
+
+**Guard.** `ProtectedRoute` (`App.tsx`) takes `requireAdmin`: signed-out ->
+`/login`, signed-in non-admin -> `/`. Uses the existing persisted `isAdmin`.
+The backend `@PreAuthorize` remains the real enforcement (the guard just
+avoids showing a page that can only fail). User chose "guard + minimal admin
+page": new `/admin` (`AdminUsersPage`, `adminService`) lists users
+(`GET /api/users`), search, deactivate/reactivate on the existing endpoints,
+own account disabled; Navbar shows a shield link only for admins. Added a
+real 404 (`NotFoundPage`, `path="*"`).
+
+**Boundaries.** New `ErrorBoundary` (class, `resetKeys`) and `ErrorState`
+("We couldn't complete this action" + Try Again). Placed around
+`PersonaRenderer` (compact, keeps the rest of the builder usable),
+`UploadFlow` (modal-styled: Start Over / Close), the routed page in
+`MainLayout` (resets on navigation; retry + Go home), and app-wide in
+`main.tsx` (Reload). Boundaries only catch render errors, so async failures
+are handled separately:
+
+- Stores: `updateItem/removeItem`, `updateOutfit/removeOutfit/duplicateOutfit`,
+  `renameCollection/deleteCollection/removeItem/removeOutfit` now rethrow
+  after setting `error` (like `addItem`/`saveOutfit` already did).
+- Call sites: new `useSafeAction` hook (toast on failure) used in
+  `OutfitCard`, `CategoryDetailPage`, `FlatOutfitBuilderPage`;
+  `CategoriesPage` rename and `OutfitBuilderPage` save get try/catch + toast.
+  Delete confirmations stay open on failure so the user can retry.
+- Load failures: `ClosetPage`, `FlatOutfitBuilderPage`, `SavedOutfitsPage`,
+  `CategoriesPage`, `OutfitShowcasePage` show an ErrorState with Try Again
+  when the fetch failed and there is no data (fetches swallow errors into
+  the store, so pages read the store's `error` back after each attempt).
+- Dead button: `ClosetSection`'s "N ITEMS" `<button>` with no handler is now
+  plain text.
+
+**Verified** (own backend :8081 + throwaway Vite :5199; user's servers
+untouched): `tsc -b --force` + `vite build` clean. Live: non-admin hitting
+`/admin` -> `/` with no admin icon; unknown URL -> 404 page; forced render
+throws (temporary, reverted) contained by the page boundary (Try Again
+recovers), `PersonaRenderer` boundary (rest of builder intact, retry
+recovers), `UploadFlow` boundary (Start Over/Close, closet intact) and the
+app-level boundary (Reload); backend stopped -> all five data pages show the
+load-failure state and Try Again recovers once it is back; with backend down
+a category delete shows "Failed to delete category", the row stays and the
+modal stays open, then succeeds on retry. A forged `isAdmin` in localStorage
+passes the guard but the backend 403s and the page shows its own error state
+(confirms the backend is the real gate).
+
+**Not verified live:** the admin user list itself with a real admin
+(needs an account promoted with SQL, which was left to the user).
+Test account deactivated; test collection deleted.
+
+### Task 23 - Regression test suite, part a: backend (2026-09-24)
+
+Plan agreed with the user: all 7 blueprint areas, one layer at a time
+(backend -> frontend/Vitest -> Python/pytest), stopping for review after each;
+backend tests use in-memory H2 (no install, no credentials, CI-friendly).
+There were no tests, no Docker and no CI before this. Task 23 stays open in
+the master list until all layers land.
+
+**Setup.** `h2` (test scope) added to `pom.xml`; `src/test/resources/
+application-test.properties`; tests use `@ActiveProfiles("test")`, which
+replaces main's `spring.profiles.active=local`, so `application-local.properties`
+(real DB password, JWT secret, SMTP login) is never loaded by the suite.
+Test-only Base64 JWT secret, in-memory H2 in PostgreSQL mode.
+
+**Known limitation (H2).** Flyway is disabled for the tests and Hibernate
+builds the schema from the entities (`create-drop`): `V3__add_collections.sql`
+uses a Postgres-only functional index (`lower(name)`) that H2 cannot parse.
+So the suite does not exercise the migration scripts themselves (the dev
+database still runs them with `ddl-auto=validate` as the entity/schema
+check), and the case-insensitive unique collection name index is absent in
+tests. Real Postgres in CI (a service container) would close this.
+
+**Tests (36, all passing; `./mvnw test`).**
+- `ContextLoadsTest` - app boots on the test profile.
+- `OwnershipSecurityTest` (10) - clothing/outfit lists scoped to owner;
+  another user's update/delete -> 403 and data unchanged; unknown id -> 404;
+  cannot build an outfit from someone else's items; anonymous callers
+  rejected; admin endpoints forbidden for normal users.
+- `AuthenticationSecurityTest` (10) - register always ROLE_USER, a smuggled
+  `role`/`admin` field is ignored (and the token is not admin), BCrypt-hashed
+  password, duplicate email rejected, validation 400s, login success/failure,
+  garbage and forged tokens rejected, deactivated user cannot log in.
+- `JwtServiceTest` (12, plain unit tests) - subject/claims, valid vs other
+  user, tampered payload, wrong secret, malformed and `alg=none` tokens,
+  expired token, configured lifetime, non-Base64 and too-short secrets.
+- `WardrobeFlowIntegrationTest` (3) - register -> login -> clothing ->
+  outfit -> delete clothing -> permissions; outfit create/reload/edit/delete
+  round trip; invalid payloads -> 400.
+Each was seen to fail before the fixes below (real failures, not vacuous).
+
+**Two real bugs the new tests found and this task fixed:**
+1. `GlobalExceptionHandler`: `AccessDeniedException` (a normal user on an
+   `@PreAuthorize("hasRole('ADMIN')")` endpoint) fell into the generic
+   RuntimeException handler and returned **500**; now **403**.
+2. `JwtAuthenticationFilter`: an expired, tampered, malformed or
+   unknown-user token threw out of the filter -> **500**. It now just leaves
+   the request unauthenticated (the normal 403 path), which is also what the
+   frontend's "expired session -> back to login" handling depends on. (Stale
+   tokens on `/api/auth/**` requests were affected too.)
+
+### Task 23 - Regression test suite, part b: frontend (2026-09-24)
+
+Vitest 5 + React Testing Library + jest-dom + user-event + jsdom added as
+**dev** dependencies (`npm test` = `vitest run`, `npm run test:watch`).
+`vite.config.ts` now imports `defineConfig` from `vitest/config` and has a
+`test` block (jsdom, `src/test/setup.ts`, `src/**/*.test.{ts,tsx}`). Setup
+unmounts and clears localStorage after each test (persisted zustand stores
+would otherwise leak between tests) and stubs the browser APIs jsdom lacks
+(IntersectionObserver, ResizeObserver, matchMedia, scrollTo). Tests only
+replace the network edge (the `api/*Service` modules, Cloudinary, background
+removal) and the Fabric.js editors; pages, stores, modals, router and guards
+are the real ones.
+
+**Tests (42, all passing; `npm test`) in `src/__tests__/`:**
+- `deleteRegression` (4) - real `ClosetPage`: delete opens the confirmation and
+  does **not** call `deleteClothingItem`; cancel keeps the item; confirm deletes
+  exactly that id and removes it; a failed delete keeps item + dialog and
+  toasts (Task 22).
+- `uploadRoundTrip` (6) - real `UploadFlow` driven through the UI: file ->
+  Cloudinary -> backend -> store on the keep-original path (hosted URL, never
+  `blob:`, INELIGIBLE_NO_CUTOUT) and on the AI path (removal result is what
+  is uploaded, NOT_FITTED); Cloudinary and backend failures save nothing and
+  show a message; the stored item is drawn by the real `PersonaRenderer`
+  from its hosted URL, and an item of the other persona type is not.
+  The Fabric fitting paths (FITTING, shoes, jackets) are not covered - they
+  need a real canvas.
+- `outfitRoundTrip` (5) - stateful in-memory fake backend: equip state <->
+  request items is lossless; create -> reload -> render on the persona; edit;
+  duplicate; remove (including after reload).
+- `storeFailures` (15) - Task 22's rule for the clothing/outfit/collection
+  stores: mutations reject and leave data untouched, fetches swallow and
+  record `error`.
+- `routeGuards` (7) - whole `App`: signed-out -> /login on protected pages
+  incl. /admin; user can open /closet; normal user bounced from /admin; admin
+  sees /admin accounts; admin link only in an admin's navbar; 404 page; failed
+  admin load shows retry.
+- `errorBoundary` (6) - fallback + Try Again, onReset, custom fallback,
+  resetKeys, and a real crash inside `PersonaRenderer` contained.
+
+**Checked the tests can fail:** temporarily making delete skip the
+confirmation broke 3 of 4 delete tests; removing the admin check in
+`ProtectedRoute` broke the bounce test. One test I wrote first (a
+"broken persona" that did not actually make PersonaRenderer throw) passed
+vacuously and was caught only because I asserted the fallback text - it now
+corrupts the store so the renderer really throws.
+
+**One real bug the tests found, fixed here:** in `UploadFlow`, a failed
+"Save to Closet" (Cloudinary or backend error) set `error` and returned to
+the SKIP_PERSONA form, but that step never displayed `error` - the user got the
+form back with no explanation. It now shows the message (`role="alert"`).
+
+`npm audit --omit=dev` reports 9 vulnerabilities in the existing
+*production* dependencies (not introduced here; nothing was auto-fixed).
+
+### Task 23 - Regression test suite, part c: Python AI service (2026-09-24)
+
+`backend-ai/tests/` (pytest + httpx via `requirements-dev.txt`; run with
+`python -m pytest` in `backend-ai`, or from the repo root with the path):
+19 tests, all passing. FastAPI's TestClient drives the real `main.app`; the
+model is replaced by a stand-in that returns a transparent RGBA PNG and
+records what it was given, so most tests are fast and model-independent.
+- Contract: /health; valid image -> 200, `image/png`, PNG signature, the
+  uploaded bytes are what reach the model; PNG/JPEG/WEBP accepted.
+- Rejections (the model never runs on any of them): non-image Content-Type ->
+  415; empty -> 400; over 10MB -> 413; no file -> 422; bytes that are not an
+  image -> 400.
+- No leaks: a model failure whose message contains a path, CUDA text and the
+  exception class returns exactly `{"detail": "Failed to process image"}`,
+  while the real error is logged server-side.
+- CORS: configured origin allowed, other origins get no header, no credentials.
+- `TestRealModel`: the real U2-Net on a synthetic image returns a PNG in
+  RGBA mode at the same size. It is skipped unless `~/.u2net/u2net.onnx` is
+  already on disk (never downloads), so a clean CI machine skips it.
+
+**One real bug the tests found, fixed here:** `/remove-bg` trusted the
+Content-Type header. Garbage bytes sent as `image/png` went straight to the
+model and (with the real model) came back as a 500. `main.py` now opens the
+bytes with Pillow (`verify()`, which also refuses decompression bombs) after
+the size/empty checks and answers 400 "File is not a valid image".
+
+**Task 23 overall - what is and is not done.** Done: all 7 blueprint areas
+have tests (backend 36, frontend 42, Python 19 = 97). Not done: the
+blueprint's "CI" line - there is still no CI workflow (nothing runs these
+automatically); that fits Task 24 (production readiness) and needs a decision
+on where the repo is hosted/run. Known gaps: migrations are not exercised by
+the backend tests (H2 limitation, above), Fabric fitting paths are not
+covered on the frontend, and the frontend hits no real backend (the backend
+suite covers that side separately).
+
+### Task 23 - part d: CI workflow (2026-09-24)
+
+User asked for a workflow that runs the tests automatically, before starting
+Task 24. `.github/workflows/ci.yml` (GitHub Actions; the remote is GitHub):
+runs on every push to any branch (the project is developed on feature
+branches and merged locally, so a PR-only trigger would never fire), on PRs to
+`main`, and manually (`workflow_dispatch`); a newer push cancels the older run.
+Three parallel, independent jobs, no secrets and no services needed:
+- **backend** - Temurin 21, Maven cache, `chmod +x mvnw` (the wrapper was
+  committed without its executable bit), `./mvnw -B -ntp test`; uploads
+  surefire reports if it fails.
+- **frontend** - Node 24 (matches the dev machine and satisfies Vite 8 /
+  Vitest 5 / jsdom 29 engine ranges), `npm ci`, `tsc -b --force`, `npm test`,
+  `vite build`.
+- **ai-service** - Python 3.12, `pip install -r requirements-dev.txt`,
+  `pytest`; the real-model test skips itself (no model file on the runner).
+Deliberately not included: `npm run lint` (not part of the project's
+verification so far) and any deploy step (Task 24).
+
+**Checked locally, as close to a clean runner as possible:** YAML parses with
+the expected triggers/jobs/steps; backend: 36 tests pass with
+`application-local.properties` moved aside and DB_PASSWORD/JWT_SECRET unset;
+frontend: `git archive` of the committed tree, fresh `npm ci`, then tsc + 42
+tests + build all pass; Python: 18 pass + 1 skipped with an empty home
+directory. **Not verified:** the workflow itself has not run on GitHub (no way
+to run Actions locally). Likeliest first-run surprises: the native `canvas`
+package's prebuilt binary on Linux/Node 24, and the size/time of installing
+`rembg[cpu]` in the Python job.
+
+### Follow-ups after Task 23 (2026-09-24)
+
+**CI action versions.** The first CI run passed but warned about actions on
+deprecated Node 20 and `setup-java@v4`. `ci.yml` now uses the latest majors
+(looked up with `gh api`): `checkout@v7`, `setup-java@v6`, `setup-node@v7`,
+`setup-python@v7`, `upload-artifact@v7`. Only a real run can verify a major
+bump, so it is checked after push; if a job breaks, pin that action back one major.
+
+**Closet page: category chips cut off.** User: in the Closet tab the
+category options next to the search bar (ALL, BOTTOM, SHOES...) showed only
+partly. Root cause, measured live: the seven chips lived in one column of a
+`lg:grid-cols-4` grid (search = 2 cols) inside a `flex justify-center
+overflow-x-auto no-scrollbar` strip. The strip was 286px wide but the chips
+needed ~664px; with `justify-center` the overflow spilled equally off both
+edges and the hidden scrollbar made the left part unreachable (ALL/TOP/BOTTOM
+started 189px left of the box, JACKET/DRESS ended 189px right of it). Fix
+(`ClosetPage.tsx` only): search (3 cols) + Favorites Only stay on the first
+row; the chips get their own full-width row under the search bar,
+`flex flex-wrap justify-center`, no overflow. Verified live: all 7 chips fully
+inside their container at 1280px (one row) and 390px (wraps to 3 rows), and each
+chip filters the list (TOP/SHOES/ALL checked with temporary items, since
+deleted). New regression test `closetCategoryFilter.test.tsx` (4; total
+frontend tests now 46). Not touched: the Persona Filter row below is wider
+than a 390px screen (page scrolls horizontally on phones) - pre-existing,
+noted, not fixed.
+
+### Task 77 - Persona sign on every garment (2026-09-24, `/plan`ned first)
+
+User: everywhere clothes are added/listed (Closet, Attire, the other tabs) there
+must always be a sign saying which persona the garment is for, or that it is
+unassigned; "remember there is an option to not use persona at all". Findings:
+every garment already has a required `personaType` and a `personaStatus`
+(FITTED / NOT_FITTED from "Skip Persona Fitting" / INELIGIBLE_NO_CUTOUT from
+"Skip Background Removal - Keep Original, No Persona"), so no schema change.
+Before: a raw MALE/FEMALE pill on Attire's browse cards and the category
+picker; nothing on the Closet cards, Attire's "Your Selection", the
+persona-first builder or the category page's item tiles.
+
+New `utils/personaSign.ts` (pure rules) and `components/PersonaBadge.tsx`
+(always visible, top-left of the thumbnail, dark glass pill with a colour dot):
+FITTED (or legacy/no status) -> the persona's display name ("M Persona" or the
+user's custom name); NOT_FITTED -> "Not fitted" (tooltip names the persona);
+INELIGIBLE_NO_CUTOUT -> "Unassigned". `ItemPersonaBadge` looks a garment up in
+the closet store by id for tiles that only carry an itemId (a category's item
+lists). Used in: `ClothingCard` (Closet, dashboard section; replaces the small
+category tag - the category is already the caption below), Attire browse cards
+(replaces the raw pill) and `SelectionCard`, `CategoryDetailPage` (picker tiles
+and both "in this category" lists), the persona-first `OutfitBuilderPage`
+picker, and a "Persona" row in `ClothingDetailsModal`. `App.tsx` now also loads
+the persona display names once after login (`fetchDisplayNames`), so custom
+names are ready on every page instead of only the Closet.
+
+**Verified.** `tsc -b --force`, `vite build`, ESLint clean; 56 frontend tests
+pass (10 new in `personaSign.test.tsx`: the wording rules incl. legacy status
+and custom names, the badge, id lookup, and the three signs on the Closet page,
+the Attire browse grid and the Attire selection panel). Live on own servers
+(8081/5199, throwaway account with one garment per status): Closet, Attire
+(browse + selection), the persona-first builder and a category page all show
+the right sign; every badge measured fully inside its card at a 390px width.
+Test garments/category deleted, account deactivated, servers stopped.
+
+### Task 78 - Main outfit on the account (2026-09-24, `/plan`ned first)
+
+User: one outfit is the "main outfit" for the whole app - shown on the landing
+page, changeable while browsing outfits, the one Attire opens (editable), with a
+"create new outfit" button in Attire and an "Edit outfit" button on the landing
+page. Decisions (asked): stored **on the account** (database); "landing page" =
+the Outfit Showcase carousel opened by the navbar logo (the signed-out marketing
+page is unchanged).
+
+**Backend.** `V6__add_main_outfit.sql`: `users.main_outfit_id` nullable, FK to
+`outfits` `ON DELETE SET NULL`. `User.mainOutfitId` is a plain id column (no JPA
+relation - avoids a users<->outfits cycle); `UserResponse.mainOutfitId`.
+`PUT /api/users/me/main-outfit {outfitId}` (404 unknown, 403 someone else's,
+400 missing id) and `DELETE /api/users/me/main-outfit`, both returning the
+updated user. `OutfitService.saveOutfit`: a user's first outfit becomes main
+automatically (later ones never replace it); `deleteOutfit` clears it when the
+main outfit is deleted (belt-and-braces with the FK).
+
+**Frontend.** New `api/userService.ts`. `useOutfitStore`: `mainOutfitId`,
+`fetchMainOutfit` (failures swallowed, never sets the list's error),
+`setMainOutfit` (optimistic, reverts + rethrows on failure - Task 22's rule),
+`removeOutfit` clears it locally, `saveOutfit` re-reads it (the backend picks the
+first outfit). **Showcase:** opens on the main outfit (index computed in the same
+batch as `ready`, so no flash of the first outfit); under the title either a
+"MAIN OUTFIT" tag or a "Set as main outfit" button (toast on failure), plus
+"Edit outfit" -> `/outfits/flat/edit/<shown outfit>`. **Attire at "/":**
+`editId = id ?? (main outfit, on "/", if it exists and not arriving from WEAR
+STYLE)` drives the existing load / update / label logic, so "/" opens the main
+outfit ("UPDATE STYLE"); a "New outfit" button (whenever an existing outfit is
+being edited) clears the draft and goes to `/outfits/flat/new` (not "/", or the
+main outfit would load straight back). No main outfit, a stale main id, or WEAR
+STYLE's own draft -> "/" behaves as before. **Saved Outfits:** "MAIN" tag and a
+"Set as main outfit" star on each card.
+
+**Verified.** Backend: 48 tests (12 new `MainOutfitIntegrationTest`: none by
+default, first outfit auto-main, later ones don't replace it, change, other
+user's outfit 403, unknown 404 / missing 400, delete main clears it, delete
+other keeps it, explicit clear, per user, auth required). Frontend: 76 tests (20
+new `mainOutfit.test.tsx` across store, Showcase, Attire, cards); two
+deliberate breakages (Showcase always opening on index 0; WEAR STYLE guard
+removed) each made 1-4 tests fail. `tsc -b --force`, `vite build` clean. Live on
+my own backend (8081, against the real dev Postgres so **Flyway applied V6 to the
+dev database** - additive, one nullable column) and Vite (5199), throwaway
+account: first outfit auto-main; Showcase opens on it; "Set as main" on another
+persisted server-side and survived a reload; "Edit outfit" opened
+`/outfits/flat/edit/<id>`; "/" loaded the main outfit with "UPDATE STYLE" +
+"New outfit"; "New outfit" gave an empty "SAVE TO COLLECTION" page at
+`/outfits/flat/new`; Saved Outfits tagged exactly one card; deleting the main
+outfit cleared it on Postgres. Test data deleted, account deactivated, my
+servers stopped. **The user's already-running backend (8080) must be restarted
+to get the new endpoints** (its schema already has V6).
+Known/unchanged: a main outfit built for the other persona type isn't shown
+(Showcase/Saved filter by the active persona) until the user switches persona;
+saving an edited outfit still stamps the *current* persona type as its
+avatarType (existing behaviour of the edit route).
+
+### Task 78 follow-up - main outfit was confusing (2026-09-28)
+
+User tried it live and said it was confusing; asked what specifically -
+answer: no explanation of what "main outfit" means (wanted a tooltip), and
+"when an outfit is the main one is not that distinctive". Also: their own
+backend (8080) failed to start - root cause had nothing to do with this
+task, PostgreSQL itself (`postgresql-x64-18`) wasn't running on their
+machine; confirmed by compiling clean and reproducing the exact same
+failure on my own throwaway backend (connection refused on 5432).
+
+Fixed, one `MAIN_OUTFIT_EXPLAINER` string reused everywhere: "Your main
+outfit is the one shown first on Showcase and the one Attire opens
+automatically so you can keep refining it." Added as a `title` tooltip on
+the Showcase tag/button, the Saved Outfits star button, and a new indicator
+in Attire itself. The Showcase tag and the Saved Outfits "MAIN" tag both
+went from a lightly-tinted pill (the same visual weight as an ordinary
+button) to solid accent-filled with a glow; the Saved Outfits card also
+gets an accent ring around the whole thumbnail now, the same treatment
+`ClothingCard` already uses for "equipped". Biggest gap: Attire itself had
+**no indicator at all** that the outfit it silently opened was the main
+one - added a small "Main outfit" pill next to the item count, with a
+tooltip explaining what saving there does and pointing at "New Outfit" as
+the way out.
+
+Verified: 76 frontend tests still pass (existing main-outfit tests updated
+for the new tooltip text); `tsc -b --force`, `vite build` clean. Live on my
+own servers (8081/5199, the user's real 8080 running and untouched
+throughout): tooltips present with the full explanation on all three
+surfaces; Saved Outfits screenshot confirms the main outfit's card visibly
+stands out (ring + solid tag) next to a plain one.
+
+### Task 79 - User menu, Settings page, email uniqueness, admin create-user (2026-09-28, `/plan`ned first)
+
+Four related requests: the navbar felt cluttered (keep only Attire/Closet/
+Outfits + the avatar visible, hover the avatar for everything else); a real
+Settings page for name/email/password; check and fix email uniqueness with a
+clear message; only admins can create admins, with an option to create a
+normal user too.
+
+**Findings before writing code:** the `users.email` column already had a DB
+unique constraint, but nothing checked it first - a duplicate fell into the
+generic 500 handler, not a clear message. Incidental bug found while reading
+`AuthService`: `SignupPage` already sent `firstName`/`lastName` on register,
+but the backend's `RegisterRequest` DTO had no such fields - silently
+discarded on every signup until now. `PUT /api/users/me` (name) already
+existed but no frontend code called it. No change-password/change-email
+endpoint existed for a signed-in user. No admin create-user endpoint existed.
+
+**Backend.** New `DuplicateEmailException` -> 409 (`GlobalExceptionHandler`).
+`AuthService.register` now checks for the email first and persists
+first/last name (the incidental fix above). `UserService` gained
+`changePassword` (verifies the current password, 403 if wrong),
+`changeEmail` (verifies password, checks the new email against every
+*other* user, returns a fresh `AuthResponse`/JWT since email is the JWT
+subject), and `createUser` (admin-only route is the entire "only admins can
+create admins" control - it sets whatever role the admin picked). New
+endpoints: `PUT /me/password`, `PUT /me/email`, `POST /` (admin,
+`@PreAuthorize hasRole('ADMIN')`). No migration - every touched column
+already existed.
+
+**Frontend.** New `UserMenu.tsx`: the avatar opens a dropdown (hover, with a
+150ms close delay, and click for touch; closes on outside click via the same
+overlay pattern `ClothingCategoryFilter` already uses) holding Theme,
+Persona, Categories, Admin (admin-only), **Settings**, Logout - replacing the
+five separate always-visible icons `Navbar.tsx` used to render. New
+`SettingsPage.tsx` (`/settings`): four independent cards - Profile (name),
+Email (+ current password, reissues the token), Password (+ current
+password), Account (read-only info + a "Deactivate my account" button wired
+to the Task-22 endpoint that had never had a UI). New
+`CreateUserModal.tsx` + a "Create User" button on `AdminUsersPage`: name,
+email, password, a User/Admin role pill-picker (styled like `UploadFlow`'s
+Male/Female picker).
+
+**A real bug the live check caught, fixed here:** `SettingsPage`'s email-
+change handler called `authService.getCurrentUser()` to refresh the profile
+*before* updating the store's token - so that request still carried the old
+(now-dead) token, got a 401, and the axios interceptor force-logged the user
+out immediately after a successful email change. Backend data was correct
+throughout (confirmed via API - the account's email had genuinely changed);
+only the frontend's follow-up request was broken. Fixed by calling the
+store's `setToken` first, same order `SignupPage` already uses for exactly
+this reason. The mocked-service frontend test for this path didn't catch it
+(it bypasses the real axios interceptor) - only the live browser run did.
+
+**Verified.** Backend: 61 tests (13 new `SettingsIntegrationTest`: duplicate
+email on register incl. the original account surviving, name now persists,
+change-password success/wrong-current/too-short, change-email success incl.
+the *old* token going dead and the *new* one working, duplicate/no-op/wrong-
+password cases, admin create-user for both roles incl. the new admin
+actually working, non-admin forbidden, duplicate email, missing role). New
+`IntegrationTestBase.promoteToAdmin` helper (updates the H2 test DB directly
+- there's deliberately no self-service way to do this over the API).
+Frontend: 96 tests (25 new: `UserMenu`, `SettingsPage`, admin create-user);
+`routeGuards.test.tsx`'s admin-link test updated to open the menu first,
+since the link is genuinely not in the DOM until then. `tsc -b --force`,
+`vite build` clean.
+
+Live on my own throwaway servers (8081/5199; the user's real 8080/5173 left
+running, untouched): the dropdown's real contents confirmed via the DOM;
+register-duplicate-email gave the clear 409 message against the real
+backend; a full Settings session - rename (confirmed via `/me`), email
+change (caught the bug above, fixed, then re-verified: logged in with the
+new email, no forced logout), password change (confirmed old password now
+rejected, new one accepted), deactivate (redirected to `/login`, session
+cleared). Both throwaway accounts left deactivated afterward.
+
+**Not live-verified:** the admin "Create User" browser flow specifically -
+it needs an existing admin account, and promoting one requires either SQL
+against the shared dev database (declined - not my data to write to
+directly, same standing rule as Task 22's admin verification) or a fully
+separate throwaway database, which wasn't worth the extra setup given the
+feature is already covered by 13 real backend integration tests (through
+the actual Spring Security filter chain) and 4 frontend interaction tests.
+If you want this specific path clicked through live too, promoting a test
+account is one SQL statement, same as Task 22:
+`UPDATE users SET role='ROLE_ADMIN' WHERE email='<test email>';`
+
+### Task 79 follow-up - dropdown/Settings polish + code-confirmed email/password changes (2026-09-28)
+
+Three pieces of feedback after Task 79 shipped (uncommitted):
+
+**1. Account dropdown "looks weird."** First pass measured its position live
+(DOM rects) and found it already below-right of the avatar (`right-0
+top-full mt-3`), so added a caret to visually tie panel to trigger.
+User follow-up: it should be *centered* under the avatar, not right-aligned
+to it. Changed `right-0` -> `left-1/2 -translate-x-1/2` (menu and caret both);
+confirmed live at a real desktop width (1440px): avatar center 923px, menu
+spans 819-1027px - centered exactly, and fully on-screen.
+
+**2. Settings cards "look weird" - not centered.** The inner grid had
+`max-w-4xl` but no `mx-auto`, so it sat flush left inside the page's
+already-centered, wider container. One class added (`SettingsPage.tsx`).
+
+**3. "For more security," changing email or password should require
+confirming a code sent to email.** Real feature, `/plan`ned first. Shape:
+**request -> emailed code -> confirm**, mirroring the existing password-
+reset flow (`PasswordResetService`/`PasswordResetToken`/mailer pattern)
+rather than inventing a new one. The code always goes to the account's
+*current*, already-verified email - never the new one being requested -
+so a hijacked session (e.g. a stolen JWT) can no longer silently take over
+the account or change its password; the real owner's inbox has to agree.
+
+**Backend.** `V7__add_pending_account_changes.sql`: one table for both
+change types (discriminator column, same reuse as `persona_display_names`)
+- staged new email / already-bcrypt-hashed new password, a hashed 6-digit
+code, an attempt counter, expiry. New `AccountChangeType` enum,
+`PendingAccountChange` entity, `PendingAccountChangeRepository`. New
+`VerificationCodeMailer` interface + `Logging`/`Smtp` implementations,
+mirroring `PasswordResetMailer` exactly (same `app.mail.mode` bean
+selection, so it automatically uses real SMTP wherever that's already
+configured); new branded template `mail/verification-code.html`. New
+`app.account-verification.{expiration-minutes=10, min-interval-seconds=60,
+max-attempts=5}`. `UserService`'s just-built `changeEmail`/`changePassword`
+replaced in place with `request*`/`confirm*` pairs (nothing was committed
+yet, so no deprecation needed). New `InvalidVerificationCodeException`
+(400, one message for unknown/expired/used/wrong - a guesser learns
+nothing) and `TooManyRequestsException` (429, the resend throttle).
+`UserController`: `PUT /me/email`+`/me/password` became
+`POST /me/{email,password}/{request,confirm}`.
+
+**A real bug found while wiring up the tests, fixed here:** confirming a
+wrong code is supposed to count against the attempt limit, but
+`confirmPasswordChange`/`confirmEmailChange` are `@Transactional`, and
+Spring rolls back the *whole* method on the `RuntimeException` it throws
+for a wrong code - silently undoing the attempt-count increment (and the
+eventual lockout-delete) right along with it every single time. New
+`VerificationAttemptTracker` (a separate bean, `@Transactional(REQUIRES_NEW)`)
+records the failed attempt in its own transaction that commits regardless
+of the caller's outcome - self-invocation of a `REQUIRES_NEW` method on
+the same class would have silently skipped the proxy and done nothing,
+which is why this is a separate small service rather than a method on
+`UserService`. Caught by a test that runs 5 wrong attempts then expects
+even the *correct* code to be locked out on the 6th - it wasn't, until
+this fix.
+
+**Frontend.** `userService.ts`:
+`request/confirmEmailChange`, `request/confirmPasswordChange`. The Email
+and Password cards each get a small `'form' | 'code'` step: submitting
+the form sends the code and switches to a "we sent a code to
+`{user.email}`" view with a single numeric input (no multi-box OTP
+widget - this app avoids fussy/oversized UI) plus Confirm, Resend, and
+Cancel. Email's confirm still updates the store the same way as before
+(`setToken` then `getCurrentUser` then `login`, in that order so the
+refresh call authenticates with the new token) - simpler now, since the
+token only ever changes once, at the very end, not mid-flow.
+
+**Verified.** Backend: 68 tests (20 in `SettingsIntegrationTest`, up from
+13: added wrong code, expired code, max-attempts lockout, second request
+invalidates the first code, confirm-without-request, resend-too-soon,
+account only actually changes after confirm not after request). New
+`@MockBean VerificationCodeMailer` + `ArgumentCaptor` in the test to
+capture the code that would otherwise only exist in the outgoing email;
+`setExpiresAt`/`setCreatedAt` added to the entity so tests can backdate
+past expiry/the resend throttle without a real wait (`created_at`'s
+`updatable=false` - copied from `PasswordResetToken` - had to be dropped
+for this one entity specifically, since it now has a real, intentional
+setter). Frontend: 103 tests (16 in `settingsPage.test.tsx`, up from 9).
+`tsc -b --force`, `vite build` clean.
+
+Live on my own throwaway servers (8081/5199, forced `--app.mail.mode=log`
+so codes print to the console instead of going out for real; the user's
+8080/5173 left running, untouched): full email-change and password-change
+round trips through the actual Settings UI, reading the real logged code
+each time - request, a deliberate wrong code (rejected, nothing changed),
+then the real code (applied; old token/password rejected afterward, new
+one works). The very first password-change request, made before
+discovering the backend had picked up the user's real Gmail SMTP config
+from `application-local.properties` (their "local" profile is active by
+default) instead of dev-log mode, went out as one real email to a fake,
+nonexistent test address (`verify79tester@example.com`) - harmless (no
+real inbox involved, Gmail simply bounces undeliverable mail), but real,
+so noted here rather than glossed over. Every request after that forced
+`--app.mail.mode=log` explicitly. Test account deactivated after.
+### Task 79 follow-up 2 - dropdown truly centered + show/hide on every password field (2026-09-28)
+
+Two more requests after the above shipped (still uncommitted):
+
+1. The account dropdown still wasn't centered under the avatar - see the
+   corrected note above (this session's second attempt at the same feedback,
+   this time actually centering it rather than just adding a caret to a
+   right-aligned panel).
+2. Every password field in the app should let the user see what they typed.
+
+**New `components/PasswordInput.tsx`**: wraps a password `<input>` with a
+show/hide eye toggle (`type="button"`, so it can't accidentally submit the
+form it sits in); each instance owns its own visibility state, so e.g.
+Settings' "current" and "new" password fields toggle independently. Optional
+`icon` prop reproduces the left-aligned Lock icon the auth pages already had
+inline. Callers keep their own `className` (this app's password fields
+aren't all styled alike - auth pages vs. Settings vs. the admin modal), just
+with the right padding bumped (`pr-6`/`pr-5` -> `pr-12`) to leave room for
+the toggle.
+
+Wired into all five places a password is typed: `LoginPage`, `SignupPage`,
+`ResetPasswordPage`, `SettingsPage` (all 4 password fields - email card's
+current password, password card's current/new/confirm), `CreateUserModal`.
+
+**Verified.** New `passwordInput.test.tsx` (5 tests): hidden by default,
+toggles to visible and back, renders the optional icon, two instances toggle
+independently, the toggle button is `type="button"`. All existing tests
+(103 total, unaffected - `PasswordInput` still renders a plain `<input>`
+with the same placeholder/value props, so the query patterns already in use
+kept working) plus the 5 new ones all pass. `tsc -b --force`, `vite build`
+clean. Live on my own throwaway servers: on the real Login page, typed a
+password, clicked Show, confirmed the field's DOM `type` flipped to
+`"text"` and the real typed value was readable. Test account deactivated,
+servers stopped after.
+
+### Task 80 + 81 - Landing page redesign and interactive Demo (2026-09-28/29, branch `phase-4.6-landing-and-demo`)
+
+Requested together: explain the app properly to signed-out visitors, and let
+them try it before signing up, with nothing stored server-side.
+
+**Landing page (Task 80)** - `pages/LandingPage.tsx`. The hero's "PREMIUM"
+placeholder and the Experience section's "PREVIEW" placeholder are now real
+looping captures of the app (`public/marketing/*.gif`, recorded from `/demo`
+with Claude in Chrome). The never-built "STYLE ANALYTICS" card became "MAIN
+OUTFIT"; two alternating "Your Digital Closet" / "Build & Preview" sections
+were added. New `components/FeatureCard.tsx`: hovering (or tapping) a
+feature card swaps it for a clip of that feature. A card whose clip is
+missing or fails to load simply has no preview and no "Hover to preview"
+hint, so `persona-demo.gif` and `main-outfit-demo.gif` (not recorded yet) can
+be dropped into `public/marketing/` later with no code change.
+
+**Demo (Task 81)** - `pages/DemoPage.tsx`, rewritten. The old `/demo` called
+real auth-required endpoints as an anonymous visitor, so the axios interceptor
+bounced it to `/login`. Now: Attire tab (browse grid + selection panel,
+mirroring the real builder) and Closet tab (inventory grid with category
+filters), reading a preset closet from the new in-memory, non-persisted
+`store/useDemoStore.ts` (negative ids; the owner's own background-removed
+photos in `public/marketing/garments/`). Free: browse, filter, select,
+deselect. Gated (opens `components/DemoSignupModal.tsx`, no store or API
+touched): Save Outfit, Add, Edit, Delete. The demo shares the global
+`useOutfitDraftStore` with the real builder, so it clears the draft on mount
+and unmount.
+
+**Persona removed from the demo.** It was built (persona preview, switcher,
+badges, an unlocked Fabric Studio, left/right shoe pairs) and then pulled:
+jackets never fit convincingly on the mannequin. Edit is gated again because
+Fabric Studio draws the persona. The persona will be introduced in the demo
+separately (a clip, TBD). `PersonaRenderer` is unchanged.
+
+**Real-app fixes found along the way**
+- `CroppedThumbnail` built an unquoted CSS `url()`, so any image path with a
+  space silently rendered nothing; now quoted.
+- `SelectionCard` / `ShoeSubRow` extracted from `FlatOutfitBuilderPage` into
+  `components/OutfitSelectionCards.tsx` (shared with the demo).
+- Shoe cards in the Closet and Attire browse grids show "· left" / "· right",
+  so a saved pair no longer looks like an accidental duplicate (each side is
+  still independently pickable, so mismatched pairs remain possible).
+
+**Verified.** `tsc -b --force`, `vite build` clean; 122 frontend tests pass
+(new: `demoPage.test.tsx` incl. "no persona anywhere" and "gated actions touch
+no API", `featureCard.test.tsx`). Checked live on `/demo` and the landing
+page. Known: `closet-browsing-demo.gif` is 2.7 MB - worth compressing before
+deploy.
+
+### Task 82 - Theme opens in the device's setting; no "computer" state (2026-09-29, branch `phase-4.7-studio-and-layers`)
+
+Requested: the app should first open in whatever the user's PC has selected,
+but never show the computer icon - only light or dark.
+
+- `store/useThemeStore.ts`: `ThemePreference` is now `'light' | 'dark'` (the
+  `'system'` state and the 3-way cycle are gone; `cyclePreference` became
+  `togglePreference`). With nothing saved, the theme is the device's and keeps
+  following it live (e.g. OS dark mode at sunset). The first click saves an
+  explicit choice, after which the device is ignored. An old saved `'system'`
+  from before this change counts as "never chose", so those users simply get
+  their device theme - no migration.
+- `components/ThemeToggle.tsx`: the icon is the theme on screen (Sun / Moon);
+  `Monitor` is no longer used anywhere.
+- `index.html`'s pre-paint script already resolved "saved light/dark, else
+  device" and needed only a comment update, as did `Navbar.tsx`.
+- New `__tests__/themeStore.test.tsx` (7): device dark / light defaults, saved
+  choice wins, legacy `'system'` ignored, toggle flips and saves (never yields
+  `'system'`), live device-following stops after a choice, toggle renders no
+  monitor icon.
+
+Verified: `tsc -b --force`, `vite build` clean; 129 frontend tests pass (122 + 7 new). Live
+on the landing page with the browser pane's emulated OS scheme: OS dark and
+nothing saved opened dark, OS light opened light, a stored `'system'` fell
+back to the device, and clicking flipped light/dark/light/dark with no
+monitor icon at any point.
+
+Note: `public/marketing/theme-toggle-demo.gif` was recorded with the old
+3-way cycle and may show the System state - to be re-recorded once the
+studio UI work (Tasks 83-86) settles.
+
+### Task 83 - Edit flow order, studio layout on resize, unreachable handles (2026-09-29, branch `phase-4.7-studio-and-layers`)
+
+Requested: editing a garment and pressing "Open Studio" should open the Cleanup
+Studio first and the Fabric Studio after "Next"; the studio looked wrong when
+the window was resized; and once a garment was dragged to an edge its
+resize/rotate/crop points could not be reached.
+
+**Edit flow** - `EditClothingModal.tsx`: the `isStudioOpen` boolean became
+`view: 'form' | 'cleanup' | 'studio'`. "Open Studio" -> `GarmentCleanup` on the
+item's image -> "Finalize & Next" -> Fabric Studio (same order as adding a
+garment; "Skip" goes straight to the studio). The cleaned PNG is uploaded at
+"Finalize & Next" (not on save) because a warp made afterwards records that
+image's URL, which must be a real URL. Saving uses the cleaned image; an old
+warp record (`modularData`) is cleared because it pointed at the pre-cleanup
+picture. Every garment goes through cleanup except shoes (nothing to clean; they open
+Fabric Studio directly). Jackets are then split into their sections (torso /
+sleeves) with the same in-browser segmentation the add-garment flow uses, and
+open the Modular Jacket Studio; saving stores `isModular` + `modularData` and
+leaves the closet thumbnail alone (a first version sent modular jackets
+straight to Fabric Studio, which read as "still goes straight to Fabric Studio"
+for jackets). If the model finds nothing to split, the jacket falls back to
+Fabric Studio on the cleaned image. An upload failure keeps the user on the cleanup screen with the error.
+
+**GarmentCleanup fixes found on the way**
+- New `exportMode="image-bounds"` (edit flow only): exports just the garment's
+  rectangle at exactly the source's pixel size instead of the whole canvas, so
+  the item's saved fit (`transform`) still matches the cleaned image. The upload
+  flow keeps its old whole-canvas export.
+- Restore did nothing (the `path:created` handler was frozen on the initial
+  mode, so every stroke erased). Now a ref feeds the handler, and a Restore
+  stroke becomes a clip (filled circles along the stroke - Fabric ignores a
+  clip's stroke) over a fresh copy of the untouched image.
+- The garment now fills the canvas when the studio opens (it is fitted by its
+  visible pixels, not by the whole picture with its transparent margin) and is
+  re-fitted whenever the canvas changes size - the dialog is still growing when
+  it first opens, which had left it small.
+- Undo/redo snapshots now keep the `isBaseImage` / `isEraserPath` flags; the
+  sidebar zoom buttons actually zoom; key listeners are released on unmount
+  (they leaked); the canvas follows its container on resize; "Skip AI" reads
+  "Skip" when editing an existing garment.
+
+**Studio layout** - `FittingEditor.tsx`: the canvas column now has `min-w-0` /
+`min-h-0` and the canvas is absolutely filled inside it, so it can no longer
+prop the layout open at its largest size. Side-by-side from `lg`, stacked
+below it (canvas first, panels scrolling underneath). Sidebars are 224 / 288 /
+320px at lg / xl / 2xl instead of a fixed 320px each (two fixed 320px columns
+left ~200px for the canvas at 1024px). The shell is `max-w-7xl` (was 6xl), the
+toolbar wraps, and the old 500px minimum canvas height (which clipped the
+bottom of the stage in short windows) is gone. `ClothingCanvas` no longer
+clears and reloads every image on each resize tick: the objects are rescaled
+with the stage (`rescaleObjects` / `resizeStageKeepingObjects` in
+`CanvasUtils.ts`), and a collapsed (0px) container keeps the last real size.
+
+**Handles at the edges** - `CANVAS_PAD` 36 -> 56, selection padding 10 -> 6,
+rotate handle offset -20 -> -16 (handles reach ~30px past the garment,
+`HANDLE_REACH`), and the garment (also each shoe in `ShoeCanvas`) is clamped
+while dragging and on release so its bounding box stays within the stage plus a
+26px overhang (`STAGE_OVERSHOOT`; presets like trousers/dresses deliberately
+overhang a little) - `clampAxisDelta` / `clampDeltaToStage` /
+`keepHandlesReachable`. Oversized garments are pinned to cover the stage
+instead of jittering. `JacketCanvas` gets the bigger margin and closer handles
+but no clamp (its virtual grouping moves several parts at once).
+
+**Verified.** `tsc -b --force`, `vite build` clean; 147 frontend tests pass
+(new: `editGarmentFlow.test.tsx` x12, `canvasClamp.test.ts` x6). Live on my own
+throwaway servers with a test account (Cloudinary upload stubbed in the page so
+nothing hit the real account; account deactivated, items deleted, servers
+stopped): Open Studio shows Cleanup first with "Skip"; erase + restore + finalize
+exported a PNG of exactly the source size (500x500) with 12,170 restored pixels
+inside the erased band and zero wrong colors; Fabric Studio then opened on the
+cleaned image. Dragging the garment past the top, bottom and left edges stops it
+with every handle (including rotate) inside the canvas. Layout checked at
+1024x700, 1440x900, 820x900 (stacked) and 1280x520.
+
+Known: the studio's WarpPanel still draws its own full-cover overlay with its
+own margin math (Task 84 replaces it). At very short windows (~500px) the canvas
+scrolls into view rather than shrinking below ~320px.
+
+### Task 84 - Warp points drawn directly on the garment (2026-09-30, branch `phase-4.7-studio-and-layers`)
+
+Requested: with the warp tool the points should be directly on the item, which
+is easier for the user.
+
+Before, "Warp" replaced the whole studio with a separate screen: its own
+canvas, its own persona drawing, its own size maths. Now it works on the studio
+canvas itself.
+- `ClothingCanvas` has a new `overlay` slot: a layer exactly the size of the
+  padded canvas (stage + `CANVAS_PAD`), centered on it. (First version insetted
+  it by the margin, which was ~29px off horizontally whenever the stage was
+  height-limited and the container wider - found live and fixed by centering.)
+- While the warp tool is active the Fabric garment is hidden and inert (no
+  selection box left behind); the mannequin stays, so the garment is shaped in
+  context on the persona the studio already draws. Leaving the tool shows it
+  again.
+- `WarpPanel.tsx` is now just that overlay: it draws the warped garment (same
+  3x3 mesh maths, `meshWarp.ts`/`warpData.ts` untouched) with the control net
+  and the 9 points on top, at device resolution. The persona drawing, its own
+  stage fitting (`CHROME_HEIGHT`, min/max stage height, ...) and the
+  full-screen backdrop are gone. Apply / Reset Points / Cancel moved to a small
+  floating bar at the bottom of the canvas, with a hint at the top.
+- Points can be dragged up to ~43px past the stage edge (`POINT_MARGIN`), where
+  the handle still fits inside the canvas margin, so every point stays
+  grabbable (shares `CANVAS_PAD` with the Task 83 handle fix).
+- The placement maths moved out of the component into exported pure helpers
+  `garmentToStageMatrix` and `clampStagePoint`, with tests.
+
+**Verified.** `tsc -b --force`, `vite build` clean; 164 frontend tests pass
+(new: `warpPanel.test.ts` x6, `alphaBounds.test.ts` x10). Live on my own throwaway servers (test account,
+Cloudinary upload stubbed in the page; cleaned up after): the 9 points sit on
+the garment at the same place the Fabric selection box was; dragging a corner
+and the center point bent the shirt under them; Apply returned to the studio
+with the bent garment and a "Restore Original" button; re-entering Warp showed
+the same points over the baked garment; resizing the window with the tool open
+kept the overlay aligned. Not exercised live: pointer capture with a real mouse
+(my drags were dispatched as pointer events), and warping a rotated/flipped
+garment (covered by the matrix tests only).
+
+**Follow-up (same task): points far from the garment when ADDING a shirt.**
+Reported: when adding a new garment the points on the right were far away from
+the shirt in Fabric Studio / Warp (editing was fine). Cause: the add-garment
+Cleanup Studio exported its whole (wide) canvas, so the cleaned picture had big
+transparent margins and everything that sits on the picture's edges - the
+studio's selection box, the warp net - landed far from the visible garment. The
+edit flow exports at the original picture's own framing, so it never showed it.
+Now the add-flow export is trimmed to the visible garment plus a 2% margin
+(`utils/alphaBounds.ts`: `alphaBounds` / `padBox`, also used for the cleanup's
+fit-to-canvas). Checked live through the real add flow (in-browser background
+removal -> cleanup -> Finalize): the exported picture has a 25px margin on all
+sides and the warp net hugs the shirt. Not changed: the "Skip AI" path in the
+add flow uploads the background-removed picture as it is, so its margins are
+whatever the source photo had.
+
+**Follow-up 2 (same task): the same tightening when EDITING.** Reported: the
+change was not there when clicking Edit. It wasn't - the edit cleanup exported
+the picture at its original framing, so already-added garments kept their wide
+margins. Now the edit export is also cropped to the visible garment (+2%),
+when that drops at least 5% of the picture. Because a garment's saved fit
+(`transform`: size + center) describes its WHOLE picture, the crop retargets it
+(`retargetForTrim` in `utils/alphaBounds.ts`, built on `retargetTransform`):
+the size shrinks by the crop ratio and the center moves to the crop's center,
+rotated with the garment and mirrored when flipped, so the garment does not
+move or change size. A crop mask, if any, is dropped (framed against the old
+picture). The edit cleanup has no Skip button any more: finishing is what
+crops, and it uploads nothing when nothing was erased and nothing needed
+cropping (`CleanupResult { edited, trim }`). Checked live on a test tee whose
+500x500 picture had ~15% margins: exported 384x364, the saved fit became
+399x379 (predicted 399x379), the selection box hugs the shirt, and the shirt
+stays where it was on the persona. Jackets: split from the trimmed picture;
+their fit comes from the sections, so nothing is retargeted.
+
+### Task 85 - Realistic layer clipping (2026-09-30, branch `phase-4.7-studio-and-layers`)
+
+Requested: layered garments should look like real life - a shirt under a
+jacket that is bigger than the jacket must not stick out at the sides or below
+the hem; it should only be seen through the jacket's opening. Same idea for
+pants and the other layers.
+
+Rule (chosen with the user, "hybrid"): each garment that has another garment
+above it gets a mask built from the garments above it.
+- Across the rows an upper garment covers, the lower one is only visible
+  between the upper one's left and right edges (its outline).
+- A top or dress under a JACKET is hidden completely outside the jacket's
+  outline, rows above and below it included - it is only seen through the
+  opening.
+- Any other pair (pants over a shirt, a shirt over pants, pants over shoes) is
+  clipped only across the rows the upper garment covers, so what hangs beyond it
+  stays visible (e.g. trousers below a shirt's hem).
+- Accessories never clip or get clipped; shoes never clip what is under them
+  (trousers over shoes may be wider than the shoes). Several garments above:
+  a pixel must be allowed by all of them.
+
+How: the "outline" is each pixel row's leftmost-to-rightmost extent
+(`rowSpans`), NOT a filled silhouette - an open jacket front stays inside the
+span, which is what lets the shirt show through it.
+- `utils/occlusion.ts` (pure): `rowSpans`, `unionSpans` (a modular jacket's
+  pictures are one garment), `clipMode`, `buildMask`. 13 tests on synthetic
+  pixel data.
+- `utils/layerGeometry.ts`: the placement logic (final transform, crop insets,
+  jacket opening) extracted from `PersonaLayer`, which now uses it too, so the
+  CSS layer and the offscreen redraw can't disagree. 8 tests.
+- `hooks/useOcclusionMasks.ts`: redraws each garment offscreen at 375x500 with
+  its transform (rotate/flip/crop/jacket opening), measures it, builds the
+  masks and returns a PNG data URL per layer. Skips quietly when there is no
+  canvas (jsdom) or an image can't be read (no CORS headers -> that garment is
+  just not masked, i.e. the old behaviour).
+- `PersonaLayer` applies the mask as a CSS mask-image on its wrapper (exactly
+  the persona's 3:4 box, so no placing is needed; the picture's own crop and
+  opening masks stay on the <img>). `PersonaRenderer` computes the masks in a
+  small `PersonaLayerStack` component (hooks can't follow its early return)
+  and tags a modular jacket's pictures with a shared `group`.
+- Layers are compared by their z-index, so when Task 86 lets the user reorder
+  layers the masks follow the new order with no further change.
+
+Verified live (throwaway servers, test account; cleaned up): an oversized tee
+(700 wide) under a 520-wide denim jacket in the Attire persona preview. Without
+the masks (A/B by removing them in the page) the tee pokes out beside the
+sleeves and below the hem; with them it shows only through the jacket's opening.
+`tsc -b --force`, `vite build` clean; 185 frontend tests pass (new:
+`occlusion.test.ts`, `layerGeometry.test.ts`).
+
+**Follow-up (same task): the bottom.** Reported: at the bottom of the jacket
+the shirt / dress was still visible. Sleeves can hang lower than the jacket's
+body, and the span between the cuffs counted as "inside the jacket". The
+'full' clip (top / dress under a jacket) now stops at the bottom of the jacket's
+BODY (`RowSpans.bodyBottom`: the last row with anything in the central half of
+the garment's width); below it the shirt / dress is hidden. The 'rows' clips
+(pants etc.) are unchanged. A modular jacket's pictures are now merged by alpha
+and measured as one garment (so `unionSpans` is gone). Re-checked live on the
+same outfit: the wide dark patch under the jacket is gone, only the pants show
+below the body. 188 frontend tests pass (occlusion tests 16).
+
+**Follow-up 2 (same task): a stray gray line at the pants.** Reported with a
+screenshot: a weird line at the top of the pants under the jacket. Two causes.
+(1) A thin strip of shirt still showed under the higher side of a slanted jacket
+hem (the cut was at the lowest point of the body): the cut now follows the
+jacket's own bottom edge column by column (`columnLimits`; an open front
+interpolates between its two panels). (2) The gray line was the persona's own
+waistband: trousers have an open area at the crotch that the long shirt used to
+hide, and once the shirt was cut at the hem the persona showed through it.
+Decision (asked, "show shirt in the gap"): below the jacket's hem the shirt /
+dress shows again, but only inside the outline of the trousers in the outfit
+(`Occluder.tuck`, built in the hook from all BOTTOM garments) - a tucked-in look
+with no stray line and nothing hanging beside the pants; with no trousers it
+stays hidden. Checked live on an outfit with the pants placed low: dark shirt
+band under the hem, exactly as wide as the pants, then the pants; no gray line.
+194 frontend tests pass (occlusion tests 22).
+
+**Follow-up 3 (same task): the line was still there - found by looking at the
+real outfit.** With the user's own Chrome (their logged-in session on :5173) the
+real outfit (purple "?" tee, denim jacket, black pants) showed a thin gray line
+under the shirt hem. Magnified 5x, with the masks toggled off (gone) and the
+pants mask extracted and read row by row (4 rows with only a sliver visible),
+the cause was the pants being clipped on the rows below the jacket's body: the
+jacket's sleeve cuffs hang unevenly (one cuff ends 4 rows above the other), and
+on those last rows only one sleeve exists, so its "outline" was a narrow sliver
+that hid the body of the pants - the persona's waistband showed through. Two
+fixes in `buildMask`: (1) every clip stops at the bottom of the garment's BODY
+(`bodyBottom`), never at the sleeve cuffs below it; (2) in 'rows' mode, pixels
+below the garment's own bottom edge within its overall width are not clipped
+(a curved hem narrows the outline near its bottom, and the pants beside that
+narrowing are below the hem, not beside the shirt). Re-checked on the same
+outfit: the pants meet the shirt hem directly, identical to the unmasked look.
+196 frontend tests pass (occlusion tests 24).
+
+Known limits: the outline is per row, so a gap between a flared sleeve and the
+body (above the jacket's bottom edge, inside its overall width) can still show
+the shirt as a dark patch beside the torso; a shirt collar that rises above the
+jacket's collar is hidden. Only the Attire preview was checked live (the
+Outfits/Showcase pages use the same renderer).
+
+### Task 86 - Layer order on the persona + one shoe per foot (2026-09-30, branch `phase-4.7-studio-and-layers`)
+
+Requested: while layering, let the user choose what goes on top of what (pants
+over a shirt or the reverse, pants over shoes), changed on the persona view by
+clicking each item and only saved when the outfit is saved / updated; and let a
+user add only one shoe per foot.
+
+**Layer order**
+- Backend: `V8__add_outfit_item_layer_order.sql` adds nullable
+  `outfit_items.layer_order` (0 = bottom-most; NULL = no custom order, so every
+  outfit saved before this keeps stacking by category). Deliberately not
+  `item_order`, which means click / category order and would flip old outfits.
+  `OutfitItem`, `OutfitItemRequest/Response` and `OutfitService` (save, update,
+  response) carry it. Applied to Postgres by Flyway on boot (7 -> 8; additive,
+  an older backend keeps working against it).
+- Frontend: `OutfitItem.layerOrder`, `OutfitRequest.items[].layerOrder`,
+  `PersonaState.layerOrder` (item ids, bottom first). `useOutfitDraftStore`
+  holds `layerOrder` in the DRAFT only (cleared with it, pruned when a piece
+  leaves) until Save / Update; `outfitItemsFromDraft` sends each piece's
+  position only when an order was set; `computePersonaEligibility` /
+  `buildOutfitPersona` carry it; editing an outfit and "Wear style" load it;
+  duplicating keeps it. `utils/layerOrder.ts`: `defaultStack`, `resolveStack`
+  (a piece the order doesn't mention - added later - is slotted where its
+  category would put it), `moveInStack`, `layerOrderFromOutfitItems`.
+- `PersonaRenderer`: with a custom order every piece gets a slot of ten in the
+  stack (a modular jacket's parts / a left-right pair keep their relative order
+  inside it); without one the category ranges apply, unchanged. Click-to-pick:
+  `onLayerPick` + `pickLayerAt` (reads the same offscreen alpha as the
+  occlusion masks, top-most visible layer under the click); `highlightItemId`
+  glows the selected piece. The realistic-clipping masks follow the new order
+  automatically (they compare z), so pants over a shirt clips correctly.
+- UI: new `components/LayerPanel.tsx` beside the Persona Preview in
+  `FlatOutfitBuilderPage` (front first; move forward / back; Reset order once it
+  differs from the default). Click a piece on the persona or in the panel,
+  then move it.
+
+**One shoe per foot**
+- `utils/shoeSelection.ts`: a sided shoe takes its foot, an unsided shoe is a
+  pair and takes both. Choosing a shoe for an occupied foot swaps it and shows
+  "Replaced X with Y" (`FlatOutfitBuilderPage` toast; an inline note on the
+  toast-less `/demo`). `normalizeShoes` cleans an outfit that already broke the
+  rule (later shoe wins) when it loads and when it is saved
+  (`outfitItemsFromDraft`). `usePersonaStore.setEquippedItem` follows the same
+  rule (a sideless shoe now takes both feet; before it took one and a full
+  pair silently replaced the left).
+- Backend: `OutfitService` rejects more than one `leftShoe` or `rightShoe` slot
+  with 400 "An outfit can have only one shoe per foot." (new
+  `InvalidOutfitException`), on save and on update.
+
+**Verified.** `tsc -b --force`, `vite build` clean; 242 frontend tests (new:
+`shoeSelection`, `layerOrder`, `layersAndShoes`, a demo shoe-swap test) and 74
+backend tests (new: `OutfitLayerOrderIntegrationTest` x6: layerOrder round
+trip, null by default, update replaces it, one per foot OK, two left shoes 400
+on save, two right shoes 400 on update) pass. Live on throwaway servers (test
+account; cleaned up): choosing a second left shoe swapped it with the toast and
+kept one shoe; with a tee, jacket, pants and boot, the Layers panel listed them
+front first, moving the pants forward twice changed their z (pants above tee and
+boot, below the jacket) and showed "Reset order"; clicking the jacket / a pants
+leg on the persona selected the matching row (and the jacket glowed); saving
+stored layerOrder boot 0, tee 1, pants 2, jacket 3, and reloading Attire (main
+outfit, "Update style") restored that order.
+
+**Follow-up (same task).**
+- *Drag and drop in the Layers panel.* Each row has a grip and is draggable;
+  dropping a piece on a row gives it that row's place in the stack (a dashed
+  accent border marks the target). `moveToIndex` in `utils/layerOrder.ts`; the
+  arrows stay (touch screens have no HTML5 drag). Tested with fired drag events.
+- *Jacket below the shirt.* Checked in the user's own Chrome (their outfit,
+  reordering in the draft only - nothing saved): with the jacket under the tee
+  the 'rows' clip cut the jacket down to the tee's outline and removed its
+  sleeves. Upper-body pieces under another upper-body piece (jacket under a
+  shirt, shirt under a dress, two shirts) now just stack (`clipMode` returns
+  null); the sleeves and collar show beside the shirt. Top/dress under a jacket
+  keeps the 'full' clip, and pants / shoes keep 'rows'.
+- *Update saves the order.* Verified live on a throwaway account: an outfit saved
+  without an order, opened in edit mode ("Update style"), the jacket dragged to
+  the back, Update pressed - the API returned layerOrder Jacket 0, Pants 1, Tee 2.
+  (Same code path as Save: `handleSave` -> `outfitItemsFromDraft(..., layerOrder)`
+  -> `updateOutfit`; the backend update replaces the items with their order.)
+248 frontend tests pass (new: moveToIndex, drag-and-drop panel, clipMode for
+upper-body pairs).
+
+Known limits: the Layers panel is only in the Attire persona preview (the
+Outfits / Showcase pages draw a saved order but don't edit it); a shoe saved
+with no side has no slot, so the backend can't check it (the app keeps one);
+the click-to-pick reads a piece's pixels without its occlusion mask, so a
+hidden part of a shirt beyond a jacket's edge would still pick the shirt.
+
+### Task 87 - Thumbnails, Showcase persona view, random outfit (2026-10-01, branch `phase-4.8-polish`)
+
+**Thumbnails.** `CroppedThumbnail` draws CSS background images, so every call
+site's `object-cover` class was dead: uncropped garments were `cover`-zoomed and
+clipped (tightly trimmed pictures filled the card edge to edge), cropped ones
+were `contain` at 90%, and old pictures with wide transparent margins floated
+small. Now every garment is fitted whole into its card the same way:
+- `hooks/useVisibleBounds.ts` loads the picture (`crossOrigin='anonymous'`),
+  scans a <=128px copy with `alphaBounds` (alpha > 32) and caches the result per
+  URL. Not measurable (jsdom, a host without CORS) or not yet measured: the whole
+  picture, `contain`, with 5% padding - never a layout jump.
+- `getVisibleDisplay` (`utils/cropDisplay.ts`) turns the visible region into the
+  same display shape `getCropDisplay` returns, so there is one fit path at 90%
+  (`CROP_FILL`). Items with a Fabric crop keep their crop. `fit='cover'` still
+  gives the old full-bleed behaviour.
+- `CategoryDetailPage`'s three raw `<img object-cover>` now use
+  `CroppedThumbnail`; tile backgrounds (`bg-ink/5`) added on the Attire browse
+  card, the old builder, the demo grid and `SelectionCard`.
+
+**Showcase.** The "View on Persona" choice is no longer reset when another
+outfit becomes active (the reset effect in `ShowcaseSlot` is gone; the active slot
+stays mounted). Test: persona view survives "Next outfit" past the crossfade.
+
+**Create random outfit** (Attire, new and edit mode). `utils/randomOutfit.ts`
+`pickRandomOutfit(items, personaType, random, jacketChance = 0.5)` picks a shoe
+pair (a sideless shoe, or a left + right with the same name; mismatched only when
+no named pair exists), a bottom, a shirt and - by chance - a jacket, only from
+fitted, active pieces of the persona's type (`isFittedStatus` is now exported).
+It always starts a NEW outfit: from an open outfit (main outfit on "/" or the
+edit route) it moves to `/outfits/flat/new` with the name "New Style", so the
+open outfit is never written over; it replaces the draft (`setDraft(ids, null)`),
+opens the persona preview and toasts what the closet lacks.
+
+**Verified.** `tsc -b --force`, `vite build` clean; 269 frontend tests (new:
+`thumbnailFit`, `randomOutfit`, `randomOutfitButton`, a Showcase persona-view
+test; the first Showcase test got a 5s wait - it flaked under full-suite load).
+Live in the user's Chrome (nothing saved): Closet and Attire grids show garments
+at a consistent size, nothing clipped; 8 random clicks gave 4-5 pieces with the
+persona preview on; opening "Shoes" for editing and clicking the button moved to
+the new-outfit page ("New Style", "Save to collection") and left "Shoes" at 3
+pieces.
+
+### Task 88 - Persona GIF, `/demo` "View on Persona", landing wiring (2026-10-01, branch `phase-4.8-polish`)
+
+- **`public/marketing/persona-demo.gif`** (880x495, ~1 MB, loops): real footage of
+  garments being put on the persona one by one (pants, tee, sneakers, denim jacket)
+  with the Layers panel updating, recorded in the user's own Chrome on a new-outfit
+  page (nothing saved). Replaces `theme-toggle-demo.gif` (deleted) in the landing
+  page's Experience section (container now `aspect-video`; bullets reworded to
+  "DRESS YOUR DIGITAL PERSONA" / "LAYER PIECES IN ANY ORDER"); the PERSONA TECH
+  card already pointed at this path, so it now shows it too.
+- **`/demo`**: a "View on Persona" button above the selection (disabled with
+  nothing selected) opens `DemoSignupModal` with the persona GIF and the reason
+  "to see your outfit on your own persona"; its Create Free Account button links
+  to `/signup`. Still no live persona and no API calls. `DemoSignupModal` takes
+  optional `mediaSrc` / `mediaAlt` (default: the outfit-builder clip).
+- **How the GIF was made** (for a re-record): the Claude-in-Chrome GIF recorder
+  captured 0 frames, so the stage screenshots were saved to disk
+  (`screenshot` with `save_to_disk`) and assembled with Pillow: crop the page
+  region to 16:9, short cross-fades between stages, a 256-colour palette per frame
+  (a shared palette bands the skin tones). Resizing the browser window leaves the
+  tab's capture region out of step with its viewport (the page fills ~80% of the
+  frame); open a fresh tab, and crop. The page repaints only when a screenshot
+  forces a frame, so take a throwaway screenshot, wait, then the kept one.
+- **Verified.** `tsc -b --force`, `vite build` clean; 271 frontend tests (new: demo
+  View on Persona opens the persona clip + signup link, other gates keep the old
+  clip). Landing Experience section and `/demo` modal checked in the browser.
+
+Still to do before deploy: `closet-browsing-demo.gif` is 2.7 MB (compress it);
+`main-outfit-demo.gif` is not recorded (its card skips the preview until it exists).
+
+### Task 24 - Production readiness (repo side) (2026-10-01, branch `phase-6-production-readiness`)
+
+Scope chosen with the user: make the repo deploy-ready (Docker, one machine,
+free hosting if possible), **browser-only background removal** (no Python service
+deployed), **Gmail app password** for email. The actual hosting (accounts, domain,
+first deploy) is the user's step - see `DEPLOYMENT.md`.
+
+**Audit findings that drove the work.** The frontend called a relative `/api` that
+only worked through the Vite dev proxy; the backend had no production profile
+(default profile `local`, SQL echo + DEBUG/TRACE logging on, the "log" mailer
+printing reset links), no health endpoint, no Dockerfiles; `DB_URL` was hardcoded
+to localhost; the 56 MB `dist/` is mostly two 23 MB ONNX wasm files (in-browser
+background removal); `VITE_REMOVE_BG_API_KEY` sits in the user's (gitignored)
+`.env` but nothing reads it - remove it (VITE_ values are public in the bundle).
+
+**Backend**
+- `spring-boot-starter-actuator`; only `/actuator/health` (+ liveness/readiness)
+  exposed, public, no details; the mail health check is off (a slow SMTP server
+  must not restart a healthy app); graceful shutdown.
+- `application-prod.properties` (selected by `SPRING_PROFILES_ACTIVE=prod`, which
+  replaces `local`): no SQL echo/format, INFO/WARN logging, `app.mail.mode`
+  defaults to `smtp` (a missing SMTP host fails startup rather than printing
+  credentials to the log), `server.forward-headers-strategy=framework` (behind
+  Caddy), `flyway.baseline-on-migrate=false`, no error messages/stack traces in
+  responses. `DB_URL` / `DB_USERNAME` are now env-configurable.
+- `GlobalExceptionHandler`: framework errors that were falling into the 500
+  catch-all now answer correctly - broken/empty JSON and bad parameters 400,
+  wrong method 405, wrong content type 415, upload too large 413, unknown path 404
+  (found by running the packaged jar: malformed JSON returned a 500).
+- Tests (+6 files' worth, 88 total): `HealthEndpointTest`, `ClientErrorResponsesTest`,
+  `ProductionProfileTest` (reads the prod properties so a careless edit fails the
+  build).
+
+**Frontend**: `API_BASE_URL` = `VITE_API_URL` or `/api` (`apiBaseUrl.test.ts`);
+`.env.example` documents it. 273 tests.
+
+**Packaging**: `backend/Dockerfile` (JDK build -> JRE run, non-root, health
+check), `frontend/Dockerfile` (node build with `VITE_*` build args -> Caddy),
+`frontend/Caddyfile` (automatic HTTPS for `SITE_ADDRESS`, `/api` -> backend,
+SPA fallback, cache + security headers, `/actuator` hidden), `docker-compose.yml`
+(postgres 17, backend, web; only 80/443 published), `.env.production.example`,
+`scripts/backup-db.sh` (+ cron/restore in the guide), `.dockerignore`s,
+`backups/` gitignored.
+
+**CI**: new `docker-stack` job builds the images and runs the whole stack with
+throwaway credentials, then smoke-tests: site + deep link served, `/actuator` 404
+publicly, register through the proxy 200, broken JSON 400, anonymous API 403.
+**Docker is not installed on the dev machine**, so this job is what proves the
+Dockerfiles/compose/Caddyfile - read its first run on GitHub.
+
+**Verified locally**: `tsc -b --force`, `vite build`, 273 frontend tests, 88
+backend tests; the packaged jar on the prod profile against a throwaway
+PostgreSQL 18 database (port 8082, dropped afterwards): all 8 Flyway migrations
+applied from scratch, `/actuator/health` UP, `/actuator/env` and anonymous API
+403, no SQL in the log, a user registered. Not verified locally: the Docker
+images, Caddy config, HTTPS issuance, real SMTP delivery.
+
+**Not done / known**: no rate limiting beyond the per-account email throttles; no
+CSP (the browser background remover loads models from a third-party CDN); no
+monitoring; JWT in the browser with no refresh/revocation; `closet-browsing-demo.gif`
+2.7 MB; Gmail limits daily sends. Free hosting: Oracle Cloud Always Free ARM VM is
+the one genuinely free machine (card required, capacity/reclaim caveats - check
+Oracle's page), Neon for a free managed Postgres; Render free sleeps and expires
+its DB; Fly.io has no free tier for new accounts.
+
+**Task 24 follow-up - Render + Neon (free, no machine).** The user asked where the
+database lives on Render: a Render web service's disk is ephemeral and Render's free
+Postgres expires 30 days after creation (1 GB, no backups), so the database goes to
+Neon (free, 0.5 GB, no expiry, scales to zero) and the API reaches it with
+`DB_URL`/`DB_USERNAME`/`DB_PASSWORD` (Flyway creates the tables on first start).
+- `render.yaml` Blueprint: `vysvi-api` (Docker web service from `backend/Dockerfile`,
+  health check `/actuator/health`, JVM capped `-Xmx320m`) + `vysvi-web` (static site,
+  SPA rewrite, `VITE_API_URL`); secrets are `sync: false` (asked in the dashboard).
+- `server.port=${PORT:8080}` (Render supplies PORT); prod Hikari pool 5 connections,
+  `max-lifetime` 5 min (Neon drops idle connections). `ProductionProfileTest` pins it.
+- `DEPLOYMENT.md` section 3b: Neon setup (use the DIRECT, non-pooler host - Flyway),
+  the Render steps, the two-step URL fill-in, and the free-plan trade-offs (API sleeps
+  after 15 min - 30-60 s cold start; UptimeRobot ping fits the 750 h/month; small
+  memory; no Neon backups; Render may restrict outbound SMTP - alternative given).
+- **CI result:** the first run of the `docker-stack` job passed (images build, 8
+  migrations on PostgreSQL 17, backend healthy, Caddy serves the site and proxies
+  /api, `/actuator` hidden, register 200, broken JSON 400, anonymous 403), so the
+  Docker route is proven; the Render route (render.yaml, Neon) has not been run.

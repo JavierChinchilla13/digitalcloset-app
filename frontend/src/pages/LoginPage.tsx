@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/authService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import PasswordInput from '../components/PasswordInput';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -80,20 +81,17 @@ const LoginPage = () => {
           <div className="space-y-2">
             <div className="flex justify-between items-end px-4">
               <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Password</label>
-              <button type="button" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</button>
+              <Link to="/forgot-password" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</Link>
             </div>
-            <div className="relative group">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
-              <input 
-                type="password" 
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
-                disabled={isLoading}
-              />
-            </div>
+            <PasswordInput
+              icon={Lock}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-12 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all"
+              disabled={isLoading}
+            />
           </div>
 
           <button 

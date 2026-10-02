@@ -25,6 +25,10 @@ public class OutfitItem {
     @Column(name = "item_order")
     private Integer itemOrder;
 
+    // Stacking position on the persona (0 = bottom-most); null = default order.
+    @Column(name = "layer_order")
+    private Integer layerOrder;
+
     @Column(name = "position_x")
     private Double positionX;
 
@@ -55,6 +59,9 @@ public class OutfitItem {
 
     public Integer getItemOrder() { return itemOrder; }
     public void setItemOrder(Integer itemOrder) { this.itemOrder = itemOrder; }
+
+    public Integer getLayerOrder() { return layerOrder; }
+    public void setLayerOrder(Integer layerOrder) { this.layerOrder = layerOrder; }
 
     public Double getPositionX() { return positionX; }
     public void setPositionX(Double positionX) { this.positionX = positionX; }

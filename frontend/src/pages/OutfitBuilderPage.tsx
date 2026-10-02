@@ -14,12 +14,15 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useOutfitStore, outfitItemsFromEquipped, equippedFromOutfitItems } from '../store/useOutfitStore';
 import type { OutfitRequest } from '../types';
 import CroppedThumbnail from '../components/CroppedThumbnail';
+import PersonaBadge from '../components/PersonaBadge';
+import { useToast } from '../components/Toast';
 import { ClothingCategory } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
 
 const OutfitBuilderPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const { fetchItems, isLoading: loadingCloset, items: closetItems } = useClothingStore();
   const { persona, updatePersona, setEquippedItem, clearEquipped } = usePersonaStore();
   const { outfits, fetchOutfits, saveOutfit, updateOutfit } = useOutfitStore();
@@ -61,6 +64,10 @@ const OutfitBuilderPage = () => {
         await saveOutfit(outfitData);
       }
       navigate('/outfits');
+    } catch (err: any) {
+      // The store's mutations rethrow on failure (Task 22) - stay on the page with
+      // the look intact and say so, instead of failing silently.
+      showToast(err.message || 'Failed to save outfit', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -189,11 +196,12 @@ const OutfitBuilderPage = () => {
                         whileTap={{ scale: 0.95 }}
                         onClick={() => toggleItem(item)}
                         className={`
-                          relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300
+                          relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300
                           ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                         `}
                       >
                         <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
+                        <PersonaBadge item={item} compact />
                         <div className={`
                           absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                           ${active ? 'opacity-100' : 'opacity-0'}

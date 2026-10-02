@@ -5,6 +5,7 @@ import type { ClothingItem, PersonaState } from '../types';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import CroppedThumbnail from './CroppedThumbnail';
+import PersonaBadge from './PersonaBadge';
 
 interface ClothingCardProps {
   item: ClothingItem;
@@ -150,12 +151,11 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
           </div>
         </div>
 
-        {/* Category Tag (Mini) */}
-        <div className="absolute top-2 left-2">
-          <span className="px-2 py-0.5 bg-black/40 backdrop-blur-md text-white text-[10px] font-medium tracking-widest uppercase rounded-full border border-white/10">
-            {item.category}
-          </span>
-        </div>
+        {/* Task 77: persona sign (which persona this garment is for, or
+            "Not fitted" / "Unassigned"). Replaces the small category tag that
+            used to sit here - the category is already the caption under the
+            card. */}
+        <PersonaBadge item={item} />
       </div>
 
       <div className="px-1">
@@ -167,6 +167,12 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
         </h3>
         <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase opacity-40 mt-0.5">
           {item.category}
+          {/* A shoe pair is saved as two items sharing a name (side: left/
+              right) - without this, both cards read as identical, looking
+              like an accidental duplicate rather than one matching pair.
+              Still two independently equippable items on purpose (a
+              mismatched pair is a legitimate choice), just labeled clearly. */}
+          {item.category === 'SHOES' && item.side && ` · ${item.side}`}
         </p>
       </div>
     </motion.div>

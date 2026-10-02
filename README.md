@@ -55,3 +55,10 @@ DigitalCloset is a premium full-stack web application designed to help users man
 - **Phase 9: Modular Fashion AI**: Completed (Transformers.js Segmentation, Mesh Warping/Puppet Warp, Dynamic Center Opening Masks).
 - **Phase 10: Resilient AI & Pro-Cleanup**: Completed (Hugging Face Inference Integration, 100% Local SegFormer Fallback, Manual Magic Pen Cleanup Studio, Standardized Layer Centering).
 - **Phase 12: Stabilization & Security Hardening**: Completed (fixed a build-breaking regression and a TypeScript baseline of real bugs, removed dead code/dependencies, closed a registration privilege-escalation vulnerability and an outfit-ownership IDOR gap, externalized all secrets, moved schema management to Flyway, added soft-delete for clothing items, proper 404/403 exception handling, request validation, explicit CORS configuration, and hardened the Python AI microservice). See `backend/IMPLEMENTATION_SUMMARY.md` and `frontend/FRONTEND_CHANGES.md` for details.
+
+## Deployment
+
+The whole app (PostgreSQL + Spring Boot API + Caddy web server with automatic
+HTTPS) runs on one machine with `docker compose`. See [DEPLOYMENT.md](DEPLOYMENT.md)
+for the step-by-step guide, the settings reference, backups, and a free hosting
+option.

@@ -54,15 +54,49 @@ export function getCropDisplay(transform?: ClothingTransform): CropDisplay | nul
   const fl = Math.min(Math.max((maskLeft - maskWidth / 2 - (x - width / 2)) / width, 0), 1 - fw);
   const ft = Math.min(Math.max((maskTop - maskHeight / 2 - (y - height / 2)) / height, 0), 1 - fh);
 
+  return displayForRegion({ left: fl, top: ft, width: fw, height: fh }, maskWidth / maskHeight);
+}
+
+// A region of a picture, as fractions (0..1) of the picture's own width/height.
+export interface PictureRegion {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+// Shows `region` of a picture in a box whose aspect ratio is `aspectRatio`
+// (the region's own proportions): scale the whole picture to
+// `100/width % x 100/height %` and put the region's top-left at the box origin.
+function displayForRegion(region: PictureRegion, aspectRatio: number): CropDisplay {
+  const { left, top, width: fw, height: fh } = region;
   // background-position percentages map 0%..100% onto the overflow
   // (image size - box size); a dimension with no overflow (fw or fh == 1)
   // has nothing to position.
-  const posX = fw >= 0.999 ? 0 : (fl / (1 - fw)) * 100;
-  const posY = fh >= 0.999 ? 0 : (ft / (1 - fh)) * 100;
+  const posX = fw >= 0.999 ? 0 : (left / (1 - fw)) * 100;
+  const posY = fh >= 0.999 ? 0 : (top / (1 - fh)) * 100;
 
   return {
-    aspectRatio: maskWidth / maskHeight,
+    aspectRatio,
     backgroundSize: `${100 / fw}% ${100 / fh}%`,
     backgroundPosition: `${posX}% ${posY}%`,
   };
+}
+
+/**
+ * Task 87: the same fit for an UNCROPPED garment, using the part of its picture
+ * that is actually visible (see hooks/useVisibleBounds). A picture with wide
+ * transparent margins, a tightly trimmed one and a full-bleed photo then all
+ * end up filling their card the same way - instead of `cover` zooming and
+ * clipping some while others float small. `pictureWidth/Height` are the
+ * picture's pixel size (the region's own aspect ratio depends on them).
+ */
+export function getVisibleDisplay(
+  region: PictureRegion,
+  pictureWidth: number,
+  pictureHeight: number
+): CropDisplay | null {
+  if (pictureWidth <= 0 || pictureHeight <= 0 || region.width <= 0 || region.height <= 0) return null;
+  const aspectRatio = (region.width * pictureWidth) / (region.height * pictureHeight);
+  return displayForRegion(region, aspectRatio);
 }

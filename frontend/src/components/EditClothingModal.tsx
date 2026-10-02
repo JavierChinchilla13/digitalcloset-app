@@ -20,7 +20,12 @@ import type { ClothingItem } from '../types';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
 import FittingEditor from './FittingTool/FittingEditor';
+import GarmentCleanup, { type CleanupResult } from './FittingTool/GarmentCleanup';
+import { retargetForTrim } from '../utils/alphaBounds';
+import JacketFittingEditor from './FittingTool/JacketFittingEditor';
+import { segmentationService } from '../utils/segmentationService';
 import { parseWarpData } from '../utils/warpData';
+import { cloudinaryService } from '../api/cloudinaryService';
 
 interface EditClothingModalProps {
   item: ClothingItem | null;
@@ -57,8 +62,20 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
   const [errorMessage, setErrorMessage] = useState('');
   const { showToast } = useToast();
 
-  // View State
-  const [isStudioOpen, setIsStudioOpen] = useState(false);
+  // View State. Task 83: "Open Studio" goes to the Cleanup Studio first (erase
+  // leftovers from the cutout), and only its "Finalize & Next" opens the
+  // studio - the same order as adding a garment. Jackets then get split into
+  // torso / sleeves and open the Modular Jacket Studio ('jacket') instead of
+  // Fabric Studio ('studio'); shoes skip cleanup entirely.
+  const [view, setView] = useState<'form' | 'cleanup' | 'studio' | 'jacket'>('form');
+  // Set once a cleaned image has been uploaded; from then on it replaces the
+  // item's image (in Fabric Studio and on save).
+  const [cleanedImageUrl, setCleanedImageUrl] = useState<string | null>(null);
+  // Jacket sections (torso, sleeves, ...) as uploaded image URLs.
+  const [jacketSegments, setJacketSegments] = useState<Record<string, string>>({});
+  // What the cleanup screen's busy indicator says; null when idle.
+  const [cleanupBusy, setCleanupBusy] = useState<string | null>(null);
+  const [cleanupError, setCleanupError] = useState('');
 
   // Form State
   const [name, setName] = useState('');
@@ -75,9 +92,97 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       setCategory(item.category);
       setTransform(item.transform);
       setStatus('idle');
-      setIsStudioOpen(false);
+      setView('form');
+      setCleanedImageUrl(null);
+      setJacketSegments({});
+      setCleanupBusy(null);
+      setCleanupError('');
     }
   }, [item, isOpen]);
+
+  // "Open Studio": cleanup first - except shoes, which have nothing to clean
+  // up (they are edited as they are).
+  const handleOpenStudio = () => {
+    setCleanupError('');
+    setView(category === ClothingCategory.SHOES ? 'studio' : 'cleanup');
+  };
+
+  // Splits a jacket image into its sections (the same in-browser segmentation
+  // the add-garment flow uses), uploads each and opens the Modular Jacket
+  // Studio. Returns false when the model found nothing to split.
+  const splitJacket = async (blob: Blob): Promise<boolean> => {
+    setCleanupBusy('Splitting the jacket into sections...');
+    const parts = await segmentationService.segmentJacket(new File([blob], 'jacket.png', { type: 'image/png' }));
+    if (parts.size === 0) return false;
+    const urls: Record<string, string> = {};
+    for (const [partName, partBlob] of parts.entries()) {
+      urls[partName] = await cloudinaryService.uploadImage(partBlob);
+    }
+    setJacketSegments(urls);
+    setView('jacket');
+    return true;
+  };
+
+  // Cleanup's "Finalize & Next" (dataUrl = the picture as exported). The
+  // export is also how a loose picture gets cropped to the garment, so the
+  // studio's selection box and warp points sit on the garment instead of far
+  // out on a wide margin; since the saved fit describes the whole picture, a
+  // crop retargets it so the garment looks exactly as before. Nothing to
+  // upload when nothing was erased and nothing was cropped. Jackets are split
+  // into sections; anything else uploads the picture and opens Fabric Studio on
+  // it - uploaded now (not on save) because a warp made in the studio records
+  // this image's URL as its "original", which must be a real URL.
+  const handleCleanupDone = async (dataUrl: string, result?: CleanupResult) => {
+    setCleanupError('');
+    try {
+      const changed = result ? result.edited || !!result.trim : true;
+      if (category === ClothingCategory.JACKET) {
+        setCleanupBusy('Preparing the jacket...');
+        const source = changed ? dataUrl : cleanedImageUrl ?? item?.imageUrl ?? '';
+        const blob = await (await fetch(source)).blob();
+        if (await splitJacket(blob)) return;
+        // Nothing to split: carry on with a single image below.
+      }
+      if (changed) {
+        setCleanupBusy('Saving image...');
+        const blob = await (await fetch(dataUrl)).blob();
+        setCleanedImageUrl(await cloudinaryService.uploadImage(blob));
+        if (result?.trim && transform) setTransform(retargetForTrim(transform, result.trim));
+      }
+      setView('studio');
+    } catch (err: any) {
+      setCleanupError(err.message || 'Failed to process the image.');
+    } finally {
+      setCleanupBusy(null);
+    }
+  };
+
+  // Modular Jacket Studio's save: the sections and their fit go in
+  // modularData. The item's own image (the closet thumbnail) stays as it is.
+  const handleJacketSave = async (data: { name: string; description: string; modularData: string }) => {
+    if (!item) return;
+    setStatus('updating');
+    try {
+      await updateItem(item.itemId, {
+        name: data.name,
+        description: data.description,
+        category,
+        isModular: true,
+        modularData: data.modularData,
+        transform: transform ?? item.transform,
+        personaStatus: promoteToFittedOnSave ? PersonaStatus.FITTED : undefined
+      });
+      setStatus('success');
+      showToast(`${data.name} updated successfully`, 'success');
+      setTimeout(() => {
+        onClose();
+      }, 1500);
+    } catch (err: any) {
+      setStatus('error');
+      setErrorMessage(err.message || 'Failed to update garment.');
+      showToast('Failed to update garment', 'error');
+    }
+  };
 
   const handleUpdate = async (overrides?: {
     name: string;
@@ -101,9 +206,16 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
         name: finalName,
         description: finalDescription,
         category,
-        imageUrl: overrides?.imageUrl ?? item.imageUrl,
+        imageUrl: overrides?.imageUrl ?? cleanedImageUrl ?? item.imageUrl,
         // Only sent when the mesh warp changed this session ('' clears it).
-        ...(overrides?.modularData !== undefined && { modularData: overrides.modularData }),
+        // A cleaned image with no new warp also clears it: the item's old
+        // warp record points at the pre-cleanup image, so keeping it would
+        // let "Restore Original" bring the erased leftovers back.
+        ...(overrides?.modularData !== undefined
+          ? { modularData: overrides.modularData }
+          : cleanedImageUrl && item.modularData && !item.isModular
+            ? { modularData: '' }
+            : {}),
         transform: finalTransform,
         personaStatus: promoteToFittedOnSave ? PersonaStatus.FITTED : undefined
       });
@@ -137,11 +249,11 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             className={`relative bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ${
-              isStudioOpen ? 'w-full max-w-6xl h-[90vh]' : 'w-full max-w-2xl'
+              view !== 'form' ? 'w-full max-w-7xl h-[90vh]' : 'w-full max-w-2xl'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            {!isStudioOpen ? (
+            {view === 'form' ? (
               <>
                 {/* Header */}
                 <div className="flex justify-between items-center p-8 border-b border-ink/5">
@@ -166,11 +278,11 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       </div>
                       <div>
                         <h4 className="text-[10px] font-medium uppercase tracking-widest text-text-primary">Fabric Studio</h4>
-                        <p className="text-[10px] text-text-secondary uppercase tracking-widest opacity-60">Resize and reposition garment</p>
+                        <p className="text-[10px] text-text-secondary uppercase tracking-widest opacity-60">Clean up, resize and reposition garment</p>
                       </div>
                     </div>
                     <button 
-                      onClick={() => setIsStudioOpen(true)}
+                      onClick={handleOpenStudio}
                       className="px-6 py-3 bg-accent hover:bg-accent-hover text-on-accent text-[10px] font-medium uppercase tracking-widest rounded-xl transition-all shadow-lg"
                     >
                       Open Studio
@@ -287,18 +399,53 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   </div>
                 </div>
               </>
+            ) : view === 'cleanup' ? (
+              <div className="p-4 md:p-8 h-full relative">
+                <GarmentCleanup
+                  imageUrl={cleanedImageUrl ?? item?.imageUrl ?? ''}
+                  exportMode="image-bounds"
+                  onComplete={handleCleanupDone}
+                  onBack={() => setView('form')}
+                />
+                {(cleanupBusy || cleanupError) && (
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 px-5 py-3 rounded-2xl bg-background-secondary border border-ink/10 shadow-lg flex items-center gap-3 text-[10px] font-medium uppercase tracking-widest">
+                    {cleanupBusy ? (
+                      <>
+                        <Loader2 size={14} className="animate-spin text-accent" />
+                        <span className="text-text-primary">{cleanupBusy}</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle size={14} className="text-rose-400" />
+                        <span className="text-rose-400">{cleanupError}</span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : view === 'jacket' ? (
+              <div className="p-4 md:p-8 h-full">
+                <JacketFittingEditor
+                  segments={jacketSegments}
+                  personaType={item?.personaType || PersonaType.MALE}
+                  initialName={name}
+                  initialDescription={description}
+                  onSave={handleJacketSave}
+                  onBack={() => setView('form')}
+                />
+              </div>
             ) : (
-              <div className="p-8 h-full">
-                <FittingEditor 
-                  imageUrl={item?.imageUrl || ''}
+              <div className="p-4 md:p-8 h-full">
+                <FittingEditor
+                  imageUrl={cleanedImageUrl ?? item?.imageUrl ?? ''}
                   category={category}
                   personaType={item?.personaType || PersonaType.MALE}
                   initialName={name}
                   initialDescription={description}
                   initialTransform={transform}
                   allowWarp={category === ClothingCategory.TOP && !item?.isModular}
-                  initialWarp={parseWarpData(item?.modularData, item?.isModular)}
-                  onBack={() => setIsStudioOpen(false)}
+                  initialWarp={cleanedImageUrl ? null : parseWarpData(item?.modularData, item?.isModular)}
+                  onBack={() => setView('form')}
                   onSave={handleUpdate}
                 />
               </div>

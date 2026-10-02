@@ -113,9 +113,11 @@ const ClosetSection = () => {
               <div className="flex items-center gap-4 mb-6">
                 <span className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">{category}</span>
                 <div className="h-[1px] flex-grow bg-ink/5" />
-                <button className="text-[8px] font-bold text-text-secondary hover:text-text-primary transition-colors uppercase tracking-widest">
+                {/* Was a <button> with no handler (Task 22: dead button) - it's
+                    just a count, so it's plain text now. */}
+                <span className="text-[8px] font-bold text-text-secondary uppercase tracking-widest">
                   {categoryItems.length} ITEMS
-                </button>
+                </span>
               </div>
 
               <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">

@@ -3,6 +3,7 @@ import type { ClothingItem, Outfit, OutfitItem, PersonaState, PersonaType } from
 import { equippedFromOutfitItems } from '../store/useOutfitStore';
 import type { EquippedItemIds } from '../store/useOutfitStore';
 import { outfitItemsFromDraft } from '../store/useOutfitDraftStore';
+import { layerOrderFromOutfitItems } from './layerOrder';
 
 // Persona-eligibility filtering (Task 38, extracted into a shared utility
 // by Task 61 so FlatOutfitBuilderPage and OutfitCard can use the same
@@ -37,7 +38,7 @@ export interface PersonaEligibility {
 
 // An item with no personaStatus at all predates Task 29's column and is
 // treated as FITTED - same backfill the V2 migration applied server-side.
-const isFittedStatus = (item: ClothingItem): boolean =>
+export const isFittedStatus = (item: ClothingItem): boolean =>
   item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED;
 
 // Task 66 (Phase 9.6): a shoe with no recorded `side` (older items, or any
@@ -80,7 +81,10 @@ export function applyLegacyShoeFallback(
 export function computePersonaEligibility(
   selectedItems: ClothingItem[],
   allItems: ClothingItem[],
-  targetPersonaType: PersonaType
+  targetPersonaType: PersonaType,
+  // Task 86: the custom stacking order (item ids, bottom first), if any. Only
+  // the pieces that can be shown are kept.
+  layerOrder?: number[] | null
 ): PersonaEligibility {
   const ineligibleItems = selectedItems.filter(
     (item) => item.personaStatus != null && item.personaStatus !== PersonaStatus.FITTED
@@ -109,6 +113,7 @@ export function computePersonaEligibility(
   const previewPersona: PersonaState = {
     type: targetPersonaType,
     ...applyLegacyShoeFallback(equippedFromOutfitItems(eligibleOutfitItems), eligibleItems),
+    ...(layerOrder && { layerOrder: layerOrder.filter((id) => eligibleIds.includes(id)) }),
   };
 
   return { previewPersona, eligibleItems, ineligibleItems, notFittedItems, noCutoutItems, wrongPersonaItems };
@@ -133,6 +138,7 @@ export function buildOutfitPersona(outfit: Outfit, allItems: ClothingItem[]): Pe
 
   const eligibility = computePersonaEligibility(outfitClothing, allItems, outfit.avatarType);
   const eligibleIds = new Set(eligibility.eligibleItems.map((item) => item.itemId));
+  const layerOrder = layerOrderFromOutfitItems(outfit.items)?.filter((id) => eligibleIds.has(id));
 
   return {
     type: outfit.avatarType,
@@ -140,5 +146,6 @@ export function buildOutfitPersona(outfit: Outfit, allItems: ClothingItem[]): Pe
       equippedFromOutfitItems(outfit.items.filter((oi) => eligibleIds.has(oi.itemId))),
       eligibility.eligibleItems
     ),
+    ...(layerOrder && layerOrder.length > 0 && { layerOrder }),
   };
 }

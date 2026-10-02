@@ -39,32 +39,33 @@ export const usePersonaStore = create<PersonaStore>()(
         const { category, itemId, side } = item;
         const currentPersona = state.persona;
 
-        // 1. Specialized Shoe Logic
+        // 1. Specialized Shoe Logic - one shoe per foot (Task 86). A shoe with
+        // a side takes that foot (swapping what was there); one without a side
+        // is a single picture of the pair and takes both feet.
+        const { leftShoeId, rightShoeId } = currentPersona;
         if (category === ClothingCategory.SHOES) {
-           // A. If it has a specific side, toggle that specific slot
-           if (side === 'left') {
-              return { persona: { ...currentPersona, leftShoeId: currentPersona.leftShoeId === itemId ? null : itemId } };
-           }
-           if (side === 'right') {
-              return { persona: { ...currentPersona, rightShoeId: currentPersona.rightShoeId === itemId ? null : itemId } };
-           }
-           
-           // B. Legacy Shoe Handling (No side metadata)
-           // If already equipped on either foot, remove from both
-           if (currentPersona.leftShoeId === itemId || currentPersona.rightShoeId === itemId) {
-              return { persona: { ...currentPersona, leftShoeId: null, rightShoeId: null } };
-           }
-           
-           // If not equipped, try to find an empty slot
-           if (!currentPersona.leftShoeId) {
-              return { persona: { ...currentPersona, leftShoeId: itemId } };
-           }
-           if (!currentPersona.rightShoeId) {
-              return { persona: { ...currentPersona, rightShoeId: itemId } };
-           }
-           
-           // If both slots are full with OTHER shoes, replace the left one (default)
-           return { persona: { ...currentPersona, leftShoeId: itemId } };
+          if (side === 'left' || side === 'right') {
+            const own = side === 'left' ? leftShoeId : rightShoeId;
+            const other = side === 'left' ? rightShoeId : leftShoeId;
+            // Taking a foot from a pair leaves the pair's other foot empty (it
+            // was the same picture, now gone), not stuck on the old pair.
+            const otherFoot = other != null && other === own ? null : other;
+            const next = own === itemId ? null : itemId;
+            return {
+              persona: {
+                ...currentPersona,
+                leftShoeId: side === 'left' ? next : otherFoot,
+                rightShoeId: side === 'right' ? next : otherFoot,
+              },
+            };
+          }
+
+          // No side: toggles the pair off if it is already on either foot,
+          // otherwise replaces whatever is on both feet.
+          if (leftShoeId === itemId || rightShoeId === itemId) {
+            return { persona: { ...currentPersona, leftShoeId: null, rightShoeId: null } };
+          }
+          return { persona: { ...currentPersona, leftShoeId: itemId, rightShoeId: itemId } };
         }
 
         // 2. Multiple Items for other categories
@@ -113,6 +114,7 @@ export const usePersonaStore = create<PersonaStore>()(
           accessoryIds: [],
           jacketIds: [],
           dressIds: [],
+          layerOrder: undefined,
         }
       })),
     }),
