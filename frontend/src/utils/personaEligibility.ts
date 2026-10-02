@@ -38,7 +38,7 @@ export interface PersonaEligibility {
 
 // An item with no personaStatus at all predates Task 29's column and is
 // treated as FITTED - same backfill the V2 migration applied server-side.
-const isFittedStatus = (item: ClothingItem): boolean =>
+export const isFittedStatus = (item: ClothingItem): boolean =>
   item.personaStatus == null || item.personaStatus === PersonaStatus.FITTED;
 
 // Task 66 (Phase 9.6): a shoe with no recorded `side` (older items, or any

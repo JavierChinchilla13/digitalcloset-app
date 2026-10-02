@@ -183,7 +183,7 @@ const DemoPage = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => toggleItem(item.itemId)}
                             className={`
-                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer border transition-all duration-300 group
+                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300 group
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                             `}
                           >

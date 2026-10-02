@@ -349,14 +349,10 @@ const ShowcaseSlot = ({
   onSelect,
 }: ShowcaseSlotProps) => {
   const isActive = role === "active";
+  // The active slot stays mounted while you move between outfits, so this
+  // choice carries over: once "View on Persona" is on, every outfit you switch
+  // to is shown on the persona until you press "Show Pieces".
   const [showPersona, setShowPersona] = useState(false);
-
-  // Default view resets to the flat rows whenever a different outfit
-  // becomes active, rather than remembering "was showing persona" across
-  // outfits - each outfit starts on the same footing.
-  useEffect(() => {
-    setShowPersona(false);
-  }, [outfit.outfitId]);
 
   const outfitItems = useMemo(() => {
     const byId = new Map(items.map((item) => [item.itemId, item]));

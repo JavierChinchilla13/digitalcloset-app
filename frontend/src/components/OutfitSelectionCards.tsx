@@ -20,7 +20,7 @@ export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardP
   <motion.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
-    className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden border border-accent/30 group"
+    className="relative w-32 sm:w-36 shrink-0 aspect-[3/4] rounded-xl overflow-hidden bg-ink/5 border border-accent/30 group"
   >
     <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
     {showPersonaBadge && <PersonaBadge item={item} compact />}

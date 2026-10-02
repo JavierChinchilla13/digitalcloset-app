@@ -119,7 +119,7 @@ const CategoryDetailPage = () => {
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
                   {collection.items.map((item) => (
                     <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
-                      <img src={item.imageUrl} alt={item.itemName} className="w-full h-full object-cover" />
+                      <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5" />
                       <ItemPersonaBadge itemId={item.itemId} compact />
                       <button
                         onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
@@ -230,7 +230,7 @@ const OutfitPreviewThumb = ({ outfit }: { outfit: Outfit }) => {
           key={item.outfitItemId}
           className={`relative overflow-hidden bg-ink/5 ${previewItems.length === 1 ? 'col-span-2 row-span-2' : ''}`}
         >
-          {item.imageUrl && <img src={item.imageUrl} alt={item.itemName ?? ''} className="w-full h-full object-cover" />}
+          {item.imageUrl && <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName ?? ''} className="w-full h-full" />}
           {idx === 3 && outfit.items.length > 4 && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <span className="text-white text-[10px] font-medium">+{outfit.items.length - 3}</span>
@@ -462,7 +462,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                       <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {collection.items.map((item) => (
                           <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
-                            <img src={item.imageUrl} alt={item.itemName} className="w-full h-full object-cover opacity-70" />
+                            <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5 opacity-70" />
                             <ItemPersonaBadge itemId={item.itemId} compact />
                             <button
                               onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
