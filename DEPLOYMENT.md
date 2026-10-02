@@ -26,8 +26,11 @@ set `VITE_BG_REMOVER_MODE` / `VITE_BG_REMOVER_API_URL` when building the site.)
 
 ## 2. Where to host
 
-There is no free *managed* hosting that suits this stack well, but there is one
-genuinely free machine:
+Two free routes: one machine you control (below, then section 3), or Render + Neon
+with no machine at all (section 3b). Free managed hosting has more limits (sleeping,
+small memory), but needs no card.
+
+The free machine:
 
 - **Oracle Cloud "Always Free"** - an ARM virtual machine that stays free (not a
   12-month trial). Reported limits as of mid-2026: about 2 OCPU / 12 GB RAM -
@@ -89,6 +92,89 @@ once in the database:
 docker compose exec db psql -U postgres closet_db \
   -c "UPDATE users SET role='ROLE_ADMIN' WHERE email='you@example.com';"
 ```
+
+## 3b. Free hosting with Render + Neon (no server of your own)
+
+Instead of one machine, split the app across free services. Everything below is
+free and needs no credit card, with the trade-offs listed at the end.
+
+```
+ visitor ──▶ Render Static Site (the React website)
+                │  calls  https://<api>.onrender.com/api
+                ▼
+        Render Web Service (the Spring Boot API, from backend/Dockerfile)
+                │  JDBC over SSL
+                ▼
+        Neon (PostgreSQL)                     images ──▶ Cloudinary
+```
+
+**Where does the database live?** At Neon, a separate company. The API connects to
+it with the three values `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`. The first time the
+API starts, Flyway creates every table in that empty database; from then on the data
+lives at Neon and survives any API restart or redeploy. (Don't use Render's own free
+Postgres: it is deleted 30 days after creation. A Render web service's disk is wiped
+on each restart, so it can't hold a database either.)
+
+### Step 1 - the database (Neon)
+
+1. Sign up at neon.com (free plan), create a project (any region near your Render region).
+2. On the project's dashboard open **Connect**. Turn **"Connection pooling" OFF** (or
+   copy the host that does *not* contain `-pooler`): Flyway needs a direct connection.
+3. From the connection string
+   `postgresql://USER:PASSWORD@ep-xxxx.REGION.aws.neon.tech/neondb?sslmode=require`
+   build the three values:
+   - `DB_URL` = `jdbc:postgresql://ep-xxxx.REGION.aws.neon.tech/neondb?sslmode=require`
+   - `DB_USERNAME` = `USER`
+   - `DB_PASSWORD` = `PASSWORD`
+
+### Step 2 - the API and the website (Render)
+
+1. Push this repo to GitHub (it is already there). In Render: **New + -> Blueprint**,
+   pick the repo. Render reads `render.yaml` and proposes two services,
+   `vysvi-api` and `vysvi-web`, both on the **Free** plan.
+2. Render asks for the values marked `sync: false`. Fill the API's now; the two
+   address values need the website's URL, which you don't have yet, so put a
+   placeholder (`https://placeholder.invalid`) and fix them in step 3:
+
+   | Service | Variable | Value |
+   |---|---|---|
+   | vysvi-api | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | from Neon (above) |
+   | vysvi-api | `JWT_SECRET` | `openssl rand -base64 64` |
+   | vysvi-api | `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` | your Gmail / its App password |
+   | vysvi-api | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website's URL (step 3) |
+   | vysvi-web | `VITE_API_URL` | the API's URL + `/api` (step 3) |
+   | vysvi-web | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | from Cloudinary |
+
+3. After the first deploy each service has an address like
+   `https://vysvi-api.onrender.com` and `https://vysvi-web.onrender.com` (the name is
+   adjusted if it was taken). Now set, on the **API**: `CORS_ALLOWED_ORIGINS` and
+   `FRONTEND_URL` = the website's address (no trailing `/`); on the **website**:
+   `VITE_API_URL` = `<api address>/api`. Save; the API restarts, and the website
+   needs a **Manual Deploy -> Clear build cache & deploy** (the value is baked in at
+   build time).
+4. Check `https://<api address>/actuator/health` shows `{"status":"UP",...}` (the
+   first request after a sleep takes up to a minute), then open the website,
+   register, and make the first admin as in section 3 - with Neon, run that SQL in
+   Neon's **SQL Editor**.
+
+### What to expect on the free plans
+
+- **The API sleeps after 15 minutes without traffic**; the next visit waits roughly
+  30-60 s while Spring Boot starts. A free uptime pinger (UptimeRobot, every 5 min on
+  `/actuator/health`) keeps it awake; Render gives 750 free instance hours a month,
+  which covers one service running around the clock (744 h).
+- **Memory is small.** `render.yaml` caps the JVM (`-Xmx320m`). If the API dies with
+  "out of memory", lower it further (`-Xmx256m`) or move to a paid instance.
+- **Neon pauses when idle** (the first query after a pause takes about a second
+  longer) and has **no backup you control** on the free plan: run `pg_dump` against
+  the direct connection now and then (`pg_dump "postgresql://USER:PASSWORD@HOST/neondb?sslmode=require" | gzip > backup.sql.gz`).
+  Free storage is 0.5 GB.
+- Emails go through Gmail's SMTP; Render may block outbound SMTP on some plans. If
+  the "forgot password" email never arrives and the API log shows a connection
+  timeout, use a provider with an HTTPS API or port 465/2525 (e.g. Resend/Brevo SMTP).
+- Different addresses for site and API means the browser makes cross-origin
+  requests: that is what the CORS setting is for, and why a wrong
+  `CORS_ALLOWED_ORIGINS` shows up as "Network error" in the browser console.
 
 ## 4. Updating
 

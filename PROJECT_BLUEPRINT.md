@@ -6583,3 +6583,22 @@ monitoring; JWT in the browser with no refresh/revocation; `closet-browsing-demo
 the one genuinely free machine (card required, capacity/reclaim caveats - check
 Oracle's page), Neon for a free managed Postgres; Render free sleeps and expires
 its DB; Fly.io has no free tier for new accounts.
+
+**Task 24 follow-up - Render + Neon (free, no machine).** The user asked where the
+database lives on Render: a Render web service's disk is ephemeral and Render's free
+Postgres expires 30 days after creation (1 GB, no backups), so the database goes to
+Neon (free, 0.5 GB, no expiry, scales to zero) and the API reaches it with
+`DB_URL`/`DB_USERNAME`/`DB_PASSWORD` (Flyway creates the tables on first start).
+- `render.yaml` Blueprint: `vysvi-api` (Docker web service from `backend/Dockerfile`,
+  health check `/actuator/health`, JVM capped `-Xmx320m`) + `vysvi-web` (static site,
+  SPA rewrite, `VITE_API_URL`); secrets are `sync: false` (asked in the dashboard).
+- `server.port=${PORT:8080}` (Render supplies PORT); prod Hikari pool 5 connections,
+  `max-lifetime` 5 min (Neon drops idle connections). `ProductionProfileTest` pins it.
+- `DEPLOYMENT.md` section 3b: Neon setup (use the DIRECT, non-pooler host - Flyway),
+  the Render steps, the two-step URL fill-in, and the free-plan trade-offs (API sleeps
+  after 15 min - 30-60 s cold start; UptimeRobot ping fits the 750 h/month; small
+  memory; no Neon backups; Render may restrict outbound SMTP - alternative given).
+- **CI result:** the first run of the `docker-stack` job passed (images build, 8
+  migrations on PostgreSQL 17, backend healthy, Caddy serves the site and proxies
+  /api, `/actuator` hidden, register 200, broken JSON 400, anonymous 403), so the
+  Docker route is proven; the Render route (render.yaml, Neon) has not been run.
