@@ -8,9 +8,8 @@ import FeatureCard from '../components/FeatureCard';
 // footage or mockups. See PROJECT_BLUEPRINT.md for how these were recorded.
 const OUTFIT_BUILDER_GIF = '/marketing/outfit-builder-demo.gif';
 const CLOSET_BROWSING_GIF = '/marketing/closet-browsing-demo.gif';
-const THEME_TOGGLE_GIF = '/marketing/theme-toggle-demo.gif';
-// Not recorded yet - the feature cards skip the preview until these exist.
 const PERSONA_GIF = '/marketing/persona-demo.gif';
+// Not recorded yet - the feature card skips the preview until this exists.
 const MAIN_OUTFIT_GIF = '/marketing/main-outfit-demo.gif';
 
 const LandingPage = () => {
@@ -153,7 +152,7 @@ const LandingPage = () => {
               Designed for the modern fashion enthusiast. Our interface bridges the gap between your physical wardrobe and the digital world.
             </p>
             <div className="space-y-6">
-              {['DARK MODE ARCHITECTURE', 'MINIMALIST DESIGN LANGUAGE', 'FLUID MOTION SYSTEMS'].map((item) => (
+              {['DRESS YOUR DIGITAL PERSONA', 'LAYER PIECES IN ANY ORDER', 'FLUID MOTION SYSTEMS'].map((item) => (
                 <div key={item} className="flex items-center gap-4">
                   <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                   <span className="text-xs font-medium tracking-widest uppercase">{item}</span>
@@ -161,11 +160,11 @@ const LandingPage = () => {
               ))}
             </div>
           </div>
-          <div className="lg:w-1/2 w-full aspect-square glass-panel rounded-2xl relative overflow-hidden group">
+          <div className="lg:w-1/2 w-full aspect-video glass-panel rounded-2xl relative overflow-hidden group">
              <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none z-10" />
              <img
-               src={THEME_TOGGLE_GIF}
-               alt="Switching VYSVI between light and dark theme"
+               src={PERSONA_GIF}
+               alt="Garments being put on the VYSVI persona one by one"
                className="w-full h-full object-cover"
              />
           </div>

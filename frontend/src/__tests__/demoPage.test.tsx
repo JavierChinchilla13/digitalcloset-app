@@ -52,7 +52,7 @@ describe('DemoPage', () => {
     expect(useClothingStore.getState().fetchItems).not.toHaveBeenCalled();
   });
 
-  it('has no persona anywhere: no preview toggle, no switcher, no badges', async () => {
+  it('has no live persona: no preview toggle, no switcher, no badges', async () => {
     const user = userEvent.setup();
     renderDemo();
     await user.click(cardFor('Black Tee'));
@@ -60,6 +60,37 @@ describe('DemoPage', () => {
     expect(screen.queryByRole('button', { name: /preview on persona/i })).not.toBeInTheDocument();
     expect(screen.queryByAltText('Mannequin')).not.toBeInTheDocument();
     expect(screen.queryByText(/m persona/i)).not.toBeInTheDocument();
+  });
+
+  it('View on Persona is off until something is selected, then shows the persona clip with a sign-up button', async () => {
+    const user = userEvent.setup();
+    renderDemo();
+
+    const button = screen.getByRole('button', { name: /view on persona/i });
+    expect(button).toBeDisabled();
+
+    await user.click(cardFor('Black Tee'));
+    expect(button).toBeEnabled();
+    await user.click(button);
+
+    expect(await screen.findByText(/create a free account to see your outfit on your own persona/i)).toBeInTheDocument();
+    expect(screen.getByAltText(/put on the vysvi persona/i)).toHaveAttribute('src', '/marketing/persona-demo.gif');
+    expect(screen.getByRole('link', { name: /create free account/i })).toHaveAttribute('href', '/signup');
+    // A recorded clip, not the real thing: no mannequin, no API calls.
+    expect(screen.queryByAltText('Mannequin')).not.toBeInTheDocument();
+    expect(clothingService.getClothingItems).not.toHaveBeenCalled();
+  });
+
+  it('the other gates keep the outfit-builder clip', async () => {
+    const user = userEvent.setup();
+    renderDemo();
+
+    await user.click(screen.getByRole('button', { name: /save outfit/i }));
+
+    expect(await screen.findByAltText(/previewing it on a digital persona/i)).toHaveAttribute(
+      'src',
+      '/marketing/outfit-builder-demo.gif'
+    );
   });
 
   it('a shoe is one selectable item', async () => {

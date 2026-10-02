@@ -9,6 +9,10 @@ interface DemoSignupModalProps {
   // e.g. "to save this outfit", "to add your own clothes" - so the same
   // modal explains itself differently depending on what triggered it.
   reason: string;
+  // The clip shown at the top. Defaults to the outfit-builder tour; the
+  // "View on Persona" button passes the persona-dressing clip instead.
+  mediaSrc?: string;
+  mediaAlt?: string;
 }
 
 // Task 81: the demo's account-required gate. One shared modal (not a
@@ -17,7 +21,13 @@ interface DemoSignupModalProps {
 // actually do (save an outfit, add/edit/delete a garment). Shows the same
 // real, in-app footage as the landing page (Task 80) rather than describing
 // the app in words, so a visitor sees exactly what signing up gets them.
-const DemoSignupModal = ({ isOpen, onClose, reason }: DemoSignupModalProps) => {
+const DemoSignupModal = ({
+  isOpen,
+  onClose,
+  reason,
+  mediaSrc = '/marketing/outfit-builder-demo.gif',
+  mediaAlt = 'Building an outfit in VYSVI and previewing it on a digital persona',
+}: DemoSignupModalProps) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -39,8 +49,8 @@ const DemoSignupModal = ({ isOpen, onClose, reason }: DemoSignupModalProps) => {
           >
             <div className="aspect-video w-full bg-background-main">
               <img
-                src="/marketing/outfit-builder-demo.gif"
-                alt="Building an outfit in VYSVI and previewing it on a digital persona"
+                src={mediaSrc}
+                alt={mediaAlt}
                 className="w-full h-full object-cover"
               />
             </div>
