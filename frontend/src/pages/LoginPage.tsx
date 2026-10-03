@@ -6,7 +6,7 @@ import { authService } from '../api/authService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 
-// Sign-in form. On success the user lands on / (the outfit builder); a failure shows the server's message.
+// Sign-in form. On success the user lands on /showcase (their outfits); a failure shows the server's message.
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,7 +17,7 @@ const LoginPage = () => {
   const setToken = useAuthStore(state => state.setToken);
   const navigate = useNavigate();
 
-  // Logs in, fetches the user profile (for role and name), stores both, and navigates home.
+  // Logs in, fetches the user profile (for role and name), stores both, and lands on the Showcase.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -32,7 +32,7 @@ const LoginPage = () => {
       const user = await authService.getCurrentUser();
       
       loginStore(response.token, user);
-      navigate('/');
+      navigate('/showcase');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
       console.error('Login error:', err);

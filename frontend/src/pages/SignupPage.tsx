@@ -19,7 +19,7 @@ const SignupPage = () => {
   const setToken = useAuthStore(state => state.setToken);
   const navigate = useNavigate();
 
-  // Registers, fetches the full profile, stores the session and navigates home.
+  // Registers, fetches the full profile, stores the session and lands on the Showcase.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -35,7 +35,7 @@ const SignupPage = () => {
       const user = await authService.getCurrentUser();
       
       loginStore(response.token, user);
-      navigate('/');
+      navigate('/showcase');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error creating account. Email might already be in use.');
       console.error('Signup error:', err);

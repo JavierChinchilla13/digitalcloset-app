@@ -6711,3 +6711,23 @@ tests (and `tsc --noUnusedLocals --noUnusedParameters`, clean) found:
 - **For the user:** revoke `VITE_REMOVE_BG_API_KEY` (it was a `VITE_` variable, so it was
   baked into earlier bundles) and delete it from `frontend/.env`; reset the Neon password.
 - **Verified:** `tsc -b --force`, 273 frontend + 100 backend tests, `vite build`.
+
+### Task 90 - Land on /showcase after login + installable app (2026-10-02, branch `phase-12-showcase-pwa`)
+
+Second checkpoint of the cleanup / phone work.
+- **Landing:** `LoginPage` and `SignupPage` navigate to `/showcase` (the user's outfits,
+  opening on the main outfit); `/` stays the Attire builder and the signed-in logo already
+  went to `/showcase`. `NotFoundPage` "Back to home" and `MainLayout`'s error "Go home" go to
+  `/showcase` when signed in, `/` for a visitor. Tests (`postLoginLanding.test.tsx`, 5):
+  login, failed login, signup, and the 404 link for visitor / signed-in user. Checked live on
+  a throwaway backend (8081, scratch database `closet_mobile`) + Vite 5199 at 375x812: the
+  real login form lands on `/showcase`.
+- **Installable ("Add to Home Screen"):** `public/manifest.webmanifest` (name, standalone,
+  `start_url: /showcase`, dark theme/background colour), opaque dark icons generated from
+  `favicon.png` (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png` with the mark inside the
+  maskable safe zone, `apple-touch-icon.png`), and in `index.html` the manifest + apple tags,
+  `theme-color` for light/dark and `viewport-fit=cover`. No service worker (no offline mode).
+  Verified: files served with the right types, manifest parses, `vite build` copies them. The
+  actual install prompt can only be tried on a phone after deploy. Render's static-site rewrite
+  does not shadow these files.
+- 278 frontend tests, `tsc -b --force`, `vite build`.

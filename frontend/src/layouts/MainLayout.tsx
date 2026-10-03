@@ -2,11 +2,13 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ErrorState from '../components/ErrorState';
+import { useAuthStore } from '../store/useAuthStore';
 
 // The frame of every page: navbar on top, the routed page in the middle, footer below.
 const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
     <div className="min-h-screen bg-background-main flex flex-col">
@@ -24,7 +26,7 @@ const MainLayout = () => {
               message="Something went wrong while showing this page. You can try again, or head back home."
               onRetry={reset}
               secondaryLabel="Go home"
-              onSecondary={() => navigate('/')}
+              onSecondary={() => navigate(isAuthenticated ? '/showcase' : '/')}
             />
           )}
         >
