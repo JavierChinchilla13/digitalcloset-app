@@ -36,7 +36,7 @@ const SavedOutfitsPage = () => {
   }, [loadOutfits]);
 
   return (
-    <div className="relative min-h-screen pb-20">
+    <div className="relative min-h-dvh pb-20">
       <SectionWrapper className="pt-12">
         {/* Header Section - Always render to avoid complete "blank" screen */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
@@ -45,7 +45,7 @@ const SavedOutfitsPage = () => {
               <Sparkles size={16} className="text-accent" />
               <span className="text-[10px] font-medium tracking-[0.4em] text-accent uppercase">Style Collection</span>
             </div>
-            <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
               SAVED <br /> <span className="text-accent">OUTFITS</span>
             </h1>
             <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
@@ -109,7 +109,7 @@ const SavedOutfitsPage = () => {
               key="grid"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-10"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-10"
             >
               {/* Inline Add Card */}
               <motion.button

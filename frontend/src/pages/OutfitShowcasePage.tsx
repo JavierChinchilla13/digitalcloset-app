@@ -15,6 +15,7 @@ import { useOutfitStore } from "../store/useOutfitStore";
 import { useClothingStore } from "../store/useClothingStore";
 import { usePersonaStore } from "../store/usePersonaStore";
 import { buildOutfitPersona } from "../utils/personaEligibility";
+import { swipeDirection } from "../utils/swipe";
 import { buildShowcaseRows } from "../utils/selectionDisplay";
 import PersonaRenderer from "../components/PersonaRenderer";
 import CroppedThumbnail from "../components/CroppedThumbnail";
@@ -386,7 +387,7 @@ const ShowcaseSlot = ({
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
       onClick={!isActive ? onSelect : undefined}
-      className={`shrink-0 ${isActive ? "w-[340px] sm:w-[460px]" : "w-[150px] sm:w-[180px] cursor-pointer"}`}
+      className={`shrink-0 ${isActive ? "w-full max-w-[340px] sm:max-w-none sm:w-[460px]" : "w-[150px] sm:w-[180px] cursor-pointer"}`}
       whileHover={!isActive ? { scale: 1.03 } : undefined}
     >
       {isActive ? (
@@ -623,7 +624,7 @@ const OutfitShowcasePage = () => {
 
   if (!ready || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />
       </div>
     );
@@ -631,7 +632,7 @@ const OutfitShowcasePage = () => {
 
   if (loadFailed) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="min-h-dvh flex items-center justify-center px-6">
         <ErrorState
           title="We couldn't load your outfits"
           message="Check your connection and try again."
@@ -646,7 +647,7 @@ const OutfitShowcasePage = () => {
   // accent button, hover:scale-105) rather than a new visual style.
   if (n === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
+      <div className="min-h-dvh flex flex-col items-center justify-center text-center px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -683,7 +684,7 @@ const OutfitShowcasePage = () => {
     // SavedOutfitsPage's own top-padding-free wrapper); a redundant py-24
     // here was doubling that gap and pushing the outfit below the fold on
     // top of the rows themselves being tall.
-    <div className="min-h-screen flex flex-col items-center px-6 pb-16">
+    <div className="min-h-dvh flex flex-col items-center px-6 pb-16">
       <div className="text-center mb-8">
         <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-4 bg-accent/5 uppercase">
           Your Showcase
@@ -742,7 +743,7 @@ const OutfitShowcasePage = () => {
         <button
           onClick={goToPrev}
           disabled={n < 2}
-          className="shrink-0 p-3 rounded-full border border-ink/10 text-text-secondary hover:text-text-primary hover:border-ink/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
+          className="hidden sm:block shrink-0 p-3 rounded-full border border-ink/10 text-text-secondary hover:text-text-primary hover:border-ink/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
           title="Previous outfit"
         >
           <ChevronLeft size={20} />
@@ -757,7 +758,7 @@ const OutfitShowcasePage = () => {
               fixed-width slot for each side regardless of whether it holds
               an outfit keeps the group's width symmetric, so the active
               slot's own center always lands on the page's center. */}
-          <div className="w-[150px] sm:w-[180px] shrink-0 flex justify-end">
+          <div className="hidden sm:flex w-[150px] sm:w-[180px] shrink-0 justify-end">
             {leftOutfit && leftPersona && (
               <ShowcaseSlot
                 key={leftOutfit.outfitId}
@@ -795,6 +796,19 @@ const OutfitShowcasePage = () => {
             <motion.div
               animate={{ opacity: isFading ? 0 : 1 }}
               transition={{ duration: FADE_DURATION_MS / 1000 }}
+              // Task 92: swipe to move between outfits (phones have no arrows beside
+              // the card). Horizontal drags only - vertical scrolling stays with the
+              // page (touch-action: pan-y) - and the card springs back to its place.
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.25}
+              style={{ touchAction: "pan-y" }}
+              onDragEnd={(_, info) => {
+                const direction = swipeDirection(info.offset.x, info.velocity.x);
+                if (direction === "next") goToNext();
+                else if (direction === "prev") goToPrev();
+              }}
+              className="w-full max-w-[340px] sm:max-w-none sm:w-auto"
             >
               <ShowcaseSlot
                 key="active-slot"
@@ -806,7 +820,7 @@ const OutfitShowcasePage = () => {
             </motion.div>
           )}
 
-          <div className="w-[150px] sm:w-[180px] shrink-0 flex justify-start">
+          <div className="hidden sm:flex w-[150px] sm:w-[180px] shrink-0 justify-start">
             {rightOutfit && rightPersona && (
               <ShowcaseSlot
                 key={rightOutfit.outfitId}
@@ -823,7 +837,7 @@ const OutfitShowcasePage = () => {
         <button
           onClick={goToNext}
           disabled={n < 2}
-          className="shrink-0 p-3 rounded-full border border-ink/10 text-text-secondary hover:text-text-primary hover:border-ink/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
+          className="hidden sm:block shrink-0 p-3 rounded-full border border-ink/10 text-text-secondary hover:text-text-primary hover:border-ink/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
           title="Next outfit"
         >
           <ChevronRight size={20} />
@@ -831,19 +845,39 @@ const OutfitShowcasePage = () => {
       </div>
 
       {n > 1 && (
-        <div className="flex items-center gap-2 mt-12">
+        <div className="flex items-center gap-1 mt-6 sm:mt-12">
+          {/* Phones: arrows live down here (swiping the outfit works too). */}
+          <button
+            onClick={goToPrev}
+            className="sm:hidden w-11 h-11 mr-2 flex items-center justify-center rounded-full border border-ink/10 text-text-secondary active:text-text-primary"
+            aria-label="Previous outfit"
+          >
+            <ChevronLeft size={20} />
+          </button>
           {outfits.map((o, i) => (
             <button
               key={o.outfitId}
               onClick={() => setActiveIndex(i)}
-              className={`h-1.5 rounded-full transition-all ${
-                i === safeIndex
-                  ? "w-6 bg-accent"
-                  : "w-1.5 bg-ink/15 hover:bg-ink/30"
-              }`}
+              className="p-2 group/dot"
               title={o.name}
-            />
+              aria-label={`Show ${o.name}`}
+            >
+              <span
+                className={`block h-1.5 rounded-full transition-all ${
+                  i === safeIndex
+                    ? "w-6 bg-accent"
+                    : "w-1.5 bg-ink/15 group-hover/dot:bg-ink/30"
+                }`}
+              />
+            </button>
           ))}
+          <button
+            onClick={goToNext}
+            className="sm:hidden w-11 h-11 ml-2 flex items-center justify-center rounded-full border border-ink/10 text-text-secondary active:text-text-primary"
+            aria-label="Next outfit"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       )}
     </div>

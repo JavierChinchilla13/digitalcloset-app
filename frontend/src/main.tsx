@@ -21,7 +21,7 @@ createRoot(document.getElementById('root')!).render(
         page - just a way to reload. */}
     <ErrorBoundary
       fallback={() => (
-        <div className="min-h-screen bg-background-main flex items-center justify-center">
+        <div className="min-h-dvh bg-background-main flex items-center justify-center">
           <ErrorState
             title="Something went wrong"
             message="VYSVI hit an unexpected problem. Reloading usually fixes it."

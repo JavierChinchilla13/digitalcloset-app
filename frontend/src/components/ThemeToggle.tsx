@@ -14,7 +14,7 @@ const ThemeToggle = () => {
     <button
       type="button"
       onClick={togglePreference}
-      className="p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
+      className="p-2.5 sm:p-2 rounded-full hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
       title={`Theme: ${label} (click to change)`}
       aria-label={`Theme: ${label}. Click to change.`}
     >

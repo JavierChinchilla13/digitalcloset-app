@@ -6687,3 +6687,148 @@ non-obvious functions in them (what it does and why, not a restatement of the co
 - Not touched: files that already had a real header (the large editors, `UploadFlow`,
   `PersonaRenderer`, `OutfitShowcasePage`, ...) - a function-by-function pass over
   those is the remaining nice-to-have if ever wanted.
+
+### Task 89 - Code cleanup (2026-10-02, branch `phase-12-cleanup`)
+
+First of five checkpoints (cleanup, land on /showcase + installable app, phone
+foundation, phone pages, phone studios). An import-graph audit from `main.tsx` plus
+tests (and `tsc --noUnusedLocals --noUnusedParameters`, clean) found:
+- **Removed (1,298 lines):** the legacy cluster - `DashboardPage`, `sections/*`,
+  `PersonaSpotlight`, the persona-first `OutfitBuilderPage` - plus `PersonaSelector`,
+  `useLocalOutfitStore`, `src/assets/*`, `public/favicon.svg` / `icons.svg`; unused
+  API/store members (`getClothingItem`, `getOutfit`, `clearMainOutfit`, persona-name
+  `reset` / `resetDisplayName`, draft-store `addItem`, `ShoePair`, the float animation and
+  `--color-line` CSS) and `ClothingRepository.findByOwner` / `findByOwnerAndCategory`;
+  `fetchItems` / `getClothingItems` no longer take the `category` the backend ignored; the
+  Vite-template README, `FRONTEND_CHANGES.md`, `HELP.md`, `IMPLEMENTATION_SUMMARY.md`
+  (references fixed in `README.md`, `backend/.dockerignore`, `PROJECT_STRUCTURE.md`); two
+  git-ignored leftovers (repo-root `node_modules`, `frontend/src/node_modules`).
+- **Old bookmarks:** `/dashboard` -> `/showcase`, `/outfits/new` -> `/outfits/flat/new`
+  (`/outfits/edit/:id` now 404s).
+- **Kept on purpose:** `usePersonaStore` + helpers (live Closet / Outfits / builder),
+  `canvas` (Fabric/jsdom in tests) and the exact `onnxruntime-web` pin, the five unused
+  `OutfitItem` DB columns (removing them needs a Flyway V9), test-only helpers.
+- **For the user:** revoke `VITE_REMOVE_BG_API_KEY` (it was a `VITE_` variable, so it was
+  baked into earlier bundles) and delete it from `frontend/.env`; reset the Neon password.
+- **Verified:** `tsc -b --force`, 273 frontend + 100 backend tests, `vite build`.
+
+### Task 90 - Land on /showcase after login + installable app (2026-10-02, branch `phase-12-showcase-pwa`)
+
+Second checkpoint of the cleanup / phone work.
+- **Landing:** `LoginPage` and `SignupPage` navigate to `/showcase` (the user's outfits,
+  opening on the main outfit); `/` stays the Attire builder and the signed-in logo already
+  went to `/showcase`. `NotFoundPage` "Back to home" and `MainLayout`'s error "Go home" go to
+  `/showcase` when signed in, `/` for a visitor. Tests (`postLoginLanding.test.tsx`, 5):
+  login, failed login, signup, and the 404 link for visitor / signed-in user. Checked live on
+  a throwaway backend (8081, scratch database `closet_mobile`) + Vite 5199 at 375x812: the
+  real login form lands on `/showcase`.
+- **Installable ("Add to Home Screen"):** `public/manifest.webmanifest` (name, standalone,
+  `start_url: /showcase`, dark theme/background colour), opaque dark icons generated from
+  `favicon.png` (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png` with the mark inside the
+  maskable safe zone, `apple-touch-icon.png`), and in `index.html` the manifest + apple tags,
+  `theme-color` for light/dark and `viewport-fit=cover`. No service worker (no offline mode).
+  Verified: files served with the right types, manifest parses, `vite build` copies them. The
+  actual install prompt can only be tried on a phone after deploy. Render's static-site rewrite
+  does not shadow these files.
+- 278 frontend tests, `tsc -b --force`, `vite build`.
+
+### Task 91 - Phone foundation (2026-10-02, branch `phase-12-mobile-foundation`)
+
+Third checkpoint. Audit (3 read-only agents + live 375x812 checks): signed-in users had **no
+navigation on a phone** (`hidden md:flex` links, account dropdown without the main pages),
+and Tailwind v4 only applies `hover:` / `group-hover:` where the device can hover, so every
+hover-revealed control is invisible on touch (fixed in the next checkpoint with the new `touch:`
+variant). Done here:
+- **Hamburger menu** (`MobileMenu.tsx`, used by `Navbar.tsx`; links shared with the desktop navbar
+  in `navLinks.ts`): below `md` a signed-in user gets a menu button opening a full-screen sheet:
+  Showcase, Attire, Closet, Outfits, Categories, Persona, Settings, Admin (admins), theme, Log
+  out; 48px rows, closes on route change / Escape / X, body scroll locked while open
+  (`pointer-events-auto` because the host navbar is `pointer-events-none`). Desktop navbar and
+  `UserMenu` unchanged. Signed-out pill tightened (Join `px-4`), navbar honours the notch.
+- **Viewport units:** `min-h-screen` / `min-h-[NNvh]` -> `dvh` on 17 files (the height between the
+  browser's toolbars). The builder/studio `h-screen`/`vh` uses are rebuilt in the next checkpoints.
+- **CSS (`index.css`):** `@custom-variant touch (@media (hover: none))`; unlayered rules: inputs 16px
+  on phones (stops iOS zoom-on-focus), `touch-action: manipulation` (no double-tap delay).
+- **`ModalShell.tsx`:** the shared frame (backdrop + scale-in card) with the card capped to
+  `100dvh - 1.5rem` and scrolling inside; adopted by DeleteConfirmationModal, CreateUserModal,
+  DemoSignupModal, ClothingDetailsModal (image 4:3 on phones), CategoriesPage and
+  CategoryDetailPage modals. `EditClothingModal` / `UploadFlow` are the studios (checkpoint 5).
+- **Type/targets:** `h1` headings `text-4xl sm:text-6xl` (Closet, Outfits, Categories, Admin,
+  Settings, Category detail), landing headings / CTA / section padding phone-sized, theme toggle
+  40px, Toast full-width above the bottom safe area with a 40px dismiss.
+- **Tests (+9, 287 total):** `mobileMenu.test.tsx` (7: no button for visitors, every link, Admin only
+  for admins, navigates + closes, X / Escape + scroll lock, log out), `modalShell.test.tsx` (3).
+  `tsc -b --force`, strict unused check, `vite build`. Live on the throwaway backend (8081, scratch
+  database `closet_mobile`) + Vite 5199: menu lists every page; the demo sign-up modal fits the
+  screen; desktop Showcase/navbar unchanged. Known and next: Closet page is 427px wide on a phone
+  (persona filter row does not wrap) and the builder is unusable (two-panel layout).
+
+### Task 92 - Phone pages (2026-10-02, branch `phase-12-mobile-pages`)
+
+Fourth checkpoint. Reworked on the user's feedback ("you can barely see the clothes", "mini
+display of the outfit in Closet and of the items in Outfit", "drag layers on mobile", "persona
+is on top of the writing in layers").
+- **Builder (Attire) and demo on a phone** (`FlatOutfitBuilderPage`, `DemoPage`): below `lg` two
+  tabs, **Closet | Outfit (n)**. The header is one row (back, name, Save); the secondary actions
+  (random / new outfit / category / clear) move to the top of the Outfit tab; search and the
+  category filter share one row; the pieces are a 3-column grid with compact badges, so about
+  110px more of clothes show. The Closet tab ends in a **dock**: a mini persona wearing the
+  outfit (tap = Outfit tab), the picked pieces as thumbnails, and an "Outfit n" button. The
+  Outfit tab (persona view) shows a **strip of the picked pieces** with an x each. Wide screens
+  are unchanged. `hooks/useMediaQuery.ts` (new) picks which content to render, so no button is
+  duplicated; jsdom reports "not wide", so tests default to the phone and `setViewport(true)`
+  checks the wide layout. `MainLayout` / builder tops no longer double their padding.
+- **Layers on touch** (`LayerPanel`): the grip handle drags with a finger or pen via pointer
+  events (the row follows the finger, the target row is outlined, release moves it; HTML5 drag
+  and drop does not work on touch and stays for mice; `draggable` is off on `(hover: none)`
+  screens). Arrows are side by side and 40px on touch.
+- **Persona vs Layers:** `PersonaRenderer` defaulted to 600px tall inside a ~430px box and spilled
+  over the Layers panel. On a phone it now fits its box (`h-full`, `clamp(13rem, 40dvh, 28rem)`)
+  and is `sticky top-0` so the layers scroll underneath while the outfit stays in view; wide
+  screens keep `md:h-[800px]`.
+- **Touch-visible actions** (new `touch:` variant, checkpoint 3): `ClothingCard` (details / edit /
+  delete row, favourite star), `OutfitCard` (Wear, Main star and a "..." menu), `SelectionCard`
+  remove x, `CategoryDetailPage` removes, `PersonaPage` rename, `FeatureCard` ("Tap to preview",
+  second tap closes), demo tiles.
+- **Showcase:** phones hide the side peeks and the side arrows, the outfit fills the width, arrows
+  and 24px dot targets sit below it, and a **horizontal swipe** moves between outfits
+  (`utils/swipe.ts`: 60px or a quick flick). **Lists:** Closet persona filter wraps (it made the
+  page 427px wide), Saved Outfits 2 columns, category grids 3, Categories create row fits.
+- **Bug fixed on the way:** every outfit card read "Invalid Date" - `OutfitResponse` never carried
+  `createdAt`. The API now returns it (ISO date-time; `OutfitCreatedAtIntegrationTest`) and the card
+  tolerates a missing date.
+- **Verified:** `tsc -b --force`, strict unused check, 307 frontend + 101 backend tests, `vite build`.
+  Live on the throwaway backend (8081, scratch database `closet_mobile`) + Vite 5199: every signed-in
+  page has no horizontal overflow at 360 and 375 (builder also 430 and 360x640); builder end to end
+  on a phone; a touch-type pointer drag reordered a layer; the persona stays pinned while layers
+  scroll; swipe changed Weekend -> Office; real Chrome desktop view of the builder unchanged.
+- **Known:** a phone in landscape (812x375) is too short for the builder; the add / edit garment
+  studios are still not phone-ready (next checkpoint).
+
+
+### Task 93 - Studios and upload on a phone (2026-10-02, branch `phase-12-mobile-studios`)
+
+Fifth and last checkpoint of phase 12 (the add / edit garment flows, which were unusable on a phone).
+- **`EditClothingModal`, `UploadFlow`:** full-screen sheets below `sm` (`h-dvh`, no rounded corners,
+  content scrolls inside, Cancel / Save footer pinned with the safe-area inset), centred cards from
+  `sm` up; `vh` heights replaced by `dvh`. Upload steps: smaller headings, 3-column category grid,
+  phone-sized previews; the close button moves into the corner.
+- **`GarmentCleanup`** (Cleanup Studio): below `lg` the picture comes first, the undo / zoom tools are a
+  row under it, the Erase / Restore / Pan switch is full width, and the brush slider, Finalize and
+  Back buttons stack below (it used to overflow the right edge with no room for the canvas).
+- **`FittingEditor`, `CanvasToolbar`:** one-row header and toolbar on a phone (Capture Preview is
+  icon-only, tools have `aria-label`s), the dev-speak info card is hidden, canvas is `58dvh`.
+- **`ShoeFittingEditor`, `JacketFittingEditor`, `JacketSegmentationTool`, `ShoeSymmetryCheck`,
+  `ShoeCanvas`, `JacketCanvas`:** the three columns stack below `lg` (canvas, calibration, identity)
+  and the body scrolls; the foot switch takes its own row; the jacket part tabs scroll sideways;
+  segment grid 2 columns; canvas `min-h` 18rem on phones.
+- **Touch:** Fabric `touchCornerSize` 36 (drawn handles stay 12px so they still fit `CANVAS_PAD`);
+  range sliders get a taller track on `(hover: none)` screens (`TransformPanel`, brush, opening).
+- **Tests:** `fabricControls.test.ts` (308 frontend tests).
+- **Verified:** `tsc -b --force`, strict unused check, `vite build`; live at 375x812 (throwaway
+  servers): edit modal, Cleanup Studio, Fabric Studio, upload Config / Skip / Shoe pair steps with no
+  horizontal overflow; Shoe and Jacket studios checked in a throwaway harness page (deleted); desktop
+  widths of the edit modal, Cleanup, Jacket and Shoe studios unchanged.
+- **Known / not done:** `CANVAS_PAD` (56px) is unchanged, so the persona is small on a 375px canvas;
+  no two-finger pinch zoom in the Cleanup Studio (zoom buttons + Pan work); no real-device test of a
+  finger drag on a Fabric handle (the browser pane drives mouse input only).

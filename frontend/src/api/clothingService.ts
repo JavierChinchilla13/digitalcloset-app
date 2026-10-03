@@ -1,23 +1,13 @@
 import api from './axios';
-import { ClothingCategory } from '../types';
 import type { ClothingItem } from '../types';
 
 // The garment endpoints (ClothingController, /api/clothing). A thin wrapper: every
 // call returns the response body, and errors propagate to the store that called it.
-// Note: getClothingItem is unused and the backend has no GET /clothing/{id} - the
-// closet is always loaded as a list (useClothingStore.fetchItems).
 export const clothingService = {
-  // All of the user's active garments. `category` is sent as a query parameter, but
-// ClothingController.getAllItems ignores it and returns everything, so filter on the
-// client (the closet pages already do).
-  getClothingItems: async (category?: ClothingCategory): Promise<ClothingItem[]> => {
-    const params = category ? { category } : {};
-    const response = await api.get<ClothingItem[]>('/clothing', { params });
-    return response.data;
-  },
-
-  getClothingItem: async (itemId: number): Promise<ClothingItem> => {
-    const response = await api.get<ClothingItem>(`/clothing/${itemId}`);
+  // All of the user's active garments. The closet is always loaded as one list and
+  // filtered on the client (the closet pages do), so there is no category parameter.
+  getClothingItems: async (): Promise<ClothingItem[]> => {
+    const response = await api.get<ClothingItem[]>('/clothing');
     return response.data;
   },
 

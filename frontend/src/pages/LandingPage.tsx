@@ -16,7 +16,7 @@ const LandingPage = () => {
   return (
     <div className="overflow-hidden">
       {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center pt-20">
+      <section className="relative min-h-dvh flex flex-col items-center justify-center pt-20">
         
         <SectionWrapper className="text-center">
           <motion.div
@@ -77,7 +77,7 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <SectionWrapper className="py-40">
+      <SectionWrapper className="py-20 sm:py-40">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Hover/tap a card to see that feature in action. The persona and
               main-outfit clips don't exist yet - drop files with these names
@@ -98,7 +98,7 @@ const LandingPage = () => {
         <div className="flex flex-col lg:flex-row items-center gap-20">
           <div className="lg:w-1/2">
             <span className="text-accent text-[10px] font-medium tracking-[0.4em] mb-6 block uppercase">Step One</span>
-            <h2 className="text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
               YOUR DIGITAL <br />
               <span className="italic text-accent">CLOSET</span>
             </h2>
@@ -121,7 +121,7 @@ const LandingPage = () => {
         <div className="flex flex-col lg:flex-row-reverse items-center gap-20">
           <div className="lg:w-1/2">
             <span className="text-accent text-[10px] font-medium tracking-[0.4em] mb-6 block uppercase">Step Two</span>
-            <h2 className="text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
               BUILD & <br />
               <span className="italic text-accent">PREVIEW</span>
             </h2>
@@ -140,11 +140,11 @@ const LandingPage = () => {
       </SectionWrapper>
 
       {/* Experience Section */}
-      <SectionWrapper className="bg-background-secondary/30 border-y border-ink/5 py-40">
+      <SectionWrapper className="bg-background-secondary/30 border-y border-ink/5 py-20 sm:py-40">
         <div className="flex flex-col lg:flex-row items-center gap-20">
           <div className="lg:w-1/2">
             <span className="text-accent text-[10px] font-medium tracking-[0.4em] mb-6 block uppercase">Seamless Integration</span>
-            <h2 className="text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
+            <h2 className="text-4xl sm:text-5xl md:text-6xl font-light tracking-tighter mb-8 leading-tight">
               A FASHION TECH <br />
               <span className="italic text-accent">EXPERIENCE</span>
             </h2>
@@ -172,11 +172,11 @@ const LandingPage = () => {
       </SectionWrapper>
 
       {/* CTA Section */}
-      <SectionWrapper className="text-center py-60">
-        <h2 className="text-6xl md:text-8xl font-light tracking-tighter mb-12">READY TO <span className="italic text-accent">UPGRADE?</span></h2>
+      <SectionWrapper className="text-center py-32 sm:py-60">
+        <h2 className="text-4xl sm:text-6xl md:text-8xl font-light tracking-tighter mb-8 sm:mb-12">READY TO <span className="italic text-accent">UPGRADE?</span></h2>
         <Link 
           to="/signup" 
-          className="inline-block px-16 py-8 bg-accent text-on-accent font-medium text-xl rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg"
+          className="inline-block px-8 sm:px-16 py-5 sm:py-8 bg-accent text-on-accent font-medium text-base sm:text-xl rounded-full transition-all hover:scale-105 active:scale-95 shadow-lg"
         >
           CREATE YOUR CLOSET
         </Link>

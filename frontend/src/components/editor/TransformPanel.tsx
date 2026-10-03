@@ -62,7 +62,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
+        className="w-full h-1 touch:h-2 touch:my-2 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
       />
     </div>
   );

@@ -51,11 +51,10 @@ Digital-Closet/
 └── README.md            Short intro
 ```
 
-Older notes that may be out of date (kept for history, not maintained):
-`frontend/README.md`, `frontend/FRONTEND_CHANGES.md`, `backend/HELP.md`,
-`backend/IMPLEMENTATION_SUMMARY.md`. The root `README.md`'s feature list predates
-several features (it still mentions local-only outfit storage; outfits now live in
-the database).
+The root `README.md`'s feature list predates several features (it still mentions
+local-only outfit storage; outfits now live in the database). The old per-folder notes
+(`frontend/README.md`, `FRONTEND_CHANGES.md`, `backend/HELP.md`,
+`IMPLEMENTATION_SUMMARY.md`) were removed; `PROJECT_BLUEPRINT.md` has the history.
 
 ## 3. Frontend (`frontend/`)
 
@@ -96,7 +95,7 @@ the database).
 | `/settings` | `SettingsPage` - name, email, password, account status | signed in |
 | `/persona` | `PersonaPage` - rename the personas | signed in |
 | `/admin` | `AdminUsersPage` | admin only (`ProtectedRoute requireAdmin`) |
-| `/outfits/new`, `/outfits/edit/:id`, `/dashboard` | older pages (see 3.10) | signed in |
+| `/dashboard`, `/outfits/new` | redirect to `/showcase` and `/outfits/flat/new` (old bookmarks; those pages were removed) | signed in |
 | `*` | `NotFoundPage` | everyone |
 
 `ProtectedRoute` (in `App.tsx`) sends signed-out visitors to `/login` and non-admins
@@ -139,7 +138,6 @@ away from `/admin`; the backend enforces the same rules independently.
 | `PersonaRenderer` | Draws the mannequin and the garments stacked on it (z-order by layer slot, click to pick a layer). |
 | `PersonaLayer` | One garment layer (a modular jacket is several pictures in one group); applies the clipping masks. |
 | `LayerPanel` | The "Layers" list: reorder pieces by drag and drop or arrows. |
-| `PersonaSelector`, `PersonaSpotlight` | Older persona widgets; `PersonaSelector` is no longer used anywhere (see 3.10). |
 
 **Upload and editing** (`FittingTool/`, `editor/`)
 
@@ -172,7 +170,6 @@ away from `/admin`; the backend enforces the same rules independently.
 | `usePersonaSettingsStore` | Persona display names (synced with the backend) | no |
 | `useThemeStore` | `light` / `dark` | `vysvi-theme` |
 | `useDemoStore` | The demo's sample closet - in memory only, never sent anywhere | no |
-| `useLocalOutfitStore` | Legacy browser-only outfit store, **unused** | `saved-outfits-storage` |
 
 ### 3.7 API layer (`src/api/`)
 
@@ -216,16 +213,15 @@ a toast if it fails).
 `PersonaStatus`, ...), mirroring the backend's DTOs. `types/fabric.d.ts` patches
 Fabric's typings. Styling is Tailwind plus the theme tokens in `index.css`.
 
-### 3.10 Tests and legacy code
+### 3.10 Tests and removed code
 
 - `src/__tests__/` - Vitest + Testing Library suites (about 30 files, 270+ tests):
   stores, pure utils, and whole pages with the API modules mocked.
   `src/test/setup.ts` and `fixtures.ts` are the shared setup and `makeItem()` builder.
-- **Legacy / orphaned (still in the repo, not part of the main flow):** `DashboardPage`
-  and `sections/*` (an old dashboard no menu links to), `OutfitBuilderPage` (the old
-  persona-first builder, still routable at `/outfits/new`), `PersonaSelector`,
-  `useLocalOutfitStore`. Safe to delete after a check; they were kept to avoid
-  unrelated changes.
+- **Legacy code was removed** (the old dashboard and its `sections/`, the persona-first
+  `OutfitBuilderPage`, `PersonaSelector`, `PersonaSpotlight`, `useLocalOutfitStore`).
+  What still looks "old" but is live: `usePersonaStore` (the active persona type and
+  the equip lists `ClothingCard`/`OutfitCard` use) and the `equipped*` helpers.
 
 ## 4. Backend (`backend/`)
 
@@ -351,7 +347,7 @@ use single-use, expiring tokens/codes whose **hashes** are stored.
 - **Comments.** Files and functions carry a short comment saying *why* (the
   reason, the trade-off, the task that introduced it). "Task NN" refers to
   `PROJECT_BLUEPRINT.md`.
-  Every source file has a purpose comment; legacy modules say so (LEGACY / UNUSED).
+  Every source file has a purpose comment.
 - **Don't duplicate; reuse.** Look for an existing component/util first (the
   persona rendering, thumbnails, eligibility and layer rules each have one home).
 - **Small tested changes.** Every change is checked with `npx tsc -b --force`,

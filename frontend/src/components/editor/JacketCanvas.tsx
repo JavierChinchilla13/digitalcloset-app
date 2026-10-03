@@ -428,7 +428,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   }, [activePart, isGroupMode, onSelectPart]);
 
   return (
-    <div className="relative w-full h-full min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner" style={{ padding: CANVAS_PAD }}>
+    <div className="relative w-full h-full min-h-[18rem] md:min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner" style={{ padding: CANVAS_PAD }}>
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`, backgroundSize: '30px 30px' }} />
       {/* The stage is sized from this inner box; the outer box's padding is
           the handle margin (see CANVAS_PAD in ClothingCanvas's notes). */}

@@ -105,7 +105,7 @@ const ClosetPage = () => {
   const personaFilters = ["ALL", ...Object.values(PersonaType)];
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         {/* Header & Main Actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
@@ -121,7 +121,7 @@ const ClosetPage = () => {
                 page's own title (the nav link is just "Closet"). Renamed
                 to match "Complete Wardrobe Management" right below it,
                 rather than repeating the new VYSVI brand name here too. */}
-            <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
               MY <br /> <span className="text-accent">WARDROBE</span>
             </h1>
             <div className="flex items-center gap-4 pt-2">
@@ -216,8 +216,8 @@ const ClosetPage = () => {
           </div>
 
           {/* Persona Filtering Row */}
-          <div className="flex items-center gap-4 bg-ink/[0.02] border border-ink/5 p-2 rounded-xl self-center">
-            <div className="px-6 flex items-center gap-2 text-text-secondary border-r border-ink/10 mr-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-4 bg-ink/[0.02] border border-ink/5 p-2 rounded-xl self-stretch sm:self-center">
+            <div className="px-3 sm:px-6 w-full sm:w-auto justify-center flex items-center gap-2 text-text-secondary sm:border-r border-ink/10 sm:mr-2">
               <Users size={14} className="text-accent" />
               <span className="text-[10px] font-medium uppercase tracking-widest">
                 Persona Filter
@@ -229,7 +229,7 @@ const ClosetPage = () => {
                   key={p}
                   onClick={() => setActivePersonaFilter(p)}
                   className={`
-                    px-8 py-3 rounded-full text-[10px] font-medium uppercase tracking-[0.2em] transition-all
+                    px-5 sm:px-8 py-3 rounded-full text-[10px] font-medium uppercase tracking-[0.2em] transition-all
                     ${
                       activePersonaFilter === p
                         ? "bg-ink text-background-main shadow-md"
