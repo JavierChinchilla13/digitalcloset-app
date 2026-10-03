@@ -26,8 +26,9 @@ export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardP
     {showPersonaBadge && <PersonaBadge item={item} compact />}
     <button
       onClick={() => onRemove(item.itemId)}
-      className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+      className="absolute top-1.5 right-1.5 p-1 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
       title="Remove from outfit"
+      aria-label={`Remove ${item.name} from outfit`}
     >
       <X size={10} />
     </button>

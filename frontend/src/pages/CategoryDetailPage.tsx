@@ -116,14 +116,14 @@ const CategoryDetailPage = () => {
                   <Shirt size={14} />
                   <span className="text-[10px] font-medium uppercase tracking-widest">Items</span>
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                   {collection.items.map((item) => (
                     <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
                       <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5" />
                       <ItemPersonaBadge itemId={item.itemId} compact />
                       <button
                         onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
-                        className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-1.5 right-1.5 p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
                         title="Remove from category"
                       >
                         <X size={12} />
@@ -407,7 +407,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {availableItems.map((item) => {
                           const isAdding = addingItemId === item.itemId;
                           return (
@@ -443,14 +443,14 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                       <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
                         Already in this category ({collection.items.length})
                       </p>
-                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {collection.items.map((item) => (
                           <div key={item.collectionItemId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
                             <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5 opacity-70" />
                             <ItemPersonaBadge itemId={item.itemId} compact />
                             <button
                               onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
-                              className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute top-1.5 right-1.5 p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
                               title="Remove from category"
                             >
                               <X size={12} />
@@ -479,7 +479,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {availableOutfits.map((outfit: Outfit) => {
                           const isAdding = addingOutfitId === outfit.outfitId;
                           return (
@@ -514,7 +514,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                       <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
                         Already in this category ({collection.outfits.length})
                       </p>
-                      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
+                      <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {collection.outfits.map((collectionOutfit) => {
                           // CollectionOutfit is a minimal DTO (id/name only) -
                           // the full Outfit (with items[].imageUrl for the
@@ -527,7 +527,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                               {fullOutfit ? <OutfitPreviewThumb outfit={fullOutfit} /> : <div className="w-full h-full bg-ink/5" />}
                               <button
                                 onClick={() => runSafely(() => removeOutfit(collection.collectionId, collectionOutfit.outfitId), "Couldn't remove this outfit")}
-                                className="absolute top-1.5 right-1.5 p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1.5 right-1.5 p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
                                 title="Remove from category"
                               >
                                 <X size={12} />

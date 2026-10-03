@@ -29,14 +29,15 @@ const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardP
       transition={{ delay }}
       onMouseEnter={() => setIsActive(true)}
       onMouseLeave={() => setIsActive(false)}
-      // A tap fires mouseenter first, then click - so click only ever opens
-      // (a toggle would immediately close what the hover just opened).
-      onClick={() => setIsActive(true)}
+      // With a mouse, hover already opened it and a click only ever opens (a toggle
+      // would close what the hover just opened). On a touch screen there is no
+      // hover, so a second tap closes the preview again.
+      onClick={() => setIsActive((open) => (window.matchMedia?.('(hover: none)').matches ? !open : true))}
       onFocus={() => setIsActive(true)}
       onBlur={() => setIsActive(false)}
       tabIndex={hasPreview ? 0 : undefined}
       data-testid="feature-card"
-      className={`premium-card relative overflow-hidden p-10 group hover:border-accent/30 min-h-[20rem] ${hasPreview ? 'cursor-pointer' : ''}`}
+      className={`premium-card relative overflow-hidden p-6 sm:p-10 group hover:border-accent/30 min-h-[20rem] ${hasPreview ? 'cursor-pointer' : ''}`}
     >
       <div className="w-14 h-14 rounded-2xl bg-ink/5 flex items-center justify-center mb-8 group-hover:bg-accent group-hover:text-on-accent transition-all">
         <Icon size={28} />
@@ -44,8 +45,9 @@ const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardP
       <h3 className="text-lg font-bold tracking-widest mb-4 uppercase">{title}</h3>
       <p className="text-text-secondary text-sm leading-relaxed">{desc}</p>
       {hasPreview && (
-        <p className="absolute bottom-5 left-10 text-[9px] font-medium tracking-[0.3em] uppercase text-accent/70">
-          Hover to preview
+        <p className="absolute bottom-5 left-6 sm:left-10 text-[9px] font-medium tracking-[0.3em] uppercase text-accent/70">
+          <span className="touch:hidden">Hover to preview</span>
+          <span className="hidden touch:inline">Tap to preview</span>
         </p>
       )}
 

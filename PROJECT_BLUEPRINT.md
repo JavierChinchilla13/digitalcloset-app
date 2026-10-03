@@ -6762,3 +6762,45 @@ variant). Done here:
   database `closet_mobile`) + Vite 5199: menu lists every page; the demo sign-up modal fits the
   screen; desktop Showcase/navbar unchanged. Known and next: Closet page is 427px wide on a phone
   (persona filter row does not wrap) and the builder is unusable (two-panel layout).
+
+### Task 92 - Phone pages (2026-10-02, branch `phase-12-mobile-pages`)
+
+Fourth checkpoint. Reworked on the user's feedback ("you can barely see the clothes", "mini
+display of the outfit in Closet and of the items in Outfit", "drag layers on mobile", "persona
+is on top of the writing in layers").
+- **Builder (Attire) and demo on a phone** (`FlatOutfitBuilderPage`, `DemoPage`): below `lg` two
+  tabs, **Closet | Outfit (n)**. The header is one row (back, name, Save); the secondary actions
+  (random / new outfit / category / clear) move to the top of the Outfit tab; search and the
+  category filter share one row; the pieces are a 3-column grid with compact badges, so about
+  110px more of clothes show. The Closet tab ends in a **dock**: a mini persona wearing the
+  outfit (tap = Outfit tab), the picked pieces as thumbnails, and an "Outfit n" button. The
+  Outfit tab (persona view) shows a **strip of the picked pieces** with an x each. Wide screens
+  are unchanged. `hooks/useMediaQuery.ts` (new) picks which content to render, so no button is
+  duplicated; jsdom reports "not wide", so tests default to the phone and `setViewport(true)`
+  checks the wide layout. `MainLayout` / builder tops no longer double their padding.
+- **Layers on touch** (`LayerPanel`): the grip handle drags with a finger or pen via pointer
+  events (the row follows the finger, the target row is outlined, release moves it; HTML5 drag
+  and drop does not work on touch and stays for mice; `draggable` is off on `(hover: none)`
+  screens). Arrows are side by side and 40px on touch.
+- **Persona vs Layers:** `PersonaRenderer` defaulted to 600px tall inside a ~430px box and spilled
+  over the Layers panel. On a phone it now fits its box (`h-full`, `clamp(13rem, 40dvh, 28rem)`)
+  and is `sticky top-0` so the layers scroll underneath while the outfit stays in view; wide
+  screens keep `md:h-[800px]`.
+- **Touch-visible actions** (new `touch:` variant, checkpoint 3): `ClothingCard` (details / edit /
+  delete row, favourite star), `OutfitCard` (Wear, Main star and a "..." menu), `SelectionCard`
+  remove x, `CategoryDetailPage` removes, `PersonaPage` rename, `FeatureCard` ("Tap to preview",
+  second tap closes), demo tiles.
+- **Showcase:** phones hide the side peeks and the side arrows, the outfit fills the width, arrows
+  and 24px dot targets sit below it, and a **horizontal swipe** moves between outfits
+  (`utils/swipe.ts`: 60px or a quick flick). **Lists:** Closet persona filter wraps (it made the
+  page 427px wide), Saved Outfits 2 columns, category grids 3, Categories create row fits.
+- **Bug fixed on the way:** every outfit card read "Invalid Date" - `OutfitResponse` never carried
+  `createdAt`. The API now returns it (ISO date-time; `OutfitCreatedAtIntegrationTest`) and the card
+  tolerates a missing date.
+- **Verified:** `tsc -b --force`, strict unused check, 307 frontend + 101 backend tests, `vite build`.
+  Live on the throwaway backend (8081, scratch database `closet_mobile`) + Vite 5199: every signed-in
+  page has no horizontal overflow at 360 and 375 (builder also 430 and 360x640); builder end to end
+  on a phone; a touch-type pointer drag reordered a layer; the persona stays pinned while layers
+  scroll; swipe changed Weekend -> Office; real Chrome desktop view of the builder unchanged.
+- **Known:** a phone in landscape (812x375) is too short for the builder; the add / edit garment
+  studios are still not phone-ready (next checkpoint).

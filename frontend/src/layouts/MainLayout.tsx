@@ -13,7 +13,7 @@ const MainLayout = () => {
   return (
     <div className="min-h-dvh bg-background-main flex flex-col">
       <Navbar />
-      <main className="flex-grow pt-24">
+      <main className="flex-grow pt-[calc(5.5rem+env(safe-area-inset-top))] md:pt-24">
         {/* Task 22: a page that crashes while rendering shows a recoverable
             error instead of a blank screen, and the navbar keeps working. It
             resets when the route changes, so leaving a crashed page never
