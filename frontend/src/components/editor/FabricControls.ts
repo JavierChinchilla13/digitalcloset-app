@@ -13,6 +13,10 @@ export const customizeFabricControls = () => {
     cornerColor: '#FFFFFF',
     cornerStrokeColor: getStageAccentHex(),
     cornerSize: 12,
+    // Task 93: a fingertip can't hit a 12px handle. touchCornerSize only widens the
+    // area that grabs a handle for touch / pen input (a mouse keeps the 12px one), so
+    // the drawn handles - and the CANVAS_PAD margin they must fit in - don't change.
+    touchCornerSize: 36,
     transparentCorners: false,
     cornerStyle: 'circle' as const,
     borderDashArray: [3, 3],

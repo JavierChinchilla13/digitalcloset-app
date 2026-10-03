@@ -15,13 +15,13 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="space-y-12 py-10"
+      className="space-y-8 sm:space-y-12 py-4 sm:py-10"
     >
       <div className="text-center space-y-4">
         <div className="inline-flex p-4 bg-accent/10 rounded-3xl text-accent mb-4">
           <Footprints size={32} />
         </div>
-        <h2 className="text-4xl font-light tracking-tighter text-text-primary uppercase italic">Pair Configuration</h2>
+        <h2 className="text-3xl sm:text-4xl font-light tracking-tighter text-text-primary uppercase italic">Pair Configuration</h2>
         <p className="text-text-secondary text-xs font-medium uppercase tracking-[0.2em] opacity-40 max-w-md mx-auto">
           Is the other shoe visually different? 
         </p>
@@ -31,7 +31,7 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
         {/* Option 1: Mirrored */}
         <button
           onClick={() => onSelect(false)}
-          className="group relative p-8 bg-ink/[0.02] border border-ink/5 rounded-[2.5rem] hover:bg-ink/[0.05] hover:border-accent/30 transition-all duration-500 text-left overflow-hidden"
+          className="group relative p-6 sm:p-8 bg-ink/[0.02] border border-ink/5 rounded-[2.5rem] hover:bg-ink/[0.05] hover:border-accent/30 transition-all duration-500 text-left overflow-hidden"
         >
           <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-700 pointer-events-none">
             <Copy size={120} />
@@ -61,7 +61,7 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
         {/* Option 2: Different */}
         <button
           onClick={() => onSelect(true)}
-          className="group relative p-8 bg-ink/[0.02] border border-ink/5 rounded-[2.5rem] hover:bg-ink/[0.05] hover:border-emerald-500/30 transition-all duration-500 text-left overflow-hidden"
+          className="group relative p-6 sm:p-8 bg-ink/[0.02] border border-ink/5 rounded-[2.5rem] hover:bg-ink/[0.05] hover:border-emerald-500/30 transition-all duration-500 text-left overflow-hidden"
         >
           <div className="absolute top-0 right-0 p-10 opacity-[0.03] group-hover:opacity-[0.08] group-hover:scale-110 transition-all duration-700 pointer-events-none">
             <Layers size={120} />

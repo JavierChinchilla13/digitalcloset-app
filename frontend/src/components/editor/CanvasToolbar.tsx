@@ -57,6 +57,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
                 }
               `}
               title={tool.label}
+              aria-label={tool.label}
             >
               <Icon size={16} />
               <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
@@ -70,6 +71,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             onClick={onResetCrop}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-text-secondary hover:bg-ink/5 hover:text-text-primary"
             title="Reset Crop"
+            aria-label="Reset Crop"
           >
             <Undo2 size={16} />
             <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
@@ -82,6 +84,7 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
             onClick={onRestoreWarp}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-text-secondary hover:bg-ink/5 hover:text-text-primary"
             title="Restore Original (undo warp)"
+            aria-label="Restore Original (undo warp)"
           >
             <RotateCcw size={16} />
             <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
@@ -91,14 +94,16 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         )}
       </div>
 
-      <div className="flex items-center gap-2 pr-2">
-        <div className="h-6 w-[1px] bg-ink/5 mx-2" />
+      <div className="flex items-center gap-2 sm:pr-2">
+        <div className="h-6 w-[1px] bg-ink/5 mx-1 sm:mx-2" />
         <button 
           onClick={onExport}
+          aria-label="Capture Preview"
+          title="Capture Preview"
           className="flex items-center gap-2 px-4 py-2.5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl transition-all border border-ink/5"
         >
           <Download size={14} className="text-accent" />
-          <span className="text-[9px] font-black uppercase tracking-widest">Capture Preview</span>
+          <span className="hidden sm:inline text-[9px] font-black uppercase tracking-widest">Capture Preview</span>
         </button>
       </div>
     </div>

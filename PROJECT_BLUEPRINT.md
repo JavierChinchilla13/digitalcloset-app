@@ -6804,3 +6804,31 @@ is on top of the writing in layers").
   scroll; swipe changed Weekend -> Office; real Chrome desktop view of the builder unchanged.
 - **Known:** a phone in landscape (812x375) is too short for the builder; the add / edit garment
   studios are still not phone-ready (next checkpoint).
+
+
+### Task 93 - Studios and upload on a phone (2026-10-02, branch `phase-12-mobile-studios`)
+
+Fifth and last checkpoint of phase 12 (the add / edit garment flows, which were unusable on a phone).
+- **`EditClothingModal`, `UploadFlow`:** full-screen sheets below `sm` (`h-dvh`, no rounded corners,
+  content scrolls inside, Cancel / Save footer pinned with the safe-area inset), centred cards from
+  `sm` up; `vh` heights replaced by `dvh`. Upload steps: smaller headings, 3-column category grid,
+  phone-sized previews; the close button moves into the corner.
+- **`GarmentCleanup`** (Cleanup Studio): below `lg` the picture comes first, the undo / zoom tools are a
+  row under it, the Erase / Restore / Pan switch is full width, and the brush slider, Finalize and
+  Back buttons stack below (it used to overflow the right edge with no room for the canvas).
+- **`FittingEditor`, `CanvasToolbar`:** one-row header and toolbar on a phone (Capture Preview is
+  icon-only, tools have `aria-label`s), the dev-speak info card is hidden, canvas is `58dvh`.
+- **`ShoeFittingEditor`, `JacketFittingEditor`, `JacketSegmentationTool`, `ShoeSymmetryCheck`,
+  `ShoeCanvas`, `JacketCanvas`:** the three columns stack below `lg` (canvas, calibration, identity)
+  and the body scrolls; the foot switch takes its own row; the jacket part tabs scroll sideways;
+  segment grid 2 columns; canvas `min-h` 18rem on phones.
+- **Touch:** Fabric `touchCornerSize` 36 (drawn handles stay 12px so they still fit `CANVAS_PAD`);
+  range sliders get a taller track on `(hover: none)` screens (`TransformPanel`, brush, opening).
+- **Tests:** `fabricControls.test.ts` (308 frontend tests).
+- **Verified:** `tsc -b --force`, strict unused check, `vite build`; live at 375x812 (throwaway
+  servers): edit modal, Cleanup Studio, Fabric Studio, upload Config / Skip / Shoe pair steps with no
+  horizontal overflow; Shoe and Jacket studios checked in a throwaway harness page (deleted); desktop
+  widths of the edit modal, Cleanup, Jacket and Shoe studios unchanged.
+- **Known / not done:** `CANVAS_PAD` (56px) is unchanged, so the persona is small on a 375px canvas;
+  no two-finger pinch zoom in the Cleanup Studio (zoom buttons + Pan work); no real-device test of a
+  finger drag on a Fabric handle (the browser pane drives mouse input only).
