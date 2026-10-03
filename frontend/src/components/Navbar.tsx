@@ -1,3 +1,4 @@
+import { useCallback, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
@@ -5,26 +6,21 @@ import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
 import BrandMark from './BrandMark';
 import UserMenu from './UserMenu';
-import { Shirt, LayoutPanelTop, PlayCircle, UserCircle } from 'lucide-react';
+import MobileMenu from './MobileMenu';
+import { NAV_LINKS } from './navLinks';
+import { Menu } from 'lucide-react';
 
 const Navbar = () => {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
 
-  // "Attire" points at / (Task 40, Phase 8 pivot) - the flat outfit builder
-  // (Task 36-39), which already contains the List/Persona preview toggle
-  // (Task 38). /persona (a separate, standalone persona-type picker) stays
-  // reachable by direct URL, just no longer linked from primary nav - same
-  // pattern as the old /dashboard in Task 39 (which has since been removed).
-  const navLinks = [
-    { name: 'Attire', path: '/', icon: UserCircle, protected: true },
-    { name: 'Closet', path: '/closet', icon: Shirt, protected: true },
-    { name: 'Outfits', path: '/outfits', icon: LayoutPanelTop, protected: true },
-    { name: 'Demo', path: '/demo', icon: PlayCircle, protected: false, publicOnly: true },
-  ];
+  // Phone navigation (Task 91): below md the links don't fit in the pill, so a menu
+  // button opens MobileMenu (a full-screen sheet) instead.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center p-6 pointer-events-none">
+    <nav className="fixed top-0 left-0 right-0 z-50 flex justify-center px-3 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:p-6 pointer-events-none">
       <motion.div 
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -41,7 +37,7 @@ const Navbar = () => {
 
         {/* Center Links */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => {
+          {NAV_LINKS.map((link) => {
             const showLink = link.protected
               ? isAuthenticated
               : link.publicOnly
@@ -85,8 +81,23 @@ const Navbar = () => {
             // Task 79: Persona/Categories/Admin/Logout/Theme used to be
             // separate always-visible icons here - "too cluttered." They
             // (plus the new Settings page) now live in one dropdown off the
-            // avatar; see UserMenu.tsx.
-            <UserMenu />
+            // avatar; see UserMenu.tsx. Phones get the menu button instead (the
+            // sheet has everything the dropdown does, plus the main pages).
+            <>
+              <div className="hidden md:block">
+                <UserMenu />
+              </div>
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+                aria-haspopup="dialog"
+                aria-expanded={menuOpen}
+                className="md:hidden w-11 h-11 -my-1 rounded-full flex items-center justify-center text-text-primary hover:bg-ink/5 active:bg-ink/10 transition-colors"
+              >
+                <Menu size={20} />
+              </button>
+            </>
           ) : (
             <>
               {/* Task 67: light / dark toggle - shown logged out;
@@ -100,7 +111,7 @@ const Navbar = () => {
               </Link>
               <Link 
                 to="/signup" 
-                className="bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded-full text-[10px] font-medium uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg"
+                className="bg-accent hover:bg-accent-hover text-on-accent px-4 sm:px-6 py-2.5 rounded-full text-[10px] font-medium uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg"
               >
                 Join
               </Link>
@@ -108,6 +119,7 @@ const Navbar = () => {
           )}
         </div>
       </motion.div>
+      <MobileMenu isOpen={menuOpen} onClose={closeMenu} />
     </nav>
   );
 };

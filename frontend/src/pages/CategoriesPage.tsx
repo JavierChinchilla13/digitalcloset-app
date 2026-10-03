@@ -7,6 +7,7 @@ import {
 import { useCollectionStore } from '../store/useCollectionStore';
 import { useToast } from '../components/Toast';
 import SectionWrapper from '../components/SectionWrapper';
+import ModalShell from '../components/ModalShell';
 import type { Collection } from '../types';
 import ErrorState from '../components/ErrorState';
 
@@ -124,7 +125,7 @@ const CategoriesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-10">
           <div className="space-y-4">
@@ -135,7 +136,7 @@ const CategoriesPage = () => {
               <ChevronLeft size={14} />
               Back to Attire
             </button>
-            <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
               MY <br /> <span className="text-accent">CATEGORIES</span>
             </h1>
             <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
@@ -272,23 +273,7 @@ const CategoriesPage = () => {
         </AnimatePresence>
       </SectionWrapper>
 
-      <AnimatePresence>
-        {pendingDelete != null && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setPendingDelete(null)}
-              className="absolute inset-0 bg-background-main/90 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md bg-background-secondary border border-rose-500/20 rounded-xl shadow-lg overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
+      <ModalShell isOpen={!!(pendingDelete != null)} onClose={() => setPendingDelete(null)} className="max-w-md bg-background-secondary border border-rose-500/20 rounded-xl shadow-lg" backdropClassName="bg-background-main/90 backdrop-blur-sm">
               <div className="p-8 text-center">
                 <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-500">
                   <Trash2 size={40} />
@@ -322,10 +307,7 @@ const CategoriesPage = () => {
               >
                 <X size={20} />
               </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+            </ModalShell>
     </div>
   );
 };

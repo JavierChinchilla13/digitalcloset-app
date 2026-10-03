@@ -47,7 +47,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed bottom-8 right-8 z-[200] flex flex-col gap-3 pointer-events-none">
+      <div className="fixed z-[200] inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] sm:inset-x-auto sm:right-8 sm:bottom-8 flex flex-col gap-3 pointer-events-none">
         <AnimatePresence>
           {toasts.map((toast) => (
             <motion.div
@@ -58,7 +58,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               className="pointer-events-auto"
             >
               <div className={`
-                flex items-center gap-4 px-6 py-4 rounded-2xl border backdrop-blur-xl shadow-lg min-w-[300px]
+                flex items-center gap-4 px-5 sm:px-6 py-4 rounded-2xl border backdrop-blur-xl shadow-lg w-full sm:w-auto sm:min-w-[300px]
                 ${toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : ''}
                 ${toast.type === 'error' ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : ''}
                 ${toast.type === 'info' ? 'bg-accent/10 border-accent/20 text-accent' : ''}
@@ -73,7 +73,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 
                 <button 
                   onClick={() => removeToast(toast.id)}
-                  className="p-1 hover:bg-ink/5 rounded-full transition-colors opacity-50 hover:opacity-100"
+                  className="p-2 -m-1 hover:bg-ink/5 rounded-full transition-colors opacity-50 hover:opacity-100 touch:opacity-100"
                 >
                   <X size={14} />
                 </button>

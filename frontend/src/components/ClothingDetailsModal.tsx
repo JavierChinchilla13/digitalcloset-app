@@ -1,9 +1,9 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, Layers } from 'lucide-react';
 import type { ClothingItem } from '../types';
 import CroppedThumbnail from './CroppedThumbnail';
 import PersonaBadge from './PersonaBadge';
+import ModalShell from './ModalShell';
 
 interface ClothingDetailsModalProps {
   item: ClothingItem | null;
@@ -83,23 +83,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-background-main/80 backdrop-blur-md"
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="relative w-full max-w-2xl bg-background-secondary border border-ink/10 rounded-xl overflow-hidden shadow-lg shadow-black/50"
-          >
+    <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-2xl bg-background-secondary border border-ink/10 rounded-xl shadow-lg shadow-black/50" backdropClassName="bg-background-main/80 backdrop-blur-md">
             <button
               onClick={onClose}
               className="absolute top-6 right-6 z-10 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors backdrop-blur-md"
@@ -109,7 +93,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
 
             <div className="flex flex-col md:flex-row h-full">
               {/* Image Section */}
-              <div className="md:w-1/2 aspect-[3/4] md:aspect-auto relative overflow-hidden bg-ink/5">
+              <div className="md:w-1/2 aspect-[4/3] md:aspect-auto relative overflow-hidden bg-ink/5">
                 <CroppedThumbnail
                   imageUrl={item.imageUrl}
                   transform={item.transform}
@@ -176,10 +160,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                 </div>
               </div>
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </ModalShell>
   );
 };
 

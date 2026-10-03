@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, ShieldCheck, User as UserIcon, X } from 'lucide-react';
 import { adminService } from '../api/adminService';
 import PasswordInput from './PasswordInput';
+import ModalShell from './ModalShell';
 import { Role, type User } from '../types';
 
 interface CreateUserModalProps {
@@ -64,24 +64,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreated }: CreateUserModalProps) =
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleClose}
-            className="absolute inset-0 bg-background-main/90 backdrop-blur-sm"
-          />
-
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <ModalShell isOpen={isOpen} onClose={handleClose} className="max-w-md bg-background-secondary border border-ink/5 rounded-2xl shadow-lg" backdropClassName="bg-background-main/90 backdrop-blur-sm">
             <div className="p-8">
               <h2 className="text-2xl font-light tracking-tight text-text-primary mb-1">Create Account</h2>
               <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase opacity-50 mb-8">
@@ -174,10 +157,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreated }: CreateUserModalProps) =
             >
               <X size={20} />
             </button>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </ModalShell>
   );
 };
 

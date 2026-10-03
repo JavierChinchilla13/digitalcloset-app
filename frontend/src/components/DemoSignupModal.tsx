@@ -1,6 +1,6 @@
-import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, X } from 'lucide-react';
+import ModalShell from './ModalShell';
 
 interface DemoSignupModalProps {
   isOpen: boolean;
@@ -29,24 +29,7 @@ const DemoSignupModal = ({
   mediaAlt = 'Building an outfit in VYSVI and previewing it on a digital persona',
 }: DemoSignupModalProps) => {
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-background-main/90 backdrop-blur-sm"
-          />
-
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-lg bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-lg bg-background-secondary border border-ink/5 rounded-2xl shadow-lg" backdropClassName="bg-background-main/90 backdrop-blur-sm">
             <div className="aspect-video w-full bg-background-main">
               <img
                 src={mediaSrc}
@@ -88,10 +71,7 @@ const DemoSignupModal = ({
             >
               <X size={20} />
             </button>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </ModalShell>
   );
 };
 
