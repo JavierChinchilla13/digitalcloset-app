@@ -22,6 +22,7 @@ import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import PersonaTypeSwitcher, { type PersonaFilterValue } from '../components/PersonaTypeSwitcher';
 import { useToast } from '../components/Toast';
 import { useSafeAction } from '../hooks/useSafeAction';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import ErrorState from '../components/ErrorState';
 import PersonaBadge from '../components/PersonaBadge';
 import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
@@ -305,6 +306,16 @@ const FlatOutfitBuilderPage = () => {
     Boolean((navState as { showPersonaPreview?: boolean } | null)?.showPersonaPreview)
   );
 
+  // Task 92: on a phone the builder is two screens - the closet to pick from, and the
+  // outfit (selection, persona preview, layers). Wide screens (lg+) show both side
+  // by side and ignore this.
+  const [phoneTab, setPhoneTab] = useState<'closet' | 'outfit'>('closet');
+  // lg and up: the two-panel layout. Below it (a phone) some controls move: the
+  // secondary actions go to the top of the Outfit tab, and the Closet tab gets a dock
+  // with a mini preview of the outfit. Content that differs - not just styling - is
+  // rendered for one case only, so no button appears twice.
+  const isWide = useMediaQuery('(min-width: 1024px)', true);
+
   // Task 45: "Adjust & Fit" entry point - opens EditClothingModal's Fabric
   // Studio for a specific excluded item, with promoteToFittedOnSave so a
   // saved adjustment also flips it to FITTED.
@@ -344,6 +355,7 @@ const FlatOutfitBuilderPage = () => {
     setDraft(ids, null);
     setSelectedLayerId(null);
     setShowPersonaPreview(true);
+    setPhoneTab('outfit');
     if (missing.length > 0) showToast(`No ${missing.join(', ')} in your closet for this persona yet`, 'info');
   };
 
@@ -419,6 +431,52 @@ const FlatOutfitBuilderPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMixedPersona]);
 
+  // Random / new outfit / category / clear: in the header on a wide screen, at the top of
+  // the Outfit tab on a phone (where the header only has room for the name and Save).
+  const secondaryActions = (
+    <>
+      <button
+        onClick={handleRandomOutfit}
+        aria-label="Create random outfit"
+        title="Create random outfit"
+        className="px-3.5 lg:px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
+      >
+        <Shuffle size={16} /> <span className="hidden lg:inline">Create random outfit</span>
+      </button>
+      {editId && (
+        <button
+          onClick={handleNewOutfit}
+          aria-label="New outfit"
+          title="New outfit"
+          className="px-3.5 lg:px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
+        >
+          <Plus size={16} /> <span className="hidden lg:inline">New outfit</span>
+        </button>
+      )}
+      {!editId && (
+        <CategoryPicker
+          collections={collections}
+          selectedIds={selectedCollectionIds}
+          onToggle={toggleSelectedCollection}
+          isCreating={isCreatingCollection}
+          onStartCreating={() => setIsCreatingCollection(true)}
+          newName={newCollectionName}
+          onNewNameChange={setNewCollectionName}
+          onConfirmCreate={handleCreateCollectionInline}
+          onCancelCreate={() => { setIsCreatingCollection(false); setNewCollectionName(''); }}
+        />
+      )}
+      <button
+        onClick={clearDraft}
+        disabled={selectedItemIds.length === 0}
+        className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary hover:text-text-primary transition-colors border border-ink/5 disabled:opacity-20 disabled:pointer-events-none"
+        title="Clear Selection"
+      >
+        <RotateCcw size={18} />
+      </button>
+    </>
+  );
+
   if (!outfitsReady) {
     return (
       <div className="min-h-dvh bg-background-main flex items-center justify-center">
@@ -428,25 +486,31 @@ const FlatOutfitBuilderPage = () => {
   }
 
   return (
-    <div className="h-screen bg-background-main flex flex-col overflow-hidden pt-16">
-      <header className="px-8 py-6 border-b border-ink/5 bg-background-secondary/20 flex items-center justify-between z-20">
-        <div className="flex items-center gap-6">
+    <div className="h-[calc(100dvh-5.5rem-env(safe-area-inset-top))] md:h-dvh bg-background-main flex flex-col overflow-hidden md:pt-16">
+      <header className="px-3 py-2 lg:px-8 lg:py-6 border-b border-ink/5 bg-background-secondary/20 flex items-center gap-2 lg:gap-4 justify-between z-20">
+        <div className="flex items-center gap-2 lg:gap-6 min-w-0 flex-1 lg:flex-none">
           {!isLandingRoute && (
             <button
               onClick={() => navigate('/outfits')}
-              className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary transition-colors border border-ink/5"
+              aria-label="Back to outfits"
+              className="shrink-0 p-2.5 lg:p-3 hover:bg-ink/5 rounded-xl text-text-secondary transition-colors border border-ink/5"
             >
               <ChevronLeft size={20} />
             </button>
           )}
-          <div className="space-y-1">
+          <div className="space-y-1 min-w-0 flex-1">
             <input
               value={outfitName}
               onChange={(e) => setOutfitName(e.target.value)}
-              className="bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
+              className="w-full min-w-0 bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"
             />
-            <div className="flex items-center gap-3">
+            {isEditingMainOutfit && (
+              <span className="lg:hidden inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.2em] uppercase text-accent">
+                <Star size={9} fill="currentColor" /> Main outfit
+              </span>
+            )}
+            <div className="hidden lg:flex items-center gap-3">
               <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
                 {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
               </p>
@@ -462,56 +526,44 @@ const FlatOutfitBuilderPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Task 78: while editing an existing outfit (the main one on "/", or
-              via the edit route), a way to start a brand-new outfit instead. */}
-          <button
-            onClick={handleRandomOutfit}
-            className="px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
-          >
-            <Shuffle size={14} /> Create random outfit
-          </button>
-          {editId && (
-            <button
-              onClick={handleNewOutfit}
-              className="px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
-            >
-              <Plus size={14} /> New outfit
-            </button>
-          )}
-          {!editId && (
-            <CategoryPicker
-              collections={collections}
-              selectedIds={selectedCollectionIds}
-              onToggle={toggleSelectedCollection}
-              isCreating={isCreatingCollection}
-              onStartCreating={() => setIsCreatingCollection(true)}
-              newName={newCollectionName}
-              onNewNameChange={setNewCollectionName}
-              onConfirmCreate={handleCreateCollectionInline}
-              onCancelCreate={() => { setIsCreatingCollection(false); setNewCollectionName(''); }}
-            />
-          )}
-          <button
-            onClick={clearDraft}
-            disabled={selectedItemIds.length === 0}
-            className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary hover:text-text-primary transition-colors border border-ink/5 disabled:opacity-20 disabled:pointer-events-none"
-            title="Clear Selection"
-          >
-            <RotateCcw size={18} />
-          </button>
+        <div className="flex items-center gap-2 lg:gap-4 shrink-0">
+          {isWide && secondaryActions}
           <button
             onClick={handleSave}
             disabled={isSaving || selectedItemIds.length === 0}
-            className="px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
+            className="justify-center px-4 lg:px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            {editId ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}
+            <span className="lg:hidden">{editId ? 'UPDATE' : 'SAVE'}</span>
+            <span className="hidden lg:inline">{editId ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}</span>
           </button>
         </div>
       </header>
 
-      <div className="flex-grow flex overflow-hidden">
+      <div className="flex-grow min-h-0 flex flex-col lg:flex-row overflow-hidden">
+        {/* Phone only (below lg): switch between the closet and the outfit. */}
+        <div className="lg:hidden shrink-0 px-3 py-1.5 border-b border-ink/5 bg-background-secondary/20">
+          <div role="tablist" aria-label="Outfit builder" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-ink/5">
+            {([
+              ['closet', 'Closet'],
+              ['outfit', `Outfit (${selectedItemIds.length})`],
+            ] as const).map(([tab, label]) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={phoneTab === tab}
+                onClick={() => setPhoneTab(tab)}
+                className={`py-2 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-all ${
+                  phoneTab === tab ? 'bg-ink text-background-main' : 'text-text-secondary hover:text-text-primary'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Browsable Wardrobe Panel. Task 76: the old separate `w-20`
             category-icon sidebar is gone - the category filter now lives
             directly under the search bar as a single dropdown
@@ -533,12 +585,12 @@ const FlatOutfitBuilderPage = () => {
             selection panel's content demands - confirmed live by toggling
             it directly in the browser: without it, populated width was
             148px; with it, back to the correct 384px. */}
-        <aside className="w-96 shrink-0 border-r border-ink/5 flex flex-col bg-background-secondary/5">
-          <div className="p-6 border-b border-ink/5 space-y-4">
-            <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
+        <aside className={`${phoneTab === 'closet' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-96 lg:shrink-0 flex-1 min-h-0 lg:flex-none lg:border-r border-ink/5 bg-background-secondary/5`}>
+          <div className="p-3 lg:p-6 border-b border-ink/5 flex items-center gap-2 lg:block lg:space-y-4">
+            <h3 className="hidden lg:block text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
               Available Pieces
             </h3>
-            <div className="relative">
+            <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
               <input
                 type="text"
@@ -548,13 +600,15 @@ const FlatOutfitBuilderPage = () => {
                 className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
               />
             </div>
-            <ClothingCategoryFilter value={activeCategory} onChange={setActiveCategory} />
+            <div className="w-[8.5rem] shrink-0 lg:w-auto">
+              <ClothingCategoryFilter value={activeCategory} onChange={setActiveCategory} />
+            </div>
           </div>
           <div className="relative flex-grow overflow-hidden">
             <div
               ref={browseScrollRef}
               onScroll={checkScrollHint}
-              className="h-full overflow-y-auto no-scrollbar p-6 space-y-8"
+              className="h-full overflow-y-auto no-scrollbar p-3 lg:p-6 space-y-5 lg:space-y-8"
             >
               {isLoading && items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20">
@@ -575,11 +629,11 @@ const FlatOutfitBuilderPage = () => {
                 </div>
               ) : (
                 browseSections.map((section) => (
-                  <div key={section.label} className="space-y-3">
+                  <div key={section.label} className="space-y-2 lg:space-y-3">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
                       {section.label}
                     </p>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-2 lg:grid-cols-2 lg:gap-4">
                       {section.items.map((item) => {
                         const active = selectedItemIds.includes(item.itemId);
                         return (
@@ -589,24 +643,24 @@ const FlatOutfitBuilderPage = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => handleToggle(item.itemId)}
                             className={`
-                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300
+                              relative aspect-[3/4] rounded-xl lg:rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                             `}
                           >
                             <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
                             {/* Task 77: was a raw MALE/FEMALE pill; now the shared
                                 persona sign (persona name / Not fitted / Unassigned). */}
-                            <PersonaBadge item={item} />
+                            <PersonaBadge item={item} compact={!isWide} />
                             <div className={`
                               absolute inset-0 bg-accent/20 flex items-center justify-center transition-opacity
                               ${active ? 'opacity-100' : 'opacity-0'}
                             `}>
-                              <div className="bg-ink text-accent p-2 rounded-full shadow-md">
+                              <div className="bg-ink text-accent p-1.5 lg:p-2 rounded-full shadow-md">
                                 <X size={16} className="rotate-45" />
                               </div>
                             </div>
-                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">
+                            <div className="absolute bottom-0 left-0 right-0 p-1.5 lg:p-3 bg-gradient-to-t from-black/80 to-transparent">
+                              <p className="text-[9px] lg:text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">
                                 {item.name}
                                 {/* A shoe pair is saved as two items sharing a name
                                     (side: left/right) - without this both cards read
@@ -642,10 +696,42 @@ const FlatOutfitBuilderPage = () => {
               </div>
             )}
           </div>
+          {/* Phone: what you have picked so far - a mini preview of the outfit on the
+              persona, the pieces as small thumbnails, and the way to the Outfit tab. */}
+          {!isWide && selectedItemIds.length > 0 && (
+            <div className="shrink-0 border-t border-ink/10 bg-background-main px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setPhoneTab('outfit')}
+                  aria-label="Preview the outfit on the persona"
+                  className="shrink-0 w-[3.75rem] h-[5.5rem] rounded-xl bg-ink/5 border border-ink/10 overflow-hidden"
+                >
+                  <PersonaRenderer persona={previewPersona} className="h-[5.5rem]" />
+                </button>
+                <div className="flex-1 min-w-0 flex gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label="Selected pieces">
+                  {selectedItems.map((item) => (
+                    <div key={item.itemId} className="shrink-0 w-11 h-[3.75rem] rounded-lg overflow-hidden bg-ink/5 border border-accent/30">
+                      <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full" />
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPhoneTab('outfit')}
+                  aria-label={`View outfit (${selectedItemIds.length})`}
+                  className="shrink-0 h-12 px-3.5 rounded-xl bg-ink text-background-main text-[10px] font-medium uppercase tracking-[0.15em] leading-tight flex flex-col items-center justify-center"
+                >
+                  <span>Outfit</span>
+                  <span className="opacity-70">{selectedItemIds.length}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* Right Panel: Current Selection (no persona rendering) */}
-        <main className="flex-grow relative bg-background-main overflow-y-auto no-scrollbar p-6">
+        <main className={`${phoneTab === 'outfit' ? 'block' : 'hidden'} lg:block flex-1 min-h-0 relative bg-background-main overflow-y-auto no-scrollbar p-4 lg:p-6`}>
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none"
             style={{
               backgroundImage: 'radial-gradient(#5B8CFF 1px, transparent 1px)',
@@ -654,6 +740,8 @@ const FlatOutfitBuilderPage = () => {
           />
 
           <div className="relative">
+            {/* Phone: the actions that live in the header on a wide screen. */}
+            {!isWide && <div className="flex flex-wrap items-center gap-2 mb-3">{secondaryActions}</div>}
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
                 {showPersonaPreview ? 'Persona Preview' : 'Your Selection'}
@@ -687,11 +775,31 @@ const FlatOutfitBuilderPage = () => {
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
                 <Shirt size={40} className="text-text-secondary" />
                 <p className="text-[10px] font-medium uppercase tracking-widest">
-                  Select pieces from the left to build an outfit
+                  <span className="lg:hidden">Pick pieces in the Closet tab to build an outfit</span>
+                  <span className="hidden lg:inline">Select pieces from the left to build an outfit</span>
                 </p>
               </div>
             ) : showPersonaPreview ? (
-              <div className="space-y-6">
+              <div className="space-y-4 lg:space-y-6">
+                {/* Phone: the pieces in the outfit as small thumbnails (tap the x to take
+                    one off) - the persona preview alone doesn't say what is on it. */}
+                {!isWide && (
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar py-1" aria-label="Pieces in this outfit">
+                    {selectedItems.map((item) => (
+                      <div key={item.itemId} className="relative shrink-0 w-14 h-[4.5rem] rounded-xl overflow-hidden bg-ink/5 border border-accent/30">
+                        <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full" />
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.itemId)}
+                          aria-label={`Remove ${item.name} from outfit`}
+                          className="absolute top-0.5 right-0.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {(excludedIneligibleCount > 0 || excludedWrongPersonaCount > 0) && (
                   <div className="px-5 py-4 rounded-2xl bg-ink/[0.02] border border-ink/5 text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
                     {excludedIneligibleCount > 0 && (
@@ -739,8 +847,12 @@ const FlatOutfitBuilderPage = () => {
                   </div>
                 )}
                 <div className="flex flex-col md:flex-row items-start gap-6">
-                  <div className="w-full md:flex-1 h-[50vh]">
+                  {/* Phone: the persona is sized to fit this box (it used to be 600px tall in a
+                      shorter box and spilled over the Layers panel below) and sticks to the
+                      top while the layers scroll underneath, so a reorder can be watched. */}
+                  <div className="w-full md:flex-1 h-[clamp(13rem,40dvh,28rem)] md:h-[50vh] sticky top-0 z-10 md:static bg-background-main border-b border-ink/5 md:border-0 overflow-hidden md:overflow-visible">
                     <PersonaRenderer
+                      className="h-full md:h-[800px]"
                       persona={previewPersona}
                       onLayerPick={setSelectedLayerId}
                       highlightItemId={selectedLayerId}

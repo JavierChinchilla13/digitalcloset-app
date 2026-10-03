@@ -144,7 +144,7 @@ const CategoriesPage = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full sm:w-auto">
             {showCreateForm ? (
               <>
                 <input
@@ -156,7 +156,7 @@ const CategoriesPage = () => {
                     if (e.key === 'Escape') cancelCreate();
                   }}
                   placeholder="CATEGORY NAME"
-                  className="bg-ink/5 border border-ink/10 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all w-56"
+                  className="bg-ink/5 border border-ink/10 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all w-full min-w-0 flex-1 sm:flex-none sm:w-56"
                 />
                 <button
                   onClick={handleCreate}

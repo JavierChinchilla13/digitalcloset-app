@@ -165,6 +165,10 @@ public class OutfitService {
         res.setName(outfit.getName());
         res.setDescription(outfit.getDescription());
         res.setAvatarType(outfit.getAvatarType());
+        // The API never sent this, so every outfit card read "Invalid Date".
+        if (outfit.getCreatedAt() != null) {
+            res.setCreatedAt(outfit.getCreatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        }
         res.setItems(outfit.getItems().stream().map(item -> {
             OutfitItemResponse itemRes = new OutfitItemResponse();
             itemRes.setOutfitItemId(item.getOutfitItemId());
