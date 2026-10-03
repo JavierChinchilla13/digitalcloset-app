@@ -16,7 +16,6 @@ interface OutfitDraftState {
   // is saved / updated.
   layerOrder: number[] | null;
   toggleItem: (itemId: number) => void;
-  addItem: (itemId: number) => void;
   removeItem: (itemId: number) => void;
   setDraft: (itemIds: number[], layerOrder?: number[] | null) => void;
   setLayerOrder: (layerOrder: number[] | null) => void;
@@ -37,12 +36,6 @@ export const useOutfitDraftStore = create<OutfitDraftState>((set) => ({
       : [...state.selectedItemIds, itemId];
     return { selectedItemIds, layerOrder: prune(state.layerOrder, selectedItemIds) };
   }),
-
-  addItem: (itemId) => set((state) =>
-    state.selectedItemIds.includes(itemId)
-      ? state
-      : { selectedItemIds: [...state.selectedItemIds, itemId] }
-  ),
 
   removeItem: (itemId) => set((state) => {
     const selectedItemIds = state.selectedItemIds.filter((id) => id !== itemId);

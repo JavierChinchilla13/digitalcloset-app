@@ -15,7 +15,7 @@ interface ClothingCardProps {
   showManagement?: boolean;
   // Task 65 (Phase 9.5): by default the card keeps its fixed width
   // (w-40 md:w-48), which is what it was written for - a horizontal-scroll
-  // flex row (the orphaned /dashboard's ClosetSection still renders it that
+  // flex row (the removed dashboard's closet strip rendered it that
   // way). Inside a CSS grid that fixed width is wider than the grid column
   // at some breakpoints (measured 192px card in a 182.8px column at 1280px)
   // and squeezes the gap between cards; `fluid` lets the card fill its grid
@@ -58,8 +58,8 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
     e.stopPropagation();
     // Toggles this item on the persona's equip lists (drives the
     // "Equipped" badge below). Task 63 removed a trailing scroll to
-    // #persona here - that element only exists on the orphaned /dashboard,
-    // so on /closet it was a silent no-op.
+    // #persona here - that element belonged to the (since removed) dashboard
+    // page, so on /closet it was a silent no-op.
     setEquippedItem(item);
   };
 

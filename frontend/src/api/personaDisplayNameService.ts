@@ -19,8 +19,4 @@ export const personaDisplayNameService = {
     const response = await api.put<PersonaDisplayName>(`/persona-display-names/${personaType}`, { displayName });
     return response.data;
   },
-
-  reset: async (personaType: PersonaType): Promise<void> => {
-    await api.delete(`/persona-display-names/${personaType}`);
-  },
 };

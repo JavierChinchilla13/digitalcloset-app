@@ -32,7 +32,7 @@ import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 // backend outfit via outfitItemsFromDraft.
 //
 // Originally deliberately did NOT filter the browse grid by persona type
-// the way ClosetPage/OutfitBuilderPage do, on the reasoning that an
+// the way ClosetPage (and the removed persona-first builder) did, on the reasoning that an
 // outfit should be assemblable from any of the user's items (open
 // question #7's resolution for the *selection* UI specifically) - each
 // card just showed its persona type as a badge instead, so mixed
@@ -145,8 +145,8 @@ const FlatOutfitBuilderPage = () => {
   };
 
   // Editing an existing outfit: load its saved selection into the draft
-  // store once outfits have loaded. Mirrors OutfitBuilderPage's equivalent
-  // effect, using draftFromOutfitItems instead of equippedFromOutfitItems.
+  // store once outfits have loaded. Replaced the removed persona-first
+  // builder's equivalent effect (it used equippedFromOutfitItems instead).
   useEffect(() => {
     if (!outfitsReady || !editId) return;
     const existing = outfits.find((o) => String(o.outfitId) === editId);

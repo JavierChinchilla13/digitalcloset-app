@@ -10,11 +10,6 @@ export const outfitService = {
     return response.data;
   },
 
-  getOutfit: async (outfitId: number): Promise<Outfit> => {
-    const response = await api.get<Outfit>(`/outfits/${outfitId}`);
-    return response.data;
-  },
-
   createOutfit: async (data: OutfitRequest): Promise<Outfit> => {
     const response = await api.post<Outfit>('/outfits', data);
     return response.data;

@@ -6687,3 +6687,27 @@ non-obvious functions in them (what it does and why, not a restatement of the co
 - Not touched: files that already had a real header (the large editors, `UploadFlow`,
   `PersonaRenderer`, `OutfitShowcasePage`, ...) - a function-by-function pass over
   those is the remaining nice-to-have if ever wanted.
+
+### Task 89 - Code cleanup (2026-10-02, branch `phase-12-cleanup`)
+
+First of five checkpoints (cleanup, land on /showcase + installable app, phone
+foundation, phone pages, phone studios). An import-graph audit from `main.tsx` plus
+tests (and `tsc --noUnusedLocals --noUnusedParameters`, clean) found:
+- **Removed (1,298 lines):** the legacy cluster - `DashboardPage`, `sections/*`,
+  `PersonaSpotlight`, the persona-first `OutfitBuilderPage` - plus `PersonaSelector`,
+  `useLocalOutfitStore`, `src/assets/*`, `public/favicon.svg` / `icons.svg`; unused
+  API/store members (`getClothingItem`, `getOutfit`, `clearMainOutfit`, persona-name
+  `reset` / `resetDisplayName`, draft-store `addItem`, `ShoePair`, the float animation and
+  `--color-line` CSS) and `ClothingRepository.findByOwner` / `findByOwnerAndCategory`;
+  `fetchItems` / `getClothingItems` no longer take the `category` the backend ignored; the
+  Vite-template README, `FRONTEND_CHANGES.md`, `HELP.md`, `IMPLEMENTATION_SUMMARY.md`
+  (references fixed in `README.md`, `backend/.dockerignore`, `PROJECT_STRUCTURE.md`); two
+  git-ignored leftovers (repo-root `node_modules`, `frontend/src/node_modules`).
+- **Old bookmarks:** `/dashboard` -> `/showcase`, `/outfits/new` -> `/outfits/flat/new`
+  (`/outfits/edit/:id` now 404s).
+- **Kept on purpose:** `usePersonaStore` + helpers (live Closet / Outfits / builder),
+  `canvas` (Fabric/jsdom in tests) and the exact `onnxruntime-web` pin, the five unused
+  `OutfitItem` DB columns (removing them needs a Flyway V9), test-only helpers.
+- **For the user:** revoke `VITE_REMOVE_BG_API_KEY` (it was a `VITE_` variable, so it was
+  baked into earlier bundles) and delete it from `frontend/.env`; reset the Neon password.
+- **Verified:** `tsc -b --force`, 273 frontend + 100 backend tests, `vite build`.

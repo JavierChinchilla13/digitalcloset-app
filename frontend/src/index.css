@@ -86,7 +86,6 @@
   --color-accent-hover: var(--vy-accent-hover);
   --color-on-accent: var(--vy-on-accent);
   --color-ink: var(--vy-ink);
-  --color-line: var(--vy-line);
   --color-stage: var(--vy-stage);
   --color-stage-accent: var(--vy-stage-accent);
 }
@@ -96,13 +95,6 @@
      Cormorant Garamond: the editorial serif for large headings. */
   --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-
-  --animate-float: float 6s ease-in-out infinite;
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
-  }
 }
 
 @layer base {

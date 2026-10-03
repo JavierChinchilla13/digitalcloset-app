@@ -15,7 +15,7 @@ const Navbar = () => {
   // (Task 36-39), which already contains the List/Persona preview toggle
   // (Task 38). /persona (a separate, standalone persona-type picker) stays
   // reachable by direct URL, just no longer linked from primary nav - same
-  // pattern as /dashboard in Task 39.
+  // pattern as the old /dashboard in Task 39 (which has since been removed).
   const navLinks = [
     { name: 'Attire', path: '/', icon: UserCircle, protected: true },
     { name: 'Closet', path: '/closet', icon: Shirt, protected: true },
