@@ -52,7 +52,7 @@ const PersonaPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         {/* Header */}
         <div className="mb-16 space-y-4">

@@ -623,7 +623,7 @@ const OutfitShowcasePage = () => {
 
   if (!ready || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-dvh flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />
       </div>
     );
@@ -631,7 +631,7 @@ const OutfitShowcasePage = () => {
 
   if (loadFailed) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="min-h-dvh flex items-center justify-center px-6">
         <ErrorState
           title="We couldn't load your outfits"
           message="Check your connection and try again."
@@ -646,7 +646,7 @@ const OutfitShowcasePage = () => {
   // accent button, hover:scale-105) rather than a new visual style.
   if (n === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6">
+      <div className="min-h-dvh flex flex-col items-center justify-center text-center px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -683,7 +683,7 @@ const OutfitShowcasePage = () => {
     // SavedOutfitsPage's own top-padding-free wrapper); a redundant py-24
     // here was doubling that gap and pushing the outfit below the fold on
     // top of the rows themselves being tall.
-    <div className="min-h-screen flex flex-col items-center px-6 pb-16">
+    <div className="min-h-dvh flex flex-col items-center px-6 pb-16">
       <div className="text-center mb-8">
         <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-4 bg-accent/5 uppercase">
           Your Showcase

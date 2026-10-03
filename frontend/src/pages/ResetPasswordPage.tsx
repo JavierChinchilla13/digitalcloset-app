@@ -55,7 +55,7 @@ const ResetPasswordPage = () => {
     'w-full bg-background-secondary border border-ink/5 rounded-2xl py-4 pl-14 pr-12 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-background-secondary/80 transition-all';
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center p-6">
+    <div className="min-h-[80dvh] flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Loader2, Plus, Shirt, LayoutGrid, X, Tag, Check, Search } from 'lucide-react';
 import { useCollectionStore } from '../store/useCollectionStore';
@@ -8,6 +7,7 @@ import { useOutfitStore } from '../store/useOutfitStore';
 import { useToast } from '../components/Toast';
 import { useSafeAction } from '../hooks/useSafeAction';
 import SectionWrapper from '../components/SectionWrapper';
+import ModalShell from '../components/ModalShell';
 import CroppedThumbnail from '../components/CroppedThumbnail';
 import PersonaBadge, { ItemPersonaBadge } from '../components/PersonaBadge';
 import { ClothingCategory, PersonaType } from '../types';
@@ -40,7 +40,7 @@ const CategoryDetailPage = () => {
 
   if (!isReady) {
     return (
-      <div className="min-h-screen bg-background-main flex items-center justify-center">
+      <div className="min-h-dvh bg-background-main flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />
       </div>
     );
@@ -48,7 +48,7 @@ const CategoryDetailPage = () => {
 
   if (!collection) {
     return (
-      <div className="min-h-screen bg-background-main pt-24 pb-20">
+      <div className="min-h-dvh bg-background-main pt-24 pb-20">
         <SectionWrapper>
           <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]">
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
@@ -69,7 +69,7 @@ const CategoryDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
           <div className="space-y-4">
@@ -80,7 +80,7 @@ const CategoryDetailPage = () => {
               <ChevronLeft size={14} />
               Back to Categories
             </button>
-            <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none break-words">
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none break-words">
               {collection.name}
             </h1>
             <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
@@ -315,23 +315,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-background-main/90 backdrop-blur-sm"
-          />
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-3xl max-h-[85vh] bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-3xl max-h-[85dvh] bg-background-secondary border border-ink/5 rounded-2xl shadow-lg flex flex-col" backdropClassName="bg-background-main/90 backdrop-blur-sm">
             <div className="flex justify-between items-center p-8 pb-6 border-b border-ink/5 flex-shrink-0">
               <div>
                 <h2 className="text-2xl font-light tracking-tighter text-text-primary uppercase">Add to Category</h2>
@@ -560,10 +544,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                 </>
               )}
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </ModalShell>
   );
 };
 

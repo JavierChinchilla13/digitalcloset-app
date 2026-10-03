@@ -421,7 +421,7 @@ const FlatOutfitBuilderPage = () => {
 
   if (!outfitsReady) {
     return (
-      <div className="min-h-screen bg-background-main flex items-center justify-center">
+      <div className="min-h-dvh bg-background-main flex items-center justify-center">
         <Loader2 className="animate-spin text-accent" size={40} />
       </div>
     );

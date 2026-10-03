@@ -9,7 +9,7 @@ const NotFoundPage = () => {
   // Home is the Showcase for a signed-in user and the landing page for a visitor.
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   return (
-    <div className="min-h-[60vh] flex items-center justify-center p-6">
+    <div className="min-h-[60dvh] flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

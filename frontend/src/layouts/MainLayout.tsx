@@ -11,7 +11,7 @@ const MainLayout = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   return (
-    <div className="min-h-screen bg-background-main flex flex-col">
+    <div className="min-h-dvh bg-background-main flex flex-col">
       <Navbar />
       <main className="flex-grow pt-24">
         {/* Task 22: a page that crashes while rendering shows a recoverable

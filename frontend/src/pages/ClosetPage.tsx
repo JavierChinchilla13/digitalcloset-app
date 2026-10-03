@@ -105,7 +105,7 @@ const ClosetPage = () => {
   const personaFilters = ["ALL", ...Object.values(PersonaType)];
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         {/* Header & Main Actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
@@ -121,7 +121,7 @@ const ClosetPage = () => {
                 page's own title (the nav link is just "Closet"). Renamed
                 to match "Complete Wardrobe Management" right below it,
                 rather than repeating the new VYSVI brand name here too. */}
-            <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
+            <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
               MY <br /> <span className="text-accent">WARDROBE</span>
             </h1>
             <div className="flex items-center gap-4 pt-2">

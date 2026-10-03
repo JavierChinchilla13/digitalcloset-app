@@ -6731,3 +6731,34 @@ Second checkpoint of the cleanup / phone work.
   actual install prompt can only be tried on a phone after deploy. Render's static-site rewrite
   does not shadow these files.
 - 278 frontend tests, `tsc -b --force`, `vite build`.
+
+### Task 91 - Phone foundation (2026-10-02, branch `phase-12-mobile-foundation`)
+
+Third checkpoint. Audit (3 read-only agents + live 375x812 checks): signed-in users had **no
+navigation on a phone** (`hidden md:flex` links, account dropdown without the main pages),
+and Tailwind v4 only applies `hover:` / `group-hover:` where the device can hover, so every
+hover-revealed control is invisible on touch (fixed in the next checkpoint with the new `touch:`
+variant). Done here:
+- **Hamburger menu** (`MobileMenu.tsx`, used by `Navbar.tsx`; links shared with the desktop navbar
+  in `navLinks.ts`): below `md` a signed-in user gets a menu button opening a full-screen sheet:
+  Showcase, Attire, Closet, Outfits, Categories, Persona, Settings, Admin (admins), theme, Log
+  out; 48px rows, closes on route change / Escape / X, body scroll locked while open
+  (`pointer-events-auto` because the host navbar is `pointer-events-none`). Desktop navbar and
+  `UserMenu` unchanged. Signed-out pill tightened (Join `px-4`), navbar honours the notch.
+- **Viewport units:** `min-h-screen` / `min-h-[NNvh]` -> `dvh` on 17 files (the height between the
+  browser's toolbars). The builder/studio `h-screen`/`vh` uses are rebuilt in the next checkpoints.
+- **CSS (`index.css`):** `@custom-variant touch (@media (hover: none))`; unlayered rules: inputs 16px
+  on phones (stops iOS zoom-on-focus), `touch-action: manipulation` (no double-tap delay).
+- **`ModalShell.tsx`:** the shared frame (backdrop + scale-in card) with the card capped to
+  `100dvh - 1.5rem` and scrolling inside; adopted by DeleteConfirmationModal, CreateUserModal,
+  DemoSignupModal, ClothingDetailsModal (image 4:3 on phones), CategoriesPage and
+  CategoryDetailPage modals. `EditClothingModal` / `UploadFlow` are the studios (checkpoint 5).
+- **Type/targets:** `h1` headings `text-4xl sm:text-6xl` (Closet, Outfits, Categories, Admin,
+  Settings, Category detail), landing headings / CTA / section padding phone-sized, theme toggle
+  40px, Toast full-width above the bottom safe area with a 40px dismiss.
+- **Tests (+9, 287 total):** `mobileMenu.test.tsx` (7: no button for visitors, every link, Admin only
+  for admins, navigates + closes, X / Escape + scroll lock, log out), `modalShell.test.tsx` (3).
+  `tsc -b --force`, strict unused check, `vite build`. Live on the throwaway backend (8081, scratch
+  database `closet_mobile`) + Vite 5199: menu lists every page; the demo sign-up modal fits the
+  screen; desktop Showcase/navbar unchanged. Known and next: Closet page is 427px wide on a phone
+  (persona filter row does not wrap) and the builder is unusable (two-panel layout).
