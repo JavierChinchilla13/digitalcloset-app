@@ -122,20 +122,6 @@ export interface OutfitItem {
   layerOrder?: number | null;
 }
 
-export interface ShoePair {
-  leftShoe: {
-    imageUrl: string;
-    transform: ClothingTransform;
-  };
-  rightShoe: {
-    imageUrl: string;
-    transform: ClothingTransform;
-  };
-  mirrored: boolean;
-  category: ClothingCategory;
-  personaType: PersonaType;
-}
-
 export interface Outfit {
   outfitId: number;
   name: string;

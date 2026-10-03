@@ -87,7 +87,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
 
   // "Wear Style" (Task 63, Phase 9.5). This used to write the older
   // equip-id lists and then scroll to #persona - an element that only
-  // exists on the orphaned /dashboard, so from /outfits it silently did
+  // existed on the (since removed) dashboard, so from /outfits it silently did
   // nothing visible. Now it takes the user to Attire ("/", the flat builder)
   // with the outfit loaded and the persona preview already on
   // (open question #22).

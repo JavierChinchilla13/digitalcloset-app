@@ -24,7 +24,6 @@ interface PersonaSettingsState {
   fetchDisplayNames: () => Promise<void>;
   getDisplayName: (type: PersonaType) => string;
   setDisplayName: (type: PersonaType, name: string) => Promise<void>;
-  resetDisplayName: (type: PersonaType) => Promise<void>;
 }
 
 export const usePersonaSettingsStore = create<PersonaSettingsState>((set, get) => ({
@@ -52,14 +51,5 @@ export const usePersonaSettingsStore = create<PersonaSettingsState>((set, get) =
     if (!trimmed) return;
     await personaDisplayNameService.upsert(type, trimmed);
     set((state) => ({ displayNames: { ...state.displayNames, [type]: trimmed } }));
-  },
-
-  resetDisplayName: async (type) => {
-    await personaDisplayNameService.reset(type);
-    set((state) => {
-      const next = { ...state.displayNames };
-      delete next[type];
-      return { displayNames: next };
-    });
   },
 }));

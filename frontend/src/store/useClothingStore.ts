@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { ClothingCategory, PersonaStatus } from '../types';
+import { PersonaStatus } from '../types';
 import type { ClothingItem } from '../types';
 import { clothingService } from '../api/clothingService';
 
@@ -11,7 +11,7 @@ interface ClothingState {
   error: string | null;
   _hasHydrated: boolean;
   setHasHydrated: (state: boolean) => void;
-  fetchItems: (category?: ClothingCategory) => Promise<void>;
+  fetchItems: () => Promise<void>;
   addItem: (data: Omit<ClothingItem, 'itemId'>) => Promise<ClothingItem>;
   updateItem: (itemId: number, data: Partial<ClothingItem>) => Promise<void>;
   removeItem: (itemId: number) => Promise<void>;
@@ -35,11 +35,11 @@ export const useClothingStore = create<ClothingState>()(
       _hasHydrated: false,
       setHasHydrated: (state) => set({ _hasHydrated: state }),
 
-      // Replaces the list with the server's (optionally one category) and marks each item with its local favourite flag.
-      fetchItems: async (category) => {
+      // Replaces the list with the server's and marks each item with its local favourite flag.
+      fetchItems: async () => {
         set({ isLoading: true, error: null });
         try {
-          const items = await clothingService.getClothingItems(category);
+          const items = await clothingService.getClothingItems();
           // Augment items with favorite state
           const favorites = JSON.parse(localStorage.getItem('closet-favorites') || '[]');
           const augmentedItems = items.map(item => ({

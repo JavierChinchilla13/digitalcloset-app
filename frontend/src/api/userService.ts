@@ -15,11 +15,6 @@ export const userService = {
     return response.data;
   },
 
-  clearMainOutfit: async (): Promise<User> => {
-    const response = await api.delete<User>('/users/me/main-outfit');
-    return response.data;
-  },
-
   // Task 79 (Settings page):
   updateProfile: async (data: { firstName?: string; lastName?: string }): Promise<User> => {
     const response = await api.put<User>('/users/me', data);
