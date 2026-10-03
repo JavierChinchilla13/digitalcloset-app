@@ -308,7 +308,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
 
   return (
     <div
-      className="relative w-full h-full min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
+      className="relative w-full h-full min-h-[18rem] md:min-h-[500px] bg-stage rounded-2xl overflow-hidden border border-white/10 shadow-inner"
       style={{ padding: CANVAS_PAD }}
     >
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none"

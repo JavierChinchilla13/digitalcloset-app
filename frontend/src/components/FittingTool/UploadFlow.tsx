@@ -513,10 +513,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     }
   };
 
+  // The steps that show an editor (a canvas) instead of a short form get the big card.
+  const isStudioStep =
+    step === 'FITTING' || step === 'SHOE_FITTING' || step === 'JACKET_FITTING' || step === 'GARMENT_CLEANUP';
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 md:p-6 overflow-hidden">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -528,14 +532,15 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       <motion.div
         initial={{ scale: 0.95, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        className={`relative bg-background-secondary border border-ink/5 rounded-[3rem] shadow-2xl overflow-hidden transition-all duration-700 ${
-          step === 'FITTING' || step === 'SHOE_FITTING' || step === 'JACKET_FITTING' || step === 'GARMENT_CLEANUP' ? 'w-full max-w-7xl h-[90vh]' : 'w-full max-w-2xl'
+        className={`relative flex flex-col bg-background-secondary border border-ink/5 sm:rounded-[3rem] shadow-2xl overflow-hidden transition-all duration-700 ${
+          isStudioStep ? 'w-full max-w-7xl h-dvh sm:h-[90dvh]' : 'w-full max-w-2xl h-dvh sm:h-auto sm:max-h-[calc(100dvh-2rem)]'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         <button 
           onClick={handleClose}
-          className="absolute top-8 right-8 p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary z-50"
+          aria-label="Close"
+          className="absolute top-2 right-2 sm:top-8 sm:right-8 p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary z-50"
         >
           <X size={20} />
         </button>
@@ -555,12 +560,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
           />
         </div>
 
-        <div className="p-8 md:p-12 h-full flex flex-col overflow-y-auto no-scrollbar">
+        <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar ${
+          isStudioStep ? 'p-3 pt-12 sm:p-8 md:p-12' : 'p-5 pt-14 sm:p-8 md:p-12'
+        }`}>
           <AnimatePresence mode="wait">
             {step === 'UPLOAD' && (
               <motion.div key="upload" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 1 — Initial Intake</h2>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 1 — Initial Intake</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Drop your garment to begin digitization</p>
                 </div>
                 <div onClick={() => document.getElementById('file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-ink/10 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-accent/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
@@ -574,9 +581,9 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             )}
 
             {step === 'CONFIG' && (
-              <motion.div key="config" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+              <motion.div key="config" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8 sm:space-y-12">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 2 — Architecture</h2>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 2 — Architecture</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Define garment category and persona target</p>
                 </div>
                 <div className="space-y-10">
@@ -585,11 +592,11 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                       <Layers size={14} className="text-accent" />
                       <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Garment Category</label>
                     </div>
-                    <div className="flex flex-wrap justify-center gap-3">
+                    <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-center gap-2 sm:gap-3">
                       {Object.values(ClothingCategory).map((cat) => {
                         const Icon = CATEGORY_ICONS[cat];
                         return (
-                          <button key={cat} onClick={() => setCategory(cat)} className={`flex flex-col items-center gap-3 p-4 w-24 rounded-2xl border transition-all ${category === cat ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'}`}>
+                          <button key={cat} onClick={() => setCategory(cat)} className={`flex flex-col items-center gap-3 p-3 sm:p-4 sm:w-24 rounded-2xl border transition-all ${category === cat ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'}`}>
                             <Icon size={18} />
                             <span className="text-[8px] font-black uppercase tracking-widest">{cat}</span>
                           </button>
@@ -671,7 +678,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'SHOE_UPLOAD_RIGHT' && (
               <motion.div key="upload-right" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Second Asset</h2>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Second Asset</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Upload the RIGHT shoe image</p>
                 </div>
                 <div onClick={() => document.getElementById('right-file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-ink/10 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-emerald-500/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
@@ -727,13 +734,13 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             )}
 
             {step === 'PREVIEW' && backgroundRemovedUrl && (
-              <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-12">
+              <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8 sm:space-y-12">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Analysis Preview</h2>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Analysis Preview</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Compare AI extraction with original source</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-8 h-[40vh]">
+                <div className="grid grid-cols-2 gap-3 sm:gap-8 h-[34dvh] sm:h-[40vh]">
                   <div className="space-y-4">
                     <p className="text-[10px] font-black tracking-widest text-text-secondary uppercase text-center opacity-50">Original Source</p>
                     <div className="flex-1 h-full rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-4">
@@ -786,7 +793,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'SKIP_PERSONA' && (
               <motion.div key="skip-persona" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                 <div className="text-center space-y-2">
-                  <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic">
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">
                     {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'Save Original As-Is' : 'Save Without Fitting'}
                   </h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">
@@ -796,7 +803,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   </p>
                 </div>
 
-                <div className="rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-6 h-[30vh]">
+                <div className="rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-4 sm:p-6 h-[26dvh] sm:h-[30vh]">
                   <img
                     src={(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? originalPreviewUrl : backgroundRemovedUrl) ?? undefined}
                     alt="Preview"

@@ -99,11 +99,11 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
   return (
     <div className="flex flex-col h-full space-y-8">
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-light tracking-tighter text-text-primary uppercase italic italic">Step 3 — Architecture Decomposition</h2>
+        <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Architecture Decomposition</h2>
         <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Select identified regions for independent manipulation</p>
       </div>
 
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-y-auto no-scrollbar p-1">
+      <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 overflow-y-auto no-scrollbar p-1">
         {Array.from(segmentUrls.entries()).map(([name, url]) => (
           <motion.div
             key={name}
@@ -153,14 +153,14 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
         <div className="flex gap-4">
           <button
             onClick={onBack}
-            className="flex-1 py-6 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all"
+            className="flex-1 py-4 sm:py-6 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-[2rem] font-black text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase transition-all"
           >
             Back
           </button>
           <button
             onClick={handleFinish}
             disabled={!!uploadingStatus}
-            className="flex-[2] py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3"
+            className="flex-[2] py-4 sm:py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3"
           >
             {uploadingStatus ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
             <span>{segmentUrls.size > 0 ? 'Initialize Modular Studio' : 'Proceed Rigid'}</span>
