@@ -66,33 +66,34 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background-secondary rounded-[3rem] overflow-hidden border border-ink/5 shadow-2xl">
+    <div className="flex flex-col h-full bg-background-secondary rounded-2xl lg:rounded-[3rem] overflow-hidden border border-ink/5 shadow-2xl">
       {/* Top Header */}
-      <header className="flex items-center justify-between px-10 py-6 border-b border-ink/5 bg-ink/5 backdrop-blur-md z-10">
-        <div className="flex items-center gap-6">
+      <header className="shrink-0 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 px-4 py-3 lg:px-10 lg:py-6 border-b border-ink/5 bg-ink/5 backdrop-blur-md z-10">
+        <div className="flex items-center gap-3 lg:gap-6">
           <button 
             onClick={onBack}
+            aria-label="Back"
             className="p-3 hover:bg-ink/5 rounded-2xl transition-all text-text-secondary hover:text-text-primary"
           >
             <ChevronLeft size={20} />
           </button>
           <div>
             <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic">Shoe Studio</h2>
-            <p className="text-[9px] text-text-secondary font-black tracking-widest uppercase opacity-40">Precision Alignment Engine</p>
+            <p className="hidden sm:block text-[9px] text-text-secondary font-black tracking-widest uppercase opacity-40">Precision Alignment Engine</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-           <div className="flex p-1 bg-ink/5 rounded-2xl border border-ink/5">
+        <div className="order-last basis-full lg:order-none lg:basis-auto flex items-center gap-4">
+           <div className="grid grid-cols-2 w-full lg:w-auto lg:flex p-1 bg-ink/5 rounded-2xl border border-ink/5">
               <button 
                 onClick={() => setActiveSide('left')}
-                className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSide === 'left' ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
+                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSide === 'left' ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Left Foot
               </button>
               <button 
                 onClick={() => setActiveSide('right')}
-                className={`px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSide === 'right' ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
+                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSide === 'right' ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
               >
                 Right Foot
               </button>
@@ -103,7 +104,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
           onClick={() => onSave({ name, description, leftTransform, rightTransform, skipLeft, skipRight })}
           disabled={!name || (skipLeft && skipRight)}
           className={`
-            px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-3 transition-all
+            px-5 lg:px-8 py-3.5 lg:py-4 rounded-full text-[10px] font-black uppercase tracking-[0.2em] lg:tracking-[0.3em] flex items-center gap-3 transition-all
             ${!name || (skipLeft && skipRight)
               ? 'bg-ink/5 text-ink/20 cursor-not-allowed'
               : 'bg-ink text-background-main hover:scale-105 active:scale-95 shadow-2xl shadow-ink/10'
@@ -115,9 +116,11 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
         </button>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      {/* Task 93: below `lg` the three columns stack - canvas, then the foot being
+          calibrated, then the name / foot management - and the body scrolls. */}
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row overflow-y-auto lg:overflow-hidden no-scrollbar">
         {/* Left Control Panel */}
-        <aside className="w-80 border-r border-ink/5 bg-ink/5 overflow-y-auto no-scrollbar p-8 space-y-10">
+        <aside className="order-3 lg:order-1 w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-r border-ink/5 bg-ink/5 lg:overflow-y-auto no-scrollbar p-5 lg:p-8 space-y-8 lg:space-y-10">
           <div className="space-y-8">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-text-secondary">
@@ -174,7 +177,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
             </div>
           </div>
 
-          <div className="p-6 bg-accent/5 border border-accent/10 rounded-3xl space-y-3">
+          <div className="hidden lg:block p-6 bg-accent/5 border border-accent/10 rounded-3xl space-y-3">
              <div className="flex items-center gap-2 text-accent">
                <Info size={14} />
                <span className="text-[9px] font-black uppercase tracking-widest">Usage Note</span>
@@ -186,7 +189,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
         </aside>
 
         {/* Studio Area */}
-        <main className="flex-1 p-8 relative overflow-hidden bg-ink/5">
+        <main className="order-1 lg:order-2 shrink-0 lg:shrink h-[56dvh] min-h-[20rem] lg:h-auto lg:flex-1 p-2 lg:p-8 relative overflow-hidden bg-ink/5">
           <ShoeCanvas 
             leftImageUrl={leftImageUrl}
             rightImageUrl={rightImageUrl}
@@ -200,8 +203,8 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
         </main>
 
         {/* Right Transform Panel */}
-        <aside className="w-80 border-l border-ink/5 bg-ink/5 overflow-y-auto no-scrollbar p-8">
-           <div className="mb-10 flex items-center justify-between">
+        <aside className="order-2 lg:order-3 w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-ink/5 bg-ink/5 lg:overflow-y-auto no-scrollbar p-5 lg:p-8">
+           <div className="mb-6 lg:mb-10 flex items-center justify-between">
               <h3 className="text-[10px] font-black text-text-primary uppercase tracking-[0.3em]">
                 {activeSide === 'left' ? 'LEFT FOOT' : 'RIGHT FOOT'}
               </h3>

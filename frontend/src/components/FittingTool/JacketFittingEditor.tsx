@@ -168,10 +168,11 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-background-main/50">
-      <div className="flex flex-col md:flex-row gap-6 items-center justify-between mb-8">
-        <div className="flex items-center gap-6">
+      <div className="shrink-0 flex flex-col lg:flex-row gap-3 lg:gap-6 lg:items-center justify-between mb-3 lg:mb-8">
+        <div className="flex items-center gap-3 lg:gap-6">
           <button 
             onClick={onBack}
+            aria-label="Back"
             className="p-3 hover:bg-ink/5 rounded-2xl text-text-secondary hover:text-text-primary transition-all border border-ink/5"
           >
             <ChevronLeft size={20} />
@@ -181,12 +182,12 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               <Layers size={16} className="text-accent" />
               Modular Jacket Studio
             </h2>
-            <p className="text-[8px] font-black text-text-secondary tracking-[0.4em] uppercase opacity-40">Precision Segment Orchestration</p>
+            <p className="hidden sm:block text-[8px] font-black text-text-secondary tracking-[0.4em] uppercase opacity-40">Precision Segment Orchestration</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-           <div className="bg-ink/[0.02] border border-ink/5 rounded-2xl p-1 flex gap-1">
+        <div className="flex items-center gap-3 min-w-0">
+           <div className="bg-ink/[0.02] border border-ink/5 rounded-2xl p-1 flex gap-1 max-w-full overflow-x-auto no-scrollbar">
               {Object.keys(segments).map(name => (
                 <button
                   key={name}
@@ -194,7 +195,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                     setActivePart(name);
                     setIsGroupMode(false);
                   }}
-                  className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
+                  className={`shrink-0 px-4 py-2.5 rounded-xl text-[9px] lg:text-[8px] font-black uppercase tracking-widest transition-all ${
                     activePart === name && !isGroupMode 
                       ? 'bg-accent text-on-accent' 
                       : 'text-text-secondary hover:text-text-primary'
@@ -207,7 +208,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                 onClick={() => {
                   setIsGroupMode(true);
                 }}
-                className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all ${
+                className={`shrink-0 px-4 py-2.5 rounded-xl text-[9px] lg:text-[8px] font-black uppercase tracking-widest transition-all ${
                   isGroupMode 
                     ? 'bg-accent text-on-accent' 
                     : 'text-text-secondary hover:text-text-primary'
@@ -219,9 +220,10 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
         </div>
       </div>
 
-      <div className="flex-grow flex flex-col md:flex-row gap-8 overflow-hidden">
-        <aside className="w-full md:w-80 flex flex-col gap-8 order-2 md:order-1 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-10">
+      {/* Task 93: stacked below `lg` (canvas, calibration, identity) and scrolling. */}
+      <div className="flex-grow min-h-0 flex flex-col lg:flex-row gap-4 lg:gap-8 overflow-y-auto lg:overflow-hidden no-scrollbar">
+        <aside className="w-full lg:w-80 shrink-0 flex flex-col gap-6 lg:gap-8 order-2 lg:order-1 lg:overflow-y-auto no-scrollbar pb-4 lg:pb-10">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-3xl lg:rounded-[2.5rem] p-5 lg:p-8 space-y-8 lg:space-y-10">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
               <div className={`w-2 h-2 rounded-full ${isGroupMode ? 'text-emerald-400 bg-emerald-400' : 'text-accent bg-accent'}`} />
               <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">
@@ -252,13 +254,13 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                    min="0" max="0.6" step="0.01"
                    value={modularData.openness || 0}
                    onChange={(e) => handleOpennessChange(parseFloat(e.target.value))}
-                   className="w-full h-1 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
+                   className="w-full h-1 touch:h-2 touch:my-2 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
                  />
                </div>
             </div>
           </div>
 
-          <div className="mt-auto bg-accent/5 border border-accent/10 rounded-3xl p-6 flex gap-4">
+          <div className="hidden lg:flex mt-auto bg-accent/5 border border-accent/10 rounded-3xl p-6 gap-4">
             <Info size={16} className="text-accent shrink-0" />
             <p className="text-[9px] text-text-secondary leading-relaxed uppercase tracking-widest font-bold opacity-60">
               Use Group Mode to position the entire jacket. Use Center Opening to show inner clothing.
@@ -266,8 +268,8 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
           </div>
         </aside>
 
-        <main className="flex-1 flex flex-col gap-6 order-1 md:order-2">
-          <div className="flex-grow relative min-h-[500px]">
+        <main className="order-1 lg:order-2 shrink-0 lg:shrink h-[56dvh] min-h-[20rem] lg:h-auto lg:flex-1 flex flex-col gap-6">
+          <div className="flex-grow relative min-h-[18rem] lg:min-h-[500px]">
              <JacketCanvas 
                 segments={segments}
                 personaType={personaType}
@@ -289,8 +291,8 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
           </div>
         </main>
 
-        <aside className="w-full md:w-80 flex flex-col gap-8 order-3 overflow-y-auto no-scrollbar pb-10">
-          <div className="bg-background-secondary/20 border border-ink/5 rounded-[2.5rem] p-8 space-y-8">
+        <aside className="w-full lg:w-80 shrink-0 flex flex-col gap-8 order-3 lg:overflow-y-auto no-scrollbar pb-6 lg:pb-10">
+          <div className="bg-background-secondary/20 border border-ink/5 rounded-3xl lg:rounded-[2.5rem] p-5 lg:p-8 space-y-6 lg:space-y-8">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
               <div className="w-2 h-2 bg-emerald-400 rounded-full" />
               <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Modular Identity</h3>
@@ -330,7 +332,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               onClick={handleFinish}
               disabled={!name}
               className={`
-                w-full py-6 rounded-2xl font-black text-[10px] tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl
+                w-full py-5 lg:py-6 rounded-2xl font-black text-[10px] tracking-[0.3em] lg:tracking-[0.4em] uppercase transition-all flex items-center justify-center gap-3 shadow-2xl
                 ${!name
                   ? 'bg-ink/5 text-text-secondary cursor-not-allowed opacity-20' 
                   : 'bg-ink text-background-main hover:scale-[1.02] active:scale-[0.98]'

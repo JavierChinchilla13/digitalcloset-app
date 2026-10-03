@@ -15,7 +15,7 @@ interface ClothingCardProps {
   showManagement?: boolean;
   // Task 65 (Phase 9.5): by default the card keeps its fixed width
   // (w-40 md:w-48), which is what it was written for - a horizontal-scroll
-  // flex row (the orphaned /dashboard's ClosetSection still renders it that
+  // flex row (the removed dashboard's closet strip rendered it that
   // way). Inside a CSS grid that fixed width is wider than the grid column
   // at some breakpoints (measured 192px card in a 182.8px column at 1280px)
   // and squeezes the gap between cards; `fluid` lets the card fill its grid
@@ -58,8 +58,8 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
     e.stopPropagation();
     // Toggles this item on the persona's equip lists (drives the
     // "Equipped" badge below). Task 63 removed a trailing scroll to
-    // #persona here - that element only exists on the orphaned /dashboard,
-    // so on /closet it was a silent no-op.
+    // #persona here - that element belonged to the (since removed) dashboard
+    // page, so on /closet it was a silent no-op.
     setEquippedItem(item);
   };
 
@@ -91,11 +91,12 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
         {/* Favorite Star (Always visible if favorite, otherwise on hover) */}
         <button
           onClick={handleFavorite}
+          aria-label={item.isFavorite ? 'Remove from favourites' : 'Add to favourites'}
           className={`
-            absolute top-2 right-2 p-1.5 rounded-full backdrop-blur-md transition-all z-10
+            absolute top-2 right-2 p-1.5 touch:p-2.5 rounded-full backdrop-blur-md transition-all z-10
             ${item.isFavorite 
               ? 'bg-yellow-500 text-white scale-100 opacity-100' 
-              : 'bg-black/40 text-white/40 opacity-0 group-hover:opacity-100 hover:text-yellow-500'
+              : 'bg-black/40 text-white/60 opacity-0 group-hover:opacity-100 touch:opacity-100 hover:text-yellow-500'
             }
           `}
         >
@@ -103,7 +104,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
         </button>
 
         {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-background-main/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-3">
+        <div className="absolute inset-0 bg-background-main/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 touch:hidden transition-all duration-300 flex flex-col items-center justify-center gap-3">
           <div className="flex gap-2">
             <button 
               onClick={(e) => {
@@ -156,6 +157,36 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
             used to sit here - the category is already the caption under the
             card. */}
         <PersonaBadge item={item} />
+      </div>
+
+      {/* Task 92: touch screens have no hover, so the actions that appear over the
+          picture on a desktop live in a row under it (details / edit / delete). */}
+      <div className="hidden touch:flex gap-2 mb-2">
+        <button
+          onClick={(e) => { e.stopPropagation(); onViewDetails(item); }}
+          aria-label={`Details of ${item.name}`}
+          className="flex-1 h-10 flex items-center justify-center rounded-lg bg-ink/5 text-text-primary border border-ink/10"
+        >
+          <Info size={16} />
+        </button>
+        {showManagement && (
+          <>
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(item); }}
+              aria-label={`Edit ${item.name}`}
+              className="flex-1 h-10 flex items-center justify-center rounded-lg bg-ink/5 text-text-primary border border-ink/10"
+            >
+              <Edit2 size={16} />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(item); }}
+              aria-label={`Delete ${item.name}`}
+              className="flex-1 h-10 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/10"
+            >
+              <Trash2 size={16} />
+            </button>
+          </>
+        )}
       </div>
 
       <div className="px-1">

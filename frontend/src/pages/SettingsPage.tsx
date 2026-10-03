@@ -264,13 +264,13 @@ const SettingsPage = () => {
     value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'unknown';
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         <div className="space-y-4 mb-10">
           <p className="flex items-center gap-2 text-[10px] font-medium tracking-[0.3em] text-accent uppercase">
             <SettingsIcon size={14} /> Account
           </p>
-          <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
+          <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
             SETTINGS
           </h1>
         </div>

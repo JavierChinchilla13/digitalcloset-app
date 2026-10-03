@@ -9,6 +9,7 @@ import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import DemoSignupModal from '../components/DemoSignupModal';
 import { SelectionCard } from '../components/OutfitSelectionCards';
 import { toggleWithShoeRule } from '../utils/shoeSelection';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 
 // Task 81: a genuinely-working outfit builder for signed-out visitors,
 // mirroring FlatOutfitBuilderPage's browse-grid-left / selection-panel-right
@@ -59,6 +60,12 @@ const DemoPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
   const [gateReason, setGateReason] = useState<string | null>(null);
+  // Task 92: on a phone the Attire tab is two screens (the closet to pick from, and
+  // your outfit), like the real builder; wide screens (lg+) show both side by side.
+  const [phoneTab, setPhoneTab] = useState<'closet' | 'outfit'>('closet');
+  // lg and up: the two-panel layout; below it (a phone) the controls are rearranged
+  // (see useMediaQuery for why this is JS and not just CSS).
+  const isWide = useMediaQuery('(min-width: 1024px)', true);
 
   const filteredItems = useMemo(
     () => items.filter((item) => {
@@ -96,14 +103,14 @@ const DemoPage = () => {
   );
 
   const tabClass = (tab: 'attire' | 'closet') =>
-    `flex items-center gap-2 px-5 py-2.5 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-all ${
+    `flex items-center gap-2 px-3 lg:px-5 py-2 lg:py-2.5 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-all ${
       activeTab === tab ? 'bg-ink text-background-main' : 'text-text-secondary hover:text-text-primary'
     }`;
 
   return (
-    <div className="h-screen bg-background-main flex flex-col overflow-hidden pt-16">
-      <header className="px-8 py-5 border-b border-ink/5 bg-background-secondary/20 flex items-center justify-between gap-4 z-20 shrink-0">
-        <div className="flex items-center gap-6 min-w-0">
+    <div className="h-[calc(100dvh-5.5rem-env(safe-area-inset-top))] md:h-dvh bg-background-main flex flex-col overflow-hidden md:pt-16">
+      <header className="px-3 py-2 lg:px-8 lg:py-5 border-b border-ink/5 bg-background-secondary/20 flex flex-wrap lg:flex-nowrap items-center justify-between gap-2 lg:gap-4 z-20 shrink-0">
+        <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <div className="flex items-center gap-1 p-1 rounded-xl bg-ink/5 border border-ink/5">
             <button onClick={() => setActiveTab('attire')} className={tabClass('attire')}>
               <Shirt size={14} /> Attire
@@ -112,17 +119,17 @@ const DemoPage = () => {
               <LayoutGrid size={14} /> Closet
             </button>
           </div>
-          <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase whitespace-nowrap">
+          <p className="hidden lg:block text-[10px] font-medium text-accent tracking-[0.4em] uppercase whitespace-nowrap">
             {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
           </p>
           {swapNote && (
-            <p role="status" className="text-[10px] font-medium text-text-secondary tracking-widest uppercase">
+            <p role="status" className="order-last basis-full lg:order-none lg:basis-auto text-[10px] font-medium text-text-secondary tracking-widest uppercase">
               {swapNote}
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-4">
           <span
             title="This demo closet lives only in your browser - nothing is saved."
             className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-ink/10 bg-ink/[0.03] text-[9px] font-medium tracking-[0.25em] uppercase text-text-secondary"
@@ -131,29 +138,54 @@ const DemoPage = () => {
           </span>
           <button
             onClick={() => setGateReason('to save this outfit')}
-            className="px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em]"
+            className="justify-center px-4 lg:px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em]"
           >
-            <Save size={16} /> SAVE OUTFIT
+            <Save size={16} /> <span className="lg:hidden">SAVE</span><span className="hidden lg:inline">SAVE OUTFIT</span>
           </button>
         </div>
       </header>
 
       {activeTab === 'attire' ? (
-        <div className="flex-grow flex overflow-hidden">
-          <aside className="w-96 shrink-0 border-r border-ink/5 flex flex-col bg-background-secondary/5">
-            <div className="p-6 border-b border-ink/5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
-                  Available Pieces
-                </h3>
+        <div className="flex-grow min-h-0 flex flex-col lg:flex-row overflow-hidden">
+          {/* Phone only (below lg): switch between the closet and the outfit. */}
+          <div className="lg:hidden shrink-0 px-3 py-1.5 border-b border-ink/5 bg-background-secondary/20">
+            <div role="tablist" aria-label="Demo outfit builder" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-ink/5">
+              {([
+                ['closet', 'Pieces'],
+                ['outfit', `Outfit (${selectedItemIds.length})`],
+              ] as const).map(([tab, label]) => (
                 <button
-                  onClick={() => setGateReason('to add your own clothes')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest text-accent hover:bg-accent/10 transition-colors"
+                  key={tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={phoneTab === tab}
+                  onClick={() => setPhoneTab(tab)}
+                  className={`py-2 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-all ${
+                    phoneTab === tab ? 'bg-ink text-background-main' : 'text-text-secondary hover:text-text-primary'
+                  }`}
                 >
-                  <Plus size={12} /> Add Garment
+                  {label}
                 </button>
-              </div>
-              <div className="relative">
+              ))}
+            </div>
+          </div>
+
+          <aside className={`${phoneTab === 'closet' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-96 lg:shrink-0 flex-1 min-h-0 lg:flex-none lg:border-r border-ink/5 bg-background-secondary/5`}>
+            <div className="p-3 lg:p-6 border-b border-ink/5 flex items-center gap-2 lg:block lg:space-y-4">
+              {isWide && (
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
+                    Available Pieces
+                  </h3>
+                  <button
+                    onClick={() => setGateReason('to add your own clothes')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest text-accent hover:bg-accent/10 transition-colors"
+                  >
+                    <Plus size={12} /> Add Garment
+                  </button>
+                </div>
+              )}
+              <div className="relative flex-1 min-w-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
                 <input
                   type="text"
@@ -163,9 +195,20 @@ const DemoPage = () => {
                   className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
                 />
               </div>
-              <ClothingCategoryFilter value={activeCategory} onChange={setActiveCategory} />
+              <div className="w-[8.5rem] shrink-0 lg:w-auto">
+                <ClothingCategoryFilter value={activeCategory} onChange={setActiveCategory} />
+              </div>
+              {!isWide && (
+                <button
+                  onClick={() => setGateReason('to add your own clothes')}
+                  aria-label="Add garment"
+                  className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-ink/10 text-accent"
+                >
+                  <Plus size={18} />
+                </button>
+              )}
             </div>
-            <div className="flex-grow overflow-y-auto no-scrollbar p-6 space-y-8">
+            <div className="flex-grow overflow-y-auto no-scrollbar p-3 lg:p-6 space-y-5 lg:space-y-8">
               {browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                   <Shirt size={32} className="text-text-secondary" />
@@ -173,11 +216,11 @@ const DemoPage = () => {
                 </div>
               ) : (
                 browseSections.map((section) => (
-                  <div key={section.label} className="space-y-3">
+                  <div key={section.label} className="space-y-2 lg:space-y-3">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
                       {section.label}
                     </p>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-3 gap-2 lg:grid-cols-2 lg:gap-4">
                       {section.items.map((item) => {
                         const active = selectedItemIds.includes(item.itemId);
                         return (
@@ -187,22 +230,22 @@ const DemoPage = () => {
                             whileTap={{ scale: 0.95 }}
                             onClick={() => toggleItem(item.itemId)}
                             className={`
-                              relative aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300 group
+                              relative aspect-[3/4] rounded-xl lg:rounded-2xl overflow-hidden cursor-pointer bg-ink/5 border transition-all duration-300 group
                               ${active ? 'border-accent ring-2 ring-accent/20' : 'border-ink/5 hover:border-ink/20'}
                             `}
                           >
                             <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
-                            <div className="absolute top-1.5 right-1.5 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-1.5 right-1.5 z-10 flex gap-1 opacity-0 group-hover:opacity-100 touch:hidden transition-opacity">
                               <button
                                 onClick={(e) => { e.stopPropagation(); setGateReason('to edit this item'); }}
-                                className="p-1.5 bg-black/60 hover:bg-black/80 rounded-full text-white"
+                                className="p-1.5 touch:p-2.5 bg-black/60 hover:bg-black/80 rounded-full text-white"
                                 title="Edit"
                               >
                                 <Pencil size={10} />
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setGateReason('to delete this item'); }}
-                                className="p-1.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white"
+                                className="p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white"
                                 title="Delete"
                               >
                                 <Trash2 size={10} />
@@ -216,8 +259,8 @@ const DemoPage = () => {
                                 <X size={16} className="rotate-45" />
                               </div>
                             </div>
-                            <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
-                              <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
+                            <div className="absolute bottom-0 left-0 right-0 p-1.5 lg:p-3 bg-gradient-to-t from-black/80 to-transparent">
+                              <p className="text-[9px] lg:text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
                             </div>
                           </motion.div>
                         );
@@ -227,9 +270,32 @@ const DemoPage = () => {
                 ))
               )}
             </div>
+            {/* Phone: what you have picked so far, and the way to the Outfit tab. */}
+            {!isWide && selectedItemIds.length > 0 && (
+              <div className="shrink-0 border-t border-ink/10 bg-background-main px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex-1 min-w-0 flex gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label="Selected pieces">
+                    {selectedItems.map((item) => (
+                      <div key={item.itemId} className="shrink-0 w-11 h-[3.75rem] rounded-lg overflow-hidden bg-ink/5 border border-accent/30">
+                        <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full" />
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPhoneTab('outfit')}
+                    aria-label={`View outfit (${selectedItemIds.length})`}
+                    className="shrink-0 h-12 px-3.5 rounded-xl bg-ink text-background-main text-[10px] font-medium uppercase tracking-[0.15em] leading-tight flex flex-col items-center justify-center"
+                  >
+                    <span>Outfit</span>
+                    <span className="opacity-70">{selectedItemIds.length}</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </aside>
 
-          <main className="flex-grow relative bg-background-main overflow-y-auto no-scrollbar p-6">
+          <main className={`${phoneTab === 'outfit' ? 'block' : 'hidden'} lg:block flex-1 min-h-0 relative bg-background-main overflow-y-auto no-scrollbar p-4 lg:p-6`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
                 Your Selection
@@ -247,7 +313,8 @@ const DemoPage = () => {
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
                 <Shirt size={40} className="text-text-secondary" />
                 <p className="text-[10px] font-medium uppercase tracking-widest">
-                  Select pieces from the left to build an outfit
+                  <span className="lg:hidden">Pick pieces in the Pieces tab to build an outfit</span>
+                  <span className="hidden lg:inline">Select pieces from the left to build an outfit</span>
                 </p>
               </div>
             ) : (
@@ -331,7 +398,7 @@ const DemoPage = () => {
                         active ? 'border-accent ring-2 ring-accent/20 shadow-lg' : 'border-ink/5 bg-ink/5 hover:border-ink/20'
                       }`}>
                         <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-background-main/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col items-center justify-center gap-3">
+                        <div className="absolute inset-0 bg-background-main/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 touch:hidden transition-all duration-300 flex flex-col items-center justify-center gap-3">
                           <div className="flex gap-2">
                             <button
                               onClick={(e) => { e.stopPropagation(); setGateReason('to edit this item'); }}
@@ -354,6 +421,23 @@ const DemoPage = () => {
                             <Shirt size={10} />
                             <span>{active ? 'Selected' : 'Select'}</span>
                           </div>
+                        </div>
+                        {/* Touch screens have no hover: small always-visible actions instead of the overlay. */}
+                        <div className="hidden touch:flex absolute top-2 right-2 z-10 gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setGateReason('to edit this item'); }}
+                            className="p-2.5 bg-black/60 rounded-full text-white"
+                            aria-label={`Edit ${item.name}`}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setGateReason('to delete this item'); }}
+                            className="p-2.5 bg-black/60 rounded-full text-white"
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       </div>
                       <div className="px-1">

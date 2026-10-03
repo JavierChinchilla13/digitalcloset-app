@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Loader2, X } from 'lucide-react';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
+import ModalShell from './ModalShell';
 
 interface DeleteConfirmationModalProps {
   itemId: number | null;
@@ -42,24 +42,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-background-main/90 backdrop-blur-sm"
-          />
-
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-md bg-background-secondary border border-rose-500/20 rounded-xl shadow-lg overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
+    <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-md bg-background-secondary border border-rose-500/20 rounded-xl shadow-lg" backdropClassName="bg-background-main/90 backdrop-blur-sm">
             <div className="p-8 text-center">
               <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-500">
                 <AlertTriangle size={40} />
@@ -98,10 +81,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
             >
               <X size={20} />
             </button>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </ModalShell>
   );
 };
 

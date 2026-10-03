@@ -235,7 +235,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 sm:p-4 md:p-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -248,15 +248,17 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className={`relative bg-background-secondary border border-ink/5 rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ${
-              view !== 'form' ? 'w-full max-w-7xl h-[90vh]' : 'w-full max-w-2xl'
+            className={`relative bg-background-secondary border border-ink/5 sm:rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ${
+              view !== 'form'
+                ? 'w-full max-w-7xl h-dvh sm:h-[90dvh]'
+                : 'w-full max-w-2xl h-dvh sm:h-auto sm:max-h-[calc(100dvh-2rem)] flex flex-col'
             }`}
             onClick={(e) => e.stopPropagation()}
           >
             {view === 'form' ? (
               <>
                 {/* Header */}
-                <div className="flex justify-between items-center p-8 border-b border-ink/5">
+                <div className="flex justify-between items-center p-5 sm:p-8 border-b border-ink/5 shrink-0">
                   <div>
                     <h2 className="text-2xl font-light tracking-tight text-text-primary">Edit Garment</h2>
                     <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase mt-1 opacity-50">Refining your collection</p>
@@ -269,9 +271,9 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   </button>
                 </div>
 
-                <div className="p-8 space-y-8 max-h-[70vh] overflow-y-auto no-scrollbar">
+                <div className="p-5 sm:p-8 space-y-6 sm:space-y-8 flex-1 min-h-0 overflow-y-auto no-scrollbar">
                   {/* Studio Quick Access */}
-                  <div className="p-6 bg-accent/5 border border-accent/20 rounded-3xl flex items-center justify-between">
+                  <div className="p-4 sm:p-6 bg-accent/5 border border-accent/20 rounded-3xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex items-center gap-4">
                       <div className="p-3 bg-accent/10 rounded-2xl text-accent">
                         <Sparkles size={20} />
@@ -283,7 +285,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     </div>
                     <button 
                       onClick={handleOpenStudio}
-                      className="px-6 py-3 bg-accent hover:bg-accent-hover text-on-accent text-[10px] font-medium uppercase tracking-widest rounded-xl transition-all shadow-lg"
+                      className="px-6 py-3.5 bg-accent hover:bg-accent-hover text-on-accent text-[10px] font-medium uppercase tracking-widest rounded-xl transition-all shadow-lg"
                     >
                       Open Studio
                     </button>
@@ -354,7 +356,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 </div>
 
                 {/* Footer */}
-                <div className="p-8 bg-ink/5 border-t border-ink/5 flex items-center justify-between">
+                <div className="p-4 sm:p-8 pb-[max(1rem,env(safe-area-inset-bottom))] bg-ink/5 border-t border-ink/5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
                   <div className="flex items-center gap-3">
                     {status === 'updating' && (
                       <div className="flex items-center gap-2 text-accent">
@@ -376,10 +378,10 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     )}
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-2 sm:gap-4">
                     <button 
                       onClick={onClose}
-                      className="px-8 py-4 text-text-secondary hover:text-text-primary text-[10px] font-medium uppercase tracking-widest transition-colors"
+                      className="flex-1 sm:flex-none px-4 sm:px-8 py-4 text-text-secondary hover:text-text-primary text-[10px] font-medium uppercase tracking-widest transition-colors"
                     >
                       Cancel
                     </button>
@@ -387,7 +389,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       onClick={() => handleUpdate()}
                       disabled={status === 'updating' || !name}
                       className={`
-                        px-10 py-4 rounded-full text-[10px] font-medium uppercase tracking-[0.2em] transition-all shadow-md
+                        flex-1 sm:flex-none px-6 sm:px-10 py-4 rounded-full text-[10px] font-medium uppercase tracking-[0.2em] transition-all shadow-md
                         ${status === 'updating' || !name
                           ? 'bg-ink/5 text-ink/20 cursor-not-allowed'
                           : 'bg-accent hover:bg-accent-hover text-on-accent hover:scale-105 active:scale-95'
@@ -400,7 +402,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 </div>
               </>
             ) : view === 'cleanup' ? (
-              <div className="p-4 md:p-8 h-full relative">
+              <div className="p-3 md:p-8 h-full relative">
                 <GarmentCleanup
                   imageUrl={cleanedImageUrl ?? item?.imageUrl ?? ''}
                   exportMode="image-bounds"
@@ -424,7 +426,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 )}
               </div>
             ) : view === 'jacket' ? (
-              <div className="p-4 md:p-8 h-full">
+              <div className="p-3 md:p-8 h-full">
                 <JacketFittingEditor
                   segments={jacketSegments}
                   personaType={item?.personaType || PersonaType.MALE}
@@ -435,7 +437,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 />
               </div>
             ) : (
-              <div className="p-4 md:p-8 h-full">
+              <div className="p-3 md:p-8 h-full">
                 <FittingEditor
                   imageUrl={cleanedImageUrl ?? item?.imageUrl ?? ''}
                   category={category}

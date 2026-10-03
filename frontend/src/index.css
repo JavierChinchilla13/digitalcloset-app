@@ -1,6 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
+/* Task 91: `touch:` applies on devices that cannot hover (phones, tablets). Tailwind v4
+   only applies `hover:` / `group-hover:` where hover exists, so a control that is
+   revealed on hover is invisible on a phone; add `touch:` to the same element to show
+   it there (e.g. `opacity-0 group-hover:opacity-100 touch:opacity-100`). */
+@custom-variant touch (@media (hover: none));
+
 /* Task 67, Phase 9.6 - VYSVI theme tokens.
    The palette is defined once per theme as plain CSS variables (--vy-*), then
    exposed to Tailwind through `@theme inline` below, so every existing
@@ -86,7 +92,6 @@
   --color-accent-hover: var(--vy-accent-hover);
   --color-on-accent: var(--vy-on-accent);
   --color-ink: var(--vy-ink);
-  --color-line: var(--vy-line);
   --color-stage: var(--vy-stage);
   --color-stage-accent: var(--vy-stage-accent);
 }
@@ -96,13 +101,6 @@
      Cormorant Garamond: the editorial serif for large headings. */
   --font-sans: "Jost", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
-
-  --animate-float: float 6s ease-in-out infinite;
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-20px); }
-  }
 }
 
 @layer base {
@@ -142,4 +140,25 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Task 91: phone ergonomics (unlayered on purpose, so it beats utility classes).
+   - iOS Safari zooms the page when an input smaller than 16px is focused: keep
+     text inputs at 16px on phones.
+   - `touch-action: manipulation` removes the double-tap-to-zoom delay on controls. */
+@media (max-width: 639px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']):not([type='color']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+button,
+a,
+[role='button'],
+input,
+select,
+textarea,
+summary {
+  touch-action: manipulation;
 }

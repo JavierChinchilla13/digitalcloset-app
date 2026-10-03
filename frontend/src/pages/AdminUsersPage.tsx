@@ -68,13 +68,13 @@ const AdminUsersPage = () => {
     new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         <div className="space-y-4 mb-10">
           <p className="flex items-center gap-2 text-[10px] font-medium tracking-[0.3em] text-accent uppercase">
             <ShieldCheck size={14} /> Administration
           </p>
-          <h1 className="text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
+          <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
             USER <span className="text-accent">ACCOUNTS</span>
           </h1>
           <div className="flex items-center justify-between gap-4 flex-wrap">

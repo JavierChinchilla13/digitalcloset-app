@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle, Star } from 'lucide-react';
+import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle, Star, MoreHorizontal } from 'lucide-react';
 import type { ClothingItem, Outfit } from '../types';
 
 const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
@@ -22,6 +22,8 @@ interface OutfitCardProps {
 const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPersona, setShowPersona] = useState(false);
+  // Touch screens only: the "..." menu with the less common actions (see below).
+  const [menuOpen, setMenuOpen] = useState(false);
   const { removeOutfit, duplicateOutfit, mainOutfitId, setMainOutfit } = useOutfitStore();
   // Task 78: is this the account's main outfit?
   const isMain = mainOutfitId === outfit.outfitId;
@@ -35,6 +37,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const equippedIds = useMemo(() => equippedFromOutfitItems(outfit.items), [outfit.items]);
 
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -87,7 +90,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
 
   // "Wear Style" (Task 63, Phase 9.5). This used to write the older
   // equip-id lists and then scroll to #persona - an element that only
-  // exists on the orphaned /dashboard, so from /outfits it silently did
+  // existed on the (since removed) dashboard, so from /outfits it silently did
   // nothing visible. Now it takes the user to Attire ("/", the flat builder)
   // with the outfit loaded and the persona preview already on
   // (open question #22).
@@ -174,7 +177,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
         </div>
         
         {/* Actions Overlay */}
-        <div className="absolute inset-0 bg-background-main/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-between p-6 backdrop-blur-[2px]">
+        <div className="absolute inset-0 bg-background-main/60 opacity-0 group-hover:opacity-100 touch:hidden transition-all duration-300 flex flex-col justify-between p-6 backdrop-blur-[2px]">
           <div className="flex justify-end gap-2">
             <button 
               onClick={() => setShowPersona(!showPersona)}
@@ -265,7 +268,58 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
           )}
         </AnimatePresence>
       </div>
-      
+
+      {/* Task 92: touch screens have no hover, so the overlay's actions live here: Wear
+          style and Set-as-main stay one tap away, the rest are behind "...". */}
+      <div className="hidden touch:block relative mt-3">
+        <div className="flex gap-2">
+          <button
+            onClick={handleApply}
+            className="flex-1 h-10 rounded-xl bg-ink text-background-main font-medium text-[10px] tracking-[0.15em] flex items-center justify-center gap-1.5 active:scale-95 transition-all"
+          >
+            <Play size={12} fill="currentColor" /> WEAR
+          </button>
+          <button
+            onClick={() => runSafely(() => setMainOutfit(outfit.outfitId), "Couldn't set your main outfit")}
+            disabled={isMain}
+            aria-label={isMain ? 'Main outfit' : 'Set as main outfit'}
+            className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border disabled:pointer-events-none ${isMain ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 text-text-primary border-ink/10'}`}
+          >
+            <Star size={16} fill={isMain ? 'currentColor' : 'none'} />
+          </button>
+          <button
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label="More actions"
+            aria-expanded={menuOpen}
+            className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-ink/10 bg-ink/5 text-text-primary"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+        </div>
+        {menuOpen && (
+          <>
+            <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+            <div role="menu" className="absolute right-0 bottom-full mb-2 w-44 z-30 rounded-xl bg-background-secondary border border-ink/10 shadow-lg p-1.5">
+              {[
+                { label: showPersona ? 'Show items' : 'On persona', icon: Info, run: () => setShowPersona(!showPersona) },
+                { label: 'Duplicate', icon: Copy, run: () => runSafely(() => duplicateOutfit(outfit), "Couldn't duplicate this outfit") },
+                { label: 'Edit', icon: Edit2, run: () => navigate(`/outfits/flat/edit/${outfit.outfitId}`) },
+                { label: 'Delete', icon: Trash2, run: () => setIsDeleting(true), danger: true },
+              ].map(({ label, icon: Icon, run, danger }) => (
+                <button
+                  key={label}
+                  role="menuitem"
+                  onClick={() => { setMenuOpen(false); run(); }}
+                  className={`w-full min-h-11 flex items-center gap-3 px-3 rounded-lg text-[10px] font-medium uppercase tracking-widest ${danger ? 'text-rose-500' : 'text-text-primary'} active:bg-ink/10`}
+                >
+                  <Icon size={14} /> {label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
       <div className="mt-4 px-2 space-y-1">
         <h3 className="text-sm font-bold text-text-primary group-hover:text-accent transition-colors line-clamp-1 uppercase tracking-wider">
           {outfit.name}

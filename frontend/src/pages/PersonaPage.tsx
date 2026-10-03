@@ -52,7 +52,7 @@ const PersonaPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background-main pt-24 pb-20">
+    <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         {/* Header */}
         <div className="mb-16 space-y-4">
@@ -140,7 +140,7 @@ const PersonaPage = () => {
                         </h3>
                         <button
                           onClick={(e) => { e.stopPropagation(); startRename(type.id); }}
-                          className="p-1.5 rounded-lg hover:bg-ink/5 text-text-secondary hover:text-text-primary opacity-0 group-hover:opacity-100 transition-all"
+                          className="p-1.5 rounded-lg hover:bg-ink/5 text-text-secondary hover:text-text-primary opacity-0 group-hover:opacity-100 touch:opacity-100 transition-all"
                           title="Rename"
                         >
                           <Pencil size={13} />
