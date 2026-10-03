@@ -7,7 +7,19 @@
          PROJECT_BLUEPRINT.md Phase 9.7 for how that was verified). Replaces
          the old placeholder favicon.svg (left in public/, unreferenced). -->
     <link rel="icon" type="image/png" sizes="any" href="/favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Task 90: installable on a phone ("Add to Home Screen"): a web-app
+         manifest (name, icons, standalone display, opens on /showcase), the iOS
+         equivalents, and the browser-bar colour. viewport-fit=cover lets the
+         layout use the screen under a notch (the CSS adds the safe-area insets). -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="VYSVI" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#0B0B0C" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#F6F5F3" media="(prefers-color-scheme: light)" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
     <title>VYSVI — Digital Wardrobe</title>
     <!-- Task 67: apply the saved theme - or, if the user never picked one,

@@ -83,9 +83,8 @@ function App() {
           {/* Categories experience (Task 48-51, Phase 9) */}
           <Route path="/categories" element={<ProtectedRoute><CategoriesPage /></ProtectedRoute>} />
           <Route path="/categories/:id" element={<ProtectedRoute><CategoryDetailPage /></ProtectedRoute>} />
-          {/* Task 75, Phase 9.7: only reachable by clicking the navbar logo
-              while signed in (Navbar.tsx retargets it here) - "/" itself
-              stays the Attire builder, unchanged. */}
+          {/* Task 75, Phase 9.7 / Task 90: where login and signup land (and the
+              signed-in navbar logo goes) - "/" itself stays the Attire builder. */}
           <Route path="/showcase" element={<ProtectedRoute><OutfitShowcasePage /></ProtectedRoute>} />
           {/* Task 22: admin-only account management. */}
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
