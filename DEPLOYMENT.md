@@ -140,7 +140,7 @@ on each restart, so it can't hold a database either.)
    |---|---|---|
    | vysvi-api | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | from Neon (above) |
    | vysvi-api | `JWT_SECRET` | `openssl rand -base64 64` |
-   | vysvi-api | `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` | your Gmail / its App password |
+   | vysvi-api | `MAIL_MODE` / `MAIL_RELAY_URL` / `MAIL_RELAY_SECRET` | `relay` / the Apps Script URL / its secret - see "Email without SMTP" below |
    | vysvi-api | `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL` | the website's URL (step 3) |
    | vysvi-web | `VITE_API_URL` | the API's URL + `/api` (step 3) |
    | vysvi-web | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | from Cloudinary |
@@ -157,6 +157,36 @@ on each restart, so it can't hold a database either.)
    register, and make the first admin as in section 3 - with Neon, run that SQL in
    Neon's **SQL Editor**.
 
+### Step 3 - Email without SMTP (the Apps Script relay)
+
+Render's free tier cannot open SMTP connections, and the free email services want a
+domain you own. This works around both: a tiny Google Apps Script, running as your
+Gmail account, receives the app's emails over HTTPS and sends them. It is free, needs
+no domain, and the mail really comes from Gmail (so it is not flagged as spam for
+being sent through a stranger's server). A normal Gmail account can send to 100
+recipients a day this way - far more than password resets and 6-digit codes need.
+
+1. Open <https://script.google.com> signed in as the Gmail that should send the mail,
+   choose **New project**, delete the sample code and paste in `scripts/mail-relay.gs`.
+2. **Project Settings** (the gear) -> **Script properties** -> **Add script property**:
+   name `RELAY_SECRET`, value a long random string (e.g. `openssl rand -hex 32`).
+   Keep a copy: the backend needs the same value.
+3. In the editor pick the function `authorize` and press **Run**. Google asks you to
+   allow the script to send email as you (**Advanced** -> **Go to ... (unsafe)** is
+   normal for your own script). This is a one-time step.
+4. **Deploy** -> **New deployment** -> type **Web app**; *Execute as*: **Me**; *Who has
+   access*: **Anyone**. Deploy and copy the **Web app URL** (ends in `/exec`). The
+   secret is what protects it, so do not share the URL.
+5. On Render, `vysvi-api` -> Environment: add `MAIL_MODE=relay`, `MAIL_RELAY_URL` (the
+   URL from step 4) and `MAIL_RELAY_SECRET` (the value from step 2). The `SPRING_MAIL_*`
+   variables are no longer used and can be removed. Saving redeploys the API.
+6. Ask for a password reset on the site and check the inbox (and spam the first time).
+
+If it fails, the API log says why (search for `Could not send`): "unauthorized" = the two
+secrets differ; "did not answer JSON" = step 4's access is not **Anyone**, or the URL is
+wrong; a quota message = the 100-a-day limit. After editing the script, use **Deploy ->
+Manage deployments -> edit -> New version**: saving alone does not change the live URL.
+
 ### What to expect on the free plans
 
 - **The API sleeps after 15 minutes without traffic**; the next visit waits roughly
@@ -169,9 +199,8 @@ on each restart, so it can't hold a database either.)
   longer) and has **no backup you control** on the free plan: run `pg_dump` against
   the direct connection now and then (`pg_dump "postgresql://USER:PASSWORD@HOST/neondb?sslmode=require" | gzip > backup.sql.gz`).
   Free storage is 0.5 GB.
-- Emails go through Gmail's SMTP; Render may block outbound SMTP on some plans. If
-  the "forgot password" email never arrives and the API log shows a connection
-  timeout, use a provider with an HTTPS API or port 465/2525 (e.g. Resend/Brevo SMTP).
+- **Render's free tier blocks outbound SMTP** (ports 25, 465, 587) since September
+  2025, so Gmail over SMTP times out there. Use the free Apps Script relay below.
 - Different addresses for site and API means the browser makes cross-origin
   requests: that is what the CORS setting is for, and why a wrong
   `CORS_ALLOWED_ORIGINS` shows up as "Network error" in the browser console.
@@ -226,8 +255,10 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `PUBLIC_URL` | yes | The same as a URL (`https://closet.example.com`); used in password-reset links and CORS. |
 | `DB_PASSWORD` | yes | Database password. The backend refuses to start without it. |
 | `JWT_SECRET` | yes | Base64 signing key for login tokens. Refuses to start without it. Changing it logs everyone out. |
-| `SPRING_MAIL_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD` | yes | SMTP account (Gmail: `smtp.gmail.com`, 587, your address, the app password). |
+| `SPRING_MAIL_HOST` / `_PORT` / `_USERNAME` / `_PASSWORD` | yes (SMTP mode) | SMTP account (Gmail: `smtp.gmail.com`, 587, your address, the app password). Not needed with `MAIL_MODE=relay`. |
 | `MAIL_FROM` | no | From address (Gmail requires it to be the account itself - the default). |
+| `MAIL_MODE` | no | `smtp` (default in production) or `relay` (Apps Script, for hosts that block SMTP). |
+| `MAIL_RELAY_URL` / `MAIL_RELAY_SECRET` | yes (relay mode) | The Apps Script web app URL and its shared secret. |
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
 | `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
