@@ -3,8 +3,10 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/authService';
+import { consumeSessionExpiredNotice } from '../api/axios';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Sign-in form. On success the user lands on /showcase (their outfits); a failure shows the server's message.
 const LoginPage = () => {
@@ -12,9 +14,12 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set when the visitor was sent here because their session ended (read once).
+  const [sessionEnded] = useState(consumeSessionExpiredNotice);
   
   const loginStore = useAuthStore(state => state.login);
   const setToken = useAuthStore(state => state.setToken);
+  const logout = useAuthStore(state => state.logout);
   const navigate = useNavigate();
 
   // Logs in, fetches the user profile (for role and name), stores both, and lands on the Showcase.
@@ -33,8 +38,10 @@ const LoginPage = () => {
       
       loginStore(response.token, user);
       navigate('/showcase');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials. Please try again.');
+    } catch (err: unknown) {
+      // The token was stored before the profile fetch, so a failure there must not leave it behind.
+      logout();
+      setError(getApiErrorMessage(err, "Couldn't sign you in. Please try again."));
       console.error('Login error:', err);
     } finally {
       setIsLoading(false);
@@ -53,8 +60,15 @@ const LoginPage = () => {
           <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">Access your digital sanctuary</p>
         </div>
 
+        {sessionEnded && !error && (
+          <div role="status" className="mb-8 p-4 bg-ink/5 border border-ink/10 rounded-2xl text-text-secondary text-xs font-bold text-center uppercase tracking-widest">
+            Your session has ended. Please sign in again.
+          </div>
+        )}
+
         {error && (
-          <motion.div 
+          <motion.div
+            role="alert"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-red-400 text-xs font-bold text-center uppercase tracking-widest"

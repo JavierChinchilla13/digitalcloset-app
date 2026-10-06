@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Mail, ArrowRight, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Step 1 of password reset (Task 21): ask for a reset link. The backend
 // answers identically whether or not the email has an account, so this page
@@ -28,7 +29,7 @@ const ForgotPasswordPage = () => {
       setSentTo(submitted);
       setSentMessage(response.message);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
     } finally {
       setIsLoading(false);
     }

@@ -4,6 +4,7 @@ import { adminService } from '../api/adminService';
 import PasswordInput from './PasswordInput';
 import ModalShell from './ModalShell';
 import { Role, type User } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -57,7 +58,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreated }: CreateUserModalProps) =
       reset();
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to create account');
+      setError(getApiErrorMessage(err, 'Failed to create account'));
     } finally {
       setIsSaving(false);
     }

@@ -3,6 +3,7 @@ import { AlertTriangle, Loader2, X } from 'lucide-react';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
 import ModalShell from './ModalShell';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface DeleteConfirmationModalProps {
   itemId: number | null;
@@ -35,7 +36,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
       onClose();
     } catch (error) {
       console.error('Failed to delete item:', error);
-      showToast('Failed to delete garment', 'error');
+      showToast(getApiErrorMessage(error, 'Failed to delete garment'), 'error');
     } finally {
       setIsDeleting(false);
     }
