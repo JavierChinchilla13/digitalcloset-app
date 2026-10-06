@@ -8,6 +8,7 @@ import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
 import CreateUserModal from '../components/CreateUserModal';
 import { Role, type User } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Admin-only account management (Task 22): list every user and deactivate or
 // reactivate accounts, on the endpoints the backend already had. Reached only
@@ -50,7 +51,7 @@ const AdminUsersPage = () => {
       showToast(`${user.email} ${updated.active ? 'reactivated' : 'deactivated'}`, 'success');
     } catch (err) {
       console.error('Failed to update user:', err);
-      showToast(`Couldn't ${user.active ? 'deactivate' : 'reactivate'} ${user.email}`, 'error');
+      showToast(getApiErrorMessage(err, `Couldn't ${user.active ? 'deactivate' : 'reactivate'} ${user.email}`), 'error');
     } finally {
       setBusyId(null);
     }

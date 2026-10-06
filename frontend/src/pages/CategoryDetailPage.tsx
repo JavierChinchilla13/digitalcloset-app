@@ -12,6 +12,7 @@ import CroppedThumbnail from '../components/CroppedThumbnail';
 import PersonaBadge, { ItemPersonaBadge } from '../components/PersonaBadge';
 import { ClothingCategory, PersonaType } from '../types';
 import type { ClothingItem, Collection, Outfit } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Category detail view (Phase 9 follow-up, point 3). Reached from
 // CategoriesPage's cards at /categories/:id. Shows one Collection's items
@@ -296,8 +297,8 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
     setAddingItemId(itemId);
     try {
       await addItem(collection.collectionId, itemId);
-    } catch {
-      showToast('Failed to add item to category', 'error');
+    } catch (err) {
+      showToast(getApiErrorMessage(err, 'Failed to add item to category'), 'error');
     } finally {
       setAddingItemId(null);
     }
@@ -307,8 +308,8 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
     setAddingOutfitId(outfitId);
     try {
       await addOutfit(collection.collectionId, outfitId);
-    } catch {
-      showToast('Failed to add outfit to category', 'error');
+    } catch (err) {
+      showToast(getApiErrorMessage(err, 'Failed to add outfit to category'), 'error');
     } finally {
       setAddingOutfitId(null);
     }

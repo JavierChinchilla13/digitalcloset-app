@@ -10,6 +10,7 @@ import SectionWrapper from '../components/SectionWrapper';
 import ModalShell from '../components/ModalShell';
 import type { Collection } from '../types';
 import ErrorState from '../components/ErrorState';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Categories management page (Task 49, Phase 9; refined in the Phase 9
 // follow-up). Create/rename/delete a Collection (Task 48) and search the
@@ -80,8 +81,8 @@ const CategoriesPage = () => {
       setNewName('');
       setShowCreateForm(false);
       showToast(`Category "${name}" created`, 'success');
-    } catch {
-      showToast('Failed to create category', 'error');
+    } catch (err) {
+      showToast(getApiErrorMessage(err, 'Failed to create category'), 'error');
     } finally {
       setIsCreating(false);
     }
@@ -104,9 +105,9 @@ const CategoriesPage = () => {
     try {
       await renameCollection(renamingId, name);
       setRenamingId(null);
-    } catch {
+    } catch (err) {
       // Keep the rename box open so the user can retry.
-      showToast("Couldn't rename this category", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't rename this category"), 'error');
     }
   };
 
@@ -117,8 +118,8 @@ const CategoriesPage = () => {
       await deleteCollection(pendingDelete.id);
       showToast(`Category "${pendingDelete.name}" deleted`, 'success');
       setPendingDelete(null);
-    } catch {
-      showToast('Failed to delete category', 'error');
+    } catch (err) {
+      showToast(getApiErrorMessage(err, 'Failed to delete category'), 'error');
     } finally {
       setIsDeleting(false);
     }

@@ -3,6 +3,8 @@ package com.javier.closetapp.security;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +17,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -68,6 +72,17 @@ public class SecurityConfig {
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
+            // Task 95: no / expired / invalid token is a 401 with a message. Spring's
+            // default was an empty 403, indistinguishable from "you may not do that"
+            // (a business 403 such as "Current password is incorrect"), so the frontend
+            // could not tell an expired session from a refused action.
+            .exceptionHandling(handling -> handling.authenticationEntryPoint((request, response, ex) -> {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+                response.getWriter().write("{\"timestamp\":\"" + LocalDateTime.now()
+                        + "\",\"message\":\"Your session has expired. Please sign in again.\"}");
+            }))
             .authenticationProvider(authenticationProvider)
             // Task 24: the request limit on /api/auth/** runs first, so even
             // calls carrying garbage tokens count.

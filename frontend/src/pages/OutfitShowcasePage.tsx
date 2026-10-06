@@ -22,6 +22,7 @@ import CroppedThumbnail from "../components/CroppedThumbnail";
 import ErrorState from "../components/ErrorState";
 import { useToast } from "../components/Toast";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
+import { getApiErrorMessage } from '../utils/apiError';
 
 const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
 
@@ -615,7 +616,7 @@ const OutfitShowcasePage = () => {
       showToast(`"${displayedOutfit.name}" is now your main outfit`, "success");
     } catch (err) {
       console.error("Failed to set main outfit:", err);
-      showToast("Couldn't set your main outfit", "error");
+      showToast(getApiErrorMessage(err, "Couldn't set your main outfit"), "error");
     }
   };
 

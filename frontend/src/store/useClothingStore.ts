@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { PersonaStatus } from '../types';
 import type { ClothingItem } from '../types';
 import { clothingService } from '../api/clothingService';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface ClothingState {
   items: ClothingItem[];
@@ -48,7 +49,7 @@ export const useClothingStore = create<ClothingState>()(
           }));
           set({ items: augmentedItems, isLoading: false });
         } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+          set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
         }
       },
 
@@ -61,7 +62,7 @@ export const useClothingStore = create<ClothingState>()(
           set({ items: [...currentItems, newItem], isLoading: false });
           return newItem;
         } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+          set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
           throw err;
         }
       },
@@ -77,7 +78,7 @@ export const useClothingStore = create<ClothingState>()(
             isLoading: false,
           });
         } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+          set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
           throw err;
         }
       },
@@ -93,7 +94,7 @@ export const useClothingStore = create<ClothingState>()(
             isLoading: false,
           });
         } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+          set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
           throw err;
         }
       },

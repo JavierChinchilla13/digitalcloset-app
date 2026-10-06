@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Same minimum the server enforces on reset (ResetPasswordRequest).
 const MIN_PASSWORD_LENGTH = 8;
@@ -44,7 +45,7 @@ const ResetPasswordPage = () => {
       const response = await authService.resetPassword(token, password);
       setDoneMessage(response.message);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
       setLinkRejected(err.response?.status === 400);
     } finally {
       setIsLoading(false);

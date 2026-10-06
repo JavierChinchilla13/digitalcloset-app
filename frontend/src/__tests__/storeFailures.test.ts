@@ -57,7 +57,8 @@ describe('clothing store failures', () => {
     await expect(useClothingStore.getState().fetchItems()).resolves.toBeUndefined();
 
     const state = useClothingStore.getState();
-    expect(state.error).toBe('network down');
+    // Task 95: a readable sentence, not the raw error text.
+    expect(state.error).toBe('Something went wrong with your closet. Please try again.');
     expect(state.isLoading).toBe(false);
     expect(state.items).toHaveLength(2);
   });
@@ -124,7 +125,7 @@ describe('outfit store failures', () => {
 
     await expect(useOutfitStore.getState().fetchOutfits()).resolves.toBeUndefined();
 
-    expect(useOutfitStore.getState().error).toBe('network down');
+    expect(useOutfitStore.getState().error).toBe('Something went wrong with your outfits. Please try again.');
   });
 
   it('saveOutfit rejects on failure', async () => {
@@ -179,7 +180,7 @@ describe('collection store failures', () => {
 
     await expect(useCollectionStore.getState().fetchCollections()).resolves.toBeUndefined();
 
-    expect(useCollectionStore.getState().error).toBe('network down');
+    expect(useCollectionStore.getState().error).toBe('Something went wrong with your categories. Please try again.');
   });
 
   it('renameCollection rejects on failure and keeps the old name', async () => {

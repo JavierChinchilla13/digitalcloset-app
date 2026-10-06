@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/authService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Account creation form. Registering signs the user in straight away (the backend returns a token).
 const SignupPage = () => {
@@ -17,6 +18,7 @@ const SignupPage = () => {
 
   const loginStore = useAuthStore(state => state.login);
   const setToken = useAuthStore(state => state.setToken);
+  const logout = useAuthStore(state => state.logout);
   const navigate = useNavigate();
 
   // Registers, fetches the full profile, stores the session and lands on the Showcase.
@@ -36,8 +38,10 @@ const SignupPage = () => {
       
       loginStore(response.token, user);
       navigate('/showcase');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error creating account. Email might already be in use.');
+    } catch (err: unknown) {
+      // The token was stored before the profile fetch, so a failure there must not leave it behind.
+      logout();
+      setError(getApiErrorMessage(err, "Couldn't create your account. Please try again."));
       console.error('Signup error:', err);
     } finally {
       setIsLoading(false);
