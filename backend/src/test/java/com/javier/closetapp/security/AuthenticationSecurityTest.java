@@ -143,6 +143,29 @@ class AuthenticationSecurityTest extends IntegrationTestBase {
     }
 
     @Test
+    @DisplayName("Task 95: no token / a bad token is a 401 with a message, not an empty 403")
+    void missingOrBadTokenIs401WithMessage() throws Exception {
+        for (String header : new String[]{null, "Bearer not-a-real-token"}) {
+            var request = get("/api/clothing");
+            if (header != null) request = request.header("Authorization", header);
+
+            mockMvc.perform(request)
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers
+                            .jsonPath("$.message").value("Your session has expired. Please sign in again."));
+        }
+    }
+
+    @Test
+    @DisplayName("Task 95: a refused action by a signed-in user stays a 403 (so it is not mistaken for an expired session)")
+    void signedInRefusalStays403() throws Exception {
+        TestUser user = registerUser();
+
+        mockMvc.perform(get("/api/users").header("Authorization", user.bearer()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("a deactivated user's login is refused")
     void deactivatedUserCannotLogIn() throws Exception {
         TestUser user = registerUser();

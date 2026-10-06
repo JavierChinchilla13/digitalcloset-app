@@ -41,7 +41,8 @@ class RateLimitIntegrationTest extends IntegrationTestBase {
     @DisplayName("the rest of the API is not subject to it")
     void restOfTheApiIsNotLimited() throws Exception {
         for (int i = 0; i < 6; i++) {
-            mockMvc.perform(get("/api/clothing")).andExpect(status().isForbidden());
+            // Always "not signed in" (401, Task 95; it was an empty 403) - never 429.
+            mockMvc.perform(get("/api/clothing")).andExpect(status().isUnauthorized());
         }
     }
 }

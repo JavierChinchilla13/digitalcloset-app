@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Outfit, OutfitItem, OutfitRequest } from '../types';
 import { outfitService } from '../api/outfitService';
 import { userService } from '../api/userService';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface OutfitState {
   outfits: Outfit[];
@@ -57,7 +58,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
       const outfits = await outfitService.getOutfits();
       set({ outfits, isLoading: false });
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
     }
   },
 
@@ -71,7 +72,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
       void get().fetchMainOutfit();
       return newOutfit;
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
   },
@@ -85,7 +86,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
         isLoading: false,
       }));
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
   },
@@ -102,7 +103,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
         isLoading: false,
       }));
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
   },
@@ -125,7 +126,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
       });
       set((state) => ({ outfits: [...state.outfits, newOutfit], isLoading: false }));
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
   },

@@ -9,6 +9,7 @@ import { authService } from '../api/authService';
 import SectionWrapper from '../components/SectionWrapper';
 import PasswordInput from '../components/PasswordInput';
 import { Role } from '../types';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Task 79: account settings - name, email, password, and account status.
 // Each section is its own small form with its own loading/error state, so
@@ -130,7 +131,7 @@ const SettingsPage = () => {
       login(useAuthStore.getState().token!, updated);
       showToast('Profile updated', 'success');
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Couldn't update your profile", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't update your profile"), 'error');
     } finally {
       setIsSavingProfile(false);
     }
@@ -153,7 +154,7 @@ const SettingsPage = () => {
       setEmailStep('code');
       showToast(`Code sent to ${user?.email}`, 'success');
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Couldn't start the email change", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't start the email change"), 'error');
     } finally {
       setIsSavingEmail(false);
     }
@@ -179,7 +180,7 @@ const SettingsPage = () => {
       resetEmailCard();
       showToast('Email updated', 'success');
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Couldn't confirm the code", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't confirm the code"), 'error');
     } finally {
       setIsSavingEmail(false);
     }
@@ -207,7 +208,7 @@ const SettingsPage = () => {
       setPasswordStep('code');
       showToast(`Code sent to ${user?.email}`, 'success');
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Couldn't start the password change", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't start the password change"), 'error');
     } finally {
       setIsSavingPassword(false);
     }
@@ -230,7 +231,7 @@ const SettingsPage = () => {
       resetPasswordCard();
       showToast('Password updated', 'success');
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Couldn't confirm the code", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't confirm the code"), 'error');
     } finally {
       setIsSavingPassword(false);
     }
@@ -255,7 +256,7 @@ const SettingsPage = () => {
       logout();
       navigate('/login');
     } catch (err: any) {
-      showToast(err.response?.data?.message || "Couldn't deactivate your account", 'error');
+      showToast(getApiErrorMessage(err, "Couldn't deactivate your account"), 'error');
       setIsDeactivating(false);
     }
   };

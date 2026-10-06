@@ -6832,3 +6832,34 @@ Fifth and last checkpoint of phase 12 (the add / edit garment flows, which were 
 - **Known / not done:** `CANVAS_PAD` (56px) is unchanged, so the persona is small on a 375px canvas;
   no two-finger pinch zoom in the Cleanup Studio (zoom buttons + Pan work); no real-device test of a
   finger drag on a Fabric handle (the browser pane drives mouse input only).
+
+### Task 95 - Login and app error messages (2026-10-05, branch `phase-13-error-messages`)
+
+Reported: a wrong password or an unknown email on the sign-in form showed no error, just a page that
+seemed to reload forever.
+- **Cause:** the axios response interceptor treated every 401 and 403 as "session expired": it logged
+  out and did `window.location.href = '/login'`, a full reload that erased the form's error. A wrong
+  password is a 401; "Current password is incorrect" (Settings) is a 403 and signed the user out too.
+  The backend answered a missing / expired token with Spring's default empty 403, so the frontend
+  could not tell an expired session from a refused action.
+- **Backend:** `SecurityConfig` has an `authenticationEntryPoint`: no / expired / invalid token is a
+  401 with `{message: "Your session has expired. Please sign in again."}`; a signed-in refusal stays a
+  403 (`GlobalExceptionHandler`). `AuthenticationSecurityTest` (+2), `RateLimitIntegrationTest` now
+  expects 401 for "not signed in".
+- **`api/axios.ts`:** only a 401 on a request that carried a token and is not under `/auth/` ends the
+  session (logout, a `session-expired` flag in sessionStorage, full load of `/login` so nothing of the
+  old session stays in memory). The login page shows "Your session has ended" once. `timeout: 60000`
+  (a sleeping free-tier API needs up to ~1 min; before, a dead request spun forever).
+- **`utils/apiError.ts` - `getApiErrorMessage(err, fallback, {ownMessages})`:** the server's reason;
+  the first field reason for a 400 validation answer (was just "Validation failed"); 429 -> wait and
+  retry; no answer or 502/503/504 (a sleeping Render API) -> "Can't reach the server..."; other 5xx ->
+  the screen's own sentence; a bare `Error` -> the fallback (own-message flows opt in). Used by Login,
+  Signup, Forgot / Reset password, CreateUserModal, Settings (6 places), Categories, Category detail,
+  Admin users, Showcase main outfit, delete garment, EditClothingModal, builder save, and the
+  clothing / outfit / collection stores (they showed axios's "Request failed with status code 500").
+- **Login / Signup:** if loading the profile fails after a good login, the half-stored token is cleared.
+- **Tests:** `apiError`, `sessionExpiry`, `loginErrors` (frontend 329), backend 103 on this branch.
+- **Verified live** (throwaway backend on an in-memory H2 database, Vite 5199): unknown email and
+  wrong password on a real account show "Invalid email or password" and keep the form; an expired
+  session returns to `/login` with the notice; a stopped backend shows "Can't reach the server".
+- **Deploy note:** the app now relies on the backend's 401, so frontend and backend ship together.
