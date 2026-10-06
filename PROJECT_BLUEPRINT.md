@@ -6832,3 +6832,31 @@ Fifth and last checkpoint of phase 12 (the add / edit garment flows, which were 
 - **Known / not done:** `CANVAS_PAD` (56px) is unchanged, so the persona is small on a 375px canvas;
   no two-finger pinch zoom in the Cleanup Studio (zoom buttons + Pan work); no real-device test of a
   finger drag on a Fabric handle (the browser pane drives mouse input only).
+
+### Task 94 - Email without SMTP: the Apps Script relay (2026-10-05, branch `phase-13-mail-relay`)
+
+Production emails (password reset, 6-digit codes) were never arriving: Render's free tier blocks
+outbound SMTP (ports 25 / 465 / 587) since 2026-09-26, so Gmail over SMTP timed out, and
+`PasswordResetService` deliberately logs the failure and answers identically. Free email APIs
+(Resend, Brevo, SendGrid) need an owned domain or only send to the account owner.
+- **`MailTransport`** (new interface): the two mailers keep their branded templates
+  (`SmtpPasswordResetMailer` -> `TemplatedPasswordResetMailer`, `SmtpVerificationCodeMailer` ->
+  `TemplatedVerificationCodeMailer`, active for `app.mail.mode` = `smtp` or `relay`) and hand the
+  finished email to a transport. `SmtpMailTransport` = the previous SMTP code, unchanged behaviour.
+  `AppsScriptMailTransport` (`app.mail.mode=relay`) POSTs JSON `{secret,to,replyTo,subject,text,html}`
+  over HTTPS to a Google Apps Script web app and expects `{ok:true}`; the JDK client follows
+  Apps Script's 302 to the result page. The URL and the secret (`MAIL_RELAY_URL`,
+  `MAIL_RELAY_SECRET`) are required at startup in relay mode; errors never include the secret or the
+  recipient; a non-JSON answer is reported as a deployment problem.
+- **`scripts/mail-relay.gs`**: the script (runs as the owner's Gmail via `MailApp`, secret kept in
+  Script properties, `authorize()` to grant the mail permission once). Consumer Gmail limit: 100
+  recipients a day.
+- `render.yaml` now uses `MAIL_MODE=relay`; `DEPLOYMENT.md` has "Step 3 - Email without SMTP" and the
+  settings reference; `application-local.properties.example`, `PROJECT_STRUCTURE.md` updated.
+- **Tests:** `AppsScriptMailTransportTest` (local fake script with the redirect: JSON body + secret,
+  refusal, non-JSON, 500, unreachable, missing settings), `MailModesTest` (which beans exist per mode,
+  relay fails fast without settings, what the mailers hand to the transport, failures propagate).
+  114 backend tests.
+- **Not verified:** a real send through Google (needs the owner's Apps Script and the merge).
+  **Deploy order:** merge first, wait for Render to redeploy, then set `MAIL_MODE=relay`,
+  `MAIL_RELAY_URL`, `MAIL_RELAY_SECRET` (setting `relay` on the old code would stop the API from starting).
