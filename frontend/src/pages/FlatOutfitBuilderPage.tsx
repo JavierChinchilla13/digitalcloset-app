@@ -26,6 +26,7 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 import ErrorState from '../components/ErrorState';
 import PersonaBadge from '../components/PersonaBadge';
 import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
+import { getApiErrorMessage } from '../utils/apiError';
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -192,7 +193,7 @@ const FlatOutfitBuilderPage = () => {
       // used to swallow its errors - fixed in Task 22 - so an edit that
       // failed to save still cleared the draft and navigated away). A
       // failed save now lands here instead.
-      showToast(err.message || 'Failed to save outfit', 'error');
+      showToast(getApiErrorMessage(err, 'Failed to save outfit'), 'error');
     } finally {
       setIsSaving(false);
     }

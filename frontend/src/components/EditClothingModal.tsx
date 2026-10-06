@@ -26,6 +26,7 @@ import JacketFittingEditor from './FittingTool/JacketFittingEditor';
 import { segmentationService } from '../utils/segmentationService';
 import { parseWarpData } from '../utils/warpData';
 import { cloudinaryService } from '../api/cloudinaryService';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface EditClothingModalProps {
   item: ClothingItem | null;
@@ -151,7 +152,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       }
       setView('studio');
     } catch (err: any) {
-      setCleanupError(err.message || 'Failed to process the image.');
+      setCleanupError(getApiErrorMessage(err, 'Failed to process the image.', { ownMessages: true }));
     } finally {
       setCleanupBusy(null);
     }
@@ -179,7 +180,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       }, 1500);
     } catch (err: any) {
       setStatus('error');
-      setErrorMessage(err.message || 'Failed to update garment.');
+      setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
       showToast('Failed to update garment', 'error');
     }
   };
@@ -227,7 +228,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       }, 1500);
     } catch (err: any) {
       setStatus('error');
-      setErrorMessage(err.message || 'Failed to update garment.');
+      setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
       showToast('Failed to update garment', 'error');
     }
   };
