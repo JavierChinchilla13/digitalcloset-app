@@ -233,7 +233,7 @@ checks), `entity/` + `repository/` (JPA), `dto/` (request/response shapes).
 
 | Package | Purpose |
 |---|---|
-| `auth` | Register, login, forgot/reset password. `mail/` has the mailer interfaces (`PasswordResetMailer`, `VerificationCodeMailer`) with a **log** implementation (dev: prints the link/code to the console) and an **SMTP** implementation (production), chosen by `app.mail.mode`. HTML email templates are in `resources/mail/`. |
+| `auth` | Register, login, forgot/reset password. `mail/` has the mailer interfaces (`PasswordResetMailer`, `VerificationCodeMailer`) which build the branded email and hand it to a `MailTransport`: **log** (dev: prints the link/code to the console), **smtp** (`SmtpMailTransport`) or **relay** (`AppsScriptMailTransport`: HTTPS to a Google Apps Script that sends from the owner's Gmail - for hosts that block SMTP, see `scripts/mail-relay.gs`), chosen by `app.mail.mode`. HTML email templates are in `resources/mail/`. |
 | `user` | The signed-in user's account (`/api/users/me`: profile, main outfit, code-confirmed email/password change, deactivate) and admin user management. `PendingAccountChange` stages a change until the emailed code is confirmed (only the code's hash is stored; wrong attempts are counted). |
 | `clothing` | Garments: CRUD, soft delete (`active=false`). A garment carries its Cloudinary image URL, category, persona type, persona status, its transform on the persona, shoe side, and modular/warp data. |
 | `outfit` | Outfits and their items (`slot`, `itemOrder`, optional `layerOrder`). Validates e.g. one shoe per foot. |

@@ -21,3 +21,9 @@ JWT_SECRET=replace_with_a_real_base64_secret
 # spring.mail.host=smtp.gmail.com
 # spring.mail.username=you@gmail.com
 # spring.mail.password=your_16_char_app_password
+#
+# Or, from a host that blocks SMTP ports (see DEPLOYMENT.md, "Email without SMTP"),
+# the Google Apps Script relay (scripts/mail-relay.gs):
+# app.mail.mode=relay
+# app.mail.relay.url=https://script.google.com/macros/s/XXXX/exec
+# app.mail.relay.secret=a_long_random_string

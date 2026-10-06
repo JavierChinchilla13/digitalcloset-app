@@ -1,13 +1,8 @@
 package com.javier.closetapp.auth.mail;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import org.springframework.web.util.HtmlUtils;
@@ -16,31 +11,28 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Year;
 
-// Real delivery over SMTP, mirroring SmtpPasswordResetMailer exactly (same
-// account config, same @ConditionalOnProperty on app.mail.mode=smtp). The
+// The real verification-code email (app.mail.mode = smtp or relay), mirroring
+// TemplatedPasswordResetMailer: delivery is the MailTransport's business. The
 // HTML body is the branded template at resources/mail/verification-code.html,
 // with {{PURPOSE_*}} filled in per call so one template serves both an email
 // change and a password change.
 @Component
-@ConditionalOnProperty(prefix = "app.mail", name = "mode", havingValue = "smtp")
-public class SmtpVerificationCodeMailer implements VerificationCodeMailer {
+@ConditionalOnExpression("'${app.mail.mode:log}' == 'smtp' or '${app.mail.mode:log}' == 'relay'")
+public class TemplatedVerificationCodeMailer implements VerificationCodeMailer {
 
-    private final JavaMailSender mailSender;
-    private final String from;
+    private final MailTransport transport;
     private final long expirationMinutes;
     private final String ownerName;
     private final String ownerTitle;
     private final String contactEmail;
     private final String htmlTemplate;
 
-    public SmtpVerificationCodeMailer(JavaMailSender mailSender,
-                                      @Value("${app.mail.from}") String from,
+    public TemplatedVerificationCodeMailer(MailTransport transport,
                                       @Value("${app.account-verification.expiration-minutes:10}") long expirationMinutes,
                                       @Value("${app.brand.owner-name}") String ownerName,
                                       @Value("${app.brand.owner-title}") String ownerTitle,
                                       @Value("${app.brand.contact-email}") String contactEmail) {
-        this.mailSender = mailSender;
-        this.from = from;
+        this.transport = transport;
         this.expirationMinutes = expirationMinutes;
         this.ownerName = ownerName;
         this.ownerTitle = ownerTitle;
@@ -59,20 +51,9 @@ public class SmtpVerificationCodeMailer implements VerificationCodeMailer {
     }
 
     private void send(String toEmail, String code, String purposeLabel, String purposeBody, String purposeLabelLower) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(from);
-            helper.setTo(toEmail);
-            helper.setReplyTo(contactEmail);
-            helper.setSubject("Your VYSVI verification code");
-            helper.setText(buildText(code, purposeBody), buildHtml(toEmail, code, purposeLabel, purposeBody, purposeLabelLower));
-            mailSender.send(message);
-        } catch (MessagingException | MailException e) {
-            // Rethrown unchecked so the caller logs it - matches
-            // SmtpPasswordResetMailer.
-            throw new IllegalStateException("Failed to send verification code email", e);
-        }
+        // A failure is thrown unchecked so the caller logs it.
+        transport.send(toEmail, contactEmail, "Your VYSVI verification code",
+                buildText(code, purposeBody), buildHtml(toEmail, code, purposeLabel, purposeBody, purposeLabelLower));
     }
 
     private String buildHtml(String toEmail, String code, String purposeLabel, String purposeBody, String purposeLabelLower) {
