@@ -187,6 +187,26 @@ secrets differ; "did not answer JSON" = step 4's access is not **Anyone**, or th
 wrong; a quota message = the 100-a-day limit. After editing the script, use **Deploy ->
 Manage deployments -> edit -> New version**: saving alone does not change the live URL.
 
+### Ads for free accounts (optional)
+
+Free accounts see one banner above the footer; premium accounts and admins never do (and never
+download the ad script). Nothing shows until you pick a network, so this is safe to leave off.
+Set the variables on the **site** (they are baked in at build time, so rebuild it after changing them).
+
+- **Google AdSense** (best pay, strict rules): it only approves a site on a domain **you own**
+  (a free `*.onrender.com` address is refused). Once you have a domain and an approved account, create a
+  display ad unit and set `VITE_AD_PROVIDER=adsense`, `VITE_ADSENSE_CLIENT` (`ca-pub-...`) and
+  `VITE_ADSENSE_SLOT` (the unit's number). AdSense also asks for a file `ads.txt` at the site root: put it in
+  `frontend/public/ads.txt` with the line Google shows you (the site must really serve that file).
+- **A network that accepts free subdomains** (e.g. Adsterra): sign up, add the site, create a **banner**
+  unit and copy three things from its code: the `.../invoke.js` address, the `key`, and the width and height.
+  Set `VITE_AD_PROVIDER=adsterra`, `VITE_ADSTERRA_SCRIPT_URL`, `VITE_ADSTERRA_KEY`, `VITE_ADSTERRA_WIDTH`,
+  `VITE_ADSTERRA_HEIGHT`. Use banner units only (avoid popunder / redirect formats: they spoil the app and
+  annoy users). A banner wider than the visitor's screen is simply not shown (320x50 fits every phone). This
+  network's code runs in a sandboxed frame that cannot read the site's storage (where the sign-in token lives).
+- **Before real traffic:** ad networks set tracking cookies, so you need a privacy policy page, and visitors
+  in the EU / UK need a cookie-consent banner before personalised ads. Neither is built yet.
+
 ### What to expect on the free plans
 
 - **The API sleeps after 15 minutes without traffic**; the next visit waits roughly
@@ -261,6 +281,9 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `MAIL_RELAY_URL` / `MAIL_RELAY_SECRET` | yes (relay mode) | The Apps Script web app URL and its shared secret. |
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
+| `VITE_AD_PROVIDER` | no | `adsense` or `adsterra` turns ads on for signed-in free accounts; empty (default) = no ads. Needs the matching values below; see "Ads for free accounts". |
+| `VITE_ADSENSE_CLIENT` / `VITE_ADSENSE_SLOT` | with `adsense` | Your AdSense publisher id (`ca-pub-...`) and the ad unit's slot number. |
+| `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |
 | `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags; e.g. `-Xmx512m` on a small machine. |
 

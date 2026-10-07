@@ -62,6 +62,22 @@ services:
         sync: false
       - key: VITE_BG_REMOVER_MODE
         value: browser
+      # Ads for free accounts (Task 97). Leave VITE_AD_PROVIDER empty to keep ads off; see
+      # DEPLOYMENT.md, "Ads for free accounts". Public values, baked in at build time.
+      - key: VITE_AD_PROVIDER
+        sync: false
+      - key: VITE_ADSENSE_CLIENT
+        sync: false
+      - key: VITE_ADSENSE_SLOT
+        sync: false
+      - key: VITE_ADSTERRA_SCRIPT_URL
+        sync: false
+      - key: VITE_ADSTERRA_KEY
+        sync: false
+      - key: VITE_ADSTERRA_WIDTH
+        sync: false
+      - key: VITE_ADSTERRA_HEIGHT
+        sync: false
       - key: NODE_VERSION
         value: "24"
     routes:
