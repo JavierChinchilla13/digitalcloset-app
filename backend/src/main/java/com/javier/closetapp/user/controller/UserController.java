@@ -6,6 +6,7 @@ import com.javier.closetapp.user.dto.ChangeEmailRequest;
 import com.javier.closetapp.user.dto.ChangePasswordRequest;
 import com.javier.closetapp.user.dto.ConfirmCodeRequest;
 import com.javier.closetapp.user.dto.MainOutfitRequest;
+import com.javier.closetapp.user.dto.SetPlanRequest;
 import com.javier.closetapp.user.dto.UserResponse;
 import com.javier.closetapp.user.dto.UserUpdateRequest;
 import com.javier.closetapp.user.service.UserService;
@@ -105,5 +106,12 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> reactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.reactivateUser(id));
+    }
+
+    // Task 96: an admin gives an account the FREE or PREMIUM plan (more garments, no ads).
+    @PatchMapping("/{id}/plan")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> setPlan(@PathVariable Long id, @Valid @RequestBody SetPlanRequest request) {
+        return ResponseEntity.ok(userService.setPlan(id, request.getPlan()));
     }
 }

@@ -6891,3 +6891,99 @@ seemed to reload forever.
   wrong password on a real account show "Invalid email or password" and keep the form; an expired
   session returns to `/login` with the notice; a stopped backend shows "Can't reach the server".
 - **Deploy note:** the app now relies on the backend's 401, so frontend and backend ship together.
+
+### Task 96 - Plans and garment limits (2026-10-07, branch `phase-14-plans-limits`)
+
+The app runs on free tiers (Cloudinary 25 credits/month shared by storage + bandwidth, Neon 0.5 GB), and
+photos were unlimited. Now every account has a plan and a garment limit.
+- **Rule (one place, `PlanLimits`):** admins unlimited; `PREMIUM` 300; everyone else 15
+  (`app.limits.garments.free/premium`, env `GARMENT_LIMIT_FREE` / `GARMENT_LIMIT_PREMIUM`). Counts active
+  garments (soft-deleted ones free their slot); a shoe pair is two rows = 2 slots.
+- **Backend:** `Plan` enum (`FREE`, `PREMIUM`), `users.plan` (migration `V9__add_user_plan.sql`, existing
+  accounts become FREE), `UserResponse.plan` + `garmentLimit` (null = unlimited). `ClothingService.createItem`
+  locks the user row (`UserRepository.findByIdForUpdate`, pessimistic) then counts; over the limit throws
+  `GarmentLimitExceededException` -> **403** `{code: "GARMENT_LIMIT", limit, plan, message}`. Only new
+  garments are refused (an over-limit account keeps what it has). Admin `PATCH /api/users/{id}/plan`
+  (`SetPlanRequest`, 404 for an unknown id). No payment code.
+- **Frontend:** `utils/storage.ts` + `hooks/useStorage.ts` (count from the closet store, limit from the
+  account; unknown account = never blocked), `StorageMeter` ("7 / 15 garments" + bar) in the Closet header,
+  Settings (Plan + Storage rows) and both account menus; `StorageLimitModal` instead of the upload wizard when
+  full; `UploadFlow` refuses before any Cloudinary upload, warns when a shoe pair needs 2 slots and checks
+  both fit before saving either, and shows the server's message (also fixes studio save errors that were set
+  but never displayed); Admin page plan dropdown (Free 15 / Premium 300, "Unlimited space" for admins).
+- **Tests:** `GarmentLimitIntegrationTest` (10, incl. 24 concurrent creates -> exactly 15), `storageLimit`
+  (13) and `storageUi` (8); `makeUser` / `makeItems` fixtures. 126 backend + 350 frontend tests.
+- **Verified live** (scratch backend on file H2 + Vite 5199): 14/15 meter, red 15/15, full-closet popup,
+  server 403 for the 16th, admin switches the shopper to Premium (toast), 16th accepted, phone menu line,
+  no overflow at 375px.
+- **Not done / known:** the V9 SQL was checked in H2's Postgres mode, not on real Postgres (Render's Flyway
+  applies it on deploy). Direct uploads to Cloudinary outside the app and orphaned images after a delete are
+  not prevented (needs signed uploads + a Cloudinary delete): set a max file size on the upload preset.
+
+### Task 97 - Ads for free accounts (2026-10-07, branch `phase-14-ads`, stacked on Task 96)
+
+Ads to help pay for storage, shown only to signed-in FREE accounts; OFF until a network is configured.
+- **`components/ads/AdSlot.tsx`**: the app's one slot, in `MainLayout` just above the footer (below the fold on
+  the full-height builder pages). Labelled "Advertisement", not sticky. Hidden on `/admin`, `/persona`, `/demo`
+  and the sign-in pages. Only one slot (not an extra in-flow one on Closet / Outfits, which would have put two
+  ads side by side).
+- **Eligibility** (`hooks/useAdEligibility.ts`, `isPaidAccount` in `utils/storage.ts`): signed in AND not PREMIUM
+  AND not admin AND a provider configured. Ad scripts load dynamically, so nobody else downloads them.
+- **Config** (`components/ads/adConfig.ts`, read at call time): `VITE_AD_PROVIDER` = `adsense`
+  (`VITE_ADSENSE_CLIENT` `ca-pub-...`, `VITE_ADSENSE_SLOT`) or `adsterra` (`VITE_ADSTERRA_SCRIPT_URL` an https
+  `.../invoke.js`, `VITE_ADSTERRA_KEY`, `VITE_ADSTERRA_WIDTH` / `_HEIGHT`); anything missing / malformed = off.
+  AdSense needs an owned domain (it does not approve `*.onrender.com`), so it stays off until then.
+- **Providers:** `AdsenseUnit` (standard `<ins class="adsbygoogle">` + queued push, script added once, a fresh
+  element per route); `BannerFrame` runs the free-subdomain network's snippet in a **sandboxed iframe without
+  `allow-same-origin`**, so third-party ad code cannot read this site's localStorage (the JWT lives there) and its
+  `document.write` cannot wipe the single-page app; the frame declares the page's colour scheme so an empty ad is
+  not a white block; a banner wider than the screen is skipped.
+- **Account refresh on open** (`App.tsx`): `GET /users/me` once when signed in, so a plan changed by an admin (or a
+  session that predates the plan fields) takes effect without signing in again; a failure keeps the stored user.
+- **Plumbing/docs:** `frontend/.env.example`, `Dockerfile` ARGs, `docker-compose.yml`, `render.yaml`,
+  `DEPLOYMENT.md` ("Ads for free accounts": steps, `ads.txt`, privacy / consent warning).
+- **Tests:** `ads.test.tsx` (16: config parsing, who sees the slot, excluded pages, AdSense element + one script,
+  sandbox without allow-same-origin, snippet content, too-wide banner) and `accountRefresh.test.tsx` (4). 370 frontend tests.
+- **Verified live** (stub network): free account gets the sandboxed frame above the footer (no overflow at 375px),
+  premium and admin get none (admin: no ad script either), a stale FREE copy refreshed to PREMIUM on load (0 / 300,
+  ad gone).
+- **Not done / known:** no real ad network account was used, so a real impression is unverified; EU/UK cookie-consent
+  banner and a privacy-policy page are still needed before real traffic.
+
+### Task 98 - Sign in with Google (2026-10-07, branch `phase-14-google-login`, stacked on Tasks 96-97)
+
+A "Continue with Google" button on the login and signup pages. Google-Identity-Services ID-token flow: the
+browser gets a signed token from Google, `POST /api/auth/google {credential}` checks it and returns the app's own
+JWT. No Google client secret is used.
+- **Verification** (`auth/google/NimbusGoogleTokenVerifier`, behind the `GoogleTokenVerifier` interface so tests use
+  a fake): Spring's `NimbusJwtDecoder` against Google's public keys (`oauth2/v3/certs`, fetched lazily and cached) +
+  validators for expiry, issuer (`accounts.google.com` / `https://accounts.google.com`) and **audience = our client id**
+  (a token Google issued to another site's button is refused). New dependency `spring-security-oauth2-jose`.
+  `app.google.client-id=${GOOGLE_CLIENT_ID:}`; blank = Google sign-in off (400 "not set up").
+- **`AuthService.googleLogin`:** `email_verified` required; an account already tied to the Google id signs in; else an
+  account with the same email **ignoring case** (`findFirstByEmailIgnoreCaseOrderByUserIdAsc`) is linked: Google id set
+  and its **password cleared** (sign-up never verified emails, so a pre-registered password could otherwise stay in
+  an attacker's hands; the user can add one with Forgot password; garments/outfits kept); else a new ROLE_USER / FREE
+  account is created from the Google profile with no password. A deactivated account is refused (and not linked), since
+  this path bypasses `AuthenticationManager`. Errors: `GoogleSignInException` (401 / 400) via `GlobalExceptionHandler`.
+- **Schema:** `V10__add_google_login.sql` - `users.google_id` (unique index), `password_hash` nullable (a null hash never
+  matches, so password login fails closed for Google-only accounts). `UserService.requireCurrentPassword`: the password
+  / email change flows tell a Google-only user to use Forgot password instead of "Current password is incorrect".
+- **Frontend:** `GoogleSignInButton` (loads `accounts.google.com/gsi/client` only on login/signup, draws Google's own
+  button, hands up the credential; a load failure shows a note and email sign-in still works), `GoogleSignInSection`
+  ("or" divider + the whole flow, hidden when `VITE_GOOGLE_CLIENT_ID` is empty), `useCompleteSignIn` (the shared
+  token -> profile -> store -> Showcase steps, now used by the password login, signup and Google; clears a half-stored token
+  on failure), `authService.google`. Signup's error box gained `role="alert"`. `/auth/google` stays under `/auth/`,
+  so a failure never trips the session-expiry logout.
+- **Plumbing/docs:** `GOOGLE_CLIENT_ID` (API) and `VITE_GOOGLE_CLIENT_ID` (site) in `.env.example`, Dockerfile,
+  `docker-compose.yml`, `render.yaml`; `DEPLOYMENT.md` "Sign in with Google" (Google Cloud steps: consent screen
+  **published**, Web client id, authorized origins).
+- **Tests:** `NimbusGoogleTokenVerifierTest` (10: valid, both issuers, wrong audience / issuer, expired, bad signature,
+  garbage + alg none, no email, email_verified forms, not configured; keys generated in the test), `GoogleLoginIntegrationTest`
+  (11, with `FakeGoogleTokenVerifier` / `TestGoogleConfig` shared by all integration tests), `googleSignIn.test.tsx` (12).
+  147 backend + 382 frontend tests.
+- **Verified live** (fake client id): the real endpoint refuses garbage, blank and a forged unsigned token; Google's real
+  button loads and renders on login and signup (dark theme, fits 375px). Clicking it with the fake id gives Google's
+  "invalid_client" (expected). A full sign-in with a real Google account is NOT verified: it needs the owner's client id.
+- **Owner setup (not done):** Google Cloud project + consent screen (publish) + Web client id with the site's origins, then
+  set `GOOGLE_CLIENT_ID` on the API and `VITE_GOOGLE_CLIENT_ID` on the site and rebuild the site.

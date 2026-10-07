@@ -21,6 +21,9 @@ import ClothingDetailsModal from "../components/ClothingDetailsModal";
 import EditClothingModal from "../components/EditClothingModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 import ErrorState from '../components/ErrorState';
+import StorageMeter from '../components/StorageMeter';
+import StorageLimitModal from '../components/StorageLimitModal';
+import { useStorage } from '../hooks/useStorage';
 
 // The closet: every garment as a card grid with search, category / persona filters and
 // a favourites-only switch. Adding opens the upload wizard; each card can be viewed,
@@ -34,6 +37,9 @@ const ClosetPage = () => {
   // one - falls back to "M Persona"/"F Persona" via getDisplayName.
   const { fetchDisplayNames, getDisplayName } = usePersonaSettingsStore();
   const navigate = useNavigate();
+  // Task 96: adding is blocked up front (before any photo is uploaded) when the closet is full.
+  const storage = useStorage();
+  const [isLimitModalOpen, setIsLimitModalOpen] = useState(false);
 
   useEffect(() => {
     fetchDisplayNames();
@@ -139,10 +145,11 @@ const ClosetPage = () => {
                 </span>
               </div>
             </div>
+            <StorageMeter className="pt-3 max-w-[16rem]" />
           </div>
 
           <button
-            onClick={() => setIsUploadModalOpen(true)}
+            onClick={() => (storage.atLimit ? setIsLimitModalOpen(true) : setIsUploadModalOpen(true))}
             className="group px-10 py-5 bg-ink text-background-main font-medium rounded-xl flex items-center gap-4 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5"
           >
             <Plus
@@ -288,6 +295,8 @@ const ClosetPage = () => {
       </SectionWrapper>
 
       {/* Modals */}
+      <StorageLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)} />
+
       <UploadFlow
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

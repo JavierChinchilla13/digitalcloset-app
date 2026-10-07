@@ -25,6 +25,13 @@ export const authService = {
     return response.data;
   },
 
+  // Task 98: "Sign in with Google". `credential` is the signed ID token from Google's button; the backend checks
+  // it and answers with this app's own token (creating or linking the account the first time).
+  google: async (credential: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/google', { credential });
+    return response.data;
+  },
+
   // Always resolves with the same generic message, whether or not the email
   // has an account (the backend deliberately doesn't say).
   forgotPassword: async (email: string): Promise<{ message: string }> => {

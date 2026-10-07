@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { LogOut, ShieldCheck, Tag, UserCircle, Settings as SettingsIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import ThemeToggle from './ThemeToggle';
+import StorageMeter from './StorageMeter';
 
 // Task 79: the navbar used to lay Persona/Categories/Admin/Logout out as
 // separate always-visible icons next to the user avatar - "too cluttered."
@@ -84,6 +85,8 @@ const UserMenu = () => {
             <div className="px-3 py-2 text-[9px] font-bold text-text-secondary/60 uppercase tracking-widest truncate">
               {user?.email}
             </div>
+            {/* Task 96: how full the closet is, for accounts that have a limit. */}
+            <StorageMeter compact className="px-3 pb-2" />
 
             {/* Theme sits inline as a menu row rather than its own icon now. */}
             <div className={itemClass}>

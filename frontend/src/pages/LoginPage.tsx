@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/useAuthStore';
+import { Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { consumeSessionExpiredNotice } from '../api/axios';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
+import GoogleSignInSection from '../components/GoogleSignInSection';
+import { useCompleteSignIn } from '../hooks/useCompleteSignIn';
 import { getApiErrorMessage } from '../utils/apiError';
 
 // Sign-in form. On success the user lands on /showcase (their outfits); a failure shows the server's message.
@@ -17,12 +18,9 @@ const LoginPage = () => {
   // Set when the visitor was sent here because their session ended (read once).
   const [sessionEnded] = useState(consumeSessionExpiredNotice);
   
-  const loginStore = useAuthStore(state => state.login);
-  const setToken = useAuthStore(state => state.setToken);
-  const logout = useAuthStore(state => state.logout);
-  const navigate = useNavigate();
+  const completeSignIn = useCompleteSignIn();
 
-  // Logs in, fetches the user profile (for role and name), stores both, and lands on the Showcase.
+  // Logs in, then (completeSignIn) fetches the profile, stores the session and lands on the Showcase.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -30,17 +28,8 @@ const LoginPage = () => {
 
     try {
       const response = await authService.login({ email, password });
-      
-      // Set token first so subsequent requests (like getCurrentUser) have it in the header
-      setToken(response.token);
-      
-      const user = await authService.getCurrentUser();
-      
-      loginStore(response.token, user);
-      navigate('/showcase');
+      await completeSignIn(response.token);
     } catch (err: unknown) {
-      // The token was stored before the profile fetch, so a failure there must not leave it behind.
-      logout();
       setError(getApiErrorMessage(err, "Couldn't sign you in. Please try again."));
       console.error('Login error:', err);
     } finally {
@@ -125,6 +114,8 @@ const LoginPage = () => {
             )}
           </button>
         </form>
+
+        <GoogleSignInSection onError={setError} />
 
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">
