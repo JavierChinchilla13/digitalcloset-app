@@ -16,6 +16,10 @@ import {
 import { ClothingCategory, PersonaType, PersonaStatus, type ClothingTransform, type ClothingItem } from '../../types';
 import { useClothingStore } from '../../store/useClothingStore';
 import { useCollectionStore } from '../../store/useCollectionStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useStorage } from '../../hooks/useStorage';
+import { computeStorage, limitMessage, StorageLimitError } from '../../utils/storage';
+import { getApiErrorMessage } from '../../utils/apiError';
 import CategoryPicker from '../CategoryPicker';
 import { cloudinaryService } from '../../api/cloudinaryService';
 import { bgRemovalService, optimizeImage } from '../../lib/background-removers';
@@ -30,6 +34,11 @@ import JacketFittingEditor from './JacketFittingEditor';
 import GarmentCleanup from './GarmentCleanup';
 import ErrorBoundary from '../ErrorBoundary';
 import ErrorState from '../ErrorState';
+
+// The message for a failed save: our own "closet is full" sentence, else what the server said
+// (a 403 GARMENT_LIMIT carries a readable message), else the step's own fallback.
+const saveErrorMessage = (err: unknown, fallback: string) =>
+  err instanceof StorageLimitError ? err.message : getApiErrorMessage(err, fallback);
 
 interface UploadFlowProps {
   isOpen: boolean;
@@ -121,12 +130,20 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   const createItemAndMaybeAddToCollection = async (
     data: Parameters<typeof addItem>[0]
   ): Promise<ClothingItem> => {
+    // Task 96: the server enforces the limit too; this just says so in plain words, before the call.
+    const room = freshStorage();
+    if (!room.canAdd(1)) throw new StorageLimitError(limitMessage(room));
     const newItem = await addItem(data);
     for (const collectionId of selectedCollectionIds) {
       await useCollectionStore.getState().addItem(collectionId, newItem.itemId);
     }
     return newItem;
   };
+
+  // Task 96: how much garment space is left. Read fresh (not from the hook) at the moment of
+  // saving, because a shoe pair's first item changes the count before the second is saved.
+  const storage = useStorage();
+  const freshStorage = () => computeStorage(useAuthStore.getState().user, useClothingStore.getState().items.length);
 
   const resetFlow = () => {
     setStep('UPLOAD');
@@ -156,6 +173,11 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   };
 
   const handleFileSelect = (selectedFile: File) => {
+    // Task 96: nothing is uploaded or processed for a closet that is already full.
+    if (storage.atLimit) {
+      setError(limitMessage(storage));
+      return;
+    }
     setFile(selectedFile);
     setOriginalPreviewUrl(URL.createObjectURL(selectedFile));
     setStep('CONFIG');
@@ -374,7 +396,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       });
       handleClose();
     } catch (err: unknown) {
-      setError('Failed to save garment.');
+      setError(saveErrorMessage(err, 'Failed to save garment.'));
       setStep('SKIP_PERSONA');
     }
   };
@@ -433,7 +455,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       });
       handleClose();
     } catch (err: unknown) {
-      setError('Failed to save garment.');
+      setError(saveErrorMessage(err, 'Failed to save garment.'));
     }
   };
 
@@ -445,6 +467,16 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     skipLeft: boolean;
     skipRight: boolean;
   }) => {
+    // Task 96: a pair is two garments. Check both fit before saving either, so the pair is never
+    // left half saved when the closet has one slot left.
+    const needed = (!data.skipLeft && leftProcessedUrl ? 1 : 0) + (!data.skipRight && rightProcessedUrl ? 1 : 0);
+    const room = freshStorage();
+    if (!room.canAdd(needed)) {
+      setError(
+        `A shoe pair uses ${needed} slots and you have ${room.remaining} left. Skip one shoe to save just one, or delete a garment first.`
+      );
+      return;
+    }
     try {
       if (!data.skipLeft && leftProcessedUrl) {
         await createItemAndMaybeAddToCollection({
@@ -470,7 +502,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       }
       handleClose();
     } catch (err: unknown) {
-      setError('Failed to save shoe pair.');
+      setError(saveErrorMessage(err, 'Failed to save shoe pair.'));
     }
   };
 
@@ -509,7 +541,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       });
       handleClose();
     } catch (err: unknown) {
-      setError('Failed to save modular jacket.');
+      setError(saveErrorMessage(err, 'Failed to save modular jacket.'));
     }
   };
 
@@ -560,6 +592,15 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
           />
         </div>
 
+        {error && (step === 'FITTING' || step === 'SHOE_FITTING' || step === 'JACKET_FITTING') && (
+          <div
+            role="alert"
+            className="absolute bottom-3 left-3 right-3 sm:bottom-6 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl bg-background-main border border-red-500/40 text-red-400 text-[10px] font-medium uppercase tracking-widest shadow-lg"
+          >
+            <AlertCircle size={14} className="shrink-0" /> {error}
+          </div>
+        )}
+
         <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar ${
           isStudioStep ? 'p-3 pt-12 sm:p-8 md:p-12' : 'p-5 pt-14 sm:p-8 md:p-12'
         }`}>
@@ -570,6 +611,12 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 1 — Initial Intake</h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Drop your garment to begin digitization</p>
                 </div>
+                {storage.atLimit ? (
+                  <div role="alert" className="rounded-[2.5rem] border border-ink/10 bg-ink/[0.02] p-8 text-center space-y-3">
+                    <p className="text-text-primary font-bold tracking-tight text-lg">Your closet is full</p>
+                    <p className="text-text-secondary text-xs leading-relaxed">{limitMessage(storage)}</p>
+                  </div>
+                ) : (
                 <div onClick={() => document.getElementById('file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-ink/10 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-accent/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
                   <input id="file-input" type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
                   <div className="w-20 h-20 rounded-full bg-ink/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-accent/10 transition-all duration-500">
@@ -577,6 +624,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   </div>
                   <p className="text-text-primary font-bold tracking-tight text-lg">Select Image</p>
                 </div>
+                )}
               </motion.div>
             )}
 
@@ -604,6 +652,11 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                       })}
                     </div>
                   </div>
+                  {category === ClothingCategory.SHOES && storage.remaining !== null && storage.remaining < 2 && (
+                    <p role="note" className="px-1 text-text-secondary text-[10px] uppercase tracking-widest leading-relaxed">
+                      A shoe pair uses 2 slots and you have {storage.remaining} left - you can save a single shoe.
+                    </p>
+                  )}
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 px-1">
                       <User size={14} className="text-accent" />

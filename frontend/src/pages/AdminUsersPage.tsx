@@ -7,7 +7,7 @@ import { useToast } from '../components/Toast';
 import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
 import CreateUserModal from '../components/CreateUserModal';
-import { Role, type User } from '../types';
+import { Plan, Role, type User } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
 
 // Admin-only account management (Task 22): list every user and deactivate or
@@ -52,6 +52,22 @@ const AdminUsersPage = () => {
     } catch (err) {
       console.error('Failed to update user:', err);
       showToast(getApiErrorMessage(err, `Couldn't ${user.active ? 'deactivate' : 'reactivate'} ${user.email}`), 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  // Task 96: gives the account FREE or PREMIUM. There is no payment flow yet - this is how a
+  // paying user is marked (more garment space, no ads).
+  const changePlan = async (user: User, plan: Plan) => {
+    setBusyId(user.userId);
+    try {
+      const updated = await adminService.setPlan(user.userId, plan);
+      setUsers((prev) => prev.map((u) => (u.userId === updated.userId ? updated : u)));
+      showToast(`${user.email} is now on the ${plan === Plan.PREMIUM ? 'Premium' : 'Free'} plan`, 'success');
+    } catch (err) {
+      console.error('Failed to change plan:', err);
+      showToast(getApiErrorMessage(err, `Couldn't change the plan for ${user.email}`), 'error');
     } finally {
       setBusyId(null);
     }
@@ -156,6 +172,22 @@ const AdminUsersPage = () => {
                           {name ? `${name} // ` : ''}Joined {user.createdAt ? formatDate(user.createdAt) : 'unknown'}
                         </p>
                       </div>
+
+                      {/* Task 96: admins are unlimited, so only other accounts get a plan. */}
+                      {user.role === Role.ROLE_ADMIN ? (
+                        <span className="shrink-0 text-text-secondary text-[10px] tracking-widest uppercase">Unlimited space</span>
+                      ) : (
+                        <select
+                          aria-label={`Plan for ${user.email}`}
+                          value={user.plan ?? Plan.FREE}
+                          disabled={busyId === user.userId}
+                          onChange={(e) => changePlan(user, e.target.value as Plan)}
+                          className="shrink-0 bg-ink/5 border border-ink/10 rounded-xl px-4 py-3 text-text-primary text-[10px] font-medium tracking-widest uppercase focus:outline-none focus:border-accent/50 disabled:opacity-40"
+                        >
+                          <option value={Plan.FREE}>Free (15)</option>
+                          <option value={Plan.PREMIUM}>Premium (300)</option>
+                        </select>
+                      )}
 
                       <button
                         onClick={() => toggleActive(user)}
