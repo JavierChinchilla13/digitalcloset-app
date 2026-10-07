@@ -187,6 +187,29 @@ secrets differ; "did not answer JSON" = step 4's access is not **Anyone**, or th
 wrong; a quota message = the 100-a-day limit. After editing the script, use **Deploy ->
 Manage deployments -> edit -> New version**: saving alone does not change the live URL.
 
+### Sign in with Google (optional)
+
+Adds a "Continue with Google" button to the login and signup pages. Signing in with Google creates an
+account the first time (a normal free account, no password); a person who already has a password account
+with the same email is linked to it, and that account's old password is removed (they can set a new one
+with "Forgot password"; their garments and outfits are kept). It is free and needs no domain.
+
+1. Go to <https://console.cloud.google.com>, create a project (e.g. "VYSVI").
+2. **APIs & Services -> OAuth consent screen**: choose **External**, fill in the app name, your support
+   email and developer email, save. Then **Publish app** (set it "In production"): the basic email / profile
+   permissions this uses need no Google review. While it stays in "Testing", only the test users you list
+   can sign in.
+3. **APIs & Services -> Credentials -> Create credentials -> OAuth client ID**, type **Web application**.
+   Under **Authorized JavaScript origins** add the site's address (`https://vysvi-web.onrender.com`) and
+   `http://localhost:5173` for local work. (No redirect URI and no client secret are needed.)
+4. Copy the **Client ID** (ends in `.apps.googleusercontent.com`). It is public, not a secret.
+5. On Render set `GOOGLE_CLIENT_ID` on the **API** and `VITE_GOOGLE_CLIENT_ID` on the **site**, both to that
+   value. The site must be **rebuilt** (it is baked in at build time), the API redeploys when saved.
+
+If the button does not appear, `VITE_GOOGLE_CLIENT_ID` is empty in the build. If it appears but signing in
+fails with "Google sign-in failed", the two ids differ, or the site's address is not in the authorized origins.
+When you later put the site on your own domain, add it to the authorized origins too.
+
 ### Ads for free accounts (optional)
 
 Free accounts see one banner above the footer; premium accounts and admins never do (and never
@@ -281,6 +304,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `MAIL_RELAY_URL` / `MAIL_RELAY_SECRET` | yes (relay mode) | The Apps Script web app URL and its shared secret. |
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
+| `GOOGLE_CLIENT_ID` (API) / `VITE_GOOGLE_CLIENT_ID` (site) | no | The Google OAuth client id, the same value in both places. Empty = no "Continue with Google" button. See "Sign in with Google". |
 | `VITE_AD_PROVIDER` | no | `adsense` or `adsterra` turns ads on for signed-in free accounts; empty (default) = no ads. Needs the matching values below; see "Ads for free accounts". |
 | `VITE_ADSENSE_CLIENT` / `VITE_ADSENSE_SLOT` | with `adsense` | Your AdSense publisher id (`ca-pub-...`) and the ad unit's slot number. |
 | `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |

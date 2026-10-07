@@ -137,9 +137,7 @@ public class UserService {
     @Transactional
     public void requestPasswordChange(ChangePasswordRequest request) {
         User user = getAuthenticatedUser();
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new ForbiddenOperationException("Current password is incorrect");
-        }
+        requireCurrentPassword(user, request.getCurrentPassword());
 
         String code = stagePendingChange(user, AccountChangeType.PASSWORD, change ->
                 change.setNewPasswordHash(passwordEncoder.encode(request.getNewPassword())));
@@ -165,9 +163,7 @@ public class UserService {
     @Transactional
     public void requestEmailChange(ChangeEmailRequest request) {
         User user = getAuthenticatedUser();
-        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new ForbiddenOperationException("Current password is incorrect");
-        }
+        requireCurrentPassword(user, request.getCurrentPassword());
         // Excludes the caller: re-submitting their own current email is a
         // harmless no-op, not a false "already in use".
         userRepository.findByEmail(request.getNewEmail())
@@ -305,6 +301,19 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         user.setActive(true);
         return mapToResponse(userRepository.save(user));
+    }
+
+    // Task 98: the password check the password and email changes start with. An account created through Google has
+    // no password, so there is nothing to type in - say so, and point at "Forgot password", which is how such a
+    // user adds one (instead of a misleading "Current password is incorrect").
+    private void requireCurrentPassword(User user, String currentPassword) {
+        if (user.getPassword() == null) {
+            throw new ForbiddenOperationException(
+                    "Your account signs in with Google and has no password yet. Use \"Forgot password\" on the sign-in page to set one.");
+        }
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new ForbiddenOperationException("Current password is incorrect");
+        }
     }
 
     // Admin-only: gives an account the FREE or PREMIUM plan (no payment flow yet). A 404 for an unknown id.

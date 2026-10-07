@@ -43,6 +43,8 @@ services:
       SPRING_MAIL_USERNAME: ${SPRING_MAIL_USERNAME:?Set SPRING_MAIL_USERNAME in .env}
       SPRING_MAIL_PASSWORD: ${SPRING_MAIL_PASSWORD:?Set SPRING_MAIL_PASSWORD in .env}
       MAIL_FROM: ${MAIL_FROM:-${SPRING_MAIL_USERNAME}}
+      # Task 98: Google sign-in (empty = off; the site is built with the same value).
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       # Cap the JVM if the machine is small (default: 70% of the container's RAM).
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=70}
     healthcheck:
@@ -59,6 +61,8 @@ services:
         VITE_CLOUDINARY_CLOUD_NAME: ${VITE_CLOUDINARY_CLOUD_NAME:-}
         VITE_CLOUDINARY_UPLOAD_PRESET: ${VITE_CLOUDINARY_UPLOAD_PRESET:-}
         VITE_BG_REMOVER_MODE: ${VITE_BG_REMOVER_MODE:-browser}
+        # Task 98: "Sign in with Google" (empty = no button). The backend needs the same value as GOOGLE_CLIENT_ID.
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
         # Task 97: ads for free accounts (all empty = off).
         VITE_AD_PROVIDER: ${VITE_AD_PROVIDER:-}
         VITE_ADSENSE_CLIENT: ${VITE_ADSENSE_CLIENT:-}

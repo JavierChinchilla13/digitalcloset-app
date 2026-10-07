@@ -6949,3 +6949,41 @@ Ads to help pay for storage, shown only to signed-in FREE accounts; OFF until a 
   ad gone).
 - **Not done / known:** no real ad network account was used, so a real impression is unverified; EU/UK cookie-consent
   banner and a privacy-policy page are still needed before real traffic.
+
+### Task 98 - Sign in with Google (2026-10-07, branch `phase-14-google-login`, stacked on Tasks 96-97)
+
+A "Continue with Google" button on the login and signup pages. Google-Identity-Services ID-token flow: the
+browser gets a signed token from Google, `POST /api/auth/google {credential}` checks it and returns the app's own
+JWT. No Google client secret is used.
+- **Verification** (`auth/google/NimbusGoogleTokenVerifier`, behind the `GoogleTokenVerifier` interface so tests use
+  a fake): Spring's `NimbusJwtDecoder` against Google's public keys (`oauth2/v3/certs`, fetched lazily and cached) +
+  validators for expiry, issuer (`accounts.google.com` / `https://accounts.google.com`) and **audience = our client id**
+  (a token Google issued to another site's button is refused). New dependency `spring-security-oauth2-jose`.
+  `app.google.client-id=${GOOGLE_CLIENT_ID:}`; blank = Google sign-in off (400 "not set up").
+- **`AuthService.googleLogin`:** `email_verified` required; an account already tied to the Google id signs in; else an
+  account with the same email **ignoring case** (`findFirstByEmailIgnoreCaseOrderByUserIdAsc`) is linked: Google id set
+  and its **password cleared** (sign-up never verified emails, so a pre-registered password could otherwise stay in
+  an attacker's hands; the user can add one with Forgot password; garments/outfits kept); else a new ROLE_USER / FREE
+  account is created from the Google profile with no password. A deactivated account is refused (and not linked), since
+  this path bypasses `AuthenticationManager`. Errors: `GoogleSignInException` (401 / 400) via `GlobalExceptionHandler`.
+- **Schema:** `V10__add_google_login.sql` - `users.google_id` (unique index), `password_hash` nullable (a null hash never
+  matches, so password login fails closed for Google-only accounts). `UserService.requireCurrentPassword`: the password
+  / email change flows tell a Google-only user to use Forgot password instead of "Current password is incorrect".
+- **Frontend:** `GoogleSignInButton` (loads `accounts.google.com/gsi/client` only on login/signup, draws Google's own
+  button, hands up the credential; a load failure shows a note and email sign-in still works), `GoogleSignInSection`
+  ("or" divider + the whole flow, hidden when `VITE_GOOGLE_CLIENT_ID` is empty), `useCompleteSignIn` (the shared
+  token -> profile -> store -> Showcase steps, now used by the password login, signup and Google; clears a half-stored token
+  on failure), `authService.google`. Signup's error box gained `role="alert"`. `/auth/google` stays under `/auth/`,
+  so a failure never trips the session-expiry logout.
+- **Plumbing/docs:** `GOOGLE_CLIENT_ID` (API) and `VITE_GOOGLE_CLIENT_ID` (site) in `.env.example`, Dockerfile,
+  `docker-compose.yml`, `render.yaml`; `DEPLOYMENT.md` "Sign in with Google" (Google Cloud steps: consent screen
+  **published**, Web client id, authorized origins).
+- **Tests:** `NimbusGoogleTokenVerifierTest` (10: valid, both issuers, wrong audience / issuer, expired, bad signature,
+  garbage + alg none, no email, email_verified forms, not configured; keys generated in the test), `GoogleLoginIntegrationTest`
+  (11, with `FakeGoogleTokenVerifier` / `TestGoogleConfig` shared by all integration tests), `googleSignIn.test.tsx` (12).
+  147 backend + 382 frontend tests.
+- **Verified live** (fake client id): the real endpoint refuses garbage, blank and a forged unsigned token; Google's real
+  button loads and renders on login and signup (dark theme, fits 375px). Clicking it with the fake id gives Google's
+  "invalid_client" (expected). A full sign-in with a real Google account is NOT verified: it needs the owner's client id.
+- **Owner setup (not done):** Google Cloud project + consent screen (publish) + Web client id with the site's origins, then
+  set `GOOGLE_CLIENT_ID` on the API and `VITE_GOOGLE_CLIENT_ID` on the site and rebuild the site.
