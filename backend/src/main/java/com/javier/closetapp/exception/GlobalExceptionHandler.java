@@ -58,6 +58,26 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
+    // Task 98: a Google sign-in that cannot go ahead - the status and message come from the exception.
+    @ExceptionHandler(GoogleSignInException.class)
+    public ResponseEntity<Object> handleGoogleSignIn(GoogleSignInException ex) {
+        return clientError(HttpStatus.valueOf(ex.getStatus()), ex.getMessage());
+    }
+
+    // Task 96: the account is at its garment limit. A 403 with a stable `code` (and the limit / plan) so the
+    // frontend can tell it from an ownership refusal and show the upgrade hint.
+    @ExceptionHandler(GarmentLimitExceededException.class)
+    public ResponseEntity<Object> handleGarmentLimit(GarmentLimitExceededException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        body.put("code", "GARMENT_LIMIT");
+        body.put("limit", ex.getLimit());
+        body.put("plan", ex.getPlan());
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
     // Password reset link that can't be used (unknown/expired/used) - a client
     // error the user can act on (request a new link), so 400 with the message.
     @ExceptionHandler(InvalidResetTokenException.class)

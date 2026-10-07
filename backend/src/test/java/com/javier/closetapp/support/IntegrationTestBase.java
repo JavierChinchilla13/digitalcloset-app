@@ -5,10 +5,12 @@ import com.jayway.jsonpath.JsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+import com.javier.closetapp.common.enums.Plan;
 import com.javier.closetapp.common.enums.Role;
 import com.javier.closetapp.user.repository.UserRepository;
 
@@ -27,6 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // users instead of assuming an empty database.
 @SpringBootTest
 @AutoConfigureMockMvc
+// Task 98: Google's token check is replaced by a fake in every integration test.
+@Import(TestGoogleConfig.class)
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
 
@@ -51,6 +55,13 @@ public abstract class IntegrationTestBase {
     protected void promoteToAdmin(TestUser user) {
         var entity = userRepository.findByEmail(user.email()).orElseThrow();
         entity.setRole(Role.ROLE_ADMIN);
+        userRepository.save(entity);
+    }
+
+    // Gives an already-registered user the FREE or PREMIUM plan straight in the database (Task 96).
+    protected void setPlan(TestUser user, Plan plan) {
+        var entity = userRepository.findByEmail(user.email()).orElseThrow();
+        entity.setPlan(plan);
         userRepository.save(entity);
     }
 
@@ -94,6 +105,25 @@ public abstract class IntegrationTestBase {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return ((Number) JsonPath.read(body, "$.itemId")).longValue();
+    }
+
+    /** Tries to create a clothing item and returns the response, so a test can assert a refusal. */
+    protected ResultActions postItem(TestUser user, String name) throws Exception {
+        return mockMvc.perform(post("/api/clothing")
+                .header("Authorization", user.bearer())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(Map.of(
+                        "name", name,
+                        "category", "TOP",
+                        "imageUrl", "https://res.cloudinary.com/test/image/upload/" + name + ".png",
+                        "personaType", "FEMALE"))));
+    }
+
+    /** Creates `count` garments for the user (each one must be accepted). */
+    protected void createItems(TestUser user, int count) throws Exception {
+        for (int i = 0; i < count; i++) {
+            createItem(user, "item-" + UUID.randomUUID(), "TOP");
+        }
     }
 
     protected Map<String, Object> outfitBody(String name, long... itemIds) {

@@ -3,6 +3,12 @@ export enum Role {
   ROLE_ADMIN = 'ROLE_ADMIN'
 }
 
+// Task 96: what an account is entitled to. Admins are unlimited through their role, not a plan.
+export enum Plan {
+  FREE = 'FREE',
+  PREMIUM = 'PREMIUM'
+}
+
 export enum PersonaType {
   MALE = 'MALE',
   FEMALE = 'FEMALE'
@@ -32,6 +38,10 @@ export interface User {
   createdAt: string;
   // The outfit the Showcase opens on and Attire edits (Task 78); null/absent = none.
   mainOutfitId?: number | null;
+  // Task 96: FREE or PREMIUM, and how many garments the account may keep (null = unlimited, i.e.
+  // an admin). Absent only on a record from before the server sent them.
+  plan?: Plan;
+  garmentLimit?: number | null;
 }
 
 export interface AuthResponse {

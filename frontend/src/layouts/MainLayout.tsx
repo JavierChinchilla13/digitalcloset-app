@@ -2,6 +2,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ErrorState from '../components/ErrorState';
+import AdSlot from '../components/ads/AdSlot';
 import { useAuthStore } from '../store/useAuthStore';
 
 // The frame of every page: navbar on top, the routed page in the middle, footer below.
@@ -33,6 +34,9 @@ const MainLayout = () => {
           <Outlet />
         </ErrorBoundary>
       </main>
+
+      {/* Task 97: the app's one ad slot - free accounts only, nothing when no ad network is set up. */}
+      <AdSlot />
 
       <footer className="py-12 border-t border-ink/5 text-center text-text-secondary text-sm">
         <p>© 2026 VYSVI. DESIGNED FOR THE FUTURE OF FASHION.</p>

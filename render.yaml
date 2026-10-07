@@ -41,6 +41,10 @@ services:
         sync: false
       - key: MAIL_RELAY_SECRET
         sync: false
+      # "Sign in with Google" (Task 98): the OAuth client id (public). Leave empty for no Google sign-in.
+      # The website needs the same value as VITE_GOOGLE_CLIENT_ID. See DEPLOYMENT.md.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       # A free instance has little memory: keep the JVM inside it.
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx320m -XX:+UseSerialGC -XX:TieredStopAtLevel=1"
@@ -62,6 +66,24 @@ services:
         sync: false
       - key: VITE_BG_REMOVER_MODE
         value: browser
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      # Ads for free accounts (Task 97). Leave VITE_AD_PROVIDER empty to keep ads off; see
+      # DEPLOYMENT.md, "Ads for free accounts". Public values, baked in at build time.
+      - key: VITE_AD_PROVIDER
+        sync: false
+      - key: VITE_ADSENSE_CLIENT
+        sync: false
+      - key: VITE_ADSENSE_SLOT
+        sync: false
+      - key: VITE_ADSTERRA_SCRIPT_URL
+        sync: false
+      - key: VITE_ADSTERRA_KEY
+        sync: false
+      - key: VITE_ADSTERRA_WIDTH
+        sync: false
+      - key: VITE_ADSTERRA_HEIGHT
+        sync: false
       - key: NODE_VERSION
         value: "24"
     routes:

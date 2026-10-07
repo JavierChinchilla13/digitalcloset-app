@@ -12,4 +12,7 @@ import java.util.List;
 public interface ClothingRepository extends JpaRepository<ClothingItem, Long> {
     // The closet: excludes items the owner has deactivated via deleteItem() (soft delete).
     List<ClothingItem> findByOwnerAndIsActiveTrue(User owner);
+
+    // Task 96: how many garments count against the owner's limit (soft-deleted ones free their slot).
+    long countByOwnerAndIsActiveTrue(User owner);
 }

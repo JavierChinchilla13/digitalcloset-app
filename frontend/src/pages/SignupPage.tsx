@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/useAuthStore';
+import { Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
+import GoogleSignInSection from '../components/GoogleSignInSection';
+import { useCompleteSignIn } from '../hooks/useCompleteSignIn';
 import { getApiErrorMessage } from '../utils/apiError';
 
 // Account creation form. Registering signs the user in straight away (the backend returns a token).
@@ -16,12 +17,9 @@ const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loginStore = useAuthStore(state => state.login);
-  const setToken = useAuthStore(state => state.setToken);
-  const logout = useAuthStore(state => state.logout);
-  const navigate = useNavigate();
+  const completeSignIn = useCompleteSignIn();
 
-  // Registers, fetches the full profile, stores the session and lands on the Showcase.
+  // Registers, then (completeSignIn) fetches the profile, stores the session and lands on the Showcase.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -29,18 +27,8 @@ const SignupPage = () => {
 
     try {
       const response = await authService.register({ email, password, firstName, lastName });
-      
-      // Set token first so subsequent requests (like getCurrentUser) have it in the header
-      setToken(response.token);
-      
-      // Fetch full user profile after registration
-      const user = await authService.getCurrentUser();
-      
-      loginStore(response.token, user);
-      navigate('/showcase');
+      await completeSignIn(response.token);
     } catch (err: unknown) {
-      // The token was stored before the profile fetch, so a failure there must not leave it behind.
-      logout();
       setError(getApiErrorMessage(err, "Couldn't create your account. Please try again."));
       console.error('Signup error:', err);
     } finally {
@@ -62,6 +50,7 @@ const SignupPage = () => {
 
         {error && (
           <motion.div 
+            role="alert"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-red-400 text-xs font-bold text-center uppercase tracking-widest"
@@ -140,6 +129,8 @@ const SignupPage = () => {
             )}
           </button>
         </form>
+
+        <GoogleSignInSection onError={setError} />
 
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">

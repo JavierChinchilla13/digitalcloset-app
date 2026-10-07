@@ -2,6 +2,7 @@ package com.javier.closetapp.auth.controller;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.auth.dto.ForgotPasswordRequest;
+import com.javier.closetapp.auth.dto.GoogleLoginRequest;
 import com.javier.closetapp.auth.dto.LoginRequest;
 import com.javier.closetapp.auth.dto.RegisterRequest;
 import com.javier.closetapp.auth.dto.ResetPasswordRequest;
@@ -46,6 +47,12 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.ok(authService.register(request));
+    }
+
+    // Task 98: "Sign in with Google" - exchanges Google's ID token for this app's own JWT.
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> google(@Valid @RequestBody GoogleLoginRequest request) {
+        return ResponseEntity.ok(authService.googleLogin(request.getCredential()));
     }
 
     @PostMapping("/login")

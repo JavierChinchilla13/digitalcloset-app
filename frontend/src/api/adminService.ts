@@ -1,5 +1,5 @@
 import api from './axios';
-import type { Role, User } from '../types';
+import type { Plan, Role, User } from '../types';
 
 export interface CreateUserRequest {
   email: string;
@@ -33,6 +33,12 @@ export const adminService = {
 
   reactivateUser: async (userId: number): Promise<User> => {
     const response = await api.patch<User>(`/users/${userId}/reactivate`);
+    return response.data;
+  },
+
+  // Task 96: gives an account the FREE or PREMIUM plan (more garment space, no ads).
+  setPlan: async (userId: number, plan: Plan): Promise<User> => {
+    const response = await api.patch<User>(`/users/${userId}/plan`, { plan });
     return response.data;
   },
 };
