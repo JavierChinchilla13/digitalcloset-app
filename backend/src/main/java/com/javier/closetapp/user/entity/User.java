@@ -27,8 +27,14 @@ public class User implements UserDetails {
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    // Null for an account created through Google sign-in (Task 98): a null hash never matches, so password
+    // login fails for it until the user sets one with "Forgot password".
+    @Column(name = "password_hash")
     private String password;
+
+    // Google's stable id for the person (the sign-in token's `sub`); null if Google was never used (V10).
+    @Column(name = "google_id", unique = true)
+    private String googleId;
 
     @Column(name = "first_name")
     private String firstName;
@@ -156,6 +162,14 @@ public class User implements UserDetails {
 
     public void setMainOutfitId(Long mainOutfitId) {
         this.mainOutfitId = mainOutfitId;
+    }
+
+    public String getGoogleId() {
+        return googleId;
+    }
+
+    public void setGoogleId(String googleId) {
+        this.googleId = googleId;
     }
 
     public Plan getPlan() {

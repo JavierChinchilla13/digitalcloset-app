@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -28,6 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 // users instead of assuming an empty database.
 @SpringBootTest
 @AutoConfigureMockMvc
+// Task 98: Google's token check is replaced by a fake in every integration test.
+@Import(TestGoogleConfig.class)
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
 

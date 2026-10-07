@@ -38,6 +38,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<!-- Task 98: checks Google's sign-in tokens (Nimbus JWT decoder against Google's published keys). -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-jose</artifactId>
+		</dependency>
 		<!-- Task 24: /actuator/health for the hosting platform's health check
 		     (only "health" is exposed - see application.properties). -->
 		<dependency>
