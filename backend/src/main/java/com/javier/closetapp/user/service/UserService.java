@@ -3,6 +3,7 @@ package com.javier.closetapp.user.service;
 import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.auth.mail.VerificationCodeMailer;
 import com.javier.closetapp.common.enums.AccountChangeType;
+import com.javier.closetapp.common.enums.Plan;
 import com.javier.closetapp.common.enums.Role;
 import com.javier.closetapp.exception.DuplicateEmailException;
 import com.javier.closetapp.exception.ForbiddenOperationException;
@@ -50,6 +51,7 @@ public class UserService {
     private final JwtService jwtService;
     private final VerificationCodeMailer verificationCodeMailer;
     private final VerificationAttemptTracker verificationAttemptTracker;
+    private final PlanLimits planLimits;
 
     private final long verificationExpirationMinutes;
     private final long verificationMinIntervalSeconds;
@@ -60,11 +62,13 @@ public class UserService {
                         PasswordEncoder passwordEncoder, JwtService jwtService,
                         VerificationCodeMailer verificationCodeMailer,
                         VerificationAttemptTracker verificationAttemptTracker,
+                        PlanLimits planLimits,
                         @Value("${app.account-verification.expiration-minutes:10}") long verificationExpirationMinutes,
                         @Value("${app.account-verification.min-interval-seconds:60}") long verificationMinIntervalSeconds,
                         @Value("${app.account-verification.max-attempts:5}") int verificationMaxAttempts) {
         this.userRepository = userRepository;
         this.verificationAttemptTracker = verificationAttemptTracker;
+        this.planLimits = planLimits;
         this.outfitRepository = outfitRepository;
         this.pendingChangeRepository = pendingChangeRepository;
         this.passwordEncoder = passwordEncoder;
@@ -303,6 +307,15 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
+    // Admin-only: gives an account the FREE or PREMIUM plan (no payment flow yet). A 404 for an unknown id.
+    @Transactional
+    public UserResponse setPlan(Long userId, Plan plan) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        user.setPlan(plan);
+        return mapToResponse(userRepository.save(user));
+    }
+
     private UserResponse mapToResponse(User user) {
         return new UserResponse(
                 user.getUserId(),
@@ -312,7 +325,9 @@ public class UserService {
                 user.getRole(),
                 user.isActive(),
                 user.getCreatedAt(),
-                user.getMainOutfitId()
+                user.getMainOutfitId(),
+                user.getPlan(),
+                planLimits.garmentLimit(user)
         );
     }
 }

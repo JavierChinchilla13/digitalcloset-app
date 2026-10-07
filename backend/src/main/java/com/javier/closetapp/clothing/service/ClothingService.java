@@ -7,9 +7,11 @@ import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
 import com.javier.closetapp.common.enums.PersonaStatus;
 import com.javier.closetapp.exception.ForbiddenOperationException;
+import com.javier.closetapp.exception.GarmentLimitExceededException;
 import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.user.entity.User;
 import com.javier.closetapp.user.repository.UserRepository;
+import com.javier.closetapp.user.service.PlanLimits;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,10 +27,12 @@ public class ClothingService {
 
     private final ClothingRepository clothingRepository;
     private final UserRepository userRepository;
+    private final PlanLimits planLimits;
 
-    public ClothingService(ClothingRepository clothingRepository, UserRepository userRepository) {
+    public ClothingService(ClothingRepository clothingRepository, UserRepository userRepository, PlanLimits planLimits) {
         this.clothingRepository = clothingRepository;
         this.userRepository = userRepository;
+        this.planLimits = planLimits;
     }
 
     // The account behind the current request's token (set by JwtAuthenticationFilter).
@@ -38,9 +42,18 @@ public class ClothingService {
     }
 
     // Saves a new garment owned by the caller; an omitted persona status defaults to FITTED, an omitted modular flag to false.
+    // Task 96: refused with GarmentLimitExceededException when the account already holds its limit (15 free,
+    // 300 premium, unlimited for admins). The account row is locked first, so concurrent requests are counted
+    // one after the other and cannot slip past the limit. The limit only stops NEW garments: an account that
+    // is already over it (say, after a plan change) keeps what it has.
     @Transactional
     public ClothingResponse createItem(ClothingRequest request) {
-        User user = getAuthenticatedUser();
+        User user = userRepository.findByIdForUpdate(getAuthenticatedUser().getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        Integer limit = planLimits.garmentLimit(user);
+        if (limit != null && clothingRepository.countByOwnerAndIsActiveTrue(user) >= limit) {
+            throw new GarmentLimitExceededException(limit, user.getPlan());
+        }
         ClothingItem item = new ClothingItem();
         item.setName(request.getName());
         item.setDescription(request.getDescription());

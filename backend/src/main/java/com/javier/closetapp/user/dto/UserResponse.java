@@ -1,5 +1,6 @@
 package com.javier.closetapp.user.dto;
 
+import com.javier.closetapp.common.enums.Plan;
 import com.javier.closetapp.common.enums.Role;
 import java.time.LocalDateTime;
 
@@ -14,10 +15,15 @@ public class UserResponse {
     private LocalDateTime createdAt;
     // Null when the user has no main outfit (Task 78).
     private Long mainOutfitId;
+    // Task 96: FREE or PREMIUM, and how many garments the account may keep (null = unlimited,
+    // i.e. an admin). The garment count is not here: it goes stale, the client counts its own list.
+    private Plan plan;
+    private Integer garmentLimit;
 
     public UserResponse() {}
 
-    public UserResponse(Long userId, String email, String firstName, String lastName, Role role, boolean active, LocalDateTime createdAt, Long mainOutfitId) {
+    public UserResponse(Long userId, String email, String firstName, String lastName, Role role, boolean active, LocalDateTime createdAt, Long mainOutfitId,
+                        Plan plan, Integer garmentLimit) {
         this.userId = userId;
         this.email = email;
         this.firstName = firstName;
@@ -26,6 +32,8 @@ public class UserResponse {
         this.active = active;
         this.createdAt = createdAt;
         this.mainOutfitId = mainOutfitId;
+        this.plan = plan;
+        this.garmentLimit = garmentLimit;
     }
 
     public Long getUserId() {
@@ -90,5 +98,21 @@ public class UserResponse {
 
     public void setMainOutfitId(Long mainOutfitId) {
         this.mainOutfitId = mainOutfitId;
+    }
+
+    public Plan getPlan() {
+        return plan;
+    }
+
+    public void setPlan(Plan plan) {
+        this.plan = plan;
+    }
+
+    public Integer getGarmentLimit() {
+        return garmentLimit;
+    }
+
+    public void setGarmentLimit(Integer garmentLimit) {
+        this.garmentLimit = garmentLimit;
     }
 }

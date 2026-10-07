@@ -1,5 +1,6 @@
 package com.javier.closetapp.user.entity;
 
+import com.javier.closetapp.common.enums.Plan;
 import com.javier.closetapp.common.enums.Role;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -52,6 +53,11 @@ public class User implements UserDetails {
     // nothing. The FK (V6) is ON DELETE SET NULL.
     @Column(name = "main_outfit_id")
     private Long mainOutfitId;
+
+    // FREE or PREMIUM (Task 96; column added in V9). Decides the garment limit and whether ads show.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Plan plan = Plan.FREE;
 
     public User() {}
 
@@ -150,6 +156,14 @@ public class User implements UserDetails {
 
     public void setMainOutfitId(Long mainOutfitId) {
         this.mainOutfitId = mainOutfitId;
+    }
+
+    public Plan getPlan() {
+        return plan;
+    }
+
+    public void setPlan(Plan plan) {
+        this.plan = plan;
     }
 
     public void setActive(boolean active) {

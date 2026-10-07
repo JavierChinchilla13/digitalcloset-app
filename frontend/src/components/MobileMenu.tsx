@@ -5,6 +5,7 @@ import { LogOut, Settings as SettingsIcon, ShieldCheck, Sparkles, Tag, UserCircl
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
+import StorageMeter from './StorageMeter';
 import { NAV_LINKS } from './navLinks';
 
 interface MobileMenuProps {
@@ -88,6 +89,9 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               <X size={20} />
             </button>
           </div>
+
+          {/* Task 96: how full the closet is, for accounts that have a limit. */}
+          <StorageMeter compact className="px-6 pb-3" />
 
           <nav className="px-4 pb-10 space-y-1">
             {links.map((link) => {

@@ -8,7 +8,8 @@ import { userService } from '../api/userService';
 import { authService } from '../api/authService';
 import SectionWrapper from '../components/SectionWrapper';
 import PasswordInput from '../components/PasswordInput';
-import { Role } from '../types';
+import { Plan, Role } from '../types';
+import StorageMeter from '../components/StorageMeter';
 import { getApiErrorMessage } from '../utils/apiError';
 
 // Task 79: account settings - name, email, password, and account status.
@@ -430,6 +431,18 @@ const SettingsPage = () => {
                 <span className="text-text-secondary opacity-50">Role</span>
                 <span className="text-text-primary">{user?.role === Role.ROLE_ADMIN ? 'Admin' : 'User'}</span>
               </div>
+              <div className="flex justify-between" data-testid="plan-row">
+                <span className="text-text-secondary opacity-50">Plan</span>
+                <span className="text-text-primary">
+                  {user?.role === Role.ROLE_ADMIN ? 'Admin (unlimited space)' : user?.plan === Plan.PREMIUM ? 'Premium' : 'Free'}
+                </span>
+              </div>
+              {user?.garmentLimit != null && (
+                <div className="flex justify-between items-center gap-6" data-testid="storage-row">
+                  <span className="text-text-secondary opacity-50">Storage</span>
+                  <StorageMeter className="w-40 text-right" />
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-text-secondary opacity-50">Member since</span>
                 <span className="text-text-primary">{formatDate(user?.createdAt)}</span>

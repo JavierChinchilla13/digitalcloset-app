@@ -6891,3 +6891,31 @@ seemed to reload forever.
   wrong password on a real account show "Invalid email or password" and keep the form; an expired
   session returns to `/login` with the notice; a stopped backend shows "Can't reach the server".
 - **Deploy note:** the app now relies on the backend's 401, so frontend and backend ship together.
+
+### Task 96 - Plans and garment limits (2026-10-07, branch `phase-14-plans-limits`)
+
+The app runs on free tiers (Cloudinary 25 credits/month shared by storage + bandwidth, Neon 0.5 GB), and
+photos were unlimited. Now every account has a plan and a garment limit.
+- **Rule (one place, `PlanLimits`):** admins unlimited; `PREMIUM` 300; everyone else 15
+  (`app.limits.garments.free/premium`, env `GARMENT_LIMIT_FREE` / `GARMENT_LIMIT_PREMIUM`). Counts active
+  garments (soft-deleted ones free their slot); a shoe pair is two rows = 2 slots.
+- **Backend:** `Plan` enum (`FREE`, `PREMIUM`), `users.plan` (migration `V9__add_user_plan.sql`, existing
+  accounts become FREE), `UserResponse.plan` + `garmentLimit` (null = unlimited). `ClothingService.createItem`
+  locks the user row (`UserRepository.findByIdForUpdate`, pessimistic) then counts; over the limit throws
+  `GarmentLimitExceededException` -> **403** `{code: "GARMENT_LIMIT", limit, plan, message}`. Only new
+  garments are refused (an over-limit account keeps what it has). Admin `PATCH /api/users/{id}/plan`
+  (`SetPlanRequest`, 404 for an unknown id). No payment code.
+- **Frontend:** `utils/storage.ts` + `hooks/useStorage.ts` (count from the closet store, limit from the
+  account; unknown account = never blocked), `StorageMeter` ("7 / 15 garments" + bar) in the Closet header,
+  Settings (Plan + Storage rows) and both account menus; `StorageLimitModal` instead of the upload wizard when
+  full; `UploadFlow` refuses before any Cloudinary upload, warns when a shoe pair needs 2 slots and checks
+  both fit before saving either, and shows the server's message (also fixes studio save errors that were set
+  but never displayed); Admin page plan dropdown (Free 15 / Premium 300, "Unlimited space" for admins).
+- **Tests:** `GarmentLimitIntegrationTest` (10, incl. 24 concurrent creates -> exactly 15), `storageLimit`
+  (13) and `storageUi` (8); `makeUser` / `makeItems` fixtures. 126 backend + 350 frontend tests.
+- **Verified live** (scratch backend on file H2 + Vite 5199): 14/15 meter, red 15/15, full-closet popup,
+  server 403 for the 16th, admin switches the shopper to Premium (toast), 16th accepted, phone menu line,
+  no overflow at 375px.
+- **Not done / known:** the V9 SQL was checked in H2's Postgres mode, not on real Postgres (Render's Flyway
+  applies it on deploy). Direct uploads to Cloudinary outside the app and orphaned images after a delete are
+  not prevented (needs signed uploads + a Cloudinary delete): set a max file size on the upload preset.
