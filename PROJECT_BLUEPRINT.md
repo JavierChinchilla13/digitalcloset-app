@@ -6919,3 +6919,33 @@ photos were unlimited. Now every account has a plan and a garment limit.
 - **Not done / known:** the V9 SQL was checked in H2's Postgres mode, not on real Postgres (Render's Flyway
   applies it on deploy). Direct uploads to Cloudinary outside the app and orphaned images after a delete are
   not prevented (needs signed uploads + a Cloudinary delete): set a max file size on the upload preset.
+
+### Task 97 - Ads for free accounts (2026-10-07, branch `phase-14-ads`, stacked on Task 96)
+
+Ads to help pay for storage, shown only to signed-in FREE accounts; OFF until a network is configured.
+- **`components/ads/AdSlot.tsx`**: the app's one slot, in `MainLayout` just above the footer (below the fold on
+  the full-height builder pages). Labelled "Advertisement", not sticky. Hidden on `/admin`, `/persona`, `/demo`
+  and the sign-in pages. Only one slot (not an extra in-flow one on Closet / Outfits, which would have put two
+  ads side by side).
+- **Eligibility** (`hooks/useAdEligibility.ts`, `isPaidAccount` in `utils/storage.ts`): signed in AND not PREMIUM
+  AND not admin AND a provider configured. Ad scripts load dynamically, so nobody else downloads them.
+- **Config** (`components/ads/adConfig.ts`, read at call time): `VITE_AD_PROVIDER` = `adsense`
+  (`VITE_ADSENSE_CLIENT` `ca-pub-...`, `VITE_ADSENSE_SLOT`) or `adsterra` (`VITE_ADSTERRA_SCRIPT_URL` an https
+  `.../invoke.js`, `VITE_ADSTERRA_KEY`, `VITE_ADSTERRA_WIDTH` / `_HEIGHT`); anything missing / malformed = off.
+  AdSense needs an owned domain (it does not approve `*.onrender.com`), so it stays off until then.
+- **Providers:** `AdsenseUnit` (standard `<ins class="adsbygoogle">` + queued push, script added once, a fresh
+  element per route); `BannerFrame` runs the free-subdomain network's snippet in a **sandboxed iframe without
+  `allow-same-origin`**, so third-party ad code cannot read this site's localStorage (the JWT lives there) and its
+  `document.write` cannot wipe the single-page app; the frame declares the page's colour scheme so an empty ad is
+  not a white block; a banner wider than the screen is skipped.
+- **Account refresh on open** (`App.tsx`): `GET /users/me` once when signed in, so a plan changed by an admin (or a
+  session that predates the plan fields) takes effect without signing in again; a failure keeps the stored user.
+- **Plumbing/docs:** `frontend/.env.example`, `Dockerfile` ARGs, `docker-compose.yml`, `render.yaml`,
+  `DEPLOYMENT.md` ("Ads for free accounts": steps, `ads.txt`, privacy / consent warning).
+- **Tests:** `ads.test.tsx` (16: config parsing, who sees the slot, excluded pages, AdSense element + one script,
+  sandbox without allow-same-origin, snippet content, too-wide banner) and `accountRefresh.test.tsx` (4). 370 frontend tests.
+- **Verified live** (stub network): free account gets the sandboxed frame above the footer (no overflow at 375px),
+  premium and admin get none (admin: no ad script either), a stale FREE copy refreshed to PREMIUM on load (0 / 300,
+  ad gone).
+- **Not done / known:** no real ad network account was used, so a real impression is unverified; EU/UK cookie-consent
+  banner and a privacy-policy page are still needed before real traffic.

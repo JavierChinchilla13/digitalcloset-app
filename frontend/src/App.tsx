@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
+import { authService } from './api/authService';
 import { useClothingStore } from './store/useClothingStore';
 import { usePersonaSettingsStore } from './store/usePersonaSettingsStore';
 import MainLayout from './layouts/MainLayout';
@@ -45,6 +46,24 @@ function App() {
   const { isAuthenticated } = useAuthStore();
   const { fetchItems } = useClothingStore();
   const fetchDisplayNames = usePersonaSettingsStore((state) => state.fetchDisplayNames);
+
+  // Task 97: refresh the account when the app opens. The user kept from sign-in can be out of date (the
+  // plan was changed by an admin, or the session predates a field such as the plan / garment limit), and
+  // the plan decides the garment limit and whether ads show. A failure is ignored: the kept copy is used.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    authService
+      .getCurrentUser()
+      .then((fresh) => {
+        const token = useAuthStore.getState().token;
+        if (!cancelled && token) useAuthStore.getState().login(token, fresh);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
 
   // Load clothing items globally on mount to ensure persistent visibility across all components
   useEffect(() => {

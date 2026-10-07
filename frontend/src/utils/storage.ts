@@ -19,6 +19,11 @@ export interface StorageUsage {
   isPaid: boolean;
 }
 
+// A paying account or an admin: the accounts with no ads and the bigger (or no) garment limit.
+export function isPaidAccount(user: Pick<User, 'role' | 'plan'> | null | undefined): boolean {
+  return user?.plan === Plan.PREMIUM || user?.role === Role.ROLE_ADMIN;
+}
+
 /**
  * Works out the storage state for `user` holding `used` garments. A missing user, or a
  * user the server sent without a limit, is treated as unlimited: the client never blocks
@@ -35,7 +40,7 @@ export function computeStorage(user: Pick<User, 'role' | 'plan' | 'garmentLimit'
     unlimited,
     atLimit: !unlimited && used >= (limit as number),
     canAdd: (count: number) => unlimited || used + count <= (limit as number),
-    isPaid: user?.plan === Plan.PREMIUM || user?.role === Role.ROLE_ADMIN,
+    isPaid: isPaidAccount(user),
   };
 }
 
