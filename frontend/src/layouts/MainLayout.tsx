@@ -1,8 +1,10 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ErrorState from '../components/ErrorState';
 import AdSlot from '../components/ads/AdSlot';
+import ConsentBanner from '../components/ConsentBanner';
+import { useConsentStore } from '../store/useConsentStore';
 import { useAuthStore } from '../store/useAuthStore';
 
 // The frame of every page: navbar on top, the routed page in the middle, footer below.
@@ -10,6 +12,7 @@ const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const reopenConsent = useConsentStore((state) => state.reopen);
 
   return (
     <div className="min-h-dvh bg-background-main flex flex-col">
@@ -38,9 +41,19 @@ const MainLayout = () => {
       {/* Task 97: the app's one ad slot - free accounts only, nothing when no ad network is set up. */}
       <AdSlot />
 
-      <footer className="py-12 border-t border-ink/5 text-center text-text-secondary text-sm">
+      <footer className="py-12 border-t border-ink/5 text-center text-text-secondary text-sm space-y-4">
+        {/* Task 99: legal pages and the way back to the cookie choice. */}
+        <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-widest">
+          <Link to="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
+          <Link to="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
+          <button type="button" onClick={reopenConsent} className="uppercase tracking-widest hover:text-text-primary transition-colors">
+            Cookie settings
+          </button>
+        </nav>
         <p>© 2026 VYSVI. DESIGNED FOR THE FUTURE OF FASHION.</p>
       </footer>
+
+      <ConsentBanner />
     </div>
   );
 };

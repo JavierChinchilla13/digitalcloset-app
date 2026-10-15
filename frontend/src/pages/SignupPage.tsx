@@ -132,6 +132,12 @@ const SignupPage = () => {
 
         <GoogleSignInSection onError={setError} />
 
+        <p className="mt-8 text-center text-text-secondary text-[10px] tracking-widest uppercase opacity-60">
+          By continuing you agree to the{' '}
+          <Link to="/terms" className="underline underline-offset-2 hover:text-text-primary">Terms</Link> and{' '}
+          <Link to="/privacy" className="underline underline-offset-2 hover:text-text-primary">Privacy Policy</Link>.
+        </p>
+
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">
             Already have an account? {' '}

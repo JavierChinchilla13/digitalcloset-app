@@ -227,8 +227,9 @@ Set the variables on the **site** (they are baked in at build time, so rebuild i
   `VITE_ADSTERRA_HEIGHT`. Use banner units only (avoid popunder / redirect formats: they spoil the app and
   annoy users). A banner wider than the visitor's screen is simply not shown (320x50 fits every phone). This
   network's code runs in a sandboxed frame that cannot read the site's storage (where the sign-in token lives).
-- **Before real traffic:** ad networks set tracking cookies, so you need a privacy policy page, and visitors
-  in the EU / UK need a cookie-consent banner before personalised ads. Neither is built yet.
+- **Privacy and consent (built):** the site has `/privacy` and `/terms` (drafts: review them and fill in the
+  `[COUNTRY]` spot in `frontend/src/config/legal.ts`, then set `LEGAL_IS_DRAFT = false`) and a cookie banner.
+  Ads only load after a visitor chooses "Accept all"; "Only essentials" keeps them off.
 
 ### What to expect on the free plans
 

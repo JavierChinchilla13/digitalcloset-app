@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Jost:wght@300;400;500;600&display=swap');
+/* Task 99: the two typefaces are served from this site (imported in main.tsx from @fontsource), not from
+   Google Fonts: no request to Google on every page load, and a faster first paint. */
 @import "tailwindcss";
 
 /* Task 91: `touch:` applies on devices that cannot hover (phones, tablets). Tailwind v4

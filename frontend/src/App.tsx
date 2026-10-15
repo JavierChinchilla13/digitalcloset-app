@@ -9,6 +9,8 @@ import MainLayout from './layouts/MainLayout';
 // Real Pages
 import LandingPage from './pages/LandingPage';
 import DemoPage from './pages/DemoPage';
+import PrivacyPage from './pages/PrivacyPage';
+import TermsPage from './pages/TermsPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -89,6 +91,9 @@ function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/demo" element={<DemoPage />} />
+          {/* Task 99: legal pages, readable without an account. */}
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
 
           {/* Protected Routes */}
           <Route path="/closet" element={<ProtectedRoute><ClosetPage /></ProtectedRoute>} />

@@ -42,6 +42,9 @@ const GoogleSignInSection = ({ onError }: { onError: (message: string | null) =>
         <GoogleSignInButton clientId={clientId} onCredential={handleCredential} />
         {isBusy && <Loader2 className="absolute inset-0 m-auto animate-spin text-accent" size={20} />}
       </div>
+      <p className="text-center text-text-secondary text-[10px] tracking-widest uppercase opacity-60">
+        Signing in with Google loads a script from Google.
+      </p>
     </div>
   );
 };

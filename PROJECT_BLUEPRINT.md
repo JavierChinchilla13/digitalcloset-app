@@ -6987,3 +6987,21 @@ JWT. No Google client secret is used.
   "invalid_client" (expected). A full sign-in with a real Google account is NOT verified: it needs the owner's client id.
 - **Owner setup (not done):** Google Cloud project + consent screen (publish) + Web client id with the site's origins, then
   set `GOOGLE_CLIENT_ID` on the API and `VITE_GOOGLE_CLIENT_ID` on the site and rebuild the site.
+
+### Task 99 - Legal pages, cookie consent, self-hosted fonts (2026-10-15, branch `phase-15-legal-consent`)
+
+- **Pages** `/privacy` and `/terms` (public, `PrivacyPage` / `TermsPage` on `LegalLayout`): plain-language DRAFTS naming
+  the operator, the data collected, the processors (Render, Neon, Cloudinary, Google, Stripe, Sentry, ad network), every
+  localStorage key, retention, rights, children (13+), subscription / cancellation / refund wording. Facts live in
+  `config/legal.ts`; `LEGAL_IS_DRAFT` shows a "draft for review" note and `[COUNTRY]` is a marked gap for the owner.
+- **Consent:** `store/useConsentStore.ts` (persisted `vysvi-consent`: `unset | essential | all`), `hooks/useConsent.ts`
+  (`allowsOptional`), `components/ConsentBanner.tsx` (non-blocking bottom bar, two equal buttons, safe-area padding),
+  footer Privacy / Terms / "Cookie settings" (re-opens it), agreement line under login and signup.
+- **Gating:** `useAdEligibility` requires "Accept all", so no ad script loads before it. Sentry (Task 104) will use the same.
+  Google sign-in stays user-initiated, with a one-line note that it loads a script from Google.
+- **Fonts:** `@fontsource/cormorant-garamond` and `@fontsource/jost` replace the Google Fonts `@import` (no third-party
+  request on page load; faster paint). `index.html` description + Open Graph, `public/robots.txt` (disallows `/s/`).
+- **Tests:** `consent.test.tsx` (12); ad / account-refresh tests grant consent. 394 frontend tests.
+- **Verified live:** banner at 375px (no overflow), choice persists across reload, footer re-opens it, no request to
+  googleapis/gstatic, fonts loaded from the site.
+- **Owner:** review the drafts and fill in `[COUNTRY]` (ideally with a lawyer before charging money).
