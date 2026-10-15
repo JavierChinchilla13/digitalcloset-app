@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -19,14 +19,17 @@ import { ClothingCategory, PersonaStatus, PersonaType, type ClothingTransform } 
 import type { ClothingItem } from '../types';
 import { useClothingStore } from '../store/useClothingStore';
 import { useToast } from './Toast';
-import FittingEditor from './FittingTool/FittingEditor';
-import GarmentCleanup, { type CleanupResult } from './FittingTool/GarmentCleanup';
+import type { CleanupResult } from './FittingTool/GarmentCleanup';
 import { retargetForTrim } from '../utils/alphaBounds';
-import JacketFittingEditor from './FittingTool/JacketFittingEditor';
-import { segmentationService } from '../utils/segmentationService';
+import { segmentJacket } from '../utils/lazyServices';
 import { parseWarpData } from '../utils/warpData';
 import { cloudinaryService } from '../api/cloudinaryService';
 import { getApiErrorMessage } from '../utils/apiError';
+
+// Task 100: the studios (Fabric canvases) are separate chunks, downloaded when the editor view opens.
+const FittingEditor = lazy(() => import('./FittingTool/FittingEditor'));
+const GarmentCleanup = lazy(() => import('./FittingTool/GarmentCleanup'));
+const JacketFittingEditor = lazy(() => import('./FittingTool/JacketFittingEditor'));
 
 interface EditClothingModalProps {
   item: ClothingItem | null;
@@ -113,7 +116,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
   // Studio. Returns false when the model found nothing to split.
   const splitJacket = async (blob: Blob): Promise<boolean> => {
     setCleanupBusy('Splitting the jacket into sections...');
-    const parts = await segmentationService.segmentJacket(new File([blob], 'jacket.png', { type: 'image/png' }));
+    const parts = await segmentJacket(new File([blob], 'jacket.png', { type: 'image/png' }));
     if (parts.size === 0) return false;
     const urls: Record<string, string> = {};
     for (const [partName, partBlob] of parts.entries()) {
@@ -256,6 +259,9 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             }`}
             onClick={(e) => e.stopPropagation()}
           >
+            <Suspense fallback={<div className="flex-1 h-full min-h-[40vh] flex items-center justify-center" role="status" aria-label="Loading the editor">
+                <Loader2 className="animate-spin text-accent" size={28} />
+              </div>}>
             {view === 'form' ? (
               <>
                 {/* Header */}
@@ -453,6 +459,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 />
               </div>
             )}
+            </Suspense>
           </motion.div>
         </div>
       )}

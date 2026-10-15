@@ -19,6 +19,10 @@ interface FeatureCardProps {
 const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardProps) => {
   const [isActive, setIsActive] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
+  // Task 100: the clip is requested the first time the card is hovered or tapped, not on page load
+  // (the four clips together are several MB that most visitors never ask to see).
+  const [wantsMedia, setWantsMedia] = useState(false);
+  if (isActive && !wantsMedia) setWantsMedia(true);
   const hasPreview = !!media && !mediaFailed;
 
   return (
@@ -56,12 +60,13 @@ const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardP
           aria-hidden={!isActive}
           className={`absolute inset-0 bg-background-main transition-opacity duration-300 ${isActive ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
         >
-          <img
+          {wantsMedia && <img
             src={media}
             alt={`${title.toLowerCase()} in action`}
             onError={() => setMediaFailed(true)}
             className="w-full h-full object-cover"
-          />
+            decoding="async"
+          />}
           <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/85 to-transparent">
             <p className="text-xs font-bold tracking-widest uppercase text-white">{title}</p>
           </div>

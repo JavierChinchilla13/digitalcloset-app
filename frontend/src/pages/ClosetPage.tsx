@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { lazy, useEffect, useState, useMemo } from "react";
 import {
   Plus,
   Search,
@@ -16,14 +16,17 @@ import { ClothingCategory, PersonaType } from "../types";
 import type { ClothingItem } from "../types";
 import ClothingCard from "../components/ClothingCard";
 import SectionWrapper from "../components/SectionWrapper";
-import UploadFlow from "../components/FittingTool/UploadFlow";
+import MountOnFirstOpen from "../components/MountOnFirstOpen";
 import ClothingDetailsModal from "../components/ClothingDetailsModal";
-import EditClothingModal from "../components/EditClothingModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 import ErrorState from '../components/ErrorState';
 import StorageMeter from '../components/StorageMeter';
 import StorageLimitModal from '../components/StorageLimitModal';
 import { useStorage } from '../hooks/useStorage';
+
+// Task 100: heavy editor code, downloaded on first use (see MountOnFirstOpen).
+const UploadFlow = lazy(() => import("../components/FittingTool/UploadFlow"));
+const EditClothingModal = lazy(() => import("../components/EditClothingModal"));
 
 // The closet: every garment as a card grid with search, category / persona filters and
 // a favourites-only switch. Adding opens the upload wizard; each card can be viewed,
@@ -297,10 +300,13 @@ const ClosetPage = () => {
       {/* Modals */}
       <StorageLimitModal isOpen={isLimitModalOpen} onClose={() => setIsLimitModalOpen(false)} />
 
-      <UploadFlow
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-      />
+      {/* Task 100: the upload flow and the editor are loaded the first time they are opened. */}
+      <MountOnFirstOpen open={isUploadModalOpen}>
+        <UploadFlow
+          isOpen={isUploadModalOpen}
+          onClose={() => setIsUploadModalOpen(false)}
+        />
+      </MountOnFirstOpen>
 
       <ClothingDetailsModal
         item={selectedItem}
@@ -308,11 +314,13 @@ const ClosetPage = () => {
         onClose={() => setIsDetailsModalOpen(false)}
       />
 
-      <EditClothingModal
-        item={selectedItem}
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-      />
+      <MountOnFirstOpen open={isEditModalOpen}>
+        <EditClothingModal
+          item={selectedItem}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+        />
+      </MountOnFirstOpen>
 
       <DeleteConfirmationModal
         itemId={selectedItem?.itemId ?? null}

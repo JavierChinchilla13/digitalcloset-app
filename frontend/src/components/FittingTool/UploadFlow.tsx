@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, 
@@ -22,16 +22,16 @@ import { computeStorage, limitMessage, StorageLimitError } from '../../utils/sto
 import { getApiErrorMessage } from '../../utils/apiError';
 import CategoryPicker from '../CategoryPicker';
 import { cloudinaryService } from '../../api/cloudinaryService';
-import { bgRemovalService, optimizeImage } from '../../lib/background-removers';
-import { segmentationService } from '../../utils/segmentationService';
+import { removeBackground, optimizeImage, segmentJacket } from '../../utils/lazyServices';
 import { DEFAULT_TRANSFORMS } from './Presets';
-import FittingEditor from './FittingEditor';
 
-import ShoeSymmetryCheck from './ShoeSymmetryCheck';
-import ShoeFittingEditor from './ShoeFittingEditor';
-import JacketSegmentationTool from './JacketSegmentationTool';
-import JacketFittingEditor from './JacketFittingEditor';
-import GarmentCleanup from './GarmentCleanup';
+// Task 100: each studio (Fabric canvases, segmentation) is its own chunk, downloaded when its step opens.
+const FittingEditor = lazy(() => import('./FittingEditor'));
+const ShoeSymmetryCheck = lazy(() => import('./ShoeSymmetryCheck'));
+const ShoeFittingEditor = lazy(() => import('./ShoeFittingEditor'));
+const JacketSegmentationTool = lazy(() => import('./JacketSegmentationTool'));
+const JacketFittingEditor = lazy(() => import('./JacketFittingEditor'));
+const GarmentCleanup = lazy(() => import('./GarmentCleanup'));
 import ErrorBoundary from '../ErrorBoundary';
 import ErrorState from '../ErrorState';
 
@@ -200,7 +200,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     try {
       if (category === ClothingCategory.SHOES) {
          setProcessingStatus('Digitizing pair...');
-         const leftResult = await bgRemovalService.removeBackground(file, {
+         const leftResult = await removeBackground(file, {
            onProgress: (status) => setProcessingStatus(status)
          });
 
@@ -221,7 +221,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
 
          if (isAsymmetrical && rightFile) {
             setProcessingStatus('Processing right shoe...');
-            const rightResult = await bgRemovalService.removeBackground(rightFile, {
+            const rightResult = await removeBackground(rightFile, {
               onProgress: (status) => setProcessingStatus(`Right Shoe: ${status}`)
             });
             setProcessingStatus('Uploading right shoe...');
@@ -236,7 +236,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
          setStep('SHOE_FITTING');
       } else {
          setProcessingStatus('Analyzing garment...');
-         const result = await bgRemovalService.removeBackground(file, {
+         const result = await removeBackground(file, {
            onProgress: (status) => setProcessingStatus(status)
          });
          
@@ -298,7 +298,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         setProcessingStatus('Analyzing modular structure...');
         const fileFinal = new File([blob], 'cleaned_jacket.png', { type: 'image/png' });
         
-        const segments = await segmentationService.segmentJacket(fileFinal);
+        const segments = await segmentJacket(fileFinal);
         
         if (segments.size > 0) {
           const segmentUrls: Record<string, string> = {};
@@ -338,7 +338,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         setProcessingStatus('Analyzing garment structure...');
         const fileForAI = new File([blob], 'jacket.png', { type: 'image/png' });
         
-        const segments = await segmentationService.segmentJacket(fileForAI);
+        const segments = await segmentJacket(fileForAI);
         const segmentUrls: Record<string, string> = {};
         
         for (const [name, sBlob] of segments.entries()) {
@@ -604,6 +604,9 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar ${
           isStudioStep ? 'p-3 pt-12 sm:p-8 md:p-12' : 'p-5 pt-14 sm:p-8 md:p-12'
         }`}>
+          <Suspense fallback={<div className="flex-1 h-full min-h-[40vh] flex items-center justify-center" role="status" aria-label="Loading the editor">
+                <Loader2 className="animate-spin text-accent" size={28} />
+              </div>}>
           <AnimatePresence mode="wait">
             {step === 'UPLOAD' && (
               <motion.div key="upload" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
@@ -930,6 +933,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
               </motion.div>
             )}
           </AnimatePresence>
+          </Suspense>
         </div>
       </motion.div>
     </div>

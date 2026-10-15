@@ -85,6 +85,10 @@ jobs:
       - name: Build
         run: npx vite build
 
+      # Task 100: first-load JavaScript must stay under budget and free of the editor libraries.
+      - name: Bundle size guard
+        run: npm run check:bundle
+
   ai-service:
     name: AI service (FastAPI, pytest)
     runs-on: ubuntu-latest

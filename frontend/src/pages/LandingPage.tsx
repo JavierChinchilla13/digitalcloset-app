@@ -71,6 +71,8 @@ const LandingPage = () => {
                src={OUTFIT_BUILDER_GIF}
                alt="Building an outfit in VYSVI: selecting garments and previewing them on a digital persona"
                className="w-full h-full object-cover"
+               loading="lazy"
+               decoding="async"
              />
           </div>
         </motion.div>
@@ -111,6 +113,8 @@ const LandingPage = () => {
               src={CLOSET_BROWSING_GIF}
               alt="Browsing the digital closet in VYSVI, filtering clothes by category and persona"
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>
@@ -134,6 +138,8 @@ const LandingPage = () => {
               src={OUTFIT_BUILDER_GIF}
               alt="Building an outfit in VYSVI and previewing it on a digital persona"
               className="w-full h-full object-cover"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>
@@ -166,6 +172,8 @@ const LandingPage = () => {
                src={PERSONA_GIF}
                alt="Garments being put on the VYSVI persona one by one"
                className="w-full h-full object-cover"
+               loading="lazy"
+               decoding="async"
              />
           </div>
         </div>

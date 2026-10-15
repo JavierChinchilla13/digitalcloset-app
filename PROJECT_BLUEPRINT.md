@@ -7005,3 +7005,19 @@ JWT. No Google client secret is used.
 - **Verified live:** banner at 375px (no overflow), choice persists across reload, footer re-opens it, no request to
   googleapis/gstatic, fonts loaded from the site.
 - **Owner:** review the drafts and fill in `[COUNTRY]` (ideally with a lawyer before charging money).
+
+### Task 100 - Faster first load (2026-10-15, branch `phase-15-speed`)
+
+- **Lazy routes** (`App.tsx`, `React.lazy`): Closet, Builder, Showcase, Saved Outfits, Categories, Persona, Settings, Admin,
+  Demo, Privacy, Terms. Landing, Login, Signup, Forgot/Reset, NotFound stay eager. One `<Suspense>` in `MainLayout` inside
+  the existing `ErrorBoundary` (a failed chunk shows the recoverable error).
+- **Lazy heavy parts:** `MountOnFirstOpen` mounts `UploadFlow` / `EditClothingModal` on first open; the studios
+  (Fitting, Cleanup, Jacket, Shoe, symmetry check, segmentation tool) are `lazy` inside them; `utils/lazyServices.ts`
+  dynamic-imports background removal, image optimizing and jacket segmentation at the call site.
+- **Build:** `manualChunks` vendor-react / vendor-motion / vendor-fabric; `canvas` moved to devDependencies (jsdom helper).
+- **Assets:** below-the-fold GIFs `loading="lazy"`; `FeatureCard` requests its clip on first hover/tap.
+- **Guard:** `npm run check:bundle` (`scripts/check-bundle-size.mjs`) fails above 700 kB first-load JS or when editor
+  libraries appear in it; CI runs it after the build.
+- **Result:** first-load JS 1,750 kB -> 488 kB (12 files); landing loads no fabric / onnx / imgly / segmentation.
+- **Tests:** `mountOnFirstOpen.test.tsx` (2); `featureCard` and `editGarmentFlow` adapted. 396 frontend tests.
+- **Not done:** `favicon.png` (120 KB) not shrunk; onnxruntime `.wasm` (24 MB) unchanged, only loads on first background removal.
