@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
 import { authService } from './api/authService';
@@ -8,23 +8,28 @@ import MainLayout from './layouts/MainLayout';
 
 // Real Pages
 import LandingPage from './pages/LandingPage';
-import DemoPage from './pages/DemoPage';
-import PrivacyPage from './pages/PrivacyPage';
-import TermsPage from './pages/TermsPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import NotFoundPage from './pages/NotFoundPage';
-import AdminUsersPage from './pages/AdminUsersPage';
-import FlatOutfitBuilderPage from './pages/FlatOutfitBuilderPage';
-import SavedOutfitsPage from './pages/SavedOutfitsPage';
-import ClosetPage from './pages/ClosetPage';
-import PersonaPage from './pages/PersonaPage';
-import CategoriesPage from './pages/CategoriesPage';
-import CategoryDetailPage from './pages/CategoryDetailPage';
-import OutfitShowcasePage from './pages/OutfitShowcasePage';
-import SettingsPage from './pages/SettingsPage';
+
+// Task 100: the signed-in pages and the secondary public pages are loaded on demand (one chunk each),
+// so the first visit - usually the landing page or the login - downloads only what it shows. The
+// entry pages above stay eager: they are what a first visit lands on. MainLayout shows a spinner
+// while a chunk arrives.
+const DemoPage = lazy(() => import('./pages/DemoPage'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
+const FlatOutfitBuilderPage = lazy(() => import('./pages/FlatOutfitBuilderPage'));
+const SavedOutfitsPage = lazy(() => import('./pages/SavedOutfitsPage'));
+const ClosetPage = lazy(() => import('./pages/ClosetPage'));
+const PersonaPage = lazy(() => import('./pages/PersonaPage'));
+const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
+const CategoryDetailPage = lazy(() => import('./pages/CategoryDetailPage'));
+const OutfitShowcasePage = lazy(() => import('./pages/OutfitShowcasePage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 // Task 22: role-aware route guard. Signed-out visitors go to /login; with
 // requireAdmin, signed-in non-admins are sent home instead (they have no

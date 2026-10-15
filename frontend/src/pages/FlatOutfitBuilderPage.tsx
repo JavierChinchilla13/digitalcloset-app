@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { lazy, useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown, Plus, Star, Shuffle } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -15,7 +15,7 @@ import LayerPanel from '../components/LayerPanel';
 import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
-import EditClothingModal from '../components/EditClothingModal';
+import MountOnFirstOpen from '../components/MountOnFirstOpen';
 import CroppedThumbnail from '../components/CroppedThumbnail';
 import CategoryPicker from '../components/CategoryPicker';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
@@ -27,6 +27,9 @@ import ErrorState from '../components/ErrorState';
 import PersonaBadge from '../components/PersonaBadge';
 import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 import { getApiErrorMessage } from '../utils/apiError';
+
+// Task 100: heavy editor code, downloaded on first use (see MountOnFirstOpen).
+const EditClothingModal = lazy(() => import('../components/EditClothingModal'));
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -924,12 +927,15 @@ const FlatOutfitBuilderPage = () => {
         </main>
       </div>
 
-      <EditClothingModal
-        item={fitModalItem}
-        isOpen={!!fitModalItem}
-        onClose={() => setFitModalItem(null)}
-        promoteToFittedOnSave
-      />
+      {/* Task 100: the editor (Fabric) is loaded the first time "Adjust & Fit" is used. */}
+      <MountOnFirstOpen open={!!fitModalItem}>
+        <EditClothingModal
+          item={fitModalItem}
+          isOpen={!!fitModalItem}
+          onClose={() => setFitModalItem(null)}
+          promoteToFittedOnSave
+        />
+      </MountOnFirstOpen>
     </div>
   );
 };

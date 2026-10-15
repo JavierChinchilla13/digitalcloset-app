@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import ErrorBoundary from '../components/ErrorBoundary';
 import ErrorState from '../components/ErrorState';
@@ -34,7 +36,17 @@ const MainLayout = () => {
             />
           )}
         >
-          <Outlet />
+          {/* Task 100: pages are loaded on demand; a spinner shows while a page's code arrives, and a
+              chunk that fails to load lands in the error state above like any other render error. */}
+          <Suspense
+            fallback={
+              <div className="flex justify-center py-32" role="status" aria-label="Loading">
+                <Loader2 className="animate-spin text-accent" size={28} />
+              </div>
+            }
+          >
+            <Outlet />
+          </Suspense>
         </ErrorBoundary>
       </main>
 
