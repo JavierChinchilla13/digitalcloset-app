@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+# The signed-in app and private share links are not for search engines.
+Disallow: /s/

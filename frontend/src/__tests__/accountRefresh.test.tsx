@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import App from '../App';
 import { ToastProvider } from '../components/Toast';
 import { useAuthStore } from '../store/useAuthStore';
+import { useConsentStore } from '../store/useConsentStore';
 import { useClothingStore } from '../store/useClothingStore';
 import { useOutfitStore } from '../store/useOutfitStore';
 import { useCollectionStore } from '../store/useCollectionStore';
@@ -35,6 +36,7 @@ function renderApp(path = '/closet') {
 beforeEach(() => {
   vi.clearAllMocks();
   useAuthStore.getState().logout();
+  useConsentStore.setState({ choice: 'all', decidedAt: null, reopened: false });
   useClothingStore.setState({ items: [], error: null, isLoading: false });
   useOutfitStore.setState({ outfits: [], error: null, isLoading: false });
   useCollectionStore.setState({ collections: [], error: null, isLoading: false });

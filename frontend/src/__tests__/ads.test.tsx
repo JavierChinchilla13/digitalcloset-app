@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom';
 import AdSlot from '../components/ads/AdSlot';
 import { getAdConfig } from '../components/ads/adConfig';
 import { useAuthStore } from '../store/useAuthStore';
+import { useConsentStore } from '../store/useConsentStore';
 import { Plan, Role } from '../types';
 import { makeUser } from '../test/fixtures';
 
@@ -56,6 +57,8 @@ beforeEach(() => {
   setEnv({});
   stubWideScreen(true);
   useAuthStore.getState().logout();
+  // Task 99: ads only run after Accept all; these tests are about who else is eligible.
+  useConsentStore.setState({ choice: 'all', decidedAt: null, reopened: false });
   document.head.querySelectorAll('script[src*="googlesyndication"]').forEach((el) => el.remove());
 });
 
