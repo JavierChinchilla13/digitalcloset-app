@@ -65,6 +65,8 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
+                // Task 102: shared outfits are readable by anyone with the link (GET only).
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/public/**").permitAll()
                 // Task 24: the hosting platform's health probe (no data, no auth).
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .anyRequest().authenticated()

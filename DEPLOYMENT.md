@@ -310,6 +310,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `VITE_ADSENSE_CLIENT` / `VITE_ADSENSE_SLOT` | with `adsense` | Your AdSense publisher id (`ca-pub-...`) and the ad unit's slot number. |
 | `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |
 | `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
+| `RATE_LIMIT_PUBLIC_MAX` | no | Requests per minute per visitor on the public shared-outfit endpoint `/api/public/outfits/{token}` (default 120). Separate from the login limit. |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags; e.g. `-Xmx512m` on a small machine. |
 
 Never put a secret in a `VITE_` variable: those end up in the public JavaScript.
