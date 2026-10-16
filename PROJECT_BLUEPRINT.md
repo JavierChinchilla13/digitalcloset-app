@@ -7021,3 +7021,21 @@ JWT. No Google client secret is used.
 - **Result:** first-load JS 1,750 kB -> 488 kB (12 files); landing loads no fabric / onnx / imgly / segmentation.
 - **Tests:** `mountOnFirstOpen.test.tsx` (2); `featureCard` and `editGarmentFlow` adapted. 396 frontend tests.
 - **Not done:** `favicon.png` (120 KB) not shrunk; onnxruntime `.wasm` (24 MB) unchanged, only loads on first background removal.
+
+### Task 101 - Onboarding and sample garments (2026-10-15, branch `phase-15-onboarding`)
+
+- **Guide:** `components/FirstRunPanel.tsx` - 3 steps (add pieces, build an outfit, see it in the Showcase) derived from
+  data, plus a sample picker and "Add a starter outfit". Shown on the Showcase (no outfit yet), the Closet (empty) and the
+  builder's left panel (empty closet). `hooks/useFirstRun.ts`; "Hide this guide" is stored per account in
+  `localStorage['vysvi-onboarding:<userId>']` (no backend column).
+- **Samples:** `utils/sampleGarments.ts`, pictures in `public/samples/` (permanent names: black-tee, purple-tee, pants,
+  shorts, black-jacket, denim-jacket, black-boot; the Nike-logo sneaker is excluded). Each is placed by its measured visible
+  area (`content` box) against the persona's real body geometry (per persona), not by the generic presets. Shoes are a left
+  and a right piece (right mirrored) = 2 slots. Samples are real garments: they count toward the limit and can be deleted.
+- **Limits/errors:** client check with `useStorage().canAdd` (clear "room for N more" message), server errors via
+  `getApiErrorMessage`.
+- **Builder dead end:** empty right panel and "Create random outfit" on an empty closet lead to /closet.
+- **Tests:** `onboarding.test.tsx` (11). 407 frontend tests.
+- **Verified live** at desktop size (male and female figures): tee, pants and boots sit on the body; a first version using
+  the generic presets looked wrong and was replaced.
+- **Not rendered live:** jackets and shorts use the same method but are not part of the starter outfit.

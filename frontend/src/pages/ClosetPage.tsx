@@ -17,6 +17,8 @@ import type { ClothingItem } from "../types";
 import ClothingCard from "../components/ClothingCard";
 import SectionWrapper from "../components/SectionWrapper";
 import MountOnFirstOpen from "../components/MountOnFirstOpen";
+import FirstRunPanel from "../components/FirstRunPanel";
+import { useFirstRun } from "../hooks/useFirstRun";
 import ClothingDetailsModal from "../components/ClothingDetailsModal";
 import DeleteConfirmationModal from "../components/DeleteConfirmationModal";
 import ErrorState from '../components/ErrorState';
@@ -34,6 +36,7 @@ const EditClothingModal = lazy(() => import("../components/EditClothingModal"));
 // `selectedItem`). Items come from useClothingStore; a failed load shows ErrorState.
 const ClosetPage = () => {
   const { items, isLoading, error, fetchItems } = useClothingStore();
+  const firstRun = useFirstRun();
   const { persona } = usePersonaStore();
   // Task 60, Phase 9.5: the "Active Persona" indicator shows the user's
   // custom name instead of the raw MALE/FEMALE enum value, if they've set
@@ -268,6 +271,11 @@ const ClosetPage = () => {
             message="Check your connection and try again."
             onRetry={fetchItems}
           />
+        ) : items.length === 0 && firstRun.show ? (
+          // Task 101: a brand-new closet gets the guide with sample garments, not just "no garments".
+          <div className="py-8">
+            <FirstRunPanel />
+          </div>
         ) : filteredItems.length === 0 ? (
           <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl bg-ink/[0.01]">
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
