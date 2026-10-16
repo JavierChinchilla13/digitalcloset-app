@@ -20,6 +20,7 @@ import { buildShowcaseRows } from "../utils/selectionDisplay";
 import PersonaRenderer from "../components/PersonaRenderer";
 import CroppedThumbnail from "../components/CroppedThumbnail";
 import ErrorState from "../components/ErrorState";
+import FirstRunPanel from "../components/FirstRunPanel";
 import { useToast } from "../components/Toast";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
 import { getApiErrorMessage } from '../utils/apiError';
@@ -674,6 +675,10 @@ const OutfitShowcasePage = () => {
               Let's Get Started
             </span>
           </button>
+          {/* Task 101: the first-run guide (steps + sample garments); hides itself once dismissed. */}
+          <div className="mt-10 max-w-3xl mx-auto">
+            <FirstRunPanel outfitCount={n} />
+          </div>
         </motion.div>
       </div>
     );
