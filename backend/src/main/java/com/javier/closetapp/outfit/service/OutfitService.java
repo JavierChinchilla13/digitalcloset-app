@@ -15,6 +15,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,7 @@ public class OutfitService {
     private final OutfitRepository outfitRepository;
     private final ClothingRepository clothingRepository;
     private final UserRepository userRepository;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     public OutfitService(OutfitRepository outfitRepository, 
                          ClothingRepository clothingRepository, 
@@ -138,6 +141,43 @@ public class OutfitService {
                 .collect(Collectors.toList());
     }
 
+    // Task 102: the outfit, if it exists and belongs to the signed-in user (same rules as update/delete).
+    private Outfit ownedOutfit(Long id, String forbiddenMessage) {
+        User user = getAuthenticatedUser();
+        Outfit outfit = outfitRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Outfit not found"));
+        if (!outfit.getOwner().getUserId().equals(user.getUserId())) {
+            throw new ForbiddenOperationException(forbiddenMessage);
+        }
+        return outfit;
+    }
+
+    // Task 102: turns the public link on. Idempotent: an outfit that already has a link keeps the same
+    // token, so a link that was shared does not change by pressing the button again. The token is 18
+    // random bytes (144 bits, base64url) - never the outfit's sequential id, so links cannot be guessed.
+    @Transactional
+    public OutfitResponse shareOutfit(Long id) {
+        Outfit outfit = ownedOutfit(id, "Unauthorized to share this outfit");
+        if (outfit.getShareToken() == null) {
+            byte[] bytes = new byte[18];
+            secureRandom.nextBytes(bytes);
+            outfit.setShareToken(Base64.getUrlEncoder().withoutPadding().encodeToString(bytes));
+            outfit = outfitRepository.save(outfit);
+        }
+        return mapToResponse(outfit);
+    }
+
+    // Task 102: turns the public link off; the old link stops working for good (sharing again makes a new token).
+    @Transactional
+    public OutfitResponse unshareOutfit(Long id) {
+        Outfit outfit = ownedOutfit(id, "Unauthorized to change this outfit");
+        if (outfit.getShareToken() != null) {
+            outfit.setShareToken(null);
+            outfit = outfitRepository.save(outfit);
+        }
+        return mapToResponse(outfit);
+    }
+
     @Transactional
     public void deleteOutfit(Long id) {
         User user = getAuthenticatedUser();
@@ -165,6 +205,7 @@ public class OutfitService {
         res.setName(outfit.getName());
         res.setDescription(outfit.getDescription());
         res.setAvatarType(outfit.getAvatarType());
+        res.setShareToken(outfit.getShareToken());
         // The API never sent this, so every outfit card read "Invalid Date".
         if (outfit.getCreatedAt() != null) {
             res.setCreatedAt(outfit.getCreatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));

@@ -22,5 +22,16 @@ export const outfitService = {
 
   deleteOutfit: async (outfitId: number): Promise<void> => {
     await api.delete(`/outfits/${outfitId}`);
+  },
+
+  // Task 102: turns the outfit's public link on (returns the outfit with its shareToken) and off again.
+  shareOutfit: async (outfitId: number): Promise<Outfit> => {
+    const response = await api.post<Outfit>(`/outfits/${outfitId}/share`);
+    return response.data;
+  },
+
+  unshareOutfit: async (outfitId: number): Promise<Outfit> => {
+    const response = await api.delete<Outfit>(`/outfits/${outfitId}/share`);
+    return response.data;
   }
 };

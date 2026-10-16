@@ -21,6 +21,7 @@ import NotFoundPage from './pages/NotFoundPage';
 const DemoPage = lazy(() => import('./pages/DemoPage'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const SharedOutfitPage = lazy(() => import('./pages/SharedOutfitPage'));
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage'));
 const FlatOutfitBuilderPage = lazy(() => import('./pages/FlatOutfitBuilderPage'));
 const SavedOutfitsPage = lazy(() => import('./pages/SavedOutfitsPage'));
@@ -99,6 +100,8 @@ function App() {
           {/* Task 99: legal pages, readable without an account. */}
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          {/* Task 102: a shared outfit, readable by anyone with the link. */}
+          <Route path="/s/:token" element={<SharedOutfitPage />} />
 
           {/* Protected Routes */}
           <Route path="/closet" element={<ProtectedRoute><ClosetPage /></ProtectedRoute>} />

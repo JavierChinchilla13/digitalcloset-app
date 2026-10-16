@@ -17,13 +17,13 @@ const MASK_W = 375;
 const MASK_H = 500;
 const SCALE = MASK_W / VIRTUAL_WIDTH;
 
-type MaskLayer = PersonaLayerProps & { imageUrl: string; category: ClothingCategory };
+export type MaskLayer = PersonaLayerProps & { imageUrl: string; category: ClothingCategory };
 
 const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
 
 // Loaded with CORS so the pixels can be read back; null if it can't be loaded
 // (or the host doesn't allow it) - that garment then simply gets no masking.
-function loadImage(url: string): Promise<HTMLImageElement | null> {
+export function loadImage(url: string): Promise<HTMLImageElement | null> {
   let cached = imageCache.get(url);
   if (!cached) {
     cached = new Promise((resolve) => {
@@ -153,83 +153,94 @@ const signatureOf = (layers: PersonaLayerProps[]) =>
       .map((l) => [l.id, l.group, l.imageUrl, l.zIndex, l.category, l.side, l.personaType, l.transform])
   );
 
+// Task 102: computes { layerId: maskUrl } for every layer that has a garment above it. This is the
+// work the hook does, as a plain async function so the image exporter can use the same masks. Returns
+// null when `cancelled()` turned true part-way (the hook's effect was replaced).
+export async function computeOcclusionMasks(
+  layers: PersonaLayerProps[],
+  cancelled: () => boolean = () => false
+): Promise<Record<string, string> | null> {
+  const garmentLayers = layers.filter((l): l is MaskLayer => l.id !== 'base' && !!l.imageUrl && !!l.category);
+  // A mask needs at least two garments.
+  if (!canvasAvailable() || garmentLayers.length < 2) return {};
+
+  // 1. Measure every garment (grouping the pictures of a modular jacket).
+  const byKey = new Map<string, { layers: MaskLayer[]; alpha: Uint8ClampedArray }>();
+  for (const layer of garmentLayers) {
+    const img = await loadImage(layer.imageUrl);
+    const alpha = img && layerAlpha(layer, img);
+    if (!alpha) continue;
+    const key = layer.group ?? layer.id;
+    const entry = byKey.get(key);
+    if (!entry) {
+      byKey.set(key, { layers: [layer], alpha });
+    } else {
+      // The pictures of one garment (a modular jacket's torso, sleeves, ...) are measured together, as one picture.
+      entry.layers.push(layer);
+      for (let i = 0; i < alpha.length; i++) entry.alpha[i] = Math.max(entry.alpha[i], alpha[i]);
+    }
+  }
+  if (cancelled()) return null;
+
+  const garments: Garment[] = [];
+  byKey.forEach((entry, key) => {
+    const spans = rowSpans(entry.alpha, MASK_W, MASK_H);
+    if (spans.top < 0) return;
+    const zs = entry.layers.map((l) => l.zIndex);
+    garments.push({
+      key,
+      category: entry.layers[0].category,
+      low: Math.min(...zs),
+      high: Math.max(...zs),
+      layerIds: entry.layers.map((l) => l.id),
+      spans,
+      alpha: entry.alpha,
+    });
+  });
+
+  // The outline of the trousers / skirts in the outfit (all of them, as one): a top or dress under a
+  // jacket shows below the hem only inside it.
+  const bottoms = garments.filter((g) => g.category === ClothingCategory.BOTTOM);
+  let tuck: RowSpans | null = null;
+  if (bottoms.length) {
+    const merged = new Uint8ClampedArray(MASK_W * MASK_H);
+    for (const g of bottoms) for (let i = 0; i < merged.length; i++) merged[i] = Math.max(merged[i], g.alpha[i]);
+    tuck = rowSpans(merged, MASK_W, MASK_H);
+  }
+
+  // 2. A mask for each garment that has a clipping garment above it.
+  const next: Record<string, string> = {};
+  for (const lower of garments) {
+    const occluders: Occluder[] = [];
+    for (const upper of garments) {
+      if (upper === lower || upper.low <= lower.high) continue;
+      const mode = clipMode(lower.category, upper.category);
+      if (mode) occluders.push({ spans: upper.spans, mode, tuck: mode === 'full' ? tuck : null });
+    }
+    if (occluders.length === 0) continue;
+    const url = maskToUrl(buildMask(occluders, MASK_W, MASK_H));
+    if (url) lower.layerIds.forEach((id) => (next[id] = url));
+  }
+  return cancelled() ? null : next;
+}
+
 // Returns { layerId: maskUrl } for every layer that has a garment above it.
 export function useOcclusionMasks(layers: PersonaLayerProps[]): Record<string, string> {
   const [masks, setMasks] = useState<Record<string, string>>({});
   const signature = useMemo(() => signatureOf(layers), [layers]);
 
   useEffect(() => {
-    const garmentLayers = layers.filter(
-      (l): l is MaskLayer => l.id !== 'base' && !!l.imageUrl && !!l.category
-    );
+    const garmentLayerCount = layers.filter((l) => l.id !== 'base' && l.imageUrl && l.category).length;
     // Cheap exit: a mask needs at least two garments.
-    if (!canvasAvailable() || garmentLayers.length < 2) {
+    if (!canvasAvailable() || garmentLayerCount < 2) {
       setMasks((prev) => (Object.keys(prev).length ? {} : prev));
       return;
     }
 
     let cancelled = false;
-    (async () => {
-      // 1. Measure every garment (grouping the pictures of a modular jacket).
-      const byKey = new Map<string, { layers: MaskLayer[]; alpha: Uint8ClampedArray }>();
-      for (const layer of garmentLayers) {
-        const img = await loadImage(layer.imageUrl);
-        const alpha = img && layerAlpha(layer, img);
-        if (!alpha) continue;
-        const key = layer.group ?? layer.id;
-        const entry = byKey.get(key);
-        if (!entry) {
-          byKey.set(key, { layers: [layer], alpha });
-        } else {
-          // The pictures of one garment (a modular jacket's torso, sleeves,
-          // ...) are measured together, as one picture.
-          entry.layers.push(layer);
-          for (let i = 0; i < alpha.length; i++) entry.alpha[i] = Math.max(entry.alpha[i], alpha[i]);
-        }
-      }
-      if (cancelled) return;
-
-      const garments: Garment[] = [];
-      byKey.forEach((entry, key) => {
-        const spans = rowSpans(entry.alpha, MASK_W, MASK_H);
-        if (spans.top < 0) return;
-        const zs = entry.layers.map((l) => l.zIndex);
-        garments.push({
-          key,
-          category: entry.layers[0].category,
-          low: Math.min(...zs),
-          high: Math.max(...zs),
-          layerIds: entry.layers.map((l) => l.id),
-          spans,
-          alpha: entry.alpha,
-        });
-      });
-
-      // The outline of the trousers / skirts in the outfit (all of them, as
-      // one): a top or dress under a jacket shows below the hem only inside it.
-      const bottoms = garments.filter((g) => g.category === ClothingCategory.BOTTOM);
-      let tuck: RowSpans | null = null;
-      if (bottoms.length) {
-        const merged = new Uint8ClampedArray(MASK_W * MASK_H);
-        for (const g of bottoms) for (let i = 0; i < merged.length; i++) merged[i] = Math.max(merged[i], g.alpha[i]);
-        tuck = rowSpans(merged, MASK_W, MASK_H);
-      }
-
-      // 2. A mask for each garment that has a clipping garment above it.
-      const next: Record<string, string> = {};
-      for (const lower of garments) {
-        const occluders: Occluder[] = [];
-        for (const upper of garments) {
-          if (upper === lower || upper.low <= lower.high) continue;
-          const mode = clipMode(lower.category, upper.category);
-          if (mode) occluders.push({ spans: upper.spans, mode, tuck: mode === 'full' ? tuck : null });
-        }
-        if (occluders.length === 0) continue;
-        const url = maskToUrl(buildMask(occluders, MASK_W, MASK_H));
-        if (url) lower.layerIds.forEach((id) => (next[id] = url));
-      }
-      if (!cancelled) setMasks(next);
-    })();
+    computeOcclusionMasks(layers, () => cancelled).then((next) => {
+      if (next && !cancelled) setMasks(next);
+    });
 
     return () => {
       cancelled = true;

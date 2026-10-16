@@ -33,6 +33,10 @@ public class Outfit {
     @Column(name = "avatar_type", nullable = false)
     private AvatarType avatarType;
 
+    // Task 102: the random token of the outfit's public link; null when the outfit is not shared.
+    @Column(name = "share_token", unique = true, length = 64)
+    private String shareToken;
+
     @OneToMany(mappedBy = "outfit", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OutfitItem> items = new ArrayList<>();
 
@@ -59,6 +63,9 @@ public class Outfit {
 
     public List<OutfitItem> getItems() { return items; }
     public void setItems(List<OutfitItem> items) { this.items = items; }
+
+    public String getShareToken() { return shareToken; }
+    public void setShareToken(String shareToken) { this.shareToken = shareToken; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

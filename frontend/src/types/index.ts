@@ -139,6 +139,8 @@ export interface Outfit {
   avatarType: PersonaType;
   items: OutfitItem[];
   createdAt: string;
+  // Task 102: the token of the outfit's public link; null/absent when it is not shared.
+  shareToken?: string | null;
 }
 
 // Simplified outfit contract (Task 15) - matches the backend's OutfitRequest.

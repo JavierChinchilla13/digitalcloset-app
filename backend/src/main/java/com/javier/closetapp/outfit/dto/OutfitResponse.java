@@ -12,8 +12,14 @@ public class OutfitResponse {
     // When it was saved (ISO local date-time, like ClothingResponse's). The outfit cards show it.
     private String createdAt;
     private List<OutfitItemResponse> items;
+    // Task 102: the public link's token, or null when the outfit is not shared. Only the owner's own
+    // responses carry it.
+    private String shareToken;
 
     public OutfitResponse() {}
+
+    public String getShareToken() { return shareToken; }
+    public void setShareToken(String shareToken) { this.shareToken = shareToken; }
 
     public Long getOutfitId() { return outfitId; }
     public void setOutfitId(Long outfitId) { this.outfitId = outfitId; }

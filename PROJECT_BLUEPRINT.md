@@ -7039,3 +7039,21 @@ JWT. No Google client secret is used.
 - **Verified live** at desktop size (male and female figures): tee, pants and boots sit on the body; a first version using
   the generic presets looked wrong and was replaced.
 - **Not rendered live:** jackets and shorts use the same method but are not part of the starter outfit.
+
+### Task 102 - Share an outfit: picture + public link (2026-10-15, branch `phase-15-share`)
+
+- **Backend:** `V11__add_outfit_share_token.sql` (`outfits.share_token`, unique); `POST` / `DELETE /api/outfits/{id}/share`
+  (owner only; token = 18 random bytes base64url, stable until revoked, a new one after re-sharing);
+  `GET /api/public/outfits/{token}` (`permitAll` for GET, `PublicOutfitService` -> `PublicOutfitResponse` /
+  `PublicGarmentResponse`: only drawing data, soft-deleted garments and deactivated owners hidden, unknown/revoked = 404).
+  `RateLimitFilter` gets a separate `/api/public/` bucket (`RATE_LIMIT_PUBLIC_MAX`, default 120/min/address).
+- **Frontend:** `utils/personaLayers.ts` (layers extracted from `PersonaRenderer`, which now takes an `items` prop),
+  `computeOcclusionMasks` extracted from `useOcclusionMasks`, `utils/outfitImage.ts` (canvas exporter 1080x1440, same
+  geometry and masks), `ShareOutfitModal` (download, Web Share with file, create / copy / turn off link; lazy),
+  `SharedOutfitPage` at `/s/:token` (bare axios, noindex, 404 state). Entry points: `OutfitCard` (hover + touch menu),
+  Showcase.
+- **Tests:** backend `SharedOutfitIntegrationTest` (9) + public bucket test (157 total); frontend `shareOutfit.test.tsx`,
+  `outfitImage.test.ts` (425 total).
+- **Verified live:** picture generated and matches the screen; link opened signed-out; turned off -> "no longer shared".
+- **Limits:** no rich social previews (client-rendered app); only FITTED pieces draw; a garment host without CORS headers
+  makes the picture fail (link still works). V11 runs on the next Render deploy.

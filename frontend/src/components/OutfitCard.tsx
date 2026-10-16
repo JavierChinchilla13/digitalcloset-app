@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { lazy, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle, Star, MoreHorizontal } from 'lucide-react';
+import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle, Star, MoreHorizontal, Share2 } from 'lucide-react';
 import type { ClothingItem, Outfit } from '../types';
 
 const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
@@ -14,6 +14,10 @@ import PersonaRenderer from './PersonaRenderer';
 import CroppedThumbnail from './CroppedThumbnail';
 import { computePersonaEligibility, buildOutfitPersona } from '../utils/personaEligibility';
 import { useSafeAction } from '../hooks/useSafeAction';
+import MountOnFirstOpen from './MountOnFirstOpen';
+
+// Task 102: the share dialog (and the canvas code behind its picture) loads the first time it opens.
+const ShareOutfitModal = lazy(() => import('./ShareOutfitModal'));
 
 interface OutfitCardProps {
   outfit: Outfit;
@@ -24,6 +28,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
   const [showPersona, setShowPersona] = useState(false);
   // Touch screens only: the "..." menu with the less common actions (see below).
   const [menuOpen, setMenuOpen] = useState(false);
+  // Task 102: the share dialog.
+  const [isSharing, setIsSharing] = useState(false);
   const { removeOutfit, duplicateOutfit, mainOutfitId, setMainOutfit } = useOutfitStore();
   // Task 78: is this the account's main outfit?
   const isMain = mainOutfitId === outfit.outfitId;
@@ -202,6 +208,14 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <Copy size={14} />
             </button>
             <button
+              onClick={() => setIsSharing(true)}
+              className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
+              title="Share"
+              aria-label="Share outfit"
+            >
+              <Share2 size={14} />
+            </button>
+            <button
               onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
               className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
               title="Edit"
@@ -302,6 +316,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             <div role="menu" className="absolute right-0 bottom-full mb-2 w-44 z-30 rounded-xl bg-background-secondary border border-ink/10 shadow-lg p-1.5">
               {[
                 { label: showPersona ? 'Show items' : 'On persona', icon: Info, run: () => setShowPersona(!showPersona) },
+                { label: 'Share', icon: Share2, run: () => setIsSharing(true) },
                 { label: 'Duplicate', icon: Copy, run: () => runSafely(() => duplicateOutfit(outfit), "Couldn't duplicate this outfit") },
                 { label: 'Edit', icon: Edit2, run: () => navigate(`/outfits/flat/edit/${outfit.outfitId}`) },
                 { label: 'Delete', icon: Trash2, run: () => setIsDeleting(true), danger: true },
@@ -347,6 +362,10 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
           </button>
         )}
       </div>
+
+      <MountOnFirstOpen open={isSharing}>
+        <ShareOutfitModal outfitId={outfit.outfitId} isOpen={isSharing} onClose={() => setIsSharing(false)} />
+      </MountOnFirstOpen>
     </motion.div>
   );
 };

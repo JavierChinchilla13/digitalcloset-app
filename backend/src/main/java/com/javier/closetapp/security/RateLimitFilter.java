@@ -37,12 +37,16 @@ import java.util.function.LongSupplier;
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private static final String PROTECTED_PREFIX = "/api/auth/";
+    // Task 102: anonymous reads of shared outfits. A separate, more generous bucket (people open links,
+    // and every page view makes one call), but still bounded so tokens cannot be scraped or guessed.
+    private static final String PUBLIC_PREFIX = "/api/public/";
     // Sweep expired windows once the map is this big (an attacker rotating
     // addresses would otherwise fill it).
     private static final int SWEEP_THRESHOLD = 10_000;
 
     private final boolean enabled;
     private final int maxRequests;
+    private final int publicMaxRequests;
     private final long windowMillis;
     private final LongSupplier clock;
     private final Map<String, Window> windows = new ConcurrentHashMap<>();
@@ -60,14 +64,20 @@ public class RateLimitFilter extends OncePerRequestFilter {
     public RateLimitFilter(
             @Value("${app.rate-limit.enabled:true}") boolean enabled,
             @Value("${app.rate-limit.auth.max-requests:30}") int maxRequests,
-            @Value("${app.rate-limit.auth.window-seconds:60}") long windowSeconds) {
-        this(enabled, maxRequests, windowSeconds, System::currentTimeMillis);
+            @Value("${app.rate-limit.auth.window-seconds:60}") long windowSeconds,
+            @Value("${app.rate-limit.public.max-requests:120}") int publicMaxRequests) {
+        this(enabled, maxRequests, publicMaxRequests, windowSeconds, System::currentTimeMillis);
     }
 
     // The clock is a parameter so the tests can move time without sleeping.
     RateLimitFilter(boolean enabled, int maxRequests, long windowSeconds, LongSupplier clock) {
+        this(enabled, maxRequests, 120, windowSeconds, clock);
+    }
+
+    RateLimitFilter(boolean enabled, int maxRequests, int publicMaxRequests, long windowSeconds, LongSupplier clock) {
         this.enabled = enabled;
         this.maxRequests = maxRequests;
+        this.publicMaxRequests = publicMaxRequests;
         this.windowMillis = windowSeconds * 1000;
         this.clock = clock;
     }
@@ -77,7 +87,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
         // CORS preflight (OPTIONS) is answered before this and never counts.
         return !enabled
                 || "OPTIONS".equalsIgnoreCase(request.getMethod())
-                || !request.getRequestURI().startsWith(PROTECTED_PREFIX);
+                || !(request.getRequestURI().startsWith(PROTECTED_PREFIX)
+                        || request.getRequestURI().startsWith(PUBLIC_PREFIX));
     }
 
     @Override
@@ -90,7 +101,12 @@ public class RateLimitFilter extends OncePerRequestFilter {
             windows.values().removeIf(w -> now - w.startedAt >= windowMillis);
         }
 
-        Window window = windows.compute(request.getRemoteAddr(), (ip, current) -> {
+        // Each area has its own window per address, so browsing shared outfits never eats into the
+        // login limit (and the other way round).
+        boolean isPublic = request.getRequestURI().startsWith(PUBLIC_PREFIX);
+        int limit = isPublic ? publicMaxRequests : maxRequests;
+        String key = (isPublic ? "public:" : "auth:") + request.getRemoteAddr();
+        Window window = windows.compute(key, (ip, current) -> {
             if (current == null || now - current.startedAt >= windowMillis) {
                 current = new Window(now);
             }
@@ -98,7 +114,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             return current;
         });
 
-        if (window.count > maxRequests) {
+        if (window.count > limit) {
             long retryAfterSeconds = Math.max(1, (window.startedAt + windowMillis - now + 999) / 1000);
             response.setStatus(429);
             response.setHeader("Retry-After", String.valueOf(retryAfterSeconds));

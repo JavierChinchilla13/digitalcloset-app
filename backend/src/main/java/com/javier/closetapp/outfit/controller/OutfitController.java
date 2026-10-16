@@ -38,6 +38,17 @@ public class OutfitController {
         return ResponseEntity.ok(outfitService.updateOutfit(id, request));
     }
 
+    // Task 102: create (or return the existing) public link of an outfit, and turn it off again.
+    @PostMapping("/{id}/share")
+    public ResponseEntity<OutfitResponse> shareOutfit(@PathVariable Long id) {
+        return ResponseEntity.ok(outfitService.shareOutfit(id));
+    }
+
+    @DeleteMapping("/{id}/share")
+    public ResponseEntity<OutfitResponse> unshareOutfit(@PathVariable Long id) {
+        return ResponseEntity.ok(outfitService.unshareOutfit(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteOutfit(@PathVariable Long id) {
         outfitService.deleteOutfit(id);

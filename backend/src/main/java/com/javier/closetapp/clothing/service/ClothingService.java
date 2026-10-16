@@ -173,7 +173,7 @@ public class ClothingService {
     }
 
     // Entity -> response, rebuilding the nested transform object the frontend expects.
-    private ClothingResponse mapToResponse(ClothingItem item) {
+    public ClothingResponse mapToResponse(ClothingItem item) {
         LocalDateTime createdAt = item.getCreatedAt();
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
