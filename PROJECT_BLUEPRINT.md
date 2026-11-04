@@ -7057,3 +7057,24 @@ JWT. No Google client secret is used.
 - **Verified live:** picture generated and matches the screen; link opened signed-out; turned off -> "no longer shared".
 - **Limits:** no rich social previews (client-rendered app); only FITTED pieces draw; a garment host without CORS headers
   makes the picture fail (link still works). V11 runs on the next Render deploy.
+
+### Task 103 - Premium by Stripe subscription (2026-11-04, branch `phase-15-stripe`)
+
+- **Backend:** `V12__add_stripe_billing.sql` (users: customer / subscription id, status, period end, cancel-at-period-end;
+  `stripe_events` for webhook idempotency); package `billing` (`StripeGateway` interface + `StripeSdkGateway` using
+  `stripe-java` 34.0.0, `BillingService`, `BillingController`). Endpoints: `GET /api/billing/status`,
+  `POST /api/billing/checkout`, `POST /api/billing/portal` (login) and `POST /api/billing/webhook` (public, signature
+  verified with `Webhook.constructEvent`; bad signature = 400). Only the signed webhook changes the plan; events are
+  deduplicated by id; an event only affects the subscription the account holds (admin-comped PREMIUM is never touched);
+  past_due keeps Premium, unpaid / canceled returns to FREE; deactivating an account cancels its subscription (best
+  effort). Webhook payloads are read as plain JSON (period end from the subscription or its first item). Blank
+  `STRIPE_SECRET_KEY` / `STRIPE_PRICE_ID` / `STRIPE_WEBHOOK_SECRET` = billing off.
+- **Frontend:** `billingService`, `useBillingStore` / `useBilling`, `BillingActions` (Upgrade / Manage billing / ends-on
+  note / failed-payment note), `StorageLimitModal` upgrade, Settings plan row, polling after `?billing=success`.
+- **Docs/plumbing:** `DEPLOYMENT.md` "Payments with Stripe", `render.yaml`, `docker-compose.yml`.
+- **Tests:** backend `BillingIntegrationTest` (17), `StripeSdkGatewayTest` (8, real HMAC), `FakeStripeGateway` /
+  `TestStripeConfig` (182 total); frontend `billing.test.tsx` (11, 436 total).
+- **Verified live (dummy keys):** forged / missing signature = 400; locally signed event flips the plan; Settings shows
+  "Premium ends on ..." and Manage billing; free user sees Upgrade and a friendly error when Stripe is unreachable.
+- **Not verified:** real Checkout, price label, portal and webhook delivery (needs the owner's Stripe account).
+- **Owner setup:** see `DEPLOYMENT.md` "Payments with Stripe" (test mode first).

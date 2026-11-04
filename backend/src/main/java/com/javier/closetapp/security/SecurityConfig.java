@@ -67,6 +67,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 // Task 102: shared outfits are readable by anyone with the link (GET only).
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/public/**").permitAll()
+                // Task 103: Stripe calls this; it is protected by the event signature, not a login.
+                .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/billing/webhook").permitAll()
                 // Task 24: the hosting platform's health probe (no data, no auth).
                 .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                 .anyRequest().authenticated()

@@ -45,6 +45,14 @@ services:
       # The website needs the same value as VITE_GOOGLE_CLIENT_ID. See DEPLOYMENT.md.
       - key: GOOGLE_CLIENT_ID
         sync: false
+      # Premium subscription by Stripe (Task 103). Leave all three empty and payments stay off.
+      # See DEPLOYMENT.md, "Payments with Stripe".
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
       # A free instance has little memory: keep the JVM inside it.
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx320m -XX:+UseSerialGC -XX:TieredStopAtLevel=1"

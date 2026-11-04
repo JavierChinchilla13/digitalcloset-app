@@ -210,6 +210,28 @@ If the button does not appear, `VITE_GOOGLE_CLIENT_ID` is empty in the build. If
 fails with "Google sign-in failed", the two ids differ, or the site's address is not in the authorized origins.
 When you later put the site on your own domain, add it to the authorized origins too.
 
+### Payments with Stripe - Premium subscription (optional)
+
+Premium is a monthly subscription (300 garments, no ads). Nothing is charged and no upgrade button shows until
+the three variables below are set, so this is safe to leave off. **Try everything in Stripe's test mode first**
+(the "Test mode" switch of the dashboard, test card `4242 4242 4242 4242`); going live needs Stripe's business
+verification, a public site with contact details and the Terms/Privacy pages (they are in the app).
+
+1. Create a Stripe account. In **test mode**: **Product catalog -> Add product** "VYSVI Premium", a **recurring**
+   monthly price (you choose the amount). Copy the **Price ID** (`price_...`).
+2. **Developers -> API keys**: copy the **Secret key** (`sk_test_...`). It is a secret: only on Render, never in git.
+3. **Settings -> Billing -> Customer portal**: turn it on (allow cancelling the subscription and updating the card).
+4. **Developers -> Webhooks -> Add endpoint**: URL `https://<your-api>.onrender.com/api/billing/webhook`, events
+   `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy the
+   endpoint's **Signing secret** (`whsec_...`).
+5. On the Render **API** service set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`. It redeploys.
+
+The plan changes only when Stripe's signed webhook arrives (the page the buyer returns to is never trusted), so
+if a payment succeeds but the account stays Free, look at **Developers -> Webhooks -> your endpoint -> Events**
+for failed deliveries (a wrong signing secret is the usual cause). Cancelling happens in Stripe's portal; the
+account keeps Premium until the paid period ends. Deactivating an account cancels its subscription. A Premium
+plan given by an admin has no subscription and is never changed by Stripe events.
+
 ### Ads for free accounts (optional)
 
 Free accounts see one banner above the footer; premium accounts and admins never do (and never
@@ -306,6 +328,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
 | `GOOGLE_CLIENT_ID` (API) / `VITE_GOOGLE_CLIENT_ID` (site) | no | The Google OAuth client id, the same value in both places. Empty = no "Continue with Google" button. See "Sign in with Google". |
+| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` (API) | no | Premium by Stripe subscription. All three empty = payments off. See "Payments with Stripe". |
 | `VITE_AD_PROVIDER` | no | `adsense` or `adsterra` turns ads on for signed-in free accounts; empty (default) = no ads. Needs the matching values below; see "Ads for free accounts". |
 | `VITE_ADSENSE_CLIENT` / `VITE_ADSENSE_SLOT` | with `adsense` | Your AdSense publisher id (`ca-pub-...`) and the ad unit's slot number. |
 | `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |

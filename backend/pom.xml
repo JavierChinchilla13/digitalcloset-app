@@ -16,6 +16,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<jjwt.version>0.12.5</jjwt.version>
+		<stripe.version>34.0.0</stripe.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,6 +46,12 @@
 		</dependency>
 		<!-- Task 24: /actuator/health for the hosting platform's health check
 		     (only "health" is exposed - see application.properties). -->
+		<!-- Task 103: Stripe subscriptions (Checkout, customer portal, webhook signature check). -->
+		<dependency>
+			<groupId>com.stripe</groupId>
+			<artifactId>stripe-java</artifactId>
+			<version>${stripe.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>

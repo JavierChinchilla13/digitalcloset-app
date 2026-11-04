@@ -30,7 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 // Task 98: Google's token check is replaced by a fake in every integration test.
-@Import(TestGoogleConfig.class)
+// Task 103: and Stripe by FakeStripeGateway.
+@Import({TestGoogleConfig.class, TestStripeConfig.class})
 @ActiveProfiles("test")
 public abstract class IntegrationTestBase {
 

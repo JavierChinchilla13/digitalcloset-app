@@ -45,6 +45,10 @@ services:
       MAIL_FROM: ${MAIL_FROM:-${SPRING_MAIL_USERNAME}}
       # Task 98: Google sign-in (empty = off; the site is built with the same value).
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      # Task 103: Stripe Premium subscription (all empty = payments off).
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
       # Cap the JVM if the machine is small (default: 70% of the container's RAM).
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=70}
     healthcheck:

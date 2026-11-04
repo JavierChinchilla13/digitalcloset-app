@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Settings as SettingsIcon, Shield, Trash2, User as UserIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
@@ -10,6 +10,8 @@ import SectionWrapper from '../components/SectionWrapper';
 import PasswordInput from '../components/PasswordInput';
 import { Plan, Role } from '../types';
 import StorageMeter from '../components/StorageMeter';
+import BillingActions from '../components/BillingActions';
+import { useBillingStore } from '../store/useBillingStore';
 import { getApiErrorMessage } from '../utils/apiError';
 
 // Task 79: account settings - name, email, password, and account status.
@@ -117,6 +119,50 @@ const CodeConfirmStep = ({
 const SettingsPage = () => {
   const { user, login, logout, setToken } = useAuthStore();
   const { showToast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Task 103: back from Stripe Checkout (?billing=success). The plan changes when Stripe's webhook reaches
+  // the server, which can be a few seconds (or a sleeping free-tier API's minute) after the buyer returns,
+  // so the account is re-read until it shows Premium. Never trusts the URL itself.
+  const returnedFromCheckout = searchParams.get('billing') === 'success';
+  const [confirmingUpgrade, setConfirmingUpgrade] = useState(returnedFromCheckout);
+  useEffect(() => {
+    if (!returnedFromCheckout) return;
+    let cancelled = false;
+    let attempts = 0;
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const fresh = await authService.getCurrentUser();
+        if (cancelled) return;
+        if (fresh.plan === Plan.PREMIUM) {
+          const token = useAuthStore.getState().token;
+          if (token) useAuthStore.getState().login(token, fresh);
+          void useBillingStore.getState().load(true);
+          setConfirmingUpgrade(false);
+          setSearchParams({}, { replace: true });
+          showToast('Welcome to Premium - your garment limit is now 300', 'success');
+          return;
+        }
+      } catch {
+        // Keep waiting: a sleeping API answers after a while.
+      }
+      if (cancelled) return;
+      if (attempts >= 20) {
+        setConfirmingUpgrade(false);
+        setSearchParams({}, { replace: true });
+        showToast("Your payment is still being confirmed. Premium will appear here shortly - refresh in a minute.", 'info');
+        return;
+      }
+      setTimeout(poll, 3000);
+    };
+    void poll();
+    return () => {
+      cancelled = true;
+    };
+    // Runs once for the visit that came back from Stripe.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [returnedFromCheckout]);
   const navigate = useNavigate();
 
   // --- Profile (name) ---
@@ -437,6 +483,12 @@ const SettingsPage = () => {
                   {user?.role === Role.ROLE_ADMIN ? 'Admin (unlimited space)' : user?.plan === Plan.PREMIUM ? 'Premium' : 'Free'}
                 </span>
               </div>
+              {confirmingUpgrade && (
+                <p role="status" className="text-text-secondary normal-case tracking-normal text-xs flex items-center gap-2">
+                  <Loader2 size={12} className="animate-spin" /> Confirming your payment...
+                </p>
+              )}
+              <BillingActions />
               {user?.garmentLimit != null && (
                 <div className="flex justify-between items-center gap-6" data-testid="storage-row">
                   <span className="text-text-secondary opacity-50">Storage</span>

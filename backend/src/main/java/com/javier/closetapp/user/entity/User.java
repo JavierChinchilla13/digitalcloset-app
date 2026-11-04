@@ -65,6 +65,24 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Plan plan = Plan.FREE;
 
+    // Task 103: the Stripe customer / subscription behind a paid PREMIUM plan (all null for free
+    // accounts and for admin-comped PREMIUM). `subscriptionStatus` is Stripe's own word (active,
+    // past_due, canceled, ...), `currentPeriodEnd` when the paid period runs out.
+    @Column(name = "stripe_customer_id", unique = true, length = 64)
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_subscription_id", unique = true, length = 64)
+    private String stripeSubscriptionId;
+
+    @Column(name = "subscription_status", length = 32)
+    private String subscriptionStatus;
+
+    @Column(name = "current_period_end")
+    private LocalDateTime currentPeriodEnd;
+
+    @Column(name = "cancel_at_period_end", nullable = false)
+    private boolean cancelAtPeriodEnd = false;
+
     public User() {}
 
     public User(String email, String password, Role role) {
@@ -171,6 +189,21 @@ public class User implements UserDetails {
     public void setGoogleId(String googleId) {
         this.googleId = googleId;
     }
+
+    public String getStripeCustomerId() { return stripeCustomerId; }
+    public void setStripeCustomerId(String stripeCustomerId) { this.stripeCustomerId = stripeCustomerId; }
+
+    public String getStripeSubscriptionId() { return stripeSubscriptionId; }
+    public void setStripeSubscriptionId(String stripeSubscriptionId) { this.stripeSubscriptionId = stripeSubscriptionId; }
+
+    public String getSubscriptionStatus() { return subscriptionStatus; }
+    public void setSubscriptionStatus(String subscriptionStatus) { this.subscriptionStatus = subscriptionStatus; }
+
+    public LocalDateTime getCurrentPeriodEnd() { return currentPeriodEnd; }
+    public void setCurrentPeriodEnd(LocalDateTime currentPeriodEnd) { this.currentPeriodEnd = currentPeriodEnd; }
+
+    public boolean isCancelAtPeriodEnd() { return cancelAtPeriodEnd; }
+    public void setCancelAtPeriodEnd(boolean cancelAtPeriodEnd) { this.cancelAtPeriodEnd = cancelAtPeriodEnd; }
 
     public Plan getPlan() {
         return plan;

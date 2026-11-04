@@ -112,6 +112,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    // Task 103: a billing request that cannot be done (payments not set up, already subscribed).
+    @ExceptionHandler(com.javier.closetapp.billing.BillingException.class)
+    public ResponseEntity<Object> handleBilling(com.javier.closetapp.billing.BillingException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     // A verification code was requested again too soon (the "Resend" abuse guard).
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {
