@@ -17,6 +17,9 @@ services:
     envVars:
       # Neon: the DIRECT connection (host without "-pooler"), as a JDBC URL:
       #   jdbc:postgresql://ep-xxxx.region.aws.neon.tech/neondb?sslmode=require
+      # Supabase (no compute-hour limit): the SESSION pooler, user postgres.<project-ref>:
+      #   jdbc:postgresql://aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require
+      # See DEPLOYMENT.md, "Moving the database from Neon to Supabase".
       - key: DB_URL
         sync: false
       - key: DB_USERNAME

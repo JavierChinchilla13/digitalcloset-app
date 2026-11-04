@@ -127,6 +127,52 @@ on each restart, so it can't hold a database either.)
    - `DB_USERNAME` = `USER`
    - `DB_PASSWORD` = `PASSWORD`
 
+### Moving the database from Neon to Supabase (if Neon's free compute runs out)
+
+Neon's free plan allows 100 compute-hours a month and cannot be told to stay asleep. The API's health check
+(`/actuator/health`) also asks the database, so Render and an uptime pinger kept it awake around the clock and
+the allowance ran out (Neon then refuses every connection until the next cycle). Supabase's free plan has no
+compute-hour limit; it pauses a project after 7 days **without database requests**, and the API's own health
+check is such a request, so keep the pinger running. Free storage is 500 MB.
+
+Nothing in the code changes: only `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` on the API.
+
+1. **Create the project** at supabase.com (free plan). Pick the region closest to your Render region and set a
+   strong database password (save it in your password manager; never paste it in chat or git).
+2. **Use the Session pooler address, not the direct one.** Project -> **Connect** -> **Session pooler**. The
+   direct host (`db.<ref>.supabase.co`) is IPv6-only and Render's free tier cannot reach it; the session pooler
+   is IPv4 and behaves like a normal connection (Flyway and prepared statements work; do NOT use the
+   "Transaction pooler" on port 6543). The values are:
+   - `DB_URL` = `jdbc:postgresql://aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require`
+   - `DB_USERNAME` = `postgres.<project-ref>` (the pooler needs the project ref after the dot)
+   - `DB_PASSWORD` = the database password from step 1
+3. **Bring the data over (only if Neon answers; otherwise start fresh, see below).** On your own computer, in a
+   terminal, with the PostgreSQL tools installed. The passwords stay in your terminal; set them first so they
+   are not typed into the commands:
+
+   ```bash
+   # Neon's DIRECT connection string (the host without "-pooler")
+   export NEON_URL='postgresql://USER:PASSWORD@ep-xxxx.REGION.aws.neon.tech/neondb?sslmode=require'
+   # Supabase's SESSION pooler string, from Connect -> Session pooler
+   export SUPA_URL='postgresql://postgres.<project-ref>:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require'
+
+   pg_dump --schema=public --no-owner --no-privileges --format=custom -f vysvi.dump "$NEON_URL"
+   pg_restore --schema=public --no-owner --no-privileges --exit-on-error -d "$SUPA_URL" vysvi.dump
+   ```
+
+   Only the `public` schema is moved (Supabase has its own `auth`, `storage`... schemas that must be left alone).
+   The dump includes Flyway's history table, so the API sees the schema as already up to date and only applies
+   the migrations that are newer than the data. Check the result in Supabase's **Table editor** (users, clothing,
+   outfits have rows), then delete `vysvi.dump` (it contains everyone's data).
+4. **Point the API at it.** Render -> `vysvi-api` -> **Environment**: replace the three values and save; the API
+   redeploys. In the logs look for Flyway's "Successfully validated" and "Started ClosetAppApplication".
+5. **Check:** `https://<api>.onrender.com/actuator/health` answers `{"status":"UP"}`, you can sign in, and your
+   garments and outfits are there. Keep the Neon project (do not delete it) until you are sure.
+
+**If Neon will not answer** (its allowance is spent until the next cycle) the data cannot be dumped. Either wait
+for the reset and run step 3 then, or skip step 3: the API creates an empty database on first start and accounts
+register again. Garment pictures live at Cloudinary and are not lost, but nothing points at them any more.
+
 ### Step 2 - the API and the website (Render)
 
 1. Push this repo to GitHub (it is already there). In Render: **New + -> Blueprint**,
@@ -262,7 +308,8 @@ Set the variables on the **site** (they are baked in at build time, so rebuild i
 - **Memory is small.** `render.yaml` caps the JVM (`-Xmx320m`). If the API dies with
   "out of memory", lower it further (`-Xmx256m`) or move to a paid instance.
 - **Neon pauses when idle** (the first query after a pause takes about a second
-  longer) and has **no backup you control** on the free plan: run `pg_dump` against
+  longer), allows only 100 compute-hours a month on the free plan - an uptime pinger on `/actuator/health`
+  keeps the database awake and exhausts that (see "Moving the database from Neon to Supabase") - and has **no backup you control** on the free plan: run `pg_dump` against
   the direct connection now and then (`pg_dump "postgresql://USER:PASSWORD@HOST/neondb?sslmode=require" | gzip > backup.sql.gz`).
   Free storage is 0.5 GB.
 - **Render's free tier blocks outbound SMTP** (ports 25, 465, 587) since September
