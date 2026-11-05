@@ -274,7 +274,12 @@ const SettingsPage = () => {
     e.preventDefault();
     setIsSavingPassword(true);
     try {
-      await userService.confirmPasswordChange(passwordCode);
+      const auth = await userService.confirmPasswordChange(passwordCode);
+      // The password change signed every older token out, this session's too: carry on with the new one
+      // (set first, so the getCurrentUser() call below authenticates with it - same order as the email change).
+      setToken(auth.token);
+      const refreshed = await authService.getCurrentUser();
+      login(auth.token, refreshed);
       resetPasswordCard();
       showToast('Password updated', 'success');
     } catch (err: any) {

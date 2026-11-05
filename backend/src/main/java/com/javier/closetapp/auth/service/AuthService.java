@@ -102,6 +102,8 @@ public class AuthService {
                 requireActive(user);
                 user.setGoogleId(identity.subject());
                 user.setPassword(null);
+                // A pre-registrant's tokens (made with the password just cleared) must stop working.
+                user.bumpTokenVersion();
             } else {
                 user = new User(identity.email(), null, Role.ROLE_USER);
                 user.setGoogleId(identity.subject());

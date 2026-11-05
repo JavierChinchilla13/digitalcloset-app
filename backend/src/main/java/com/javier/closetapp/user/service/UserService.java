@@ -149,13 +149,18 @@ public class UserService {
         verificationCodeMailer.sendPasswordChangeCode(user.getEmail(), code);
     }
 
+    // Returns a fresh token: changing the password signs every other session out (token version), and the
+    // caller's own session continues with this one.
     @Transactional
-    public void confirmPasswordChange(ConfirmCodeRequest request) {
+    public AuthResponse confirmPasswordChange(ConfirmCodeRequest request) {
         User user = getAuthenticatedUser();
         PendingAccountChange change = consumePendingChange(user, AccountChangeType.PASSWORD, request.getCode());
 
         user.setPassword(change.getNewPasswordHash());
-        userRepository.save(user);
+        user.bumpTokenVersion();
+        User saved = userRepository.save(user);
+
+        return new AuthResponse(jwtService.generateToken(saved), saved.getUserId(), saved.getEmail());
     }
 
     // ---- Settings (self-service): code-confirmed email change ----
@@ -283,6 +288,7 @@ public class UserService {
         // Task 103: stop charging an account that is closed (best effort; never blocks the deactivation).
         billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
+        user.bumpTokenVersion();
         userRepository.save(user);
     }
 
@@ -299,6 +305,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
+        user.bumpTokenVersion();
         return mapToResponse(userRepository.save(user));
     }
 

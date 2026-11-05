@@ -49,6 +49,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private boolean active = true;
 
+    // Audit H1: bumped when the account's credentials change or it is deactivated. A login token carries the
+    // value it was issued with and stops working as soon as it no longer matches (see JwtService).
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -120,6 +125,15 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return active;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    // Signs the account out everywhere: every token issued before this call stops authenticating.
+    public void bumpTokenVersion() {
+        tokenVersion++;
     }
 
     public Long getUserId() {
