@@ -49,6 +49,8 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_PRICE_ID: ${STRIPE_PRICE_ID:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Task 104: Sentry for the API (empty = off).
+      SENTRY_DSN: ${SENTRY_DSN:-}
       # Cap the JVM if the machine is small (default: 70% of the container's RAM).
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--XX:MaxRAMPercentage=70}
     healthcheck:
@@ -67,6 +69,8 @@ services:
         VITE_BG_REMOVER_MODE: ${VITE_BG_REMOVER_MODE:-browser}
         # Task 98: "Sign in with Google" (empty = no button). The backend needs the same value as GOOGLE_CLIENT_ID.
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+        # Task 104: Sentry for the website (empty = off).
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
         # Task 97: ads for free accounts (all empty = off).
         VITE_AD_PROVIDER: ${VITE_AD_PROVIDER:-}
         VITE_ADSENSE_CLIENT: ${VITE_ADSENSE_CLIENT:-}

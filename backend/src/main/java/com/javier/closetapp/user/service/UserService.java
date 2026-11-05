@@ -86,7 +86,7 @@ public class UserService {
     public User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
     }
 
     public UserResponse getCurrentUserResponse() {
@@ -296,7 +296,7 @@ public class UserService {
     @Transactional
     public UserResponse deactivateUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
         return mapToResponse(userRepository.save(user));
@@ -305,7 +305,7 @@ public class UserService {
     @Transactional
     public UserResponse reactivateUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(true);
         return mapToResponse(userRepository.save(user));
     }

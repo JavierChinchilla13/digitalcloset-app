@@ -256,6 +256,23 @@ If the button does not appear, `VITE_GOOGLE_CLIENT_ID` is empty in the build. If
 fails with "Google sign-in failed", the two ids differ, or the site's address is not in the authorized origins.
 When you later put the site on your own domain, add it to the authorized origins too.
 
+### Error monitoring with Sentry (optional)
+
+Sentry tells you when the app breaks for someone (a crashed page, a server error) with the place in the code. It is
+off until you set a DSN, and even then the website sends nothing until the visitor chooses **Accept all** on the cookie
+banner (the Privacy Policy already says so). Errors only: no performance tracing, no session replay, no user, headers
+or cookies; query strings are cut from URLs, console output is not kept, and emails / long tokens are blanked. The API
+reports only unexpected 500s (not wrong passwords, 404s, 403s...). Server answers 502/503/504 (the free host waking
+up) are not reported.
+
+1. Sign up at sentry.io (free plan) and create an organization.
+2. Create **two projects**: one **React** (for the website) and one **Java** (for the API). Each shows a **DSN**
+   (`https://...@o....ingest.sentry.io/...`). A DSN is not a secret key, but keep it out of git anyway.
+3. Render -> `vysvi-web` -> Environment: `VITE_SENTRY_DSN` = the React DSN, then redeploy the site (it is baked in
+   at build time). Render -> `vysvi-api` -> Environment: `SENTRY_DSN` = the Java DSN (redeploys by itself).
+4. Check: accept optional services on the site, then in the browser console run `setTimeout(() => { throw new Error('sentry test') })`
+   - the error should appear in the React project within a minute (then ignore or resolve it in Sentry).
+
 ### Payments with Stripe - Premium subscription (optional)
 
 Premium is a monthly subscription (300 garments, no ads). Nothing is charged and no upgrade button shows until

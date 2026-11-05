@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
+import { reportApiFailure } from '../monitoring/sentry';
 
 // Task 24: '/api' is right whenever the site and the API share an origin - the
 // Vite dev server proxies it, and in production the reverse proxy (Caddy, see
@@ -68,6 +69,8 @@ export const isSessionExpiry = (error: {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Task 104: a real server failure (5xx, not the host's 502/503/504 while the API wakes) is reported.
+    reportApiFailure(error.response?.status, error.config?.method, error.config?.url);
     if (isSessionExpiry(error)) {
       useAuthStore.getState().logout();
       try {

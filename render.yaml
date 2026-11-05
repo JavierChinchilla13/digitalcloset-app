@@ -56,6 +56,9 @@ services:
         sync: false
       - key: STRIPE_WEBHOOK_SECRET
         sync: false
+      # Error monitoring (Task 104): the Java project's DSN from sentry.io. Empty = off. See DEPLOYMENT.md.
+      - key: SENTRY_DSN
+        sync: false
       # A free instance has little memory: keep the JVM inside it.
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx320m -XX:+UseSerialGC -XX:TieredStopAtLevel=1"
@@ -78,6 +81,9 @@ services:
       - key: VITE_BG_REMOVER_MODE
         value: browser
       - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      # Error monitoring (Task 104): the React project's DSN from sentry.io (public). Empty = off.
+      - key: VITE_SENTRY_DSN
         sync: false
       # Ads for free accounts (Task 97). Leave VITE_AD_PROVIDER empty to keep ads off; see
       # DEPLOYMENT.md, "Ads for free accounts". Public values, baked in at build time.

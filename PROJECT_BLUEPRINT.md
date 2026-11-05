@@ -7078,3 +7078,25 @@ JWT. No Google client secret is used.
   "Premium ends on ..." and Manage billing; free user sees Upgrade and a friendly error when Stripe is unreachable.
 - **Not verified:** real Checkout, price label, portal and webhook delivery (needs the owner's Stripe account).
 - **Owner setup:** see `DEPLOYMENT.md` "Payments with Stripe" (test mode first).
+
+### Task 104 - Sentry error monitoring (2026-11-05, branch `phase-15-sentry`)
+
+- **Frontend:** `monitoring/sentry.ts` (`@sentry/react` 11.10.0, lazy dynamic import). Starts only with `VITE_SENTRY_DSN` AND
+  consent "Accept all"; stops when consent is withdrawn (`initMonitoring` subscribes to `useConsentStore`). Errors only
+  (no tracing, no replay), `dataCollection` set to collect no user info / cookies / headers / bodies / query params
+  (this SDK version collects them by default). `beforeSend` / `beforeBreadcrumb` scrub: query strings and fragments cut
+  from URLs, console breadcrumbs dropped, emails and 32+ char tokens blanked, user and request data removed. Hooks:
+  `ErrorBoundary.componentDidCatch`, axios response interceptor (`reportApiFailure`: 5xx except 502/503/504, described
+  as `API 500 PUT /outfits/:id`), Sentry's default global handlers.
+- **Backend:** plain `io.sentry:sentry` 8.50.0 (not the Spring starter, which would report handled 4xx too);
+  `monitoring/ErrorReporter` (blank `SENTRY_DSN` = off, no request/user data, scrubs emails and tokens from messages);
+  only `GlobalExceptionHandler`'s two catch-alls report. The "User not found" false 500s (valid token, missing user) are
+  now `ResourceNotFoundException` (404).
+- **Plumbing/docs:** `render.yaml`, `frontend/Dockerfile`, `docker-compose.yml`, `frontend/.env.example`, `DEPLOYMENT.md`
+  "Error monitoring with Sentry".
+- **Tests:** backend `ErrorReportingTest` (186 total); frontend `monitoring.test.tsx` (14, 450 total).
+- **Verified end to end:** against a fake local Sentry server: no request or download before "Accept all"; after it a
+  thrown error arrived as `... [email] token [token]` with the URL cut to `/reset-password`; no email, token,
+  Authorization header or query string in the payload.
+- **Not done:** source maps (need a build plugin and `SENTRY_AUTH_TOKEN`); real Sentry projects (owner: two projects,
+  set `VITE_SENTRY_DSN` on the site and `SENTRY_DSN` on the API).

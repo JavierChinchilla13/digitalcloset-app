@@ -1,5 +1,6 @@
 package com.javier.closetapp.persona.service;
 
+import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.common.enums.AvatarType;
 import com.javier.closetapp.persona.dto.PersonaDisplayNameResponse;
 import com.javier.closetapp.persona.entity.PersonaDisplayName;
@@ -28,7 +29,7 @@ public class PersonaDisplayNameService {
 
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     // Only ever returns rows that exist - a persona type with no override

@@ -1,5 +1,6 @@
 package com.javier.closetapp.billing;
 
+import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.common.enums.Plan;
 import com.javier.closetapp.common.enums.Role;
 import com.javier.closetapp.user.entity.User;
@@ -46,7 +47,7 @@ public class BillingService {
 
     private User currentUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     @Transactional(readOnly = true)
