@@ -101,7 +101,7 @@ describe('the footer and the legal pages (signed out)', () => {
       expect(screen.getAllByText(new RegExp(word)).length, word).toBeGreaterThan(0);
     }
     expect(screen.getByRole('note')).toHaveTextContent(/draft/i);
-    expect(screen.getAllByText(/\[COUNTRY\]/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Costa Rica/).length).toBeGreaterThan(0);
   });
 
   it('the Privacy page can reopen the cookie choice', async () => {
@@ -120,7 +120,7 @@ describe('the footer and the legal pages (signed out)', () => {
     expect(screen.getByRole('heading', { level: 1, name: /terms of service/i })).toBeInTheDocument();
     expect(screen.getByText(/cancel at any time/i)).toBeInTheDocument();
     expect(screen.getByText(/not refundable/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/\[COUNTRY\]/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Costa Rica/).length).toBeGreaterThan(0);
   });
 });
 

@@ -6,9 +6,9 @@ export const LEGAL = {
   contactEmail: 'javidilugo@gmail.com',
   siteName: 'VYSVI',
   siteUrl: 'https://vysvi-web.onrender.com',
-  lastUpdated: 'October 12, 2026',
-  // The governing-law country is left for the owner to fill in; it is shown as a marked gap.
-  country: '[COUNTRY]',
+  lastUpdated: 'November 5, 2026',
+  // The country whose law governs these terms.
+  country: 'Costa Rica',
 } as const;
 
 // Flip to false once the owner has reviewed both pages: removes the "draft" notice from them.
