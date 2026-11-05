@@ -632,7 +632,7 @@ const FlatOutfitBuilderPage = () => {
                   onRetry={fetchItems}
                 />
               ) : items.length === 0 && firstRun.show ? (
-                // Task 101: an empty closet gets the guide (and sample garments) right here.
+                // Task 101: an empty closet gets the guide right here.
                 <FirstRunPanel compact />
               ) : browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">

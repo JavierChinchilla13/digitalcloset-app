@@ -272,7 +272,7 @@ const ClosetPage = () => {
             onRetry={fetchItems}
           />
         ) : items.length === 0 && firstRun.show ? (
-          // Task 101: a brand-new closet gets the guide with sample garments, not just "no garments".
+          // Task 101: a brand-new closet gets the guide, not just "no garments".
           <div className="py-8">
             <FirstRunPanel />
           </div>

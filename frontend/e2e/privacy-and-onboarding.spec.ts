@@ -35,21 +35,15 @@ test.describe('privacy', () => {
   });
 });
 
-// Flow 7: a brand-new account is guided, and a sample garment can be added with one tap.
+// Flow 7: a brand-new account is guided on its empty screens, and can hide the guide for good.
 test.describe('onboarding', () => {
-  test('a new account adds a sample garment from the guide and finds it in the closet', async ({ page, request }) => {
+  test('a new account sees the guide and can hide it for good', async ({ page, request }) => {
     await chooseCookies(page);
     const account = await registerAccount(request, 'onboarding');
     await signIn(page, account.email);
 
     const guide = page.getByTestId('first-run-panel');
     await expect(guide).toBeVisible();
-    await guide.getByRole('button', { name: 'Add Black Tee' }).click();
-    await expect(guide.getByRole('button', { name: 'Black Tee (added)' })).toBeVisible();
-
-    await page.goto('/closet');
-    await expect(page.getByText('Black Tee').first()).toBeVisible();
-    await expect(page.getByText('1 / 15 garments')).toBeVisible();
 
     // The guide can be hidden for good.
     await page.goto('/showcase');

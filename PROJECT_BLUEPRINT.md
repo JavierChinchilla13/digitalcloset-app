@@ -7129,3 +7129,14 @@ JWT. No Google client secret is used.
   (accounts that already added them keep them; the picture files stay); male Black Tee refit to `top: 156,
   width: 330` (was 168 / 305). Female persona untouched.
 - **Verified:** type check and onboarding tests pass; the new tee placement still needs a look on the live figure.
+
+### Task 107 - Sample garments and "starter outfit" removed (2026-11-05, on `main`)
+
+- **Why:** the sample pieces still did not sit well on the figure after two refits (owner feedback), so the whole
+  feature was dropped rather than shipped looking bad.
+- **Change:** deleted `frontend/src/utils/sampleGarments.ts`; `FirstRunPanel` keeps the three-step guide (add pieces,
+  build an outfit, see it in the Showcase; hide it for good) without the sample picker or "Add a starter outfit";
+  step 1 now reads "Upload photos of your own clothes". Unit and e2e onboarding tests updated.
+- **Kept on purpose:** `frontend/public/samples/*.png` - accounts that already added samples store those URLs, and
+  the e2e tests use `black-tee.png` as a stand-in garment picture. Existing sample garments stay in their closets.
+- **Verified:** type checks, 443 frontend tests, build, bundle guard (490.6 kB), e2e onboarding spec (2 of 2).

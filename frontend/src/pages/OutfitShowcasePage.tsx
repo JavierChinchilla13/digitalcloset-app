@@ -682,7 +682,7 @@ const OutfitShowcasePage = () => {
               Let's Get Started
             </span>
           </button>
-          {/* Task 101: the first-run guide (steps + sample garments); hides itself once dismissed. */}
+          {/* Task 101: the first-run guide (three steps); hides itself once dismissed. */}
           <div className="mt-10 max-w-3xl mx-auto">
             <FirstRunPanel outfitCount={n} />
           </div>
