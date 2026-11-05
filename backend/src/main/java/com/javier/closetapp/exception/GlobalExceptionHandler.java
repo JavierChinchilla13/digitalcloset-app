@@ -1,5 +1,6 @@
 package com.javier.closetapp.exception;
 
+import com.javier.closetapp.monitoring.ErrorReporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,13 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    // Task 104: told about the errors nobody expected (the two catch-alls at the bottom).
+    private final ErrorReporter errorReporter;
+
+    public GlobalExceptionHandler(ErrorReporter errorReporter) {
+        this.errorReporter = errorReporter;
+    }
 
     // Resource lookups that failed (item/outfit not found, or not owned by the
     // caller) - the message is a safe, developer-written string, not raw
@@ -105,6 +113,16 @@ public class GlobalExceptionHandler {
     // the caller, so 400 with the message.
     @ExceptionHandler(InvalidOutfitException.class)
     public ResponseEntity<Object> handleInvalidOutfit(InvalidOutfitException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // Task 103: a billing request that cannot be done (payments not set up, already subscribed).
+    @ExceptionHandler(com.javier.closetapp.billing.BillingException.class)
+    public ResponseEntity<Object> handleBilling(com.javier.closetapp.billing.BillingException ex) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("message", ex.getMessage());
@@ -213,6 +231,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Object> handleRuntimeException(RuntimeException ex) {
         log.error("Unhandled RuntimeException", ex);
+        errorReporter.report(ex);
 
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
@@ -224,6 +243,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
         log.error("Unhandled Exception", ex);
+        errorReporter.report(ex);
 
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());

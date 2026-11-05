@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { lazy, useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Search, Loader2, X, Shirt, RotateCcw, Save, User, LayoutGrid, ChevronDown, Plus, Star, Shuffle } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -15,7 +15,9 @@ import LayerPanel from '../components/LayerPanel';
 import { ClothingCategory } from '../types';
 import type { OutfitRequest, ClothingItem } from '../types';
 import PersonaRenderer from '../components/PersonaRenderer';
-import EditClothingModal from '../components/EditClothingModal';
+import MountOnFirstOpen from '../components/MountOnFirstOpen';
+import FirstRunPanel from '../components/FirstRunPanel';
+import { useFirstRun } from '../hooks/useFirstRun';
 import CroppedThumbnail from '../components/CroppedThumbnail';
 import CategoryPicker from '../components/CategoryPicker';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
@@ -27,6 +29,9 @@ import ErrorState from '../components/ErrorState';
 import PersonaBadge from '../components/PersonaBadge';
 import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 import { getApiErrorMessage } from '../utils/apiError';
+
+// Task 100: heavy editor code, downloaded on first use (see MountOnFirstOpen).
+const EditClothingModal = lazy(() => import('../components/EditClothingModal'));
 
 // Item-first outfit builder (Task 36-38, Phase 8 pivot): browse the closet
 // and multi-select items with zero fitting or persona involvement, using
@@ -59,6 +64,7 @@ const FlatOutfitBuilderPage = () => {
   const { pathname, state: navState } = useLocation();
   const isLandingRoute = pathname === '/';
   const { items, isLoading, error: itemsError, fetchItems, markItemAsFitted } = useClothingStore();
+  const firstRun = useFirstRun();
   const runSafely = useSafeAction();
   // Used as the outfit's avatarType default (open question #6's
   // recommendation - the backend's Outfit.avatarType is NOT NULL and this
@@ -347,6 +353,8 @@ const FlatOutfitBuilderPage = () => {
     const { ids, missing } = pickRandomOutfit(items, persona.type);
     if (ids.length === 0) {
       showToast(`Add some ${persona.type.toLowerCase()} clothes to your closet first`, 'info');
+      // Task 101: a completely empty closet has nowhere else to go - take them to it.
+      if (items.length === 0) navigate('/closet');
       return;
     }
     if (editId) {
@@ -623,6 +631,9 @@ const FlatOutfitBuilderPage = () => {
                   message="Check your connection and try again."
                   onRetry={fetchItems}
                 />
+              ) : items.length === 0 && firstRun.show ? (
+                // Task 101: an empty closet gets the guide (and sample garments) right here.
+                <FirstRunPanel compact />
               ) : browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                   <Shirt size={32} className="text-text-secondary" />
@@ -779,6 +790,16 @@ const FlatOutfitBuilderPage = () => {
                   <span className="lg:hidden">Pick pieces in the Closet tab to build an outfit</span>
                   <span className="hidden lg:inline">Select pieces from the left to build an outfit</span>
                 </p>
+                {/* Task 101: with nothing in the closet there is nothing to pick - say where to go. */}
+                {items.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/closet')}
+                    className="mt-2 px-6 py-3 rounded-full bg-ink text-background-main text-[10px] uppercase tracking-widest font-medium opacity-100"
+                  >
+                    Go to your closet
+                  </button>
+                )}
               </div>
             ) : showPersonaPreview ? (
               <div className="space-y-4 lg:space-y-6">
@@ -924,12 +945,15 @@ const FlatOutfitBuilderPage = () => {
         </main>
       </div>
 
-      <EditClothingModal
-        item={fitModalItem}
-        isOpen={!!fitModalItem}
-        onClose={() => setFitModalItem(null)}
-        promoteToFittedOnSave
-      />
+      {/* Task 100: the editor (Fabric) is loaded the first time "Adjust & Fit" is used. */}
+      <MountOnFirstOpen open={!!fitModalItem}>
+        <EditClothingModal
+          item={fitModalItem}
+          isOpen={!!fitModalItem}
+          onClose={() => setFitModalItem(null)}
+          promoteToFittedOnSave
+        />
+      </MountOnFirstOpen>
     </div>
   );
 };

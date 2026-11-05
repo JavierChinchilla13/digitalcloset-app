@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { lazy, useCallback, useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -9,6 +9,7 @@ import {
   LayoutList,
   Star,
   Pencil,
+  Share2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useOutfitStore } from "../store/useOutfitStore";
@@ -20,9 +21,14 @@ import { buildShowcaseRows } from "../utils/selectionDisplay";
 import PersonaRenderer from "../components/PersonaRenderer";
 import CroppedThumbnail from "../components/CroppedThumbnail";
 import ErrorState from "../components/ErrorState";
+import FirstRunPanel from "../components/FirstRunPanel";
+import MountOnFirstOpen from "../components/MountOnFirstOpen";
 import { useToast } from "../components/Toast";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
 import { getApiErrorMessage } from '../utils/apiError';
+
+// Task 102: the share dialog loads the first time it opens.
+const ShareOutfitModal = lazy(() => import("../components/ShareOutfitModal"));
 
 const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
 
@@ -580,6 +586,8 @@ const OutfitShowcasePage = () => {
   // unmount can, since there's no unmount involved in the swap at all.
   const FADE_DURATION_MS = 250;
   const [displayedOutfit, setDisplayedOutfit] = useState(activeOutfit);
+  // Task 102: the share dialog for the shown outfit.
+  const [isSharing, setIsSharing] = useState(false);
   const [displayedPersona, setDisplayedPersona] = useState(activePersona);
   const [isFading, setIsFading] = useState(false);
 
@@ -674,6 +682,10 @@ const OutfitShowcasePage = () => {
               Let's Get Started
             </span>
           </button>
+          {/* Task 101: the first-run guide (steps + sample garments); hides itself once dismissed. */}
+          <div className="mt-10 max-w-3xl mx-auto">
+            <FirstRunPanel outfitCount={n} />
+          </div>
         </motion.div>
       </div>
     );
@@ -717,6 +729,14 @@ const OutfitShowcasePage = () => {
               <Star size={12} /> Set as main outfit
             </button>
           )}
+          {/* Task 102: share the shown outfit as a picture or a public link. */}
+          <button
+            onClick={() => setIsSharing(true)}
+            title="Share this outfit as a picture or a link"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-ink/15 text-text-secondary hover:text-text-primary hover:border-ink/30 text-[10px] font-medium tracking-[0.25em] uppercase transition-all"
+          >
+            <Share2 size={12} /> Share
+          </button>
           <button
             onClick={() => displayedOutfit && navigate(`/outfits/flat/edit/${displayedOutfit.outfitId}`)}
             title="Open this outfit in Attire to change what it's wearing"
@@ -881,6 +901,14 @@ const OutfitShowcasePage = () => {
           </button>
         </div>
       )}
+
+      <MountOnFirstOpen open={isSharing}>
+        <ShareOutfitModal
+          outfitId={displayedOutfit?.outfitId ?? null}
+          isOpen={isSharing}
+          onClose={() => setIsSharing(false)}
+        />
+      </MountOnFirstOpen>
     </div>
   );
 };

@@ -6987,3 +6987,136 @@ JWT. No Google client secret is used.
   "invalid_client" (expected). A full sign-in with a real Google account is NOT verified: it needs the owner's client id.
 - **Owner setup (not done):** Google Cloud project + consent screen (publish) + Web client id with the site's origins, then
   set `GOOGLE_CLIENT_ID` on the API and `VITE_GOOGLE_CLIENT_ID` on the site and rebuild the site.
+
+### Task 99 - Legal pages, cookie consent, self-hosted fonts (2026-10-15, branch `phase-15-legal-consent`)
+
+- **Pages** `/privacy` and `/terms` (public, `PrivacyPage` / `TermsPage` on `LegalLayout`): plain-language DRAFTS naming
+  the operator, the data collected, the processors (Render, Neon, Cloudinary, Google, Stripe, Sentry, ad network), every
+  localStorage key, retention, rights, children (13+), subscription / cancellation / refund wording. Facts live in
+  `config/legal.ts`; `LEGAL_IS_DRAFT` shows a "draft for review" note and `[COUNTRY]` is a marked gap for the owner.
+- **Consent:** `store/useConsentStore.ts` (persisted `vysvi-consent`: `unset | essential | all`), `hooks/useConsent.ts`
+  (`allowsOptional`), `components/ConsentBanner.tsx` (non-blocking bottom bar, two equal buttons, safe-area padding),
+  footer Privacy / Terms / "Cookie settings" (re-opens it), agreement line under login and signup.
+- **Gating:** `useAdEligibility` requires "Accept all", so no ad script loads before it. Sentry (Task 104) will use the same.
+  Google sign-in stays user-initiated, with a one-line note that it loads a script from Google.
+- **Fonts:** `@fontsource/cormorant-garamond` and `@fontsource/jost` replace the Google Fonts `@import` (no third-party
+  request on page load; faster paint). `index.html` description + Open Graph, `public/robots.txt` (disallows `/s/`).
+- **Tests:** `consent.test.tsx` (12); ad / account-refresh tests grant consent. 394 frontend tests.
+- **Verified live:** banner at 375px (no overflow), choice persists across reload, footer re-opens it, no request to
+  googleapis/gstatic, fonts loaded from the site.
+- **Owner:** review the drafts and fill in `[COUNTRY]` (ideally with a lawyer before charging money).
+
+### Task 100 - Faster first load (2026-10-15, branch `phase-15-speed`)
+
+- **Lazy routes** (`App.tsx`, `React.lazy`): Closet, Builder, Showcase, Saved Outfits, Categories, Persona, Settings, Admin,
+  Demo, Privacy, Terms. Landing, Login, Signup, Forgot/Reset, NotFound stay eager. One `<Suspense>` in `MainLayout` inside
+  the existing `ErrorBoundary` (a failed chunk shows the recoverable error).
+- **Lazy heavy parts:** `MountOnFirstOpen` mounts `UploadFlow` / `EditClothingModal` on first open; the studios
+  (Fitting, Cleanup, Jacket, Shoe, symmetry check, segmentation tool) are `lazy` inside them; `utils/lazyServices.ts`
+  dynamic-imports background removal, image optimizing and jacket segmentation at the call site.
+- **Build:** `manualChunks` vendor-react / vendor-motion / vendor-fabric; `canvas` moved to devDependencies (jsdom helper).
+- **Assets:** below-the-fold GIFs `loading="lazy"`; `FeatureCard` requests its clip on first hover/tap.
+- **Guard:** `npm run check:bundle` (`scripts/check-bundle-size.mjs`) fails above 700 kB first-load JS or when editor
+  libraries appear in it; CI runs it after the build.
+- **Result:** first-load JS 1,750 kB -> 488 kB (12 files); landing loads no fabric / onnx / imgly / segmentation.
+- **Tests:** `mountOnFirstOpen.test.tsx` (2); `featureCard` and `editGarmentFlow` adapted. 396 frontend tests.
+- **Not done:** `favicon.png` (120 KB) not shrunk; onnxruntime `.wasm` (24 MB) unchanged, only loads on first background removal.
+
+### Task 101 - Onboarding and sample garments (2026-10-15, branch `phase-15-onboarding`)
+
+- **Guide:** `components/FirstRunPanel.tsx` - 3 steps (add pieces, build an outfit, see it in the Showcase) derived from
+  data, plus a sample picker and "Add a starter outfit". Shown on the Showcase (no outfit yet), the Closet (empty) and the
+  builder's left panel (empty closet). `hooks/useFirstRun.ts`; "Hide this guide" is stored per account in
+  `localStorage['vysvi-onboarding:<userId>']` (no backend column).
+- **Samples:** `utils/sampleGarments.ts`, pictures in `public/samples/` (permanent names: black-tee, purple-tee, pants,
+  shorts, black-jacket, denim-jacket, black-boot; the Nike-logo sneaker is excluded). Each is placed by its measured visible
+  area (`content` box) against the persona's real body geometry (per persona), not by the generic presets. Shoes are a left
+  and a right piece (right mirrored) = 2 slots. Samples are real garments: they count toward the limit and can be deleted.
+- **Limits/errors:** client check with `useStorage().canAdd` (clear "room for N more" message), server errors via
+  `getApiErrorMessage`.
+- **Builder dead end:** empty right panel and "Create random outfit" on an empty closet lead to /closet.
+- **Tests:** `onboarding.test.tsx` (11). 407 frontend tests.
+- **Verified live** at desktop size (male and female figures): tee, pants and boots sit on the body; a first version using
+  the generic presets looked wrong and was replaced.
+- **Not rendered live:** jackets and shorts use the same method but are not part of the starter outfit.
+
+### Task 102 - Share an outfit: picture + public link (2026-10-15, branch `phase-15-share`)
+
+- **Backend:** `V11__add_outfit_share_token.sql` (`outfits.share_token`, unique); `POST` / `DELETE /api/outfits/{id}/share`
+  (owner only; token = 18 random bytes base64url, stable until revoked, a new one after re-sharing);
+  `GET /api/public/outfits/{token}` (`permitAll` for GET, `PublicOutfitService` -> `PublicOutfitResponse` /
+  `PublicGarmentResponse`: only drawing data, soft-deleted garments and deactivated owners hidden, unknown/revoked = 404).
+  `RateLimitFilter` gets a separate `/api/public/` bucket (`RATE_LIMIT_PUBLIC_MAX`, default 120/min/address).
+- **Frontend:** `utils/personaLayers.ts` (layers extracted from `PersonaRenderer`, which now takes an `items` prop),
+  `computeOcclusionMasks` extracted from `useOcclusionMasks`, `utils/outfitImage.ts` (canvas exporter 1080x1440, same
+  geometry and masks), `ShareOutfitModal` (download, Web Share with file, create / copy / turn off link; lazy),
+  `SharedOutfitPage` at `/s/:token` (bare axios, noindex, 404 state). Entry points: `OutfitCard` (hover + touch menu),
+  Showcase.
+- **Tests:** backend `SharedOutfitIntegrationTest` (9) + public bucket test (157 total); frontend `shareOutfit.test.tsx`,
+  `outfitImage.test.ts` (425 total).
+- **Verified live:** picture generated and matches the screen; link opened signed-out; turned off -> "no longer shared".
+- **Limits:** no rich social previews (client-rendered app); only FITTED pieces draw; a garment host without CORS headers
+  makes the picture fail (link still works). V11 runs on the next Render deploy.
+
+### Task 103 - Premium by Stripe subscription (2026-11-04, branch `phase-15-stripe`)
+
+- **Backend:** `V12__add_stripe_billing.sql` (users: customer / subscription id, status, period end, cancel-at-period-end;
+  `stripe_events` for webhook idempotency); package `billing` (`StripeGateway` interface + `StripeSdkGateway` using
+  `stripe-java` 34.0.0, `BillingService`, `BillingController`). Endpoints: `GET /api/billing/status`,
+  `POST /api/billing/checkout`, `POST /api/billing/portal` (login) and `POST /api/billing/webhook` (public, signature
+  verified with `Webhook.constructEvent`; bad signature = 400). Only the signed webhook changes the plan; events are
+  deduplicated by id; an event only affects the subscription the account holds (admin-comped PREMIUM is never touched);
+  past_due keeps Premium, unpaid / canceled returns to FREE; deactivating an account cancels its subscription (best
+  effort). Webhook payloads are read as plain JSON (period end from the subscription or its first item). Blank
+  `STRIPE_SECRET_KEY` / `STRIPE_PRICE_ID` / `STRIPE_WEBHOOK_SECRET` = billing off.
+- **Frontend:** `billingService`, `useBillingStore` / `useBilling`, `BillingActions` (Upgrade / Manage billing / ends-on
+  note / failed-payment note), `StorageLimitModal` upgrade, Settings plan row, polling after `?billing=success`.
+- **Docs/plumbing:** `DEPLOYMENT.md` "Payments with Stripe", `render.yaml`, `docker-compose.yml`.
+- **Tests:** backend `BillingIntegrationTest` (17), `StripeSdkGatewayTest` (8, real HMAC), `FakeStripeGateway` /
+  `TestStripeConfig` (182 total); frontend `billing.test.tsx` (11, 436 total).
+- **Verified live (dummy keys):** forged / missing signature = 400; locally signed event flips the plan; Settings shows
+  "Premium ends on ..." and Manage billing; free user sees Upgrade and a friendly error when Stripe is unreachable.
+- **Not verified:** real Checkout, price label, portal and webhook delivery (needs the owner's Stripe account).
+- **Owner setup:** see `DEPLOYMENT.md` "Payments with Stripe" (test mode first).
+
+### Task 104 - Sentry error monitoring (2026-11-05, branch `phase-15-sentry`)
+
+- **Frontend:** `monitoring/sentry.ts` (`@sentry/react` 11.10.0, lazy dynamic import). Starts only with `VITE_SENTRY_DSN` AND
+  consent "Accept all"; stops when consent is withdrawn (`initMonitoring` subscribes to `useConsentStore`). Errors only
+  (no tracing, no replay), `dataCollection` set to collect no user info / cookies / headers / bodies / query params
+  (this SDK version collects them by default). `beforeSend` / `beforeBreadcrumb` scrub: query strings and fragments cut
+  from URLs, console breadcrumbs dropped, emails and 32+ char tokens blanked, user and request data removed. Hooks:
+  `ErrorBoundary.componentDidCatch`, axios response interceptor (`reportApiFailure`: 5xx except 502/503/504, described
+  as `API 500 PUT /outfits/:id`), Sentry's default global handlers.
+- **Backend:** plain `io.sentry:sentry` 8.50.0 (not the Spring starter, which would report handled 4xx too);
+  `monitoring/ErrorReporter` (blank `SENTRY_DSN` = off, no request/user data, scrubs emails and tokens from messages);
+  only `GlobalExceptionHandler`'s two catch-alls report. The "User not found" false 500s (valid token, missing user) are
+  now `ResourceNotFoundException` (404).
+- **Plumbing/docs:** `render.yaml`, `frontend/Dockerfile`, `docker-compose.yml`, `frontend/.env.example`, `DEPLOYMENT.md`
+  "Error monitoring with Sentry".
+- **Tests:** backend `ErrorReportingTest` (186 total); frontend `monitoring.test.tsx` (14, 450 total).
+- **Verified end to end:** against a fake local Sentry server: no request or download before "Accept all"; after it a
+  thrown error arrived as `... [email] token [token]` with the URL cut to `/reset-password`; no email, token,
+  Authorization header or query string in the payload.
+- **Not done:** source maps (need a build plugin and `SENTRY_AUTH_TOKEN`); real Sentry projects (owner: two projects,
+  set `VITE_SENTRY_DSN` on the site and `SENTRY_DSN` on the API).
+
+### Task 105 - Playwright end-to-end tests + CI (2026-11-05, branch `phase-15-e2e`)
+
+- **Suite:** `frontend/e2e/` (8 tests, `@playwright/test` 1.56.1): sign-up lands on the Showcase with the guide; wrong
+  password; private page redirects to /login; free closet takes 15 garments (14 seeded through the API, the 15th through
+  the real upload screen with Cloudinary answered by the test) and the 16th is refused in the UI and with 403
+  `GARMENT_LIMIT`; build and save an outfit, listed and main in the Showcase; share link opened by a signed-out visitor
+  and dead after "Turn off link"; cookie banner choice persists, legal pages, no ad requests before consent; onboarding
+  sample garment and "Hide this guide". Helpers in `e2e/helpers.ts` (unique accounts through the API, seeding, banner
+  pre-answer, sign-in).
+- **Config:** `frontend/playwright.config.ts` starts the backend (`spring-boot:run` on the test classpath, profile
+  `test`, H2 / no Flyway / no rate limit / mail logged / throwaway JWT key given as environment variables because
+  `spring-boot:run` does not load the test profile's own file; CORS allows `http://localhost:4173`) and the production
+  build served by `vite preview` (fake Cloudinary names, no Google / Sentry / ads). `PW_CHANNEL=chrome` reuses the
+  installed Chrome locally; servers already running are reused outside CI. Scripts: `npm run e2e`, `e2e:typecheck`.
+- **CI:** new `e2e` job (needs `frontend`, Temurin 21 + Node 24, `playwright install --with-deps chromium`, report and
+  traces uploaded on failure); the frontend job type-checks the e2e files; the stale docker-stack smoke check now expects
+  401 (was 403) for an anonymous `GET /api/clothing`.
+- **Verified:** 8 of 8 pass locally, twice (about 38 s). The CI job itself is untested until the first push.
+- **Not covered:** Fabric studios, real background removal, real Stripe Checkout, the Google popup.

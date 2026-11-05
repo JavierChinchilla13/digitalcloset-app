@@ -18,6 +18,10 @@ interface OutfitState {
   updateOutfit: (outfitId: number, data: OutfitRequest) => Promise<void>;
   removeOutfit: (outfitId: number) => Promise<void>;
   duplicateOutfit: (outfit: Outfit) => Promise<void>;
+  // Task 102: turn the outfit's public link on / off; the outfit in the list is replaced by the
+  // server's copy (so its shareToken is current). Rethrows so the caller can tell the user.
+  shareOutfit: (outfitId: number) => Promise<Outfit>;
+  unshareOutfit: (outfitId: number) => Promise<Outfit>;
 }
 
 export const useOutfitStore = create<OutfitState>((set, get) => ({
@@ -50,6 +54,18 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
       set({ mainOutfitId: previous });
       throw err;
     }
+  },
+
+  shareOutfit: async (outfitId) => {
+    const updated = await outfitService.shareOutfit(outfitId);
+    set((state) => ({ outfits: state.outfits.map((o) => (o.outfitId === outfitId ? updated : o)) }));
+    return updated;
+  },
+
+  unshareOutfit: async (outfitId) => {
+    const updated = await outfitService.unshareOutfit(outfitId);
+    set((state) => ({ outfits: state.outfits.map((o) => (o.outfitId === outfitId ? updated : o)) }));
+    return updated;
   },
 
   fetchOutfits: async () => {

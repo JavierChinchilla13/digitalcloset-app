@@ -15,7 +15,8 @@ describe('FeatureCard', () => {
     const user = userEvent.setup();
     render(<FeatureCard icon={Shirt} title="OUTFIT BUILDER" desc="d" media="/marketing/x.gif" />);
 
-    expect(overlay()).toHaveClass('opacity-0');
+    // Task 100: the clip is not requested until the card is hovered or tapped.
+    expect(screen.queryByAltText(/in action/i)).not.toBeInTheDocument();
     await user.hover(screen.getByTestId('feature-card'));
     expect(overlay()).toHaveClass('opacity-100');
     await user.unhover(screen.getByTestId('feature-card'));
@@ -37,10 +38,12 @@ describe('FeatureCard', () => {
     expect(screen.queryByText(/hover to preview/i)).not.toBeInTheDocument();
   });
 
-  it('drops the preview and hint when the clip fails to load', () => {
+  it('drops the preview and hint when the clip fails to load', async () => {
+    const user = userEvent.setup();
     render(<FeatureCard icon={Shirt} title="PERSONA TECH" desc="d" media="/marketing/missing.gif" />);
 
     expect(screen.getByText(/hover to preview/i)).toBeInTheDocument();
+    await user.hover(screen.getByTestId('feature-card'));
     fireEvent.error(screen.getByAltText(/in action/i));
     expect(screen.queryByAltText(/in action/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/hover to preview/i)).not.toBeInTheDocument();

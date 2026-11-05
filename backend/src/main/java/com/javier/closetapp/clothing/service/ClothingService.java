@@ -38,7 +38,7 @@ public class ClothingService {
     // The account behind the current request's token (set by JwtAuthenticationFilter).
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     // Saves a new garment owned by the caller; an omitted persona status defaults to FITTED, an omitted modular flag to false.
@@ -49,7 +49,7 @@ public class ClothingService {
     @Transactional
     public ClothingResponse createItem(ClothingRequest request) {
         User user = userRepository.findByIdForUpdate(getAuthenticatedUser().getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         Integer limit = planLimits.garmentLimit(user);
         if (limit != null && clothingRepository.countByOwnerAndIsActiveTrue(user) >= limit) {
             throw new GarmentLimitExceededException(limit, user.getPlan());
@@ -173,7 +173,7 @@ public class ClothingService {
     }
 
     // Entity -> response, rebuilding the nested transform object the frontend expects.
-    private ClothingResponse mapToResponse(ClothingItem item) {
+    public ClothingResponse mapToResponse(ClothingItem item) {
         LocalDateTime createdAt = item.getCreatedAt();
         if (createdAt == null) {
             createdAt = LocalDateTime.now();

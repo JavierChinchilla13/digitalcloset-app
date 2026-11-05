@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import ErrorState from './ErrorState';
+import { reportError } from '../monitoring/sentry';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -30,6 +31,8 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, info.componentStack);
+    // Task 104: a crash the user can see is exactly what monitoring is for (no-op when it is off).
+    reportError(error, info.componentStack ?? undefined);
   }
 
   componentDidUpdate(prevProps: ErrorBoundaryProps) {

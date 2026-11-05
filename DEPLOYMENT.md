@@ -127,6 +127,52 @@ on each restart, so it can't hold a database either.)
    - `DB_USERNAME` = `USER`
    - `DB_PASSWORD` = `PASSWORD`
 
+### Moving the database from Neon to Supabase (if Neon's free compute runs out)
+
+Neon's free plan allows 100 compute-hours a month and cannot be told to stay asleep. The API's health check
+(`/actuator/health`) also asks the database, so Render and an uptime pinger kept it awake around the clock and
+the allowance ran out (Neon then refuses every connection until the next cycle). Supabase's free plan has no
+compute-hour limit; it pauses a project after 7 days **without database requests**, and the API's own health
+check is such a request, so keep the pinger running. Free storage is 500 MB.
+
+Nothing in the code changes: only `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` on the API.
+
+1. **Create the project** at supabase.com (free plan). Pick the region closest to your Render region and set a
+   strong database password (save it in your password manager; never paste it in chat or git).
+2. **Use the Session pooler address, not the direct one.** Project -> **Connect** -> **Session pooler**. The
+   direct host (`db.<ref>.supabase.co`) is IPv6-only and Render's free tier cannot reach it; the session pooler
+   is IPv4 and behaves like a normal connection (Flyway and prepared statements work; do NOT use the
+   "Transaction pooler" on port 6543). The values are:
+   - `DB_URL` = `jdbc:postgresql://aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require`
+   - `DB_USERNAME` = `postgres.<project-ref>` (the pooler needs the project ref after the dot)
+   - `DB_PASSWORD` = the database password from step 1
+3. **Bring the data over (only if Neon answers; otherwise start fresh, see below).** On your own computer, in a
+   terminal, with the PostgreSQL tools installed. The passwords stay in your terminal; set them first so they
+   are not typed into the commands:
+
+   ```bash
+   # Neon's DIRECT connection string (the host without "-pooler")
+   export NEON_URL='postgresql://USER:PASSWORD@ep-xxxx.REGION.aws.neon.tech/neondb?sslmode=require'
+   # Supabase's SESSION pooler string, from Connect -> Session pooler
+   export SUPA_URL='postgresql://postgres.<project-ref>:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require'
+
+   pg_dump --schema=public --no-owner --no-privileges --format=custom -f vysvi.dump "$NEON_URL"
+   pg_restore --schema=public --no-owner --no-privileges --exit-on-error -d "$SUPA_URL" vysvi.dump
+   ```
+
+   Only the `public` schema is moved (Supabase has its own `auth`, `storage`... schemas that must be left alone).
+   The dump includes Flyway's history table, so the API sees the schema as already up to date and only applies
+   the migrations that are newer than the data. Check the result in Supabase's **Table editor** (users, clothing,
+   outfits have rows), then delete `vysvi.dump` (it contains everyone's data).
+4. **Point the API at it.** Render -> `vysvi-api` -> **Environment**: replace the three values and save; the API
+   redeploys. In the logs look for Flyway's "Successfully validated" and "Started ClosetAppApplication".
+5. **Check:** `https://<api>.onrender.com/actuator/health` answers `{"status":"UP"}`, you can sign in, and your
+   garments and outfits are there. Keep the Neon project (do not delete it) until you are sure.
+
+**If Neon will not answer** (its allowance is spent until the next cycle) the data cannot be dumped. Either wait
+for the reset and run step 3 then, or skip step 3: the API creates an empty database on first start and accounts
+register again. Garment pictures live at Cloudinary and are not lost, but nothing points at them any more.
+
 ### Step 2 - the API and the website (Render)
 
 1. Push this repo to GitHub (it is already there). In Render: **New + -> Blueprint**,
@@ -210,6 +256,45 @@ If the button does not appear, `VITE_GOOGLE_CLIENT_ID` is empty in the build. If
 fails with "Google sign-in failed", the two ids differ, or the site's address is not in the authorized origins.
 When you later put the site on your own domain, add it to the authorized origins too.
 
+### Error monitoring with Sentry (optional)
+
+Sentry tells you when the app breaks for someone (a crashed page, a server error) with the place in the code. It is
+off until you set a DSN, and even then the website sends nothing until the visitor chooses **Accept all** on the cookie
+banner (the Privacy Policy already says so). Errors only: no performance tracing, no session replay, no user, headers
+or cookies; query strings are cut from URLs, console output is not kept, and emails / long tokens are blanked. The API
+reports only unexpected 500s (not wrong passwords, 404s, 403s...). Server answers 502/503/504 (the free host waking
+up) are not reported.
+
+1. Sign up at sentry.io (free plan) and create an organization.
+2. Create **two projects**: one **React** (for the website) and one **Java** (for the API). Each shows a **DSN**
+   (`https://...@o....ingest.sentry.io/...`). A DSN is not a secret key, but keep it out of git anyway.
+3. Render -> `vysvi-web` -> Environment: `VITE_SENTRY_DSN` = the React DSN, then redeploy the site (it is baked in
+   at build time). Render -> `vysvi-api` -> Environment: `SENTRY_DSN` = the Java DSN (redeploys by itself).
+4. Check: accept optional services on the site, then in the browser console run `setTimeout(() => { throw new Error('sentry test') })`
+   - the error should appear in the React project within a minute (then ignore or resolve it in Sentry).
+
+### Payments with Stripe - Premium subscription (optional)
+
+Premium is a monthly subscription (300 garments, no ads). Nothing is charged and no upgrade button shows until
+the three variables below are set, so this is safe to leave off. **Try everything in Stripe's test mode first**
+(the "Test mode" switch of the dashboard, test card `4242 4242 4242 4242`); going live needs Stripe's business
+verification, a public site with contact details and the Terms/Privacy pages (they are in the app).
+
+1. Create a Stripe account. In **test mode**: **Product catalog -> Add product** "VYSVI Premium", a **recurring**
+   monthly price (you choose the amount). Copy the **Price ID** (`price_...`).
+2. **Developers -> API keys**: copy the **Secret key** (`sk_test_...`). It is a secret: only on Render, never in git.
+3. **Settings -> Billing -> Customer portal**: turn it on (allow cancelling the subscription and updating the card).
+4. **Developers -> Webhooks -> Add endpoint**: URL `https://<your-api>.onrender.com/api/billing/webhook`, events
+   `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`. Copy the
+   endpoint's **Signing secret** (`whsec_...`).
+5. On the Render **API** service set `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`. It redeploys.
+
+The plan changes only when Stripe's signed webhook arrives (the page the buyer returns to is never trusted), so
+if a payment succeeds but the account stays Free, look at **Developers -> Webhooks -> your endpoint -> Events**
+for failed deliveries (a wrong signing secret is the usual cause). Cancelling happens in Stripe's portal; the
+account keeps Premium until the paid period ends. Deactivating an account cancels its subscription. A Premium
+plan given by an admin has no subscription and is never changed by Stripe events.
+
 ### Ads for free accounts (optional)
 
 Free accounts see one banner above the footer; premium accounts and admins never do (and never
@@ -227,8 +312,9 @@ Set the variables on the **site** (they are baked in at build time, so rebuild i
   `VITE_ADSTERRA_HEIGHT`. Use banner units only (avoid popunder / redirect formats: they spoil the app and
   annoy users). A banner wider than the visitor's screen is simply not shown (320x50 fits every phone). This
   network's code runs in a sandboxed frame that cannot read the site's storage (where the sign-in token lives).
-- **Before real traffic:** ad networks set tracking cookies, so you need a privacy policy page, and visitors
-  in the EU / UK need a cookie-consent banner before personalised ads. Neither is built yet.
+- **Privacy and consent (built):** the site has `/privacy` and `/terms` (drafts: review them and fill in the
+  `[COUNTRY]` spot in `frontend/src/config/legal.ts`, then set `LEGAL_IS_DRAFT = false`) and a cookie banner.
+  Ads only load after a visitor chooses "Accept all"; "Only essentials" keeps them off.
 
 ### What to expect on the free plans
 
@@ -239,7 +325,8 @@ Set the variables on the **site** (they are baked in at build time, so rebuild i
 - **Memory is small.** `render.yaml` caps the JVM (`-Xmx320m`). If the API dies with
   "out of memory", lower it further (`-Xmx256m`) or move to a paid instance.
 - **Neon pauses when idle** (the first query after a pause takes about a second
-  longer) and has **no backup you control** on the free plan: run `pg_dump` against
+  longer), allows only 100 compute-hours a month on the free plan - an uptime pinger on `/actuator/health`
+  keeps the database awake and exhausts that (see "Moving the database from Neon to Supabase") - and has **no backup you control** on the free plan: run `pg_dump` against
   the direct connection now and then (`pg_dump "postgresql://USER:PASSWORD@HOST/neondb?sslmode=require" | gzip > backup.sql.gz`).
   Free storage is 0.5 GB.
 - **Render's free tier blocks outbound SMTP** (ports 25, 465, 587) since September
@@ -305,10 +392,12 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
 | `GOOGLE_CLIENT_ID` (API) / `VITE_GOOGLE_CLIENT_ID` (site) | no | The Google OAuth client id, the same value in both places. Empty = no "Continue with Google" button. See "Sign in with Google". |
+| `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` (API) | no | Premium by Stripe subscription. All three empty = payments off. See "Payments with Stripe". |
 | `VITE_AD_PROVIDER` | no | `adsense` or `adsterra` turns ads on for signed-in free accounts; empty (default) = no ads. Needs the matching values below; see "Ads for free accounts". |
 | `VITE_ADSENSE_CLIENT` / `VITE_ADSENSE_SLOT` | with `adsense` | Your AdSense publisher id (`ca-pub-...`) and the ad unit's slot number. |
 | `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |
 | `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
+| `RATE_LIMIT_PUBLIC_MAX` | no | Requests per minute per visitor on the public shared-outfit endpoint `/api/public/outfits/{token}` (default 120). Separate from the login limit. |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags; e.g. `-Xmx512m` on a small machine. |
 
 Never put a secret in a `VITE_` variable: those end up in the public JavaScript.

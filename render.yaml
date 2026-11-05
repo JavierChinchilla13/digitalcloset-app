@@ -17,6 +17,9 @@ services:
     envVars:
       # Neon: the DIRECT connection (host without "-pooler"), as a JDBC URL:
       #   jdbc:postgresql://ep-xxxx.region.aws.neon.tech/neondb?sslmode=require
+      # Supabase (no compute-hour limit): the SESSION pooler, user postgres.<project-ref>:
+      #   jdbc:postgresql://aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require
+      # See DEPLOYMENT.md, "Moving the database from Neon to Supabase".
       - key: DB_URL
         sync: false
       - key: DB_USERNAME
@@ -45,6 +48,17 @@ services:
       # The website needs the same value as VITE_GOOGLE_CLIENT_ID. See DEPLOYMENT.md.
       - key: GOOGLE_CLIENT_ID
         sync: false
+      # Premium subscription by Stripe (Task 103). Leave all three empty and payments stay off.
+      # See DEPLOYMENT.md, "Payments with Stripe".
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      # Error monitoring (Task 104): the Java project's DSN from sentry.io. Empty = off. See DEPLOYMENT.md.
+      - key: SENTRY_DSN
+        sync: false
       # A free instance has little memory: keep the JVM inside it.
       - key: JAVA_TOOL_OPTIONS
         value: "-Xmx320m -XX:+UseSerialGC -XX:TieredStopAtLevel=1"
@@ -67,6 +81,9 @@ services:
       - key: VITE_BG_REMOVER_MODE
         value: browser
       - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+      # Error monitoring (Task 104): the React project's DSN from sentry.io (public). Empty = off.
+      - key: VITE_SENTRY_DSN
         sync: false
       # Ads for free accounts (Task 97). Leave VITE_AD_PROVIDER empty to keep ads off; see
       # DEPLOYMENT.md, "Ads for free accounts". Public values, baked in at build time.

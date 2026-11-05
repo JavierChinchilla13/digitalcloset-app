@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Playwright (Task 105)
+test-results
+playwright-report
+blob-report

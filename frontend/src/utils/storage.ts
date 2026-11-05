@@ -56,5 +56,5 @@ export class StorageLimitError extends Error {
 // The sentence shown when a free or paying account has no room left.
 export function limitMessage(storage: StorageUsage): string {
   if (storage.limit === null) return '';
-  return `You've used ${storage.used} of ${storage.limit} garments. Delete a garment to add another. Plans with more space are coming soon.`;
+  return `You've used ${storage.used} of ${storage.limit} garments. Delete a garment to add another.`;
 }

@@ -21,6 +21,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByGoogleId(String googleId);
 
+    // Task 103: the account behind a Stripe customer (a billing webhook names only the customer).
+    Optional<User> findByStripeCustomerId(String stripeCustomerId);
+
     // Task 96: the account row locked for the rest of the transaction. Creating a garment takes
     // this lock before it counts, so two requests at once cannot both see room for "one more".
     @Lock(LockModeType.PESSIMISTIC_WRITE)

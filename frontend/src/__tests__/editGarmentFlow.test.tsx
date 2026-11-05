@@ -143,7 +143,8 @@ describe('edit garment: cleanup first, then Fabric Studio', () => {
 
     await user.click(screen.getByRole('button', { name: /open studio/i }));
 
-    const cleanup = screen.getByTestId('cleanup');
+    // Task 100: the studio is a lazy chunk, so it appears a moment after the click.
+    const cleanup = await screen.findByTestId('cleanup');
     expect(cleanup).toHaveAttribute('data-src', ORIGINAL);
     // The edit flow exports just the picture's own rectangle.
     expect(cleanup).toHaveAttribute('data-export', 'image-bounds');

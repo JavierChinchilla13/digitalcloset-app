@@ -45,7 +45,7 @@ public class CollectionService {
 
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     private Collection getOwnedCollection(Long collectionId, User user) {

@@ -1,17 +1,29 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import '@fontsource/cormorant-garamond/300.css'
+import '@fontsource/cormorant-garamond/400.css'
+import '@fontsource/cormorant-garamond/500.css'
+import '@fontsource/cormorant-garamond/600.css'
+import '@fontsource/jost/300.css'
+import '@fontsource/jost/400.css'
+import '@fontsource/jost/500.css'
+import '@fontsource/jost/600.css'
 import './index.css'
 import App from './App.tsx'
 import { ToastProvider } from './components/Toast.tsx'
 import ErrorBoundary from './components/ErrorBoundary.tsx'
 import ErrorState from './components/ErrorState.tsx'
 import { initTheme } from './store/useThemeStore.ts'
+import { initMonitoring } from './monitoring/sentry.ts'
 
 // Task 67: apply the saved/device theme and keep following the device.
 // Entry point of the app. Order matters: the theme is applied first (so the first paint
 // is right), then the whole app is rendered inside the last-resort error boundary and
 // the toast provider.
 initTheme()
+
+// Task 104: error monitoring starts only when a Sentry DSN is built in and the visitor accepted optional services.
+initMonitoring()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

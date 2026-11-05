@@ -20,6 +20,7 @@ import com.javier.closetapp.user.dto.ConfirmCodeRequest;
 import com.javier.closetapp.user.dto.UserResponse;
 import com.javier.closetapp.user.dto.UserUpdateRequest;
 import com.javier.closetapp.user.entity.PendingAccountChange;
+import com.javier.closetapp.billing.BillingService;
 import com.javier.closetapp.user.entity.User;
 import com.javier.closetapp.user.repository.PendingAccountChangeRepository;
 import com.javier.closetapp.user.repository.UserRepository;
@@ -52,6 +53,7 @@ public class UserService {
     private final VerificationCodeMailer verificationCodeMailer;
     private final VerificationAttemptTracker verificationAttemptTracker;
     private final PlanLimits planLimits;
+    private final BillingService billingService;
 
     private final long verificationExpirationMinutes;
     private final long verificationMinIntervalSeconds;
@@ -63,12 +65,14 @@ public class UserService {
                         VerificationCodeMailer verificationCodeMailer,
                         VerificationAttemptTracker verificationAttemptTracker,
                         PlanLimits planLimits,
+                        BillingService billingService,
                         @Value("${app.account-verification.expiration-minutes:10}") long verificationExpirationMinutes,
                         @Value("${app.account-verification.min-interval-seconds:60}") long verificationMinIntervalSeconds,
                         @Value("${app.account-verification.max-attempts:5}") int verificationMaxAttempts) {
         this.userRepository = userRepository;
         this.verificationAttemptTracker = verificationAttemptTracker;
         this.planLimits = planLimits;
+        this.billingService = billingService;
         this.outfitRepository = outfitRepository;
         this.pendingChangeRepository = pendingChangeRepository;
         this.passwordEncoder = passwordEncoder;
@@ -82,7 +86,7 @@ public class UserService {
     public User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Authenticated user not found"));
     }
 
     public UserResponse getCurrentUserResponse() {
@@ -276,6 +280,8 @@ public class UserService {
     @Transactional
     public void deactivateCurrentUser() {
         User user = getAuthenticatedUser();
+        // Task 103: stop charging an account that is closed (best effort; never blocks the deactivation).
+        billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
         userRepository.save(user);
     }
@@ -290,7 +296,8 @@ public class UserService {
     @Transactional
     public UserResponse deactivateUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
         return mapToResponse(userRepository.save(user));
     }
@@ -298,7 +305,7 @@ public class UserService {
     @Transactional
     public UserResponse reactivateUser(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(true);
         return mapToResponse(userRepository.save(user));
     }

@@ -116,4 +116,16 @@ class RateLimitFilterTest {
         }
         assertNull(call(f, "POST", "/api/auth/login", "1.1.1.1").getHeader("Retry-After"));
     }
+
+    @Test
+    @DisplayName("shared-outfit reads have their own budget, separate from the login one")
+    void publicBucketIsSeparate() throws Exception {
+        RateLimitFilter f = new RateLimitFilter(true, 2, 3, 60, now::get);
+        for (int i = 0; i < 3; i++) {
+            assertEquals(200, call(f, "GET", "/api/public/outfits/abc", "1.1.1.1").getStatus());
+        }
+        assertEquals(429, call(f, "GET", "/api/public/outfits/abc", "1.1.1.1").getStatus());
+        // The login budget of the same address is untouched.
+        assertEquals(200, call(f, "POST", "/api/auth/login", "1.1.1.1").getStatus());
+    }
 }
