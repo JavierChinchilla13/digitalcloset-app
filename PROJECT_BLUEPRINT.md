@@ -7120,3 +7120,12 @@ JWT. No Google client secret is used.
   401 (was 403) for an anonymous `GET /api/clothing`.
 - **Verified:** 8 of 8 pass locally, twice (about 38 s). The CI job itself is untested until the first push.
 - **Not covered:** Fabric studios, real background removal, real Stripe Checkout, the Google popup.
+
+### Task 106 - Sample garments: jackets removed, male tee refit (2026-11-05, on `main`)
+
+- **Why:** on the live site the sample pieces did not sit well on the figure (owner feedback). Checked in the real
+  browser: the male tee left bare shoulders above the sleeves; pants and boots were acceptable.
+- **Change:** `frontend/src/utils/sampleGarments.ts` - the Black Jacket and Denim Jacket are no longer offered
+  (accounts that already added them keep them; the picture files stay); male Black Tee refit to `top: 156,
+  width: 330` (was 168 / 305). Female persona untouched.
+- **Verified:** type check and onboarding tests pass; the new tee placement still needs a look on the live figure.

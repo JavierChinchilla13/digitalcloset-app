@@ -31,12 +31,13 @@ export interface SampleGarment {
   fit: Record<PersonaType, Fit[]>;
 }
 
+// Jackets were removed from the samples: they did not sit well on the figure. (Existing accounts keep theirs.)
 // Hand-measured against the two persona base images (shoulders at y ~195, hips ~520, ankles ~890).
 export const SAMPLE_GARMENTS: SampleGarment[] = [
   {
     slug: 'black-tee', name: 'Black Tee', category: ClothingCategory.TOP, imageUrl: '/samples/black-tee.png',
     aspect: 1.0, content: [0.128, 0.146, 0.866, 0.844],
-    fit: { [PersonaType.MALE]: [{ centerX: 371, top: 168, width: 305 }], [PersonaType.FEMALE]: [{ centerX: 373, top: 162, width: 290 }] },
+    fit: { [PersonaType.MALE]: [{ centerX: 371, top: 156, width: 330 }], [PersonaType.FEMALE]: [{ centerX: 373, top: 162, width: 290 }] },
   },
   {
     slug: 'purple-tee', name: 'Purple Tee', category: ClothingCategory.TOP, imageUrl: '/samples/purple-tee.png',
@@ -52,16 +53,6 @@ export const SAMPLE_GARMENTS: SampleGarment[] = [
     slug: 'shorts', name: 'Shorts', category: ClothingCategory.BOTTOM, imageUrl: '/samples/shorts.png',
     aspect: 0.8, content: [0.121, 0.206, 0.879, 0.794],
     fit: { [PersonaType.MALE]: [{ centerX: 371, top: 440, width: 230 }], [PersonaType.FEMALE]: [{ centerX: 372, top: 445, width: 215 }] },
-  },
-  {
-    slug: 'black-jacket', name: 'Black Jacket', category: ClothingCategory.JACKET, imageUrl: '/samples/black-jacket.png',
-    aspect: 0.86, content: [0.002, 0.002, 0.998, 0.998],
-    fit: { [PersonaType.MALE]: [{ centerX: 371, top: 185, width: 340 }], [PersonaType.FEMALE]: [{ centerX: 373, top: 185, width: 300 }] },
-  },
-  {
-    slug: 'denim-jacket', name: 'Denim Jacket', category: ClothingCategory.JACKET, imageUrl: '/samples/denim-jacket.png',
-    aspect: 0.83, content: [0, 0, 0.998, 0.996],
-    fit: { [PersonaType.MALE]: [{ centerX: 371, top: 185, width: 330 }], [PersonaType.FEMALE]: [{ centerX: 373, top: 185, width: 295 }] },
   },
   {
     // One front-facing boot picture, used for both feet: two pieces (left and right).
