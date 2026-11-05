@@ -7100,3 +7100,23 @@ JWT. No Google client secret is used.
   Authorization header or query string in the payload.
 - **Not done:** source maps (need a build plugin and `SENTRY_AUTH_TOKEN`); real Sentry projects (owner: two projects,
   set `VITE_SENTRY_DSN` on the site and `SENTRY_DSN` on the API).
+
+### Task 105 - Playwright end-to-end tests + CI (2026-11-05, branch `phase-15-e2e`)
+
+- **Suite:** `frontend/e2e/` (8 tests, `@playwright/test` 1.56.1): sign-up lands on the Showcase with the guide; wrong
+  password; private page redirects to /login; free closet takes 15 garments (14 seeded through the API, the 15th through
+  the real upload screen with Cloudinary answered by the test) and the 16th is refused in the UI and with 403
+  `GARMENT_LIMIT`; build and save an outfit, listed and main in the Showcase; share link opened by a signed-out visitor
+  and dead after "Turn off link"; cookie banner choice persists, legal pages, no ad requests before consent; onboarding
+  sample garment and "Hide this guide". Helpers in `e2e/helpers.ts` (unique accounts through the API, seeding, banner
+  pre-answer, sign-in).
+- **Config:** `frontend/playwright.config.ts` starts the backend (`spring-boot:run` on the test classpath, profile
+  `test`, H2 / no Flyway / no rate limit / mail logged / throwaway JWT key given as environment variables because
+  `spring-boot:run` does not load the test profile's own file; CORS allows `http://localhost:4173`) and the production
+  build served by `vite preview` (fake Cloudinary names, no Google / Sentry / ads). `PW_CHANNEL=chrome` reuses the
+  installed Chrome locally; servers already running are reused outside CI. Scripts: `npm run e2e`, `e2e:typecheck`.
+- **CI:** new `e2e` job (needs `frontend`, Temurin 21 + Node 24, `playwright install --with-deps chromium`, report and
+  traces uploaded on failure); the frontend job type-checks the e2e files; the stale docker-stack smoke check now expects
+  401 (was 403) for an anonymous `GET /api/clothing`.
+- **Verified:** 8 of 8 pass locally, twice (about 38 s). The CI job itself is untested until the first push.
+- **Not covered:** Fabric studios, real background removal, real Stripe Checkout, the Google popup.
