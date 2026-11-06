@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LogOut, ShieldCheck, Tag, UserCircle, Settings as SettingsIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { resetAccountStores } from '../utils/resetAccountStores';
 import ThemeToggle from './ThemeToggle';
 import StorageMeter from './StorageMeter';
 
@@ -115,6 +116,7 @@ const UserMenu = () => {
               onClick={() => {
                 close();
                 logout();
+                resetAccountStores();
               }}
               className={itemClass}
             >

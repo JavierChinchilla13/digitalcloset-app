@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LogOut, Settings as SettingsIcon, ShieldCheck, Sparkles, Tag, UserCircle, X } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { resetAccountStores } from '../utils/resetAccountStores';
 import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
 import StorageMeter from './StorageMeter';
@@ -114,6 +115,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               onClick={() => {
                 onClose();
                 logout();
+                resetAccountStores();
               }}
               className={cn(rowClass(false), 'w-full text-left')}
             >

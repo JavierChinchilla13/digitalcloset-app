@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Role } from '../types';
 import type { User } from '../types';
+import { clearStoredAccountData } from '../utils/accountData';
 
 interface AuthState {
   token: string | null;
@@ -32,13 +33,12 @@ export const useAuthStore = create<AuthState>()(
       }),
       // Sets only the token - needed in the middle of login/signup, when the next request (fetching the user) must already carry it.
       setToken: (token) => set({ token }),
-      // Forgets the session. Other stores keep their own data; pages reset what they need.
-      logout: () => set({ 
-        token: null, 
-        user: null, 
-        isAuthenticated: false, 
-        isAdmin: false 
-      }),
+      // Forgets the session and wipes the account's data saved in this browser (audit H4). The in-memory
+      // stores are emptied by resetAccountStores() where the app signs out without reloading the page.
+      logout: () => {
+        clearStoredAccountData();
+        set({ token: null, user: null, isAuthenticated: false, isAdmin: false });
+      },
     }),
     {
       name: 'auth-storage',
