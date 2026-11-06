@@ -18,13 +18,13 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
   // Turns the upload date into "May 20, 2026". The backend has sent the date in several
   // shapes over time (ISO string, a Jackson [y, m, d, ...] array, a Postgres timestamp
   // with a space), so every one is handled; anything unreadable shows "Date not available".
-  const formatDate = (dateValue?: any) => {
+  const formatDate = (dateValue?: unknown) => {
     // 1. Exhaustive search for the date field in the item object
-    const findDate = (val: any) => {
+    const findDate = (val: unknown): unknown => {
       if (val && typeof val === 'string') return val;
       if (val && Array.isArray(val)) return val;
       
-      const obj = item as any;
+      const obj = item as unknown as Record<string, unknown>;
       return dateValue || obj.uploadDate || obj.createdAt || obj.created_at || obj.date;
     };
 
@@ -46,7 +46,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
       }
       
       // 3. Handle string formats
-      let dateToParse = actualDate;
+      let dateToParse = actualDate as string | number | Date;
       if (typeof actualDate === 'string') {
         // Handle common DB formats: "2026-05-20 21:57:43.629692-06"
         // standard Date() can fail if there's a space instead of T or complex fractional seconds

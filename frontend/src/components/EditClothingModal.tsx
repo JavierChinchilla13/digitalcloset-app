@@ -13,7 +13,8 @@ import {
   User,
   ShoppingBag,
   Layers,
-  Sparkles
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 import { ClothingCategory, PersonaStatus, PersonaType, type ClothingTransform } from '../types';
 import type { ClothingItem } from '../types';
@@ -43,7 +44,7 @@ interface EditClothingModalProps {
   promoteToFittedOnSave?: boolean;
 }
 
-const CATEGORY_ICONS: Record<ClothingCategory, any> = {
+const CATEGORY_ICONS: Record<ClothingCategory, LucideIcon> = {
   [ClothingCategory.TOP]: Shirt,
   [ClothingCategory.BOTTOM]: ShoppingBag,
   [ClothingCategory.SHOES]: Footprints,

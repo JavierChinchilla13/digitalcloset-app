@@ -8,7 +8,8 @@ import {
   Lock,
   Unlock,
   ArrowUpDown,
-  ArrowLeftRight
+  ArrowLeftRight,
+  type LucideIcon,
 } from 'lucide-react';
 import type { ClothingTransform } from '../../types';
 
@@ -45,7 +46,7 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
     max: number; 
     step?: number; 
     onChange: (val: number) => void;
-    icon: any;
+    icon: LucideIcon;
   }) => (
     <div className="space-y-4">
       <div className="flex justify-between items-center">

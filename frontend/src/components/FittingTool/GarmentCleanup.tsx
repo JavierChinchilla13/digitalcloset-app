@@ -244,7 +244,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
     
     // After loading, we must ensure all paths in 'erase' mode maintain their composite op
     canvas.getObjects().forEach(obj => {
-      if (obj.type === 'path' && (obj as any).isEraserPath) {
+      if (obj.type === 'path' && (obj as FabricObject & { isEraserPath?: boolean }).isEraserPath) {
         obj.globalCompositeOperation = 'destination-out';
       }
     });

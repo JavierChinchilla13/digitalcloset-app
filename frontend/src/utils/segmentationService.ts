@@ -1,5 +1,8 @@
 import { pipeline, env, type ImageSegmentationPipeline, type ImageSegmentationOutput } from '@huggingface/transformers';
 
+// One piece the segmentation model found: its mask has one value per pixel (above 0 means 'is this part').
+type Segment = ImageSegmentationOutput[number];
+
 // Configuration for Transformers.js
 env.allowLocalModels = false;
 env.useBrowserCache = true;
@@ -149,7 +152,7 @@ class SegmentationService {
   /**
    * Helper to convert a single segment mask to a canvas
    */
-  private segmentToMaskCanvas(segment: any, targetWidth: number, targetHeight: number): HTMLCanvasElement {
+  private segmentToMaskCanvas(segment: Segment, targetWidth: number, targetHeight: number): HTMLCanvasElement {
     const canvas = document.createElement('canvas');
     canvas.width = segment.mask.width;
     canvas.height = segment.mask.height;
@@ -175,7 +178,7 @@ class SegmentationService {
     return canvas;
   }
 
-  private async createBlobFromSegments(segments: any[], originalImg: HTMLImageElement): Promise<Blob> {
+  private async createBlobFromSegments(segments: Segment[], originalImg: HTMLImageElement): Promise<Blob> {
     const canvas = document.createElement('canvas');
     canvas.width = originalImg.width;
     canvas.height = originalImg.height;

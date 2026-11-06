@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Canvas, Rect, Image as FabricImage } from 'fabric';
+import { Canvas, Rect, Image as FabricImage, type FabricObject } from 'fabric';
 import { PersonaType, type ClothingTransform } from '../../types';
 import {
   ASPECT_RATIO,
@@ -76,7 +76,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
     setFabricCanvas(canvas);
     if (onCanvasReady) onCanvasReady(canvas);
 
-    const handleModified = (e: any) => {
+    const handleModified = (e: { target?: FabricObject }) => {
       const activeObject = e.target;
       if (activeObject && (activeObject.name === 'leftShoe' || activeObject.name === 'rightShoe') && !isUpdatingRef.current) {
         const side = activeObject.name === 'leftShoe' ? 'left' : 'right';
@@ -158,7 +158,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
 
         // 2. Setup Foot Indicators
         const indicatorColor = getStageAccentRgba(0.4);
-        const createFootIndicator = (x: number, y: number, _label: string) => {
+        const createFootIndicator = (x: number, y: number) => {
           const group = new Rect({
             left: toCanvasX(x, canvasWidth, canvasHeight),
             top: toCanvasCoord(y, canvasHeight),
@@ -179,8 +179,8 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
           canvas.add(group);
         };
 
-        createFootIndicator(300, 940, 'L');
-        createFootIndicator(450, 940, 'R');
+        createFootIndicator(300, 940);
+        createFootIndicator(450, 940);
 
         // 3. Setup Left Shoe
         leftShoe.set({
