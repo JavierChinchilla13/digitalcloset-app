@@ -95,7 +95,7 @@ public class User implements UserDetails {
     public User() {}
 
     public User(String email, String password, Role role) {
-        this.email = email;
+        this.email = normalizeEmail(email);
         this.password = password;
         this.role = role;
         this.active = true;
@@ -161,7 +161,12 @@ public class User implements UserDetails {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = normalizeEmail(email);
+    }
+
+    // Emails are stored trimmed and in lower case, so one address is one account whatever its capitals (audit M8).
+    public static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     public String getPassword() {
