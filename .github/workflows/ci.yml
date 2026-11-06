@@ -80,6 +80,10 @@ jobs:
         run: npx tsc -b --force
 
       # Task 105: the end-to-end specs are outside the app's TypeScript project; check them too.
+      # Audit M20: errors fail the build, and so does any NEW warning (the count below is today's).
+      - name: Lint
+        run: npm run lint
+
       - name: Type-check the end-to-end tests
         run: npm run e2e:typecheck
 

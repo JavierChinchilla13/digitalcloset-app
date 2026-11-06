@@ -262,6 +262,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
   // without this a reopened modal would silently keep stale filters/tab.
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the filters are reset each time the dialog opens, so a reopened one does not keep stale ones
       setTab('ITEMS');
       setSearchQuery('');
       setCategoryFilter('ALL');

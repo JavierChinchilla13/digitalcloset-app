@@ -33,7 +33,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
     try {
       const collections = await collectionService.getCollections();
       set({ collections, isLoading: false });
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.'), isLoading: false });
     }
   },
@@ -44,7 +44,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       const newCollection = await collectionService.createCollection(name);
       set((state) => ({ collections: [...state.collections, newCollection], isLoading: false }));
       return newCollection;
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.'), isLoading: false });
       throw err;
     }
@@ -58,7 +58,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         collections: state.collections.map((c) => (c.collectionId === collectionId ? updated : c)),
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.'), isLoading: false });
       throw err;
     }
@@ -72,7 +72,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
         collections: state.collections.filter((c) => c.collectionId !== collectionId),
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.'), isLoading: false });
       throw err;
     }
@@ -84,7 +84,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       set((state) => ({
         collections: state.collections.map((c) => (c.collectionId === collectionId ? updated : c)),
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.') });
       throw err;
     }
@@ -96,7 +96,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       set((state) => ({
         collections: state.collections.map((c) => (c.collectionId === collectionId ? updated : c)),
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.') });
       throw err;
     }
@@ -108,7 +108,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       set((state) => ({
         collections: state.collections.map((c) => (c.collectionId === collectionId ? updated : c)),
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.') });
       throw err;
     }
@@ -120,7 +120,7 @@ export const useCollectionStore = create<CollectionState>((set) => ({
       set((state) => ({
         collections: state.collections.map((c) => (c.collectionId === collectionId ? updated : c)),
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your categories. Please try again.') });
       throw err;
     }

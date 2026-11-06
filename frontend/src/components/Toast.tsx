@@ -20,6 +20,7 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 // Access to showToast(message, type = 'success' | 'error' | 'info'). Throws if used outside a ToastProvider.
+// eslint-disable-next-line react-refresh/only-export-components -- this file also exports a helper next to its component; fast refresh is a development-only convenience and the split would not change behavior
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {

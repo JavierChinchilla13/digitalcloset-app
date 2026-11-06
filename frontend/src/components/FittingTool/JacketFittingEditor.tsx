@@ -42,7 +42,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
   const [isGroupMode, setIsGroupMode] = useState(true);
   
   const [modularData, setModularData] = useState<ModularJacketData>(() => {
-    const initialSegments: Record<string, any> = {};
+    const initialSegments: Record<string, NonNullable<ModularJacketData['segments']['torso']>> = {};
     Object.entries(segments).forEach(([name, url]) => {
       initialSegments[name] = {
         imageUrl: url,

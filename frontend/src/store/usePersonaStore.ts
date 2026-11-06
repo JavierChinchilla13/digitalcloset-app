@@ -83,12 +83,12 @@ export const usePersonaStore = create<PersonaStore>()(
         const currentIds = (currentPersona[key] as number[]) || [];
         const isEquipped = currentIds.includes(itemId);
         
-        let newIds = isEquipped 
+        const newIds = isEquipped 
           ? currentIds.filter(id => id !== itemId)
           : [...currentIds, itemId];
 
         // 3. Logical Overrides (Dress vs Top/Bottom)
-        let overrides: Partial<PersonaState> = {};
+        const overrides: Partial<PersonaState> = {};
         if (category === ClothingCategory.DRESS && !isEquipped) {
           overrides.topIds = [];
           overrides.bottomIds = [];

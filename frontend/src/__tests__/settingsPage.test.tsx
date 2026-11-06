@@ -137,7 +137,7 @@ describe('SettingsPage', () => {
 
   it('confirming the email code updates the token and user, and resets the card', async () => {
     users.requestEmailChange.mockResolvedValue(undefined);
-    users.confirmEmailChange.mockResolvedValue({ token: 'new-token', userId: 1, email: 'new@example.com' } as any);
+    users.confirmEmailChange.mockResolvedValue({ token: 'new-token', userId: 1, email: 'new@example.com', role: Role.ROLE_USER });
     auth.getCurrentUser.mockResolvedValue({ ...baseUser, email: 'new@example.com' });
     const user = userEvent.setup();
     renderSettings();

@@ -159,6 +159,7 @@ const FlatOutfitBuilderPage = () => {
     if (!outfitsReady || !editId) return;
     const existing = outfits.find((o) => String(o.outfitId) === editId);
     if (existing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- edit mode copies the saved outfit into the draft once the outfits have loaded
       setOutfitName(existing.name);
       setDraft(draftFromOutfitItems(existing.items), layerOrderFromOutfitItems(existing.items));
     }
@@ -194,7 +195,7 @@ const FlatOutfitBuilderPage = () => {
       }
       clearDraft();
       navigate('/outfits');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // The outfit store's mutations rethrow on failure (updateOutfit
       // used to swallow its errors - fixed in Task 22 - so an edit that
       // failed to save still cleared the draft and navigated away). A

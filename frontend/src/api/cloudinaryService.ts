@@ -25,9 +25,10 @@ export const cloudinaryService = {
         formData
       );
       return response.data.secure_url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Cloudinary upload error:', error);
-      throw new Error(error.response?.data?.error?.message || 'Failed to upload image to Cloudinary');
+      const detail = (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message;
+      throw new Error(detail || 'Failed to upload image to Cloudinary', { cause: error });
     }
   }
 };

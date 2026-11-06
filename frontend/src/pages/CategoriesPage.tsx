@@ -61,6 +61,7 @@ const CategoriesPage = () => {
   }, [fetchCollections]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the list when the page opens (the loader raises its loading flag first)
     loadCollections();
   }, [loadCollections]);
 

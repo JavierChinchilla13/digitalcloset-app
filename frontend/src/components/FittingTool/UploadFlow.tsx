@@ -274,7 +274,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         setBackgroundRemovedUrl(localUrl);
         setStep('GARMENT_CLEANUP');
       }
-    } catch (err) {
+    } catch {
       setError('Upload failed.');
     }
   };
@@ -352,7 +352,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         setProcessedImageUrl(finalUrl);
         setStep('FITTING');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to process image.');
     }
   };
@@ -419,7 +419,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       const url = await cloudinaryService.uploadImage(file);
       setProcessedImageUrl(url);
       setStep('FITTING');
-    } catch (err: unknown) {
+    } catch {
       setError('Failed to upload image.');
     }
   };

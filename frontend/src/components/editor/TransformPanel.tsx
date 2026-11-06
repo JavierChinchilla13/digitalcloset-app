@@ -8,7 +8,8 @@ import {
   Lock,
   Unlock,
   ArrowUpDown,
-  ArrowLeftRight
+  ArrowLeftRight,
+  type LucideIcon,
 } from 'lucide-react';
 import type { ClothingTransform } from '../../types';
 
@@ -17,6 +18,44 @@ interface TransformPanelProps {
   onTransformChange: (updates: Partial<ClothingTransform>) => void;
   onReset: () => void;
 }
+
+// One labelled range input with its current value shown.
+const Slider = ({ 
+  label, 
+  value, 
+  min, 
+  max, 
+  step = 1, 
+  onChange, 
+  icon: Icon 
+}: { 
+  label: string; 
+  value: number; 
+  min: number; 
+  max: number; 
+  step?: number; 
+  onChange: (val: number) => void;
+  icon: LucideIcon;
+}) => (
+  <div className="space-y-4">
+    <div className="flex justify-between items-center">
+      <div className="flex items-center gap-2 text-text-secondary">
+        <Icon size={12} className="text-accent" />
+        <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
+      </div>
+      <span className="text-[10px] font-mono text-ink/50">{value.toFixed(1)}</span>
+    </div>
+    <input 
+      type="range"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={(e) => onChange(parseFloat(e.target.value))}
+      className="w-full h-1 touch:h-2 touch:my-2 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
+    />
+  </div>
+);
 
 // The numeric controls beside a garment editor: width/height (optionally keeping the
 // aspect ratio), rotation, opacity, flip X/Y and reset. It only edits a
@@ -28,44 +67,6 @@ const TransformPanel: React.FC<TransformPanelProps> = ({
 }) => {
   // While locked, changing width or height scales the other one by the current ratio.
   const [isLocked, setIsLocked] = useState(true);
-
-  // One labelled range input with its current value shown.
-  const Slider = ({ 
-    label, 
-    value, 
-    min, 
-    max, 
-    step = 1, 
-    onChange, 
-    icon: Icon 
-  }: { 
-    label: string; 
-    value: number; 
-    min: number; 
-    max: number; 
-    step?: number; 
-    onChange: (val: number) => void;
-    icon: any;
-  }) => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2 text-text-secondary">
-          <Icon size={12} className="text-accent" />
-          <span className="text-[9px] font-black uppercase tracking-widest">{label}</span>
-        </div>
-        <span className="text-[10px] font-mono text-ink/50">{value.toFixed(1)}</span>
-      </div>
-      <input 
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="w-full h-1 touch:h-2 touch:my-2 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent"
-      />
-    </div>
-  );
 
   return (
     <div className="flex flex-col gap-10">

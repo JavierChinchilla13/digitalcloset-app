@@ -13,7 +13,8 @@ import {
   User,
   ShoppingBag,
   Layers,
-  Sparkles
+  Sparkles,
+  type LucideIcon,
 } from 'lucide-react';
 import { ClothingCategory, PersonaStatus, PersonaType, type ClothingTransform } from '../types';
 import type { ClothingItem } from '../types';
@@ -43,7 +44,7 @@ interface EditClothingModalProps {
   promoteToFittedOnSave?: boolean;
 }
 
-const CATEGORY_ICONS: Record<ClothingCategory, any> = {
+const CATEGORY_ICONS: Record<ClothingCategory, LucideIcon> = {
   [ClothingCategory.TOP]: Shirt,
   [ClothingCategory.BOTTOM]: ShoppingBag,
   [ClothingCategory.SHOES]: Footprints,
@@ -91,6 +92,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
 
   useEffect(() => {
     if (item && isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the form fields are re-seeded from the garment each time the dialog opens
       setName(item.name);
       setDescription(item.description || '');
       setCategory(item.category);
@@ -154,7 +156,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
         if (result?.trim && transform) setTransform(retargetForTrim(transform, result.trim));
       }
       setView('studio');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setCleanupError(getApiErrorMessage(err, 'Failed to process the image.', { ownMessages: true }));
     } finally {
       setCleanupBusy(null);
@@ -181,7 +183,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
       setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
       showToast('Failed to update garment', 'error');
@@ -229,7 +231,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
       setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
       showToast('Failed to update garment', 'error');

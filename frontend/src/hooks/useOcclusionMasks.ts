@@ -233,6 +233,7 @@ export function useOcclusionMasks(layers: PersonaLayerProps[]): Record<string, s
     const garmentLayerCount = layers.filter((l) => l.id !== 'base' && l.imageUrl && l.category).length;
     // Cheap exit: a mask needs at least two garments.
     if (!canvasAvailable() || garmentLayerCount < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the masks are cleared when fewer than two garments remain to be layered
       setMasks((prev) => (Object.keys(prev).length ? {} : prev));
       return;
     }

@@ -44,9 +44,9 @@ const ResetPasswordPage = () => {
     try {
       const response = await authService.resetPassword(token, password);
       setDoneMessage(response.message);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
-      setLinkRejected(err.response?.status === 400);
+      setLinkRejected((err as { response?: { status?: number } }).response?.status === 400);
     } finally {
       setIsLoading(false);
     }

@@ -75,6 +75,7 @@ export function useVisibleBounds(imageUrl: string): VisibleBounds | null {
   useEffect(() => {
     if (!canMeasure()) return;
     if (settled.has(imageUrl)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the bounds belong to one image address; a result already measured is applied at once
       setBounds(settled.get(imageUrl) ?? null);
       return;
     }

@@ -178,7 +178,7 @@ const SettingsPage = () => {
       const updated = await userService.updateProfile({ firstName, lastName });
       login(useAuthStore.getState().token!, updated);
       showToast('Profile updated', 'success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(getApiErrorMessage(err, "Couldn't update your profile"), 'error');
     } finally {
       setIsSavingProfile(false);
@@ -201,7 +201,7 @@ const SettingsPage = () => {
       await userService.requestEmailChange(newEmail, emailPassword);
       setEmailStep('code');
       showToast(`Code sent to ${user?.email}`, 'success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(getApiErrorMessage(err, "Couldn't start the email change"), 'error');
     } finally {
       setIsSavingEmail(false);
@@ -227,7 +227,7 @@ const SettingsPage = () => {
       login(auth.token, refreshed);
       resetEmailCard();
       showToast('Email updated', 'success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(getApiErrorMessage(err, "Couldn't confirm the code"), 'error');
     } finally {
       setIsSavingEmail(false);
@@ -255,7 +255,7 @@ const SettingsPage = () => {
       await userService.requestPasswordChange(currentPassword, newPassword);
       setPasswordStep('code');
       showToast(`Code sent to ${user?.email}`, 'success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(getApiErrorMessage(err, "Couldn't start the password change"), 'error');
     } finally {
       setIsSavingPassword(false);
@@ -283,7 +283,7 @@ const SettingsPage = () => {
       login(auth.token, refreshed);
       resetPasswordCard();
       showToast('Password updated', 'success');
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(getApiErrorMessage(err, "Couldn't confirm the code"), 'error');
     } finally {
       setIsSavingPassword(false);
@@ -309,7 +309,7 @@ const SettingsPage = () => {
       logout();
       resetAccountStores();
       navigate('/login');
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast(getApiErrorMessage(err, "Couldn't deactivate your account"), 'error');
       setIsDeactivating(false);
     }

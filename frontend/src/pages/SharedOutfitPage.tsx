@@ -33,6 +33,7 @@ const SharedOutfitPage = () => {
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the page starts in its loading state for each address, then fetches the outfit
     setStatus('loading');
     publicOutfitService
       .getByToken(token)

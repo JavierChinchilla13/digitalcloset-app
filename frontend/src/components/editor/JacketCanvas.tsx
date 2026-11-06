@@ -14,6 +14,14 @@ import {
 } from './CanvasUtils';
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
+
+// What handleModified reads from a Fabric event, or from the synthetic ones this file raises (mouse up, undo).
+interface ModifiedEventLike {
+  target?: FabricObject;
+  type?: string;
+  action?: string;
+  transform?: { action?: string };
+}
 import { getStageAccentHex } from '../../utils/themeColors';
 
 interface JacketCanvasProps {
@@ -89,7 +97,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
     setFabricCanvas(canvas);
     if (onCanvasReady) onCanvasReady(canvas);
 
-    const handleModified = (e?: any) => {
+    const handleModified = (e?: ModifiedEventLike) => {
       if (isUpdatingRef.current || cancelled) return;
       
       const canvasHeight = stageHeight(canvas);
@@ -99,7 +107,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
       // --- Visual Virtual Grouping (Real-time movement, scaling, rotation) ---
       if (isGroupModeRef.current && target && target.name !== 'mannequin') {
         // action can be from transform or direct action property
-        const action = e.transform?.action || e.action;
+        const action = e?.transform?.action || e?.action;
         
         const lastTransform = lastTransformRef.current.get(target);
 
@@ -174,7 +182,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
       }
 
       // --- Final State Sync ---
-      if (e.type === 'object:modified' || !isInteractingRef.current) {
+      if (e?.type === 'object:modified' || !isInteractingRef.current) {
         const currentData: ModularJacketData = {
           ...modularDataRef.current,
           renderOrder: canvas.getObjects()
@@ -403,7 +411,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
     canvas.requestRenderAll();
 
     // C. Selection Events
-    const handleSelection = (e: any) => {
+    const handleSelection = (e: { selected?: FabricObject[]; target?: FabricObject }) => {
       const selected = e.selected?.[0] || e.target;
       if (selected && selected.name && selected.name !== 'mannequin' && selected.name !== activePart) {
         onSelectPart?.(selected.name);

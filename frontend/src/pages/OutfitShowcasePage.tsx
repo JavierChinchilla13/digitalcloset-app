@@ -530,6 +530,7 @@ const OutfitShowcasePage = () => {
   }, [fetchOutfits, fetchItems, fetchMainOutfit]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the showcase data when the page opens / shows the first outfit directly (no fade out of an empty state)
     loadShowcase();
   }, [loadShowcase]);
 
@@ -596,6 +597,7 @@ const OutfitShowcasePage = () => {
     if (!displayedOutfit) {
       // Nothing shown yet (first load) - show it directly, no need to
       // fade "out" of an empty state first.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the showcase data when the page opens / shows the first outfit directly (no fade out of an empty state)
       setDisplayedOutfit(activeOutfit);
       setDisplayedPersona(activePersona);
       return;

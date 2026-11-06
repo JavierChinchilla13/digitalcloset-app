@@ -1,4 +1,5 @@
 import { removeBackground } from "@imgly/background-removal";
+import type { Config } from "@imgly/background-removal";
 import type { IBgRemover, BgRemoverOptions } from "./types";
 
 // Background removal inside the visitor's browser (@imgly/background-removal, a WASM
@@ -9,13 +10,14 @@ export class BrowserBgRemover implements IBgRemover {
   async removeBackground(file: File, options?: BgRemoverOptions): Promise<string> {
     console.log('Using Browser Background Remover (@imgly)');
     
-    const config: any = {
+    const config: Config = {
       progress: (_key: string, current: number, total: number) => {
         const percentage = Math.round((current / total) * 100);
         const status = `Removing background (Browser): ${percentage}%`;
         if (options?.onProgress) options.onProgress(status);
       },
-      model: 'medium',
+      // The model the library ships as its default (the old value 'medium' is not one of its model names and was ignored).
+      model: 'isnet_fp16',
       proxyToWorker: true,
     };
 
