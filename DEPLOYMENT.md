@@ -375,6 +375,38 @@ docker compose up -d
 
 (The volume name is `<folder>_db_data`; `docker volume ls` shows it.)
 
+### Backing up the production database (Supabase) and testing the restore
+
+The commands above are for the Docker stack. The live site's database is on Supabase (free plan: **no automatic
+restore**), so make your own backups from your computer with `scripts/backup-remote-db.sh`. You type the connection
+string yourself; the script never prints or stores it, and it refuses to write inside the repository.
+
+```bash
+# Git Bash on Windows, or any Linux/macOS shell. Needs the PostgreSQL client tools (pg_dump, pg_restore).
+export BACKUP_DATABASE_URL='postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require'
+# Optional but recommended: encrypt it. Put a long random passphrase in a file and keep a copy in your password manager.
+export BACKUP_PASSPHRASE_FILE="$HOME/vysvi-backup-passphrase.txt"
+./scripts/backup-remote-db.sh              # writes ~/vysvi-backups/vysvi-<date>.dump(.gpg) + a manifest; keeps 14
+```
+
+Use the **Session pooler** address (port 5432), the same one the API uses. Make a backup before every deploy that
+changes the database and at least weekly. Copy the folder somewhere private off this computer; the files hold every
+user's email, password hashes and closet. Garment pictures live in Cloudinary and are not part of this backup.
+
+**A backup you have never restored is a hope.** Test it into an empty database on your own computer:
+
+```bash
+createdb vysvi_restore_test
+export RESTORE_DATABASE_URL='postgresql://postgres:<local password>@localhost:5432/vysvi_restore_test'
+./scripts/restore-db.sh ~/vysvi-backups/vysvi-2026-11-06-120000.dump.gpg
+```
+
+The restore script refuses anything that is not a local database named `*test*`, `*local*` or `*restore*`, refuses a
+database that already has tables, checks the backup's checksum against its manifest first, and compares the rows per
+table with the manifest afterwards ("Restore verified: N tables, M rows"). To go one step further, start the API on
+the restored copy (`DB_URL=jdbc:postgresql://localhost:5432/vysvi_restore_test`) and sign in. Restoring into
+production is a decision to take by hand, with the API stopped; these scripts will not do it.
+
 ## 6. Settings reference
 
 Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them on.
@@ -441,3 +473,25 @@ says which one (never its value): `JWT_SECRET` not Base64, shorter than 32 bytes
 `CORS_ALLOWED_ORIGINS` empty, with a wildcard, local or plain-http address; `FRONTEND_URL` not a public https
 address; `MAIL_MODE=log`; `RATE_LIMIT_ENABLED=false`; or only some of the three Stripe settings set. If a deploy
 fails with "Refusing to start in production", read the message in the Render log and fix that setting.
+
+## Console hardening checklist (things only you can set)
+
+These live in other websites' dashboards, so they cannot be checked from the code. Dashboards get rearranged: if a field
+is named differently from what is written here, look for the closest one (or ask).
+
+**Cloudinary: limit what the public upload preset accepts** (the preset name is public in the site's JavaScript)
+1. cloudinary.com -> Settings (gear) -> **Upload** -> **Upload presets** -> open the unsigned preset the site uses.
+2. **Allowed formats:** `jpg, png, webp` (nothing else).
+3. **Max file size:** 5 MB (5242880 bytes), under the preset's upload-control options.
+4. **Folder:** a fixed folder such as `garments`, and turn **Use filename / Unique filename** so names cannot collide.
+5. Leave **Overwrite** off. Save.
+6. Optional: Settings -> Security -> **Restricted media types**: untick anything you do not serve (video, raw).
+
+**Supabase: make sure the database is not reachable through Supabase's own REST API**
+1. supabase.com -> your project -> **Integrations -> Data API** (or Settings -> API): if the Data API is on,
+   **turn it off** (the app talks to Postgres directly through the pooler and never uses it).
+2. If you must keep it on: **Database -> Tables**, and for `users`, `clothing_items`, `outfits`, `collections` and
+   the other app tables enable **Row Level Security** with no policies (this denies the public key everything;
+   the app's own database user is not affected).
+3. **Database -> Backups:** note which backups your plan has (free: none you can restore yourself, so use the script).
+4. **Settings -> Database -> Connection string:** you are using the *Session pooler*; never share the password.

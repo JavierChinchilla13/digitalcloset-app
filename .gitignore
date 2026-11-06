@@ -46,3 +46,10 @@ __pycache__/
 
 # Database backups (scripts/backup-db.sh) - real user data, never commit
 backups/
+
+# Database backups hold personal data: never commit them (scripts/backup-remote-db.sh writes outside the repo)
+backups/
+vysvi-backups/
+*.dump
+*.dump.gpg
+vysvi-*.manifest.txt
