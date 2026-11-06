@@ -234,13 +234,28 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
     }
 
+    // What goes to the log for an unexpected error (audit M25): the exception types and where it happened, never
+    // the messages. A database error's message can quote a row (an email, a name) and the log is kept by the host;
+    // the full exception, with its message, goes to Sentry, which scrubs it.
+    static String describe(Throwable ex) {
+        StringBuilder out = new StringBuilder(ex.getClass().getName());
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) root = root.getCause();
+        if (root != ex) out.append(" (root cause ").append(root.getClass().getName()).append(")");
+        StackTraceElement[] frames = root.getStackTrace();
+        for (int i = 0; i < Math.min(frames.length, 8); i++) {
+            out.append("\n    at ").append(frames[i]);
+        }
+        return out.toString();
+    }
+
     // Fallback for anything else (unexpected RuntimeExceptions, NPEs, DB errors,
     // etc.). The real exception is logged server-side for debugging, but never
     // returned to the client - its message could contain internal details
     // (SQL, stack info, class names) that shouldn't be exposed over the API.
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Object> handleRuntimeException(RuntimeException ex) {
-        log.error("Unhandled RuntimeException", ex);
+        log.error("Unhandled RuntimeException: {}", describe(ex));
         errorReporter.report(ex);
 
         Map<String, Object> body = new HashMap<>();
@@ -252,7 +267,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleGeneralException(Exception ex) {
-        log.error("Unhandled Exception", ex);
+        log.error("Unhandled Exception: {}", describe(ex));
         errorReporter.report(ex);
 
         Map<String, Object> body = new HashMap<>();
