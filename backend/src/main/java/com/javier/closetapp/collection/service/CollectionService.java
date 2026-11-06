@@ -9,6 +9,7 @@ import com.javier.closetapp.collection.entity.Collection;
 import com.javier.closetapp.collection.entity.CollectionItem;
 import com.javier.closetapp.collection.entity.CollectionOutfit;
 import com.javier.closetapp.collection.repository.CollectionRepository;
+import com.javier.closetapp.exception.DuplicateNameException;
 import com.javier.closetapp.exception.ForbiddenOperationException;
 import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.outfit.entity.Outfit;
@@ -48,6 +49,16 @@ public class CollectionService {
         return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
+    // Audit M9: a second category with the same name (ignoring capitals) is a clear 409, not a database error.
+    // `selfId` is the category being renamed, which may keep its own name (or change only its capitals).
+    private void requireFreeName(User user, String name, Long selfId) {
+        collectionRepository.findFirstByOwnerAndNameIgnoreCase(user, name)
+                .filter(existing -> !existing.getCollectionId().equals(selfId))
+                .ifPresent(existing -> {
+                    throw new DuplicateNameException("You already have a category with this name.");
+                });
+    }
+
     private Collection getOwnedCollection(Long collectionId, User user) {
         Collection collection = collectionRepository.findById(collectionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
@@ -62,8 +73,10 @@ public class CollectionService {
     @Transactional
     public CollectionResponse createCollection(String name) {
         User user = getAuthenticatedUser();
+        String clean = name == null ? null : name.trim();
+        requireFreeName(user, clean, null);
         Collection collection = new Collection();
-        collection.setName(name);
+        collection.setName(clean);
         collection.setOwner(user);
         return mapToResponse(collectionRepository.save(collection));
     }
@@ -79,7 +92,9 @@ public class CollectionService {
     public CollectionResponse renameCollection(Long collectionId, String newName) {
         User user = getAuthenticatedUser();
         Collection collection = getOwnedCollection(collectionId, user);
-        collection.setName(newName);
+        String clean = newName == null ? null : newName.trim();
+        requireFreeName(user, clean, collection.getCollectionId());
+        collection.setName(clean);
         return mapToResponse(collectionRepository.save(collection));
     }
 
@@ -103,6 +118,10 @@ public class CollectionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Clothing item not found: " + itemId));
         if (!clothingItem.getOwner().getUserId().equals(user.getUserId())) {
             throw new ForbiddenOperationException("Unauthorized to use clothing item: " + itemId);
+        }
+        // A deleted garment cannot be added to a category (audit M10).
+        if (!Boolean.TRUE.equals(clothingItem.getActive())) {
+            throw new ResourceNotFoundException("Clothing item not found: " + itemId);
         }
 
         boolean alreadyMember = collection.getItems().stream()
@@ -170,7 +189,8 @@ public class CollectionService {
             res.setCreatedAt(createdAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
 
-        res.setItems(collection.getItems().stream().map(ci -> {
+        // Deleted garments no longer show in a category (audit M10).
+        res.setItems(collection.getItems().stream().filter(ci -> Boolean.TRUE.equals(ci.getClothingItem().getActive())).map(ci -> {
             CollectionItemResponse itemRes = new CollectionItemResponse();
             itemRes.setCollectionItemId(ci.getCollectionItemId());
             itemRes.setItemId(ci.getClothingItem().getItemId());

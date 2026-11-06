@@ -871,6 +871,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <input
                     type="text"
                     value={skipName}
+                    maxLength={100}
                     onChange={(e) => setSkipName(e.target.value)}
                     placeholder="Garment name"
                     className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-text-primary placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
@@ -878,6 +879,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <input
                     type="text"
                     value={skipDescription}
+                    maxLength={255}
                     onChange={(e) => setSkipDescription(e.target.value)}
                     placeholder="Description (optional)"
                     className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-text-primary placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"

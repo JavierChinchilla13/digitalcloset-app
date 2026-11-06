@@ -151,6 +151,7 @@ const CategoriesPage = () => {
                 <input
                   autoFocus
                   value={newName}
+                  maxLength={100}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleCreate();
@@ -346,6 +347,7 @@ const CollectionCard = ({
               <input
                 autoFocus
                 value={renameValue}
+                maxLength={100}
                 onChange={(e) => onRenameValueChange(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && onConfirmRename()}
                 className="min-w-0 flex-grow bg-ink/5 border border-ink/10 rounded-xl px-3 py-2 text-text-primary text-sm font-bold focus:outline-none focus:border-accent/50"

@@ -6,7 +6,9 @@ import com.javier.closetapp.clothing.dto.ClothingTransformDTO;
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
 import com.javier.closetapp.common.enums.PersonaStatus;
+import com.javier.closetapp.common.TextLimits;
 import com.javier.closetapp.exception.ForbiddenOperationException;
+import com.javier.closetapp.exception.InvalidInputException;
 import com.javier.closetapp.exception.GarmentLimitExceededException;
 import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.user.entity.User;
@@ -113,7 +115,17 @@ public class ClothingService {
         if (!item.getOwner().getUserId().equals(user.getUserId())) {
             throw new ForbiddenOperationException("Unauthorized to update this item");
         }
+        // A deleted garment is gone as far as the caller is concerned (audit M10).
+        if (!Boolean.TRUE.equals(item.getActive())) {
+            throw new ResourceNotFoundException("Item not found");
+        }
 
+        // The update is not validated as a whole (see ClothingController), so the text limits are checked here.
+        TextLimits.require(request.getName(), TextLimits.NAME, "Name");
+        TextLimits.require(request.getDescription(), TextLimits.DESCRIPTION, "Description");
+        if (request.getName() != null && request.getName().isBlank()) {
+            throw new InvalidInputException("Name is required.");
+        }
         if (request.getName() != null) {
             item.setName(request.getName());
         }

@@ -77,6 +77,7 @@ const CategoryPicker = ({
                   <input
                     autoFocus
                     value={newName}
+                    maxLength={100}
                     onChange={(e) => onNewNameChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && onConfirmCreate()}
                     placeholder="CATEGORY NAME"

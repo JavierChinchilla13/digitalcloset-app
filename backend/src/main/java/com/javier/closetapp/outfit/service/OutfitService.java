@@ -69,6 +69,10 @@ public class OutfitService {
             if (!clothing.getOwner().getUserId().equals(user.getUserId())) {
                 throw new ForbiddenOperationException("Unauthorized to use clothing item: " + itemReq.getItemId());
             }
+            // A deleted garment cannot be put in an outfit (audit M10).
+            if (!Boolean.TRUE.equals(clothing.getActive())) {
+                throw new ResourceNotFoundException("Clothing item not found: " + itemReq.getItemId());
+            }
 
             OutfitItem item = new OutfitItem();
             item.setOutfit(outfit);
@@ -117,6 +121,10 @@ public class OutfitService {
 
             if (!clothing.getOwner().getUserId().equals(user.getUserId())) {
                 throw new ForbiddenOperationException("Unauthorized to use clothing item: " + itemReq.getItemId());
+            }
+            // A deleted garment cannot be put in an outfit (audit M10).
+            if (!Boolean.TRUE.equals(clothing.getActive())) {
+                throw new ResourceNotFoundException("Clothing item not found: " + itemReq.getItemId());
             }
 
             OutfitItem item = new OutfitItem();
@@ -196,6 +204,8 @@ public class OutfitService {
             userRepository.save(user);
         }
 
+        // Audit H3: out of every category first, or the foreign key refuses the delete.
+        outfitRepository.deleteCollectionLinks(id);
         outfitRepository.delete(outfit);
     }
 
@@ -210,7 +220,8 @@ public class OutfitService {
         if (outfit.getCreatedAt() != null) {
             res.setCreatedAt(outfit.getCreatedAt().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         }
-        res.setItems(outfit.getItems().stream().map(item -> {
+        // Garments the owner deleted no longer show inside the outfit (audit M10); the row stays so nothing is orphaned.
+        res.setItems(outfit.getItems().stream().filter(item -> Boolean.TRUE.equals(item.getClothingItem().getActive())).map(item -> {
             OutfitItemResponse itemRes = new OutfitItemResponse();
             itemRes.setOutfitItemId(item.getOutfitItemId());
             itemRes.setItemId(item.getClothingItem().getItemId());
