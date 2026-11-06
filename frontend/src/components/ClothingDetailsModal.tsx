@@ -77,7 +77,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
         month: 'long',
         day: 'numeric',
       });
-    } catch (e) {
+    } catch {
       return 'Processing...';
     }
   };

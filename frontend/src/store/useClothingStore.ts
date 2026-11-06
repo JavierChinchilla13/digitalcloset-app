@@ -48,7 +48,7 @@ export const useClothingStore = create<ClothingState>()(
             isFavorite: favorites.includes(item.itemId)
           }));
           set({ items: augmentedItems, isLoading: false });
-        } catch (err: any) {
+        } catch (err: unknown) {
           set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
         }
       },
@@ -61,7 +61,7 @@ export const useClothingStore = create<ClothingState>()(
           const currentItems = get().items;
           set({ items: [...currentItems, newItem], isLoading: false });
           return newItem;
-        } catch (err: any) {
+        } catch (err: unknown) {
           set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
           throw err;
         }
@@ -77,7 +77,7 @@ export const useClothingStore = create<ClothingState>()(
             items: items.map((item) => (item.itemId === itemId ? { ...updatedItem, isFavorite: favorites.includes(itemId) } : item)),
             isLoading: false,
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
           throw err;
         }
@@ -93,7 +93,7 @@ export const useClothingStore = create<ClothingState>()(
             items: currentItems.filter((item) => item.itemId !== itemId),
             isLoading: false,
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           set({ error: getApiErrorMessage(err, 'Something went wrong with your closet. Please try again.'), isLoading: false });
           throw err;
         }

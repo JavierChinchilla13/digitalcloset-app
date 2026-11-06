@@ -21,7 +21,7 @@ class SegmentationService {
       this.segmenter = await pipeline('image-segmentation', this.segmenterModel, {
         device: 'webgpu',
       }) as ImageSegmentationPipeline;
-    } catch (err) {
+    } catch {
       console.warn("WebGPU not available for segmenter, falling back to WASM/CPU");
       this.segmenter = await pipeline('image-segmentation', this.segmenterModel, {}) as ImageSegmentationPipeline;
     }

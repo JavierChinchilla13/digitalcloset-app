@@ -138,7 +138,7 @@ export function buildPersonaLayers(persona: PersonaState, items: ClothingItem[])
             });
           }
         });
-      } catch (e) {
+      } catch {
         layers.push({
           id: `jacket-${item.itemId}`,
       itemId: item.itemId,

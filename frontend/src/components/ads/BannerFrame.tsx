@@ -2,14 +2,14 @@ import { useMemo } from 'react';
 
 // The page inside the frame: the ad network's own two-step snippet (an options object, then its
 // invoke.js script). Values go through JSON.stringify, so they cannot break out of the script.
-// (The closing tag is written "<\/script>" so no HTML parser ever sees it inside a string.)
+// (The closing tag is written "</script>" so no HTML parser ever sees it inside a string.)
 function buildDocument(scriptUrl: string, key: string, width: number, height: number, colorScheme: string): string {
   const options = JSON.stringify({ key, format: 'iframe', height, width, params: {} });
   return (
     `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="${colorScheme}">` +
     '<style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}</style></head><body>' +
-    `<script>atOptions = ${options.replace(/</g, '\\u003c')};<\/script>` +
-    `<script src=${JSON.stringify(scriptUrl)}><\/script>` +
+    `<script>atOptions = ${options.replace(/</g, '\\u003c')};</script>` +
+    `<script src=${JSON.stringify(scriptUrl)}></script>` +
     '</body></html>'
   );
 }

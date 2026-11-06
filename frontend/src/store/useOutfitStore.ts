@@ -73,7 +73,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
     try {
       const outfits = await outfitService.getOutfits();
       set({ outfits, isLoading: false });
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
     }
   },
@@ -87,7 +87,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
       // this store agrees without duplicating that rule here.
       void get().fetchMainOutfit();
       return newOutfit;
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
@@ -101,7 +101,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
         outfits: state.outfits.map((o) => (o.outfitId === outfitId ? updated : o)),
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
@@ -118,7 +118,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
         mainOutfitId: state.mainOutfitId === outfitId ? null : state.mainOutfitId,
         isLoading: false,
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }
@@ -141,7 +141,7 @@ export const useOutfitStore = create<OutfitState>((set, get) => ({
         })),
       });
       set((state) => ({ outfits: [...state.outfits, newOutfit], isLoading: false }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       set({ error: getApiErrorMessage(err, 'Something went wrong with your outfits. Please try again.'), isLoading: false });
       throw err;
     }

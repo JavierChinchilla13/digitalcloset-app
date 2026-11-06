@@ -154,7 +154,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
         if (result?.trim && transform) setTransform(retargetForTrim(transform, result.trim));
       }
       setView('studio');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setCleanupError(getApiErrorMessage(err, 'Failed to process the image.', { ownMessages: true }));
     } finally {
       setCleanupBusy(null);
@@ -181,7 +181,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
       setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
       showToast('Failed to update garment', 'error');
@@ -229,7 +229,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setStatus('error');
       setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
       showToast('Failed to update garment', 'error');

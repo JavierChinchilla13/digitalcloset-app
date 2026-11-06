@@ -57,7 +57,7 @@ const CreateUserModal = ({ isOpen, onClose, onCreated }: CreateUserModalProps) =
       onCreated(created);
       reset();
       onClose();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Failed to create account'));
     } finally {
       setIsSaving(false);

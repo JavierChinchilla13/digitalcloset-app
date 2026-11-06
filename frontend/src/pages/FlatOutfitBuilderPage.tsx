@@ -194,7 +194,7 @@ const FlatOutfitBuilderPage = () => {
       }
       clearDraft();
       navigate('/outfits');
-    } catch (err: any) {
+    } catch (err: unknown) {
       // The outfit store's mutations rethrow on failure (updateOutfit
       // used to swallow its errors - fixed in Task 22 - so an edit that
       // failed to save still cleared the draft and navigated away). A

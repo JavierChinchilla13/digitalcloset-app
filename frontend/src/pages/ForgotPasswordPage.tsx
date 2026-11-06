@@ -28,7 +28,7 @@ const ForgotPasswordPage = () => {
       const response = await authService.forgotPassword(submitted);
       setSentTo(submitted);
       setSentMessage(response.message);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
     } finally {
       setIsLoading(false);
