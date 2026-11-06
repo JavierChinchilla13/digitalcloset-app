@@ -112,6 +112,14 @@ describe('scrubbing', () => {
     expect(scrubText('plain')).toBe('plain');
   });
 
+  it('blanks a 24-character share token, in text and in the address path (audit M23)', async () => {
+    const { scrubText, scrubUrl } = await loadMonitoring('');
+    const token = 'AbCdEfGhIjKlMnOpQrStUvWx';
+    expect(scrubText(`GET /api/public/outfits/${token} failed`)).toBe('GET /api/public/outfits/[token] failed');
+    expect(scrubUrl(`https://site.test/s/${token}`)).toBe('https://site.test/s/:token');
+    expect(scrubUrl('https://site.test/outfits/flat/edit/12')).toBe('https://site.test/outfits/flat/edit/12');
+  });
+
   it('cuts the query string and fragment from URLs (a reset link carries its token there)', async () => {
     const { scrubUrl } = await loadMonitoring('');
     expect(scrubUrl('https://site.test/reset-password?token=SECRET123#x')).toBe('https://site.test/reset-password');
