@@ -120,6 +120,16 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    // Audit M3: a garment picture address outside the app's own image host - fixable by the caller, so 400.
+    @ExceptionHandler(InvalidImageUrlException.class)
+    public ResponseEntity<Object> handleInvalidImageUrl(InvalidImageUrlException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
     // Task 103: a billing request that cannot be done (payments not set up, already subscribed).
     @ExceptionHandler(com.javier.closetapp.billing.BillingException.class)
     public ResponseEntity<Object> handleBilling(com.javier.closetapp.billing.BillingException ex) {

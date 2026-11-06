@@ -49,6 +49,8 @@ export default defineConfig({
         APP_RATE_LIMIT_ENABLED: 'false',
         // The browser sends its own address as the origin of API calls; the backend must allow the test site.
         APP_CORS_ALLOWED_ORIGINS: 'http://localhost:4173',
+        // The upload is answered by the test with a picture from the test site itself (audit M3: addresses must be on an allowed host).
+        APP_IMAGES_ALLOWED_HOSTS: 'res.cloudinary.com,localhost',
       },
       url: 'http://localhost:8080/actuator/health',
       timeout: 240_000,
