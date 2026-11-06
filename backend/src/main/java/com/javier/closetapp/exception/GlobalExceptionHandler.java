@@ -120,6 +120,38 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    // Audit H7: text that is too long and similar - fixable by the caller, so 400 with the message.
+    @ExceptionHandler(InvalidInputException.class)
+    public ResponseEntity<Object> handleInvalidInput(InvalidInputException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // Audit M9: a name the user already has (a category) - 409 with the message.
+    @ExceptionHandler(DuplicateNameException.class)
+    public ResponseEntity<Object> handleDuplicateName(DuplicateNameException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
+    // Audit M9: backstop for a uniqueness rule the database enforces and no service checked first (two requests
+    // racing for the same name). A 409 instead of a 500; the message does not quote the database error.
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Object> handleDataIntegrity(org.springframework.dao.DataIntegrityViolationException ex) {
+        log.warn("Data integrity violation: {}", describe(ex));
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", "That value is already in use.");
+
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
+
     // Audit M3: a garment picture address outside the app's own image host - fixable by the caller, so 400.
     @ExceptionHandler(InvalidImageUrlException.class)
     public ResponseEntity<Object> handleInvalidImageUrl(InvalidImageUrlException ex) {

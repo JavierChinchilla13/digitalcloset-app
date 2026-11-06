@@ -53,7 +53,13 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
 
-        User savedUser = userRepository.save(user);
+        User savedUser;
+        try {
+            // Flushed here so a second sign-up racing for the same email fails now, as a clean 409 (audit M9).
+            savedUser = userRepository.saveAndFlush(user);
+        } catch (org.springframework.dao.DataIntegrityViolationException raced) {
+            throw new DuplicateEmailException("An account with this email already exists");
+        }
         
         String jwtToken = jwtService.generateToken(savedUser);
         

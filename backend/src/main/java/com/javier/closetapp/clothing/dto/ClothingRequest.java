@@ -5,6 +5,7 @@ import com.javier.closetapp.common.enums.AvatarType;
 import com.javier.closetapp.common.enums.PersonaStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import com.javier.closetapp.common.TextLimits;
 import jakarta.validation.constraints.Size;
 
 // Doubles as the update payload (ClothingService.updateItem applies fields only
@@ -12,8 +13,10 @@ import jakarta.validation.constraints.Size;
 // applies @Valid - i.e. on create, not on update.
 public class ClothingRequest {
     @NotBlank(message = "Name is required")
+    @Size(max = TextLimits.NAME, message = "Name must be at most 100 characters")
     private String name;
 
+    @Size(max = TextLimits.DESCRIPTION, message = "Description must be at most 255 characters")
     private String description;
 
     @NotNull(message = "Category is required")

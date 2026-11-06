@@ -2,7 +2,9 @@ package com.javier.closetapp.outfit.dto;
 
 import com.javier.closetapp.common.enums.AvatarType;
 import jakarta.validation.Valid;
+import com.javier.closetapp.common.TextLimits;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -10,8 +12,10 @@ import java.util.List;
 // Body to create or replace an outfit: a name, the persona type and the list of pieces.
 public class OutfitRequest {
     @NotBlank(message = "Name is required")
+    @Size(max = TextLimits.NAME, message = "Name must be at most 100 characters")
     private String name;
 
+    @Size(max = TextLimits.DESCRIPTION, message = "Description must be at most 255 characters")
     private String description;
 
     @NotNull(message = "Avatar type is required")
