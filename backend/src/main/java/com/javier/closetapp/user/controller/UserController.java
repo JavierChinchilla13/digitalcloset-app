@@ -59,9 +59,8 @@ public class UserController {
     }
 
     @PostMapping("/me/password/confirm")
-    public ResponseEntity<Void> confirmPasswordChange(@Valid @RequestBody ConfirmCodeRequest request) {
-        userService.confirmPasswordChange(request);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<AuthResponse> confirmPasswordChange(@Valid @RequestBody ConfirmCodeRequest request) {
+        return ResponseEntity.ok(userService.confirmPasswordChange(request));
     }
 
     @PostMapping("/me/email/request")

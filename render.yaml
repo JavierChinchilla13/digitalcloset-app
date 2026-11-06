@@ -44,6 +44,9 @@ services:
         sync: false
       - key: MAIL_RELAY_SECRET
         sync: false
+      # Where emails say people can reach you (not kept in the code).
+      - key: CONTACT_EMAIL
+        sync: false
       # "Sign in with Google" (Task 98): the OAuth client id (public). Leave empty for no Google sign-in.
       # The website needs the same value as VITE_GOOGLE_CLIENT_ID. See DEPLOYMENT.md.
       - key: GOOGLE_CLIENT_ID

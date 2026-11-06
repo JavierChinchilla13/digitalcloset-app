@@ -389,6 +389,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `MAIL_FROM` | no | From address (Gmail requires it to be the account itself - the default). |
 | `MAIL_MODE` | no | `smtp` (default in production) or `relay` (Apps Script, for hosts that block SMTP). |
 | `MAIL_RELAY_URL` / `MAIL_RELAY_SECRET` | yes (relay mode) | The Apps Script web app URL and its shared secret. |
+| `CONTACT_EMAIL` | recommended | The address emails show for questions (and replies go to). Not kept in the code; if unset, emails fall back to the From address. |
 | `VITE_CLOUDINARY_CLOUD_NAME`, `VITE_CLOUDINARY_UPLOAD_PRESET` | yes | Image uploads. Baked into the site at build time - rebuild after changing. |
 | `VITE_BG_REMOVER_MODE` | no | `browser` (default) removes backgrounds in the visitor's browser. |
 | `GOOGLE_CLIENT_ID` (API) / `VITE_GOOGLE_CLIENT_ID` (site) | no | The Google OAuth client id, the same value in both places. Empty = no "Continue with Google" button. See "Sign in with Google". |
@@ -431,3 +432,12 @@ Caddy answers 404 for it publicly).
 - The production image build was verified by the **CI job `docker-stack`** (it
   builds the images and smoke-tests the running stack on every push), not on the
   development machine, which has no Docker.
+
+
+## Start-up checks (production)
+
+In production (`SPRING_PROFILES_ACTIVE=prod`) the API refuses to start when a setting would make it unsafe, and
+says which one (never its value): `JWT_SECRET` not Base64, shorter than 32 bytes or a placeholder;
+`CORS_ALLOWED_ORIGINS` empty, with a wildcard, local or plain-http address; `FRONTEND_URL` not a public https
+address; `MAIL_MODE=log`; `RATE_LIMIT_ENABLED=false`; or only some of the three Stripe settings set. If a deploy
+fails with "Refusing to start in production", read the message in the Render log and fix that setting.

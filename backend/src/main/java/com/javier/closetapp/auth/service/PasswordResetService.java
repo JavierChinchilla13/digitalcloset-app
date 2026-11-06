@@ -104,6 +104,8 @@ public class PasswordResetService {
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
+        // Whoever held the old password (or a token made with it) must not stay signed in.
+        user.bumpTokenVersion();
         userRepository.save(user);
 
         // Single use: remove this and any other outstanding tokens for the user.

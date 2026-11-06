@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import com.javier.closetapp.user.entity.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,9 @@ import java.util.function.Function;
 // a token is valid exactly as long as its signature and expiry check out.
 @Service
 public class JwtService {
+
+    // The claim that carries User.tokenVersion (Audit H1).
+    private static final String TOKEN_VERSION_CLAIM = "tv";
 
     @Value("${app.jwt.secret}")
     private String secretKey;
@@ -41,9 +45,13 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>(extraClaims);
+        if (userDetails instanceof User user) {
+            claims.put(TOKEN_VERSION_CLAIM, user.getTokenVersion());
+        }
         return Jwts
                 .builder()
-                .claims(extraClaims)
+                .claims(claims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
@@ -51,10 +59,19 @@ public class JwtService {
                 .compact();
     }
 
-    // A token is valid when it names this user and has not expired. A bad signature or malformed token throws JwtException (JwtAuthenticationFilter turns that into 'not signed in').
+    // A token is valid when it names this user, has not expired and is not stale (see above). A bad signature or malformed token throws JwtException (JwtAuthenticationFilter turns that into 'not signed in').
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        if (!username.equals(userDetails.getUsername()) || isTokenExpired(token)) {
+            return false;
+        }
+        // A token issued before the account's last password change, reset, Google linking or deactivation is stale.
+        // Tokens from before this claim existed carry none, which counts as 0.
+        if (userDetails instanceof User user) {
+            Integer issuedWith = extractClaim(token, claims -> claims.get(TOKEN_VERSION_CLAIM, Integer.class));
+            return (issuedWith == null ? 0 : issuedWith) == user.getTokenVersion();
+        }
+        return true;
     }
 
     private boolean isTokenExpired(String token) {

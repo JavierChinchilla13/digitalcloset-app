@@ -23,15 +23,17 @@ export const userService = {
 
   // Task 79 follow-up: changing either requires confirming a 6-digit code
   // emailed to the account's current address - request stages the change,
-  // confirm applies it. Email's confirm returns a fresh token, since email is
-  // the login identifier and the old token's subject stops resolving the
-  // instant it's applied; password's confirm doesn't need one.
+  // confirm applies it. Both confirms return a fresh token: email is the login
+  // identifier, so the old token's subject stops resolving the instant it's
+  // applied; and a password change signs every older token out (audit H1), the
+  // caller's own included, so the caller carries on with the new one.
   requestPasswordChange: async (currentPassword: string, newPassword: string): Promise<void> => {
     await api.post('/users/me/password/request', { currentPassword, newPassword });
   },
 
-  confirmPasswordChange: async (code: string): Promise<void> => {
-    await api.post('/users/me/password/confirm', { code });
+  confirmPasswordChange: async (code: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/users/me/password/confirm', { code });
+    return response.data;
   },
 
   requestEmailChange: async (newEmail: string, currentPassword: string): Promise<void> => {

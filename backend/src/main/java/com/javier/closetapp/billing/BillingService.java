@@ -124,6 +124,16 @@ public class BillingService {
             log.warn("Stripe checkout for an unknown user {}", event.userId());
             return;
         }
+        if (isOutOfOrder(user, event)) return;
+        // Two checkouts can complete for one account (a double click, two tabs): keep the subscription it
+        // already holds and stop billing the second one, instead of orphaning the first (audit H5).
+        if (user.getStripeSubscriptionId() != null && !user.getStripeSubscriptionId().equals(event.subscriptionId())
+                && user.getSubscriptionStatus() != null && PAID_STATUSES.contains(user.getSubscriptionStatus())) {
+            log.warn("User {} completed a second checkout; cancelling the duplicate subscription", user.getUserId());
+            cancelQuietly(event.subscriptionId());
+            return;
+        }
+        markEventSeen(user, event);
         if (event.customerId() != null) user.setStripeCustomerId(event.customerId());
         user.setStripeSubscriptionId(event.subscriptionId());
         user.setSubscriptionStatus("active");
@@ -144,6 +154,9 @@ public class BillingService {
         if (user.getStripeSubscriptionId() == null && event.type() == BillingEvent.Type.SUBSCRIPTION_DELETED) {
             return;
         }
+        // Stripe does not deliver events in order: a late, older update must not undo a newer one.
+        if (isOutOfOrder(user, event)) return;
+        markEventSeen(user, event);
 
         String status = event.type() == BillingEvent.Type.SUBSCRIPTION_DELETED ? "canceled" : event.status();
         user.setSubscriptionStatus(status);
@@ -162,6 +175,29 @@ public class BillingService {
             user.setCancelAtPeriodEnd(false);
         }
         userRepository.save(user);
+    }
+
+    // True when this event was created before the newest one already applied to the account (audit H5).
+    private static boolean isOutOfOrder(User user, BillingEvent event) {
+        if (event.created() == null || user.getBillingEventAt() == null) return false;
+        return LocalDateTime.ofInstant(event.created(), ZoneOffset.UTC).isBefore(user.getBillingEventAt());
+    }
+
+    // Remembers how recent the newest applied event is (Stripe's clock), so older ones can be ignored.
+    private static void markEventSeen(User user, BillingEvent event) {
+        if (event.created() != null) {
+            user.setBillingEventAt(LocalDateTime.ofInstant(event.created(), ZoneOffset.UTC));
+        }
+    }
+
+    // Cancels a subscription by id, logging instead of failing (used for a duplicate subscription).
+    private void cancelQuietly(String subscriptionId) {
+        if (subscriptionId == null || !gateway.isConfigured()) return;
+        try {
+            gateway.cancelSubscription(subscriptionId);
+        } catch (RuntimeException e) {
+            log.warn("Could not cancel the duplicate Stripe subscription {}: {}", subscriptionId, e.getMessage());
+        }
     }
 
     // Best effort when an account is deactivated: stop charging it. A failure is logged, not raised, so

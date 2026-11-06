@@ -18,17 +18,22 @@ let starting = false;
 const pending: Array<{ error: unknown; componentStack?: string }> = [];
 
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
-// A long run of URL-safe characters: a JWT, a reset or share token, an API key.
-const TOKEN = /[A-Za-z0-9_-]{32,}/g;
+// A long run of URL-safe characters: a JWT, a reset or share token (24 characters), an API key. 20 catches the share tokens (audit M23).
+const TOKEN = /[A-Za-z0-9_-]{20,}/g;
 
 // The text with emails and token-like strings replaced by placeholders.
 export function scrubText(text: string): string {
   return text.replace(EMAIL, '[email]').replace(TOKEN, '[token]');
 }
 
-// The URL without its query string and fragment (where tokens and personal values live).
+// The URL without its query string and fragment (where tokens and personal values live), and with any
+// token-like path segment blanked: a shared outfit's address (/s/<token>) is itself the secret (audit M23).
 export function scrubUrl(url: string): string {
-  return url.replace(/[?#].*$/, '');
+  return url
+    .replace(/[?#].*$/, '')
+    .split('/')
+    .map((segment) => (/^[A-Za-z0-9_-]{20,}$/.test(segment) ? ':token' : segment))
+    .join('/');
 }
 
 // Cleans an event just before it is sent (see the rules at the top of the file).
@@ -78,7 +83,7 @@ export function describeApiFailure(status: number, method: string | undefined, u
   const path = scrubUrl(url ?? '')
     .replace(/^https?:\/\/[^/]+/, '')
     .split('/')
-    .map((segment) => (/^\d+$/.test(segment) ? ':id' : /^[A-Za-z0-9_-]{32,}$/.test(segment) ? ':token' : segment))
+    .map((segment) => (/^\d+$/.test(segment) ? ':id' : /^[A-Za-z0-9_-]{20,}$/.test(segment) ? ':token' : segment))
     .join('/');
   return `API ${status} ${(method ?? 'GET').toUpperCase()} ${path}`;
 }

@@ -299,4 +299,57 @@ class BillingIntegrationTest extends IntegrationTestBase {
                 .andExpect(status().is2xxSuccessful());
         assertEquals(false, reload(bob).isActive());
     }
+
+    // Puts Stripe's own creation time (epoch seconds) on an event payload.
+    private String created(String eventJson, long seconds) {
+        return eventJson.replaceFirst("^\\{", "{\"created\":" + seconds + ",");
+    }
+
+    @Test
+    @DisplayName("a second completed checkout keeps the first subscription and cancels the duplicate")
+    void duplicateCheckoutIsCancelled() throws Exception {
+        TestUser alice = registerUser();
+        String customer = "cus_" + uid();
+        String first = "sub_first_" + uid();
+        String second = "sub_second_" + uid();
+        webhook(checkoutCompleted("evt_" + uid(), alice.userId(), customer, first), "valid");
+
+        webhook(checkoutCompleted("evt_" + uid(), alice.userId(), customer, second), "valid");
+
+        User user = reload(alice);
+        assertEquals(first, user.getStripeSubscriptionId());
+        assertEquals(Plan.PREMIUM, user.getPlan());
+        assertEquals(java.util.List.of(second), stripe.canceledSubscriptions);
+    }
+
+    @Test
+    @DisplayName("a late, older update arriving after the cancellation does not bring Premium back")
+    void staleUpdateAfterCancellationIsIgnored() throws Exception {
+        TestUser alice = registerUser();
+        String customer = "cus_" + uid();
+        String subscription = "sub_" + uid();
+        webhook(created(checkoutCompleted("evt_" + uid(), alice.userId(), customer, subscription), 1000), "valid");
+        webhook(created(subscriptionEvent("evt_" + uid(), "customer.subscription.deleted", customer, subscription, "canceled", false, 1893456000L), 3000), "valid");
+
+        // Created at 2000 (before the cancellation at 3000) but delivered after it.
+        webhook(created(subscriptionEvent("evt_" + uid(), "customer.subscription.updated", customer, subscription, "active", false, 1893456000L), 2000), "valid");
+
+        User user = reload(alice);
+        assertEquals(Plan.FREE, user.getPlan());
+        assertNull(user.getStripeSubscriptionId());
+        assertEquals("canceled", user.getSubscriptionStatus());
+    }
+
+    @Test
+    @DisplayName("events without a creation time are still applied in arrival order")
+    void eventsWithoutTimeStillApply() throws Exception {
+        TestUser alice = registerUser();
+        String customer = "cus_" + uid();
+        String subscription = "sub_" + uid();
+        webhook(checkoutCompleted("evt_" + uid(), alice.userId(), customer, subscription), "valid");
+
+        webhook(subscriptionEvent("evt_" + uid(), "customer.subscription.updated", customer, subscription, "past_due", false, 1893456000L), "valid");
+
+        assertEquals("past_due", reload(alice).getSubscriptionStatus());
+    }
 }

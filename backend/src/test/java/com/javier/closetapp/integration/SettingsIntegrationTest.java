@@ -106,7 +106,7 @@ class SettingsIntegrationTest extends IntegrationTestBase {
                         .header("Authorization", alice.bearer())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("code", code))))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
 
         login(alice.email(), "New-Password-123").andExpect(status().isOk());
         login(alice.email(), PASSWORD).andExpect(status().isUnauthorized());

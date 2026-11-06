@@ -147,6 +147,8 @@ public class StripeSdkGateway implements StripeGateway {
         String id = event.path("id").asText(null);
         String type = event.path("type").asText("");
         JsonNode object = event.path("data").path("object");
+        Instant created = event.path("created").canConvertToLong() && !event.path("created").isMissingNode()
+                ? Instant.ofEpochSecond(event.path("created").asLong()) : null;
         if (id == null) return null;
 
         switch (type) {
@@ -162,7 +164,7 @@ public class StripeSdkGateway implements StripeGateway {
                 }
                 return new BillingEvent(id, BillingEvent.Type.CHECKOUT_COMPLETED, userId,
                         object.path("customer").asText(null), object.path("subscription").asText(null),
-                        null, null, false);
+                        null, null, false, created);
             }
             case "customer.subscription.updated":
             case "customer.subscription.deleted": {
@@ -176,7 +178,7 @@ public class StripeSdkGateway implements StripeGateway {
                 Instant periodEnd = end.canConvertToLong() && !end.isMissingNode() ? Instant.ofEpochSecond(end.asLong()) : null;
                 return new BillingEvent(id, t, null, object.path("customer").asText(null),
                         object.path("id").asText(null), object.path("status").asText(null),
-                        periodEnd, object.path("cancel_at_period_end").asBoolean(false));
+                        periodEnd, object.path("cancel_at_period_end").asBoolean(false), created);
             }
             default:
                 return null;

@@ -13,7 +13,11 @@ import java.util.Optional;
 // Accounts, found by email (the unique login name).
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    Optional<User> findByEmail(String email);
+    // The account with this email, ignoring capitals (audit M8). If two accounts differ only by case from before
+    // emails were normalised, the older one wins.
+    default Optional<User> findByEmail(String email) {
+        return findFirstByEmailIgnoreCaseOrderByUserIdAsc(email == null ? "" : email.trim());
+    }
 
     // Task 98: Google reports emails in lower case while sign-up kept whatever was typed, so a Google
     // sign-in looks an account up ignoring case. If two accounts differ only by case, the older one wins.

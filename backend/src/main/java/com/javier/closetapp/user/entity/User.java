@@ -49,6 +49,11 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private boolean active = true;
 
+    // Audit H1: bumped when the account's credentials change or it is deactivated. A login token carries the
+    // value it was issued with and stops working as soon as it no longer matches (see JwtService).
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -83,10 +88,14 @@ public class User implements UserDetails {
     @Column(name = "cancel_at_period_end", nullable = false)
     private boolean cancelAtPeriodEnd = false;
 
+    // Audit H5: when the newest Stripe event applied to this account was created; older events are ignored.
+    @Column(name = "billing_event_at")
+    private LocalDateTime billingEventAt;
+
     public User() {}
 
     public User(String email, String password, Role role) {
-        this.email = email;
+        this.email = normalizeEmail(email);
         this.password = password;
         this.role = role;
         this.active = true;
@@ -122,6 +131,23 @@ public class User implements UserDetails {
         return active;
     }
 
+    public LocalDateTime getBillingEventAt() {
+        return billingEventAt;
+    }
+
+    public void setBillingEventAt(LocalDateTime billingEventAt) {
+        this.billingEventAt = billingEventAt;
+    }
+
+    public int getTokenVersion() {
+        return tokenVersion;
+    }
+
+    // Signs the account out everywhere: every token issued before this call stops authenticating.
+    public void bumpTokenVersion() {
+        tokenVersion++;
+    }
+
     public Long getUserId() {
         return userId;
     }
@@ -135,7 +161,12 @@ public class User implements UserDetails {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = normalizeEmail(email);
+    }
+
+    // Emails are stored trimmed and in lower case, so one address is one account whatever its capitals (audit M8).
+    public static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     public String getPassword() {

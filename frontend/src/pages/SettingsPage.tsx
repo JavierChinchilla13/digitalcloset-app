@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Settings as SettingsIcon, Shield, Trash2, User as UserIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
+import { resetAccountStores } from '../utils/resetAccountStores';
 import { useToast } from '../components/Toast';
 import { userService } from '../api/userService';
 import { authService } from '../api/authService';
@@ -274,7 +275,12 @@ const SettingsPage = () => {
     e.preventDefault();
     setIsSavingPassword(true);
     try {
-      await userService.confirmPasswordChange(passwordCode);
+      const auth = await userService.confirmPasswordChange(passwordCode);
+      // The password change signed every older token out, this session's too: carry on with the new one
+      // (set first, so the getCurrentUser() call below authenticates with it - same order as the email change).
+      setToken(auth.token);
+      const refreshed = await authService.getCurrentUser();
+      login(auth.token, refreshed);
       resetPasswordCard();
       showToast('Password updated', 'success');
     } catch (err: any) {
@@ -301,6 +307,7 @@ const SettingsPage = () => {
     try {
       await userService.deactivateMe();
       logout();
+      resetAccountStores();
       navigate('/login');
     } catch (err: any) {
       showToast(getApiErrorMessage(err, "Couldn't deactivate your account"), 'error');

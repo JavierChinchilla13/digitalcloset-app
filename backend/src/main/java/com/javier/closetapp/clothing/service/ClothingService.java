@@ -28,11 +28,14 @@ public class ClothingService {
     private final ClothingRepository clothingRepository;
     private final UserRepository userRepository;
     private final PlanLimits planLimits;
+    private final ImageUrlPolicy imageUrlPolicy;
 
-    public ClothingService(ClothingRepository clothingRepository, UserRepository userRepository, PlanLimits planLimits) {
+    public ClothingService(ClothingRepository clothingRepository, UserRepository userRepository, PlanLimits planLimits,
+                           ImageUrlPolicy imageUrlPolicy) {
         this.clothingRepository = clothingRepository;
         this.userRepository = userRepository;
         this.planLimits = planLimits;
+        this.imageUrlPolicy = imageUrlPolicy;
     }
 
     // The account behind the current request's token (set by JwtAuthenticationFilter).
@@ -54,6 +57,7 @@ public class ClothingService {
         if (limit != null && clothingRepository.countByOwnerAndIsActiveTrue(user) >= limit) {
             throw new GarmentLimitExceededException(limit, user.getPlan());
         }
+        imageUrlPolicy.requireAllowed(request.getImageUrl());
         ClothingItem item = new ClothingItem();
         item.setName(request.getName());
         item.setDescription(request.getDescription());
@@ -120,6 +124,7 @@ public class ClothingService {
             item.setCategory(request.getCategory());
         }
         if (request.getImageUrl() != null) {
+            imageUrlPolicy.requireAllowed(request.getImageUrl());
             item.setImageUrl(request.getImageUrl());
         }
         if (request.getPersonaType() != null) {

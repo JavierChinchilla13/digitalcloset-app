@@ -252,7 +252,8 @@ describe('SettingsPage', () => {
 
   it('confirming the password code applies the change and resets the card', async () => {
     users.requestPasswordChange.mockResolvedValue(undefined);
-    users.confirmPasswordChange.mockResolvedValue(undefined);
+    users.confirmPasswordChange.mockResolvedValue({ token: 'fresh-token', userId: 1, email: baseUser.email, role: Role.ROLE_USER });
+    auth.getCurrentUser.mockResolvedValue(baseUser);
     const user = userEvent.setup();
     renderSettings();
     const [current, next, confirm] = passwordCardFields().getAllByPlaceholderText(/••••••••|At least 8 characters/);
@@ -266,6 +267,8 @@ describe('SettingsPage', () => {
     await user.click(passwordCardFields().getByRole('button', { name: /confirm password change/i }));
 
     await waitFor(() => expect(users.confirmPasswordChange).toHaveBeenCalledWith('111222'));
+    // The change signed the old token out: the session carries on with the fresh one.
+    await waitFor(() => expect(useAuthStore.getState().token).toBe('fresh-token'));
     // Back to the request form, cleared.
     const [currentAgain] = await waitFor(() =>
       passwordCardFields().getAllByPlaceholderText(/••••••••|At least 8 characters/)
