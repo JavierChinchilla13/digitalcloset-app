@@ -159,6 +159,7 @@ const FlatOutfitBuilderPage = () => {
     if (!outfitsReady || !editId) return;
     const existing = outfits.find((o) => String(o.outfitId) === editId);
     if (existing) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- edit mode copies the saved outfit into the draft once the outfits have loaded
       setOutfitName(existing.name);
       setDraft(draftFromOutfitItems(existing.items), layerOrderFromOutfitItems(existing.items));
     }

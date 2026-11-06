@@ -43,7 +43,9 @@ export function useFabricCanvas(options: UseFabricCanvasOptions = {}) {
   // Keep the latest onResize without making the effect below re-attach its
   // listeners whenever the caller passes a new inline function.
   const onResizeRef = useRef(onResize);
-  onResizeRef.current = onResize;
+  useEffect(() => {
+    onResizeRef.current = onResize;
+  });
 
   // Task 52/53 bug fix: the very first `updateSize()` call below always
   // used to fire before any caller's "create the Fabric Canvas" effect

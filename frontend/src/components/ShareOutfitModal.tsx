@@ -15,6 +15,7 @@ interface ShareOutfitModalProps {
 }
 
 // The public address of a shared outfit on this site.
+// eslint-disable-next-line react-refresh/only-export-components -- this file also exports a helper next to its component; fast refresh is a development-only convenience and the split would not change behavior
 export const shareUrlFor = (token: string) => `${window.location.origin}/s/${token}`;
 
 // A file name that is safe on every system, from the outfit's name.
@@ -43,6 +44,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
   useEffect(() => {
     if (!isOpen || !outfit || !persona) return;
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the picture is drawn again each time the dialog opens, so its state is cleared first
     setBlob(null);
     setPreviewUrl(null);
     setImageError(null);

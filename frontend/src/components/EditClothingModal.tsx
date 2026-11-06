@@ -92,6 +92,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
 
   useEffect(() => {
     if (item && isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the form fields are re-seeded from the garment each time the dialog opens
       setName(item.name);
       setDescription(item.description || '');
       setCategory(item.category);

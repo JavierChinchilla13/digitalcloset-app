@@ -32,6 +32,7 @@ const SavedOutfitsPage = () => {
   // Robust content visibility trigger - fetch once, only gate the loader on
   // the first fetch (not on isLoading, which also flips during save/delete).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the list when the page opens (the loader raises its loading flag first)
     loadOutfits();
   }, [loadOutfits]);
 

@@ -56,6 +56,7 @@ const POINT_MARGIN = CANVAS_PAD - HANDLE_RADIUS - 4;
 // and flipped like the garment. When the item is already warped the transform
 // describes the *baked* image, whose center sits at the original's center plus
 // the recorded shift.
+// eslint-disable-next-line react-refresh/only-export-components -- this file also exports a helper next to its component; fast refresh is a development-only convenience and the split would not change behavior
 export function garmentToStageMatrix(
   source: { w: number; h: number },
   warp: Pick<WarpData, 'bakedWidth' | 'bakedHeight' | 'shift'> | null,
@@ -86,6 +87,7 @@ export function garmentToStageMatrix(
 
 // Keeps a dragged point where its handle still fits inside the overlay canvas
 // (the stage plus POINT_MARGIN on every side).
+// eslint-disable-next-line react-refresh/only-export-components -- this file also exports a helper next to its component; fast refresh is a development-only convenience and the split would not change behavior
 export function clampStagePoint(p: WarpPoint, stageW: number, stageH: number): WarpPoint {
   return {
     x: Math.min(Math.max(p.x, -POINT_MARGIN), stageW + POINT_MARGIN),

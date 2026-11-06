@@ -51,7 +51,9 @@ const GoogleSignInButton = ({ clientId, onCredential }: GoogleSignInButtonProps)
   const container = useRef<HTMLDivElement>(null);
   // The latest callback, so the effect below does not restart the button on every render.
   const callback = useRef(onCredential);
-  callback.current = onCredential;
+  useEffect(() => {
+    callback.current = onCredential;
+  });
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {

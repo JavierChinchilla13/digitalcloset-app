@@ -80,13 +80,17 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   // `transformRef.current` instead always gets the latest value
   // regardless of which render created the closure that's reading it.
   const transformRef = useRef(transform);
-  transformRef.current = transform;
+  useEffect(() => {
+    transformRef.current = transform;
+  });
 
   // Same latest-value pattern for the active tool - needed by the load
   // effect and the selection:cleared handler, neither of which re-runs
   // when `activeTool` changes.
   const activeToolRef = useRef(activeTool);
-  activeToolRef.current = activeTool;
+  useEffect(() => {
+    activeToolRef.current = activeTool;
+  });
 
   // Task 53 (mask-follows-garment fix): tracks the garment's own
   // left/top from whichever code path last positioned it - a direct
@@ -539,7 +543,9 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       // whatever this pass just set, so a subsequent direct canvas drag
       // (`handleModified` above) computes its own delta/ratio against this
       // pass's result instead of stale data from before it ran.
+      // eslint-disable-next-line react-hooks/immutability -- a ref's .current is meant to be written; the rule mistakes this ref for a dependency
       lastGarmentPosRef.current = { left: garment.left ?? 0, top: garment.top ?? 0 };
+      // eslint-disable-next-line react-hooks/immutability -- same as above
       lastGarmentScaleRef.current = { scaleX: garment.scaleX ?? 1, scaleY: garment.scaleY ?? 1 };
       canvas.requestRenderAll();
       isUpdatingRef.current = false;

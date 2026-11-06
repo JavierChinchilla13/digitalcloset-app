@@ -201,7 +201,9 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
   // re-runs for a new image), so they read the current tool through a ref -
   // a plain `mode` there stays frozen at 'erase' forever.
   const modeRef = useRef(mode);
-  modeRef.current = mode;
+  useEffect(() => {
+    modeRef.current = mode;
+  });
   const [brushSize, setBrushSize] = useState(30);
   const [zoom, setZoom] = useState(1);
   const [canUndo, setCanUndo] = useState(false);
@@ -275,6 +277,40 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
     }
   };
 
+  // Sets up the drawing brush for a tool (erase / restore) and the cursor that matches its size. Declared before the
+  // effects below, which call it.
+  const updateBrush = (canvas: Canvas, currentMode: ToolMode) => {
+    if (!canvas) return;
+
+    if (currentMode === 'pan') {
+      canvas.isDrawingMode = false;
+      return;
+    }
+
+    canvas.isDrawingMode = true;
+    const brush = new PencilBrush(canvas);
+    brush.width = brushSize;
+    
+    if (currentMode === 'erase') {
+      brush.color = 'black'; // Color doesn't matter for destination-out
+      // @ts-expect-error fabric's typings do not declare this property
+      brush.globalCompositeOperation = 'destination-out';
+    } else {
+      // Only the live preview stroke: on release it becomes a clip of the
+      // original image (see restoreStroke), so the color never ends up in
+      // the result.
+      brush.color = 'white';
+      // @ts-expect-error fabric's typings do not declare this property
+      brush.globalCompositeOperation = 'source-over';
+    }
+
+    canvas.freeDrawingBrush = brush;
+    
+    // Cursor matches brush size
+    const cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${brushSize}" height="${brushSize}" viewBox="0 0 ${brushSize} ${brushSize}"><circle cx="${brushSize/2}" cy="${brushSize/2}" r="${brushSize/2 - 1}" style="fill:none;stroke:white;stroke-width:1;opacity:0.5"/></svg>') ${brushSize/2} ${brushSize/2}, crosshair`;
+    canvas.freeDrawingCursor = cursor;
+  };
+
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
@@ -331,7 +367,6 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
           originY: 'center',
           selectable: false,
           evented: false,
-          // @ts-ignore
           isBaseImage: true
         });
 
@@ -356,7 +391,6 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
           // EXPLICITLY set the composite operation on the path itself
           path.set({
             globalCompositeOperation: 'destination-out',
-            // @ts-ignore
             isEraserPath: true
           });
         }
@@ -464,38 +498,6 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
       if (canvas) canvas.dispose();
     };
   }, [imageUrl]);
-
-  const updateBrush = (canvas: Canvas, currentMode: ToolMode) => {
-    if (!canvas) return;
-
-    if (currentMode === 'pan') {
-      canvas.isDrawingMode = false;
-      return;
-    }
-
-    canvas.isDrawingMode = true;
-    const brush = new PencilBrush(canvas);
-    brush.width = brushSize;
-    
-    if (currentMode === 'erase') {
-      brush.color = 'black'; // Color doesn't matter for destination-out
-      // @ts-ignore
-      brush.globalCompositeOperation = 'destination-out';
-    } else {
-      // Only the live preview stroke: on release it becomes a clip of the
-      // original image (see restoreStroke), so the color never ends up in
-      // the result.
-      brush.color = 'white';
-      // @ts-ignore
-      brush.globalCompositeOperation = 'source-over';
-    }
-
-    canvas.freeDrawingBrush = brush;
-    
-    // Cursor matches brush size
-    const cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="${brushSize}" height="${brushSize}" viewBox="0 0 ${brushSize} ${brushSize}"><circle cx="${brushSize/2}" cy="${brushSize/2}" r="${brushSize/2 - 1}" style="fill:none;stroke:white;stroke-width:1;opacity:0.5"/></svg>') ${brushSize/2} ${brushSize/2}, crosshair`;
-    canvas.freeDrawingCursor = cursor;
-  };
 
   useEffect(() => {
     if (fabricCanvasRef.current && isReady) {
