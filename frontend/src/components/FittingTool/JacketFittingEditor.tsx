@@ -307,6 +307,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                 <input 
                   type="text"
                   value={name}
+                  maxLength={100}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Leather Biker Jacket"
                   className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all uppercase tracking-widest"
@@ -321,6 +322,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                 <textarea 
                   rows={4}
                   value={description}
+                  maxLength={255}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Details about material, modular fit, etc."
                   className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-xs text-ink/70 focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all resize-none leading-relaxed"

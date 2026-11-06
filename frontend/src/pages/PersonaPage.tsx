@@ -122,6 +122,7 @@ const PersonaPage = () => {
                         <input
                           autoFocus
                           value={renameValue}
+                          maxLength={30}
                           onChange={(e) => setRenameValue(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && confirmRename()}
                           className="min-w-0 flex-grow bg-ink/5 border border-ink/10 rounded-xl px-3 py-2 text-text-primary text-lg font-light tracking-widest uppercase focus:outline-none focus:border-accent/50"

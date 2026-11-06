@@ -340,6 +340,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     <input 
                       type="text"
                       value={name}
+                      maxLength={100}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="e.g. Oversized Cashmere Sweater"
                       className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary placeholder:text-ink/20 focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all"
@@ -354,6 +355,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     </div>
                     <textarea 
                       value={description}
+                      maxLength={255}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Add details about fit, material, or style..."
                       rows={4}

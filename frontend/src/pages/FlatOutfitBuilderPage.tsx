@@ -510,6 +510,7 @@ const FlatOutfitBuilderPage = () => {
           <div className="space-y-1 min-w-0 flex-1">
             <input
               value={outfitName}
+              maxLength={100}
               onChange={(e) => setOutfitName(e.target.value)}
               className="w-full min-w-0 bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
               placeholder="ENTER STYLE NAME"

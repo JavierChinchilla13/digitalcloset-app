@@ -130,6 +130,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
               <input 
                 type="text"
                 value={name}
+                maxLength={100}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Leather Oxford Shoes"
                 className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-black tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all"
@@ -143,6 +144,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
               </div>
               <textarea 
                 value={description}
+                maxLength={255}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Add style notes..."
                 rows={3}
