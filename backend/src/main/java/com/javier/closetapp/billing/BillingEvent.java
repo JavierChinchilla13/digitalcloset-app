@@ -14,7 +14,9 @@ public record BillingEvent(
         // Stripe's subscription status word (active, past_due, canceled, ...), null on a checkout event.
         String status,
         Instant currentPeriodEnd,
-        boolean cancelAtPeriodEnd) {
+        boolean cancelAtPeriodEnd,
+        // When Stripe created the event (its own clock); null if the payload carries none. Used to ignore stale events.
+        Instant created) {
 
     public enum Type { CHECKOUT_COMPLETED, SUBSCRIPTION_UPDATED, SUBSCRIPTION_DELETED }
 }

@@ -88,6 +88,10 @@ public class User implements UserDetails {
     @Column(name = "cancel_at_period_end", nullable = false)
     private boolean cancelAtPeriodEnd = false;
 
+    // Audit H5: when the newest Stripe event applied to this account was created; older events are ignored.
+    @Column(name = "billing_event_at")
+    private LocalDateTime billingEventAt;
+
     public User() {}
 
     public User(String email, String password, Role role) {
@@ -125,6 +129,14 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return active;
+    }
+
+    public LocalDateTime getBillingEventAt() {
+        return billingEventAt;
+    }
+
+    public void setBillingEventAt(LocalDateTime billingEventAt) {
+        this.billingEventAt = billingEventAt;
     }
 
     public int getTokenVersion() {
