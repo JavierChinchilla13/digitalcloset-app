@@ -2,7 +2,7 @@
 # Two stages: build the jar with the JDK, then run it on a slim JRE image.
 
 # ---- build ----
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:25-jdk AS build
 WORKDIR /app
 
 # Dependencies first, so editing source doesn't re-download them.
@@ -15,7 +15,7 @@ COPY src src
 RUN ./mvnw -B -ntp -DskipTests package
 
 # ---- run ----
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 # curl is only for the health check below.
