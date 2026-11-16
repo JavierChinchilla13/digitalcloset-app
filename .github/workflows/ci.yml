@@ -24,10 +24,13 @@ concurrency:
 permissions:
   contents: read
 
+# Runner images are pinned to ubuntu-24.04 on purpose: "ubuntu-latest" moved to 26.04, which the pinned Playwright
+# (1.56.1) cannot install its browser dependencies on. When Playwright is upgraded (Dependabot proposes it), move
+# the images up deliberately, one job at a time, instead of having them change under the build.
 jobs:
   backend:
     name: Backend (Spring Boot, JUnit)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -60,7 +63,7 @@ jobs:
 
   frontend:
     name: Frontend (TypeScript, Vitest, build)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -103,7 +106,7 @@ jobs:
   # Playwright starts both servers itself (see frontend/playwright.config.ts).
   e2e:
     name: End-to-end (Playwright)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: frontend
     timeout-minutes: 30
     defaults:
@@ -148,7 +151,7 @@ jobs:
 
   ai-service:
     name: AI service (FastAPI, pytest)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend-ai
@@ -176,17 +179,21 @@ jobs:
   # the backend on the production profile, and the Caddy web tier in front.
   docker-stack:
     name: Docker stack (build + smoke test)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
       # A throwaway .env: random passwords, a mail host that is never contacted
       # (the app only connects to it when it sends an email).
+      # PUBLIC_URL is what the backend takes as its website address and allowed origin. The backend runs on the
+      # production profile, whose start-up guard (ProductionSettingsGuard) refuses http and localhost there, so it
+      # gets a public-looking https name that is never contacted. The stack itself is still reached on plain
+      # http://localhost (SITE_ADDRESS=:80); curl sends no Origin header, so CORS plays no part in the smoke test.
       - name: Write a throwaway .env
         run: |
           cat > .env <<EOF
           SITE_ADDRESS=:80
-          PUBLIC_URL=http://localhost
+          PUBLIC_URL=https://ci.example.test
           DB_PASSWORD=ci-$(openssl rand -hex 12)
           JWT_SECRET=$(openssl rand -base64 64 | tr -d '\n')
           SPRING_MAIL_HOST=localhost

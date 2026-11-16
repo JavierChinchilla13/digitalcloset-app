@@ -32,6 +32,16 @@ class ProductionSettingsGuardTest {
     }
 
     @Test
+    @DisplayName("the values the CI Docker stack uses pass, and the plain-http localhost it used to use is still refused")
+    void ciDockerStackSettings() {
+        // .github/workflows/ci.yml writes PUBLIC_URL=https://ci.example.test and a 64-byte random Base64 key (openssl rand -base64 64);
+        // docker-compose.yml turns PUBLIC_URL into both CORS_ALLOWED_ORIGINS and FRONTEND_URL, and the prod profile defaults to smtp mail.
+        String key = Base64.getEncoder().encodeToString(new byte[64]).replace('A', 'Q');
+        assertTrue(check(key, "https://ci.example.test", "https://ci.example.test", "smtp", true, "", "", "").isEmpty());
+        assertFalse(check(key, "http://localhost", "http://localhost", "smtp", true, "", "", "").isEmpty());
+    }
+
+    @Test
     @DisplayName("a short or non-Base64 signing key is refused")
     void weakKeyIsRefused() {
         assertFalse(check("c2hvcnQ=", "https://a.example", "https://a.example", "relay", true, "", "", "").isEmpty());
