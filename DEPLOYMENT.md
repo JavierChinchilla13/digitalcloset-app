@@ -431,6 +431,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |
 | `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
 | `RATE_LIMIT_PUBLIC_MAX` | no | Requests per minute per visitor on the public shared-outfit endpoint `/api/public/outfits/{token}` (default 120). Separate from the login limit. |
+| `RATE_LIMIT_AGE_REJECTION_ENABLED` / `_MAX` / `_WINDOW_SECONDS` | no | Counts sign-ups **refused for age** per client address (in memory only) and answers 429 after `MAX` (default 5) within the window (default 3600 s). **Off by default** (`false`): behind Render's proxy the address the app sees may be the proxy's, so one counter would be shared by every visitor. To turn it on later: first measure the real client address (audit H2), then set `RATE_LIMIT_AGE_REJECTION_ENABLED=true` on `vysvi-api` and redeploy. Size `MAX` for shared mobile networks. |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags; e.g. `-Xmx512m` on a small machine. |
 
 Never put a secret in a `VITE_` variable: those end up in the public JavaScript.

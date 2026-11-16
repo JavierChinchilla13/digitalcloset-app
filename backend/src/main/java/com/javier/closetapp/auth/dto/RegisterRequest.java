@@ -20,6 +20,15 @@ public class RegisterRequest {
     private String firstName;
     private String lastName;
 
+    // Audit H12: birth MONTH and YEAR only, the guardian declaration (for 13-17), the two separate acceptances and the
+    // version of the texts the person saw. The server checks all of them (AuthService.register).
+    private Integer birthMonth;
+    private Integer birthYear;
+    private Boolean guardianAuthorized;
+    private Boolean termsAccepted;
+    private Boolean dataAuthorized;
+    private String legalVersion;
+
     public RegisterRequest() {}
 
     public RegisterRequest(String email, String password) {
@@ -58,4 +67,17 @@ public class RegisterRequest {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
+
+    public Integer getBirthMonth() { return birthMonth; }
+    public void setBirthMonth(Integer birthMonth) { this.birthMonth = birthMonth; }
+    public Integer getBirthYear() { return birthYear; }
+    public void setBirthYear(Integer birthYear) { this.birthYear = birthYear; }
+    public Boolean getGuardianAuthorized() { return guardianAuthorized; }
+    public void setGuardianAuthorized(Boolean guardianAuthorized) { this.guardianAuthorized = guardianAuthorized; }
+    public Boolean getTermsAccepted() { return termsAccepted; }
+    public void setTermsAccepted(Boolean termsAccepted) { this.termsAccepted = termsAccepted; }
+    public Boolean getDataAuthorized() { return dataAuthorized; }
+    public void setDataAuthorized(Boolean dataAuthorized) { this.dataAuthorized = dataAuthorized; }
+    public String getLegalVersion() { return legalVersion; }
+    public void setLegalVersion(String legalVersion) { this.legalVersion = legalVersion; }
 }

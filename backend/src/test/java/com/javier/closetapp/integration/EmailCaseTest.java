@@ -19,7 +19,7 @@ class EmailCaseTest extends IntegrationTestBase {
 
     private String register(String email) throws Exception {
         return mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", email, "password", PASSWORD))))
+                        .content(json(registrationBody(email, PASSWORD))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
     }
@@ -42,7 +42,7 @@ class EmailCaseTest extends IntegrationTestBase {
         register(local + "@example.com");
 
         mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", local.toUpperCase() + "@Example.com", "password", PASSWORD))))
+                        .content(json(registrationBody(local.toUpperCase() + "@Example.com", PASSWORD))))
                 .andExpect(status().isConflict());
     }
 

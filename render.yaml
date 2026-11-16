@@ -47,6 +47,10 @@ services:
       # Where emails say people can reach you (not kept in the code).
       - key: CONTACT_EMAIL
         sync: false
+      # Audit H12: rate limit on sign-ups refused for age. OFF until the real client address behind Render is measured
+      # (see DEPLOYMENT.md); set to "true" to enable it.
+      - key: RATE_LIMIT_AGE_REJECTION_ENABLED
+        value: "false"
       # "Sign in with Google" (Task 98): the OAuth client id (public). Leave empty for no Google sign-in.
       # The website needs the same value as VITE_GOOGLE_CLIENT_ID. See DEPLOYMENT.md.
       - key: GOOGLE_CLIENT_ID

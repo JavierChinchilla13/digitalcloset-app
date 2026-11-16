@@ -92,6 +92,29 @@ public class User implements UserDetails {
     @Column(name = "billing_event_at")
     private LocalDateTime billingEventAt;
 
+    // Audit H12: birth month and year (never the day), the guardian declaration, and what was accepted and when.
+    // All empty for accounts made before these were asked; they are asked once at their next sign-in.
+    @Column(name = "birth_year")
+    private Integer birthYear;
+
+    @Column(name = "birth_month")
+    private Integer birthMonth;
+
+    @Column(name = "guardian_authorized", nullable = false)
+    private boolean guardianAuthorized = false;
+
+    @Column(name = "guardian_authorized_at")
+    private LocalDateTime guardianAuthorizedAt;
+
+    @Column(name = "terms_version", length = 32)
+    private String termsVersion;
+
+    @Column(name = "terms_accepted_at")
+    private LocalDateTime termsAcceptedAt;
+
+    @Column(name = "data_authorized_at")
+    private LocalDateTime dataAuthorizedAt;
+
     public User() {}
 
     public User(String email, String password, Role role) {
@@ -138,6 +161,21 @@ public class User implements UserDetails {
     public void setBillingEventAt(LocalDateTime billingEventAt) {
         this.billingEventAt = billingEventAt;
     }
+
+    public Integer getBirthYear() { return birthYear; }
+    public void setBirthYear(Integer birthYear) { this.birthYear = birthYear; }
+    public Integer getBirthMonth() { return birthMonth; }
+    public void setBirthMonth(Integer birthMonth) { this.birthMonth = birthMonth; }
+    public boolean isGuardianAuthorized() { return guardianAuthorized; }
+    public void setGuardianAuthorized(boolean guardianAuthorized) { this.guardianAuthorized = guardianAuthorized; }
+    public LocalDateTime getGuardianAuthorizedAt() { return guardianAuthorizedAt; }
+    public void setGuardianAuthorizedAt(LocalDateTime guardianAuthorizedAt) { this.guardianAuthorizedAt = guardianAuthorizedAt; }
+    public String getTermsVersion() { return termsVersion; }
+    public void setTermsVersion(String termsVersion) { this.termsVersion = termsVersion; }
+    public LocalDateTime getTermsAcceptedAt() { return termsAcceptedAt; }
+    public void setTermsAcceptedAt(LocalDateTime termsAcceptedAt) { this.termsAcceptedAt = termsAcceptedAt; }
+    public LocalDateTime getDataAuthorizedAt() { return dataAuthorizedAt; }
+    public void setDataAuthorizedAt(LocalDateTime dataAuthorizedAt) { this.dataAuthorizedAt = dataAuthorizedAt; }
 
     public int getTokenVersion() {
         return tokenVersion;

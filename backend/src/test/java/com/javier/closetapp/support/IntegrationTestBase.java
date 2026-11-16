@@ -1,6 +1,7 @@
 package com.javier.closetapp.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.javier.closetapp.legal.LegalVersion;
 import com.jayway.jsonpath.JsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,6 +18,7 @@ import com.javier.closetapp.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -74,11 +76,33 @@ public abstract class IntegrationTestBase {
         return objectMapper.writeValueAsString(body);
     }
 
+    // The body of a valid sign-up: an adult (born May 1990) who accepted the Terms and authorised the processing of their data.
+    // Audit H12 made these required, so every test that registers someone starts from this.
+    protected static Map<String, Object> registrationBody(String email, String password) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("email", email);
+        body.put("password", password);
+        body.put("birthMonth", 5);
+        body.put("birthYear", 1990);
+        body.put("guardianAuthorized", false);
+        body.put("termsAccepted", true);
+        body.put("dataAuthorized", true);
+        body.put("legalVersion", LegalVersion.CURRENT);
+        return body;
+    }
+
+    // The same body with some fields added or replaced.
+    protected static Map<String, Object> withFields(Map<String, Object> base, Map<String, ?> extra) {
+        Map<String, Object> body = new LinkedHashMap<>(base);
+        body.putAll(extra);
+        return body;
+    }
+
     protected TestUser registerUser() throws Exception {
         String email = uniqueEmail();
         String body = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", email, "password", PASSWORD))))
+                        .content(json(registrationBody(email, PASSWORD))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return new TestUser(

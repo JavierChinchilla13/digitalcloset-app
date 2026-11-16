@@ -5,6 +5,14 @@ import com.javier.closetapp.auth.google.GoogleIdentity;
 import com.javier.closetapp.auth.google.GoogleTokenVerifier;
 import com.javier.closetapp.auth.dto.LoginRequest;
 import com.javier.closetapp.auth.dto.RegisterRequest;
+import com.javier.closetapp.exception.AgeNotAllowedException;
+import com.javier.closetapp.exception.InvalidInputException;
+import com.javier.closetapp.legal.AgePolicy;
+import com.javier.closetapp.legal.AgePolicy.AgeBand;
+import com.javier.closetapp.legal.LegalVersion;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import com.javier.closetapp.common.enums.Role;
 import com.javier.closetapp.exception.DuplicateEmailException;
 import com.javier.closetapp.exception.GoogleSignInException;
@@ -41,6 +49,15 @@ public class AuthService {
 
     // Creates the account (BCrypt-hashed password) and signs it in at once. A taken email is a 409 (DuplicateEmailException).
     public AuthResponse register(RegisterRequest request) {
+        // Audit H12: age first, before ANY lookup or write, so a refused sign-up leaves nothing behind (no row, no
+        // password hash, no log line) and the answer is the same whether or not the email already has an account.
+        AgeBand band = AgePolicy.bandFor(request.getBirthYear(), request.getBirthMonth(), LocalDate.now(ZoneOffset.UTC));
+        if (band == AgeBand.UNDER_MIN) {
+            throw new AgeNotAllowedException();
+        }
+        requireDeclarations(band, request.getGuardianAuthorized(), request.getTermsAccepted(),
+                request.getDataAuthorized(), request.getLegalVersion());
+
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new DuplicateEmailException("An account with this email already exists");
         }
@@ -52,6 +69,7 @@ public class AuthService {
         );
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
+        recordDeclarations(user, band, request.getBirthYear(), request.getBirthMonth());
 
         User savedUser;
         try {
@@ -64,6 +82,36 @@ public class AuthService {
         String jwtToken = jwtService.generateToken(savedUser);
         
         return new AuthResponse(jwtToken, savedUser.getUserId(), savedUser.getEmail());
+    }
+
+    // The declarations every new account makes (audit H12): both acceptances, the version of the texts they saw, and for a
+    // 13-17 account the guardian declaration. These are DECLARATIONS, not verification; the Terms say so.
+    static void requireDeclarations(AgeBand band, Boolean guardianAuthorized, Boolean termsAccepted,
+                                    Boolean dataAuthorized, String legalVersion) {
+        if (!Boolean.TRUE.equals(termsAccepted) || !Boolean.TRUE.equals(dataAuthorized)) {
+            throw new InvalidInputException("To create an account you need to accept the Terms and the Privacy Policy and "
+                    + "authorise the processing of your data.");
+        }
+        if (!LegalVersion.CURRENT.equals(legalVersion)) {
+            throw new InvalidInputException("The Terms have been updated. Please reload the page and try again.");
+        }
+        if (band == AgeBand.MINOR && !Boolean.TRUE.equals(guardianAuthorized)) {
+            throw new InvalidInputException("A parent or legal guardian must authorise the use of your account and data.");
+        }
+    }
+
+    // Writes the facts onto the new account: birth month/year (never the day), the declarations and when they were made.
+    static void recordDeclarations(User user, AgeBand band, Integer birthYear, Integer birthMonth) {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        user.setBirthYear(birthYear);
+        user.setBirthMonth(birthMonth);
+        user.setTermsVersion(LegalVersion.CURRENT);
+        user.setTermsAcceptedAt(now);
+        user.setDataAuthorizedAt(now);
+        if (band == AgeBand.MINOR) {
+            user.setGuardianAuthorized(true);
+            user.setGuardianAuthorizedAt(now);
+        }
     }
 
     // Checks the credentials with Spring Security's AuthenticationManager (bad password, unknown

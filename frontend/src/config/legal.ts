@@ -11,5 +11,9 @@ export const LEGAL = {
   country: 'Costa Rica',
 } as const;
 
+// The version of the Terms and Privacy Policy a person accepts when signing up; stored with the acceptance. It must equal
+// LegalVersion.CURRENT in the backend (a backend test compares the two). While the texts are a draft it reads YYYY-MM-draft-N.
+export const LEGAL_VERSION = '2026-11-draft-1';
+
 // Flip to false once the owner has reviewed both pages: removes the "draft" notice from them.
 export const LEGAL_IS_DRAFT = true;

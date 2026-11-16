@@ -120,6 +120,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    // Audit H12: a sign-up refused for age. Always the same 403 and message; deliberately NOT logged (no email, no date).
+    @ExceptionHandler(AgeNotAllowedException.class)
+    public ResponseEntity<Object> handleAgeNotAllowed(AgeNotAllowedException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        body.put("code", "AGE_NOT_ALLOWED");
+
+        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    }
+
     // Audit H7: text that is too long and similar - fixable by the caller, so 400 with the message.
     @ExceptionHandler(InvalidInputException.class)
     public ResponseEntity<Object> handleInvalidInput(InvalidInputException ex) {
