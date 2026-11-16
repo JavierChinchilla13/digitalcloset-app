@@ -5,7 +5,7 @@
 # ---- build ----
 # Debian-based (not alpine): the "canvas" dependency downloads a prebuilt native
 # binary, available for glibc on both x86 and ARM (e.g. Oracle's free ARM VMs).
-FROM node:24-slim AS build
+FROM node:26-slim AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./
