@@ -7,6 +7,7 @@ import { useToast } from '../components/Toast';
 import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
 import CreateUserModal from '../components/CreateUserModal';
+import AdminBackupSection from '../components/AdminBackupSection';
 import { Plan, Role, type User } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
 
@@ -109,6 +110,9 @@ const AdminUsersPage = () => {
             </button>
           </div>
         </div>
+
+        {/* Backup status (last backup, alert warnings) and the encrypted download, ahead of the account list. */}
+        <AdminBackupSection />
 
         {isLoading ? (
           <div className="py-32 flex items-center justify-center">

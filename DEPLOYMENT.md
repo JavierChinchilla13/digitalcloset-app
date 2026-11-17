@@ -451,6 +451,16 @@ manager, and delete downloads after 90 days. It is never stored on the server (a
 tables `password_reset_tokens` and `pending_account_changes` are not included. Limits: 3 per hour and 10 per day per admin, one at a time, 200 MB.
 For a database too large for that, use `scripts/backup-remote-db.sh` from your computer.
 
+In the app: Admin -> **Backup**. The page shows "Last backup N days ago" (a warning at 7 days or none) and, in red, **"Backup alert failed"** when the latest
+download's alert email could not be sent (the download still happens, as decided; `alert_sent=false` is also shown in the list of the last 10 downloads).
+The archive password can be typed twice or generated ("Generate passphrase", random from the browser's `crypto.getRandomValues`, 24 characters) and has a
+simple strength check; the admin confirms with their own password, or with a fresh Google sign-in if the account has no password.
+
+Related protections added with it: wrong "it is me" proofs (delete account, password change, email change, backup) are counted per account in the database
+(`reauth_failures`, migration V21): 5 wrong in 15 minutes give 429 for all of them until the window passes. A Google proof must be a token issued in the last
+5 minutes and is single-use (`google_token_uses`, migration V22; only a SHA-256 fingerprint is kept), and a token that already signed someone in cannot be
+reused as proof. The backup migrations of this branch are **V20 (backup_downloads), V21 and V22**.
+
 Restoring is for developers, into an EMPTY **local** database only (the script refuses anything else: a non-local host, a database name without
 `test`, `local` or `restore`, tables that are not empty, a schema version different from the archive's, a wrong password, or a file that was changed):
 

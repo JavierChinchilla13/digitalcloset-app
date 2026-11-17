@@ -27,6 +27,10 @@ vi.mock('../api/collectionService', () => ({
   collectionService: { getCollections: vi.fn(async () => []) },
 }));
 vi.mock('../components/FittingTool/UploadFlow', () => ({ default: () => null }));
+vi.mock('../api/backupService', () => ({
+  backupService: { getStatus: vi.fn(async () => ({ lastBackupAt: null, daysSinceLastBackup: null, recent: [] })), download: vi.fn() },
+}));
+
 
 const user = (role: Role): User => ({
   userId: role === Role.ROLE_ADMIN ? 1 : 2,

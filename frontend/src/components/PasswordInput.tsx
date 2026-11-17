@@ -15,9 +15,12 @@ import { Eye, EyeOff } from 'lucide-react';
 // duplicated per page.
 interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
   icon?: React.ComponentType<{ size?: number; className?: string }>;
+  // By default the show/hide button is skipped by Tab (it should not take focus away from typing). A form where the person must be able
+  // to check what they typed from the keyboard alone (the admin backup password) turns this on.
+  toggleTabbable?: boolean;
 }
 
-const PasswordInput = ({ icon: Icon, className, ...rest }: PasswordInputProps) => {
+const PasswordInput = ({ icon: Icon, className, toggleTabbable = false, ...rest }: PasswordInputProps) => {
   const [visible, setVisible] = useState(false);
 
   return (
@@ -33,10 +36,10 @@ const PasswordInput = ({ icon: Icon, className, ...rest }: PasswordInputProps) =
         type="button"
         // Not a real form action and shouldn't take focus away from typing -
         // same reasoning as the show/hide buttons in most password fields.
-        tabIndex={-1}
+        tabIndex={toggleTabbable ? 0 : -1}
         onClick={() => setVisible((v) => !v)}
         aria-label={visible ? 'Hide password' : 'Show password'}
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded"
       >
         {visible ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>

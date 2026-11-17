@@ -226,6 +226,10 @@ const PrivacyPage = () => {
           <li>
             <strong className={strong}>Logs</strong> at our hosting providers are kept by them for their own periods.
           </li>
+          <li>
+            <strong className={strong}>Backups downloaded from the administration area</strong> are encrypted with a password chosen at
+            the time, are never stored on the server, and are deleted within 90 days.
+          </li>
         </ul>
       </LegalSection>
 
