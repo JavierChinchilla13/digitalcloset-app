@@ -2,6 +2,8 @@ package com.javier.closetapp.billing;
 
 import com.javier.closetapp.exception.ResourceNotFoundException;
 import com.javier.closetapp.common.enums.Plan;
+import com.javier.closetapp.legal.AccountAge;
+import com.javier.closetapp.legal.AgePolicy.AgeBand;
 import com.javier.closetapp.common.enums.Role;
 import com.javier.closetapp.user.entity.User;
 import com.javier.closetapp.user.repository.UserRepository;
@@ -70,6 +72,15 @@ public class BillingService {
         User user = currentUser();
         if (user.getRole() == Role.ROLE_ADMIN) {
             throw new BillingException("Admin accounts already have unlimited garments.");
+        }
+        // Audit H12: Premium is for people who declared they are 18 or older (a minor's contract can be challenged). Someone who has
+        // not given their birth month/year yet is asked to confirm their details first.
+        AgeBand band = AccountAge.bandOf(user);
+        if (band == null) {
+            throw new BillingException("Please confirm your details before subscribing.");
+        }
+        if (band != AgeBand.ADULT) {
+            throw new BillingException("Premium is available to people who are 18 or older.");
         }
         if (user.getStripeSubscriptionId() != null && user.getSubscriptionStatus() != null
                 && PAID_STATUSES.contains(user.getSubscriptionStatus())) {

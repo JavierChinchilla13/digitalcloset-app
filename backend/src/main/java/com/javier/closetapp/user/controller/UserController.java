@@ -4,6 +4,7 @@ import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.account.AccountExportService;
 import com.javier.closetapp.user.dto.AdminCreateUserRequest;
 import com.javier.closetapp.user.dto.DeleteAccountRequest;
+import com.javier.closetapp.user.dto.LegalConfirmationRequest;
 import com.javier.closetapp.user.dto.ChangeEmailRequest;
 import com.javier.closetapp.user.dto.ChangePasswordRequest;
 import com.javier.closetapp.user.dto.ConfirmCodeRequest;
@@ -78,6 +79,13 @@ public class UserController {
     @PostMapping("/me/email/confirm")
     public ResponseEntity<AuthResponse> confirmEmailChange(@Valid @RequestBody ConfirmCodeRequest request) {
         return ResponseEntity.ok(userService.confirmEmailChange(request));
+    }
+
+    // Audit H12: an existing account gives its birth month/year (if not recorded yet) and the acceptances; the website holds the
+    // person on this step until it succeeds. Under the minimum age: the account is erased and the answer is the uniform 403.
+    @PostMapping("/me/legal")
+    public ResponseEntity<UserResponse> confirmLegal(@Valid @RequestBody LegalConfirmationRequest request) {
+        return ResponseEntity.ok(userService.confirmLegal(request));
     }
 
     // Audit H12: real erasure of the account and its data (replaces self-deactivation). POST, not DELETE, so the confirmation and

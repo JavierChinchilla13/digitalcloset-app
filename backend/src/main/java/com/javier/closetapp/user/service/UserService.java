@@ -1,6 +1,12 @@
 package com.javier.closetapp.user.service;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
+import com.javier.closetapp.auth.service.AuthService;
+import com.javier.closetapp.exception.AgeNotAllowedException;
+import com.javier.closetapp.legal.AccountAge;
+import com.javier.closetapp.legal.AgePolicy;
+import com.javier.closetapp.legal.AgePolicy.AgeBand;
+import com.javier.closetapp.user.dto.LegalConfirmationRequest;
 import com.javier.closetapp.account.AccountErasureService;
 import com.javier.closetapp.auth.google.GoogleIdentity;
 import com.javier.closetapp.auth.google.GoogleTokenVerifier;
@@ -40,7 +46,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -294,6 +302,27 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
+    // Audit H12: an EXISTING account gives the facts a new sign-up gives (birth month/year, the guardian declaration for 13-17, the two
+    // acceptances, the version of the texts). If a birth month/year is already recorded it is NOT changed from here. Someone who turns out
+    // to be under the minimum age has the account and all its data ERASED and gets the same uniform 403 as a refused sign-up; the
+    // erasure is committed even though the exception is thrown (noRollbackFor).
+    @Transactional(noRollbackFor = AgeNotAllowedException.class)
+    public UserResponse confirmLegal(LegalConfirmationRequest request) {
+        User user = getAuthenticatedUser();
+        Integer year = user.getBirthYear() != null ? user.getBirthYear() : request.getBirthYear();
+        Integer month = user.getBirthMonth() != null ? user.getBirthMonth() : request.getBirthMonth();
+
+        AgeBand band = AgePolicy.bandFor(year, month, LocalDate.now(ZoneOffset.UTC));
+        if (band == AgeBand.UNDER_MIN) {
+            accountErasureService.erase(user);
+            throw new AgeNotAllowedException();
+        }
+        AuthService.requireDeclarations(band, request.getGuardianAuthorized(), request.getTermsAccepted(),
+                request.getDataAuthorized(), request.getLegalVersion());
+        AuthService.recordDeclarations(user, band, year, month);
+        return mapToResponse(userRepository.save(user));
+    }
+
     // Audit H12: "delete my account and data" - REAL erasure (it replaces self-deactivation; admins still deactivate others).
     // The person confirms with the word DELETE and proves who they are: their password, or for a Google-only account a fresh
     // Google credential for the same Google account. A wrong proof is a 403 (not a 401, which the website reads as "session ended").
@@ -388,7 +417,9 @@ public class UserService {
                 user.getCreatedAt(),
                 user.getMainOutfitId(),
                 user.getPlan(),
-                planLimits.garmentLimit(user)
+                planLimits.garmentLimit(user),
+                AccountAge.needsConfirmation(user),
+                AccountAge.bandOf(user) == null ? null : AccountAge.bandOf(user).name()
         );
     }
 }
