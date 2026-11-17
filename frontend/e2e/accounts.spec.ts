@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { chooseCookies, PASSWORD, registerAccount, uniqueEmail } from './helpers';
 
 // Flow 1: creating an account and signing in, and what a wrong password looks like.

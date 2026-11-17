@@ -1,8 +1,8 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { chooseCookies, registerAccount, seedGarments, seedOutfit, signIn } from './helpers';
 
 // Flow 5: sharing an outfit by a public link - anyone can open it without an account, and turning it off ends it.
-test('a shared outfit opens for a signed-out visitor and stops working when the link is turned off', async ({ page, browser, request }) => {
+test('a shared outfit opens for a signed-out visitor and stops working when the link is turned off', async ({ page, newGuardedContext, request }) => {
   await chooseCookies(page);
   const account = await registerAccount(request, 'share');
   const [shirt, pants] = [
@@ -27,7 +27,7 @@ test('a shared outfit opens for a signed-out visitor and stops working when the 
   expect(link).toMatch(/\/s\/[A-Za-z0-9_-]{24}$/);
 
   // A visitor with no account (a separate browser context) opens the link.
-  const visitor = await browser.newContext({ baseURL: 'http://localhost:4173' });
+  const visitor = await newGuardedContext();
   const visitorPage = await visitor.newPage();
   await visitorPage.addInitScript(() =>
     localStorage.setItem('vysvi-consent', JSON.stringify({ state: { choice: 'essential', decidedAt: new Date().toISOString() }, version: 0 }))

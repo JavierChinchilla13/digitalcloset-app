@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { chooseCookies, registerAccount, signIn } from './helpers';
 
 // Flow 6: the cookie banner, the legal pages, and that nothing optional runs before consent.
