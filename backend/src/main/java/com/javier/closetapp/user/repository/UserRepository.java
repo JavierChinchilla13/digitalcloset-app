@@ -8,6 +8,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.javier.closetapp.common.enums.Role;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 // Accounts, found by email (the unique login name).
@@ -27,6 +30,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // Task 103: the account behind a Stripe customer (a billing webhook names only the customer).
     Optional<User> findByStripeCustomerId(String stripeCustomerId);
+
+    // Audit H12: ordinary accounts an admin deactivated at or before `cutoff` (the purge candidates). Never admins.
+    List<User> findByActiveFalseAndRoleAndDeactivatedAtLessThanEqual(Role role, LocalDateTime cutoff);
 
     // Task 96: the account row locked for the rest of the transaction. Creating a garment takes
     // this lock before it counts, so two requests at once cannot both see room for "one more".

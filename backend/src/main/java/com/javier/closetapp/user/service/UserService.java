@@ -372,6 +372,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
+        user.setDeactivatedAt(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC));
         user.bumpTokenVersion();
         return mapToResponse(userRepository.save(user));
     }
@@ -381,6 +382,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(true);
+        user.setDeactivatedAt(null);
         return mapToResponse(userRepository.save(user));
     }
 

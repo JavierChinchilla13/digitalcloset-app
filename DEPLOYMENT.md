@@ -425,6 +425,22 @@ Type the export lines yourself; the script never prints or stores them (the secr
 Cloudinary reports as already gone counts as done; anything else stays in the queue for next time. Only addresses of **your** cloud are touched.
 Signed uploads with the API removing pictures by itself are the planned replacement once the domain is in place.
 
+### Erasing accounts that stayed deactivated for 30 days
+
+The Terms say an account an admin deactivated is erased after 30 days. Nothing does it on a schedule: you run `scripts/purge-deactivated.sh` from
+your own computer, now and then. It signs in as your admin account and calls an admin-only endpoint, so each account goes through the same full
+erasure as "Delete my account and data". The time an account was deactivated is kept in `users.deactivated_at` (accounts already deactivated when
+migration V19 ran started their 30 days that day). Admins are never erased, and the server refuses fewer than 30 days.
+
+```bash
+export PURGE_API_URL='https://<your-api-host>'        # no trailing slash, no /api
+export PURGE_ADMIN_EMAIL='<your admin email>'
+./scripts/purge-deactivated.sh            # dry run (default): says how many accounts are due, erases nobody
+./scripts/purge-deactivated.sh --apply    # erases them; then run ./scripts/purge-cloudinary.sh for their pictures
+```
+
+The password is typed when asked (not echoed, not stored, not on a command line). Take a backup first.
+
 ## 6. Settings reference
 
 Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them on.

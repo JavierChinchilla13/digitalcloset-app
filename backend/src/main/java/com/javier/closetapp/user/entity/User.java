@@ -109,6 +109,11 @@ public class User implements UserDetails {
     @Column(name = "terms_version", length = 32)
     private String termsVersion;
 
+    // Audit H12: when an admin deactivated the account (null while it is active). The owner-run purge erases accounts that have been
+    // deactivated for 30 days or more.
+    @Column(name = "deactivated_at")
+    private LocalDateTime deactivatedAt;
+
     @Column(name = "terms_accepted_at")
     private LocalDateTime termsAcceptedAt;
 
@@ -172,6 +177,8 @@ public class User implements UserDetails {
     public void setGuardianAuthorizedAt(LocalDateTime guardianAuthorizedAt) { this.guardianAuthorizedAt = guardianAuthorizedAt; }
     public String getTermsVersion() { return termsVersion; }
     public void setTermsVersion(String termsVersion) { this.termsVersion = termsVersion; }
+    public LocalDateTime getDeactivatedAt() { return deactivatedAt; }
+    public void setDeactivatedAt(LocalDateTime deactivatedAt) { this.deactivatedAt = deactivatedAt; }
     public LocalDateTime getTermsAcceptedAt() { return termsAcceptedAt; }
     public void setTermsAcceptedAt(LocalDateTime termsAcceptedAt) { this.termsAcceptedAt = termsAcceptedAt; }
     public LocalDateTime getDataAuthorizedAt() { return dataAuthorizedAt; }

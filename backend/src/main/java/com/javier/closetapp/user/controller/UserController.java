@@ -2,6 +2,7 @@ package com.javier.closetapp.user.controller;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.account.AccountExportService;
+import com.javier.closetapp.account.DeactivatedAccountPurgeService;
 import com.javier.closetapp.user.dto.AdminCreateUserRequest;
 import com.javier.closetapp.user.dto.DeleteAccountRequest;
 import com.javier.closetapp.user.dto.LegalConfirmationRequest;
@@ -29,8 +30,11 @@ public class UserController {
 
     private final UserService userService;
     private final AccountExportService accountExportService;
+    private final DeactivatedAccountPurgeService purgeService;
 
-    public UserController(UserService userService, AccountExportService accountExportService) {
+    public UserController(UserService userService, AccountExportService accountExportService,
+                          DeactivatedAccountPurgeService purgeService) {
+        this.purgeService = purgeService;
         this.userService = userService;
         this.accountExportService = accountExportService;
     }
@@ -130,6 +134,16 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> reactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.reactivateUser(id));
+    }
+
+    // Audit H12: erases accounts that have stayed deactivated for `days` (at least 30) or more. Dry run unless dryRun=false is given.
+    // Used by the owner's scripts/purge-deactivated.sh; nothing calls it on a schedule.
+    @PostMapping("/purge-deactivated")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DeactivatedAccountPurgeService.Result> purgeDeactivated(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "true") boolean dryRun) {
+        return ResponseEntity.ok(purgeService.purge(days, dryRun));
     }
 
     // Task 96: an admin gives an account the FREE or PREMIUM plan (more garments, no ads).
