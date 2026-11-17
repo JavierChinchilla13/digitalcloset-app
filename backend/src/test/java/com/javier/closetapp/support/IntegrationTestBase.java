@@ -107,6 +107,14 @@ public abstract class IntegrationTestBase {
                 .andExpect(status().is2xxSuccessful());
     }
 
+    // Deletes the signed-in person's own account and data (password sign-up, so the password proves who they are).
+    protected void deleteOwnAccount(TestUser user) throws Exception {
+        mockMvc.perform(post("/api/users/me/delete").header("Authorization", user.bearer())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("confirmation", "DELETE", "password", PASSWORD))))
+                .andExpect(status().isNoContent());
+    }
+
     protected TestUser registerUser() throws Exception {
         String email = uniqueEmail();
         String body = mockMvc.perform(post("/api/auth/register")

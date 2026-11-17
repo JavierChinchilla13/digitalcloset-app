@@ -22,6 +22,9 @@ public interface StripeGateway {
     // Cancels a subscription immediately (used when an account is deactivated).
     void cancelSubscription(String subscriptionId);
 
+    // Deletes the Stripe customer of an account that is being erased (Stripe keeps the payment records it must keep).
+    void deleteCustomer(String customerId);
+
     // Verifies the webhook's signature and returns the event, or null for an event type the app ignores.
     // Throws InvalidWebhookException when the signature or payload is not valid.
     BillingEvent parseWebhook(String payload, String signatureHeader);

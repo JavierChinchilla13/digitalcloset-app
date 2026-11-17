@@ -1,7 +1,9 @@
 package com.javier.closetapp.user.controller;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
+import com.javier.closetapp.account.AccountExportService;
 import com.javier.closetapp.user.dto.AdminCreateUserRequest;
+import com.javier.closetapp.user.dto.DeleteAccountRequest;
 import com.javier.closetapp.user.dto.ChangeEmailRequest;
 import com.javier.closetapp.user.dto.ChangePasswordRequest;
 import com.javier.closetapp.user.dto.ConfirmCodeRequest;
@@ -12,20 +14,24 @@ import com.javier.closetapp.user.dto.UserUpdateRequest;
 import com.javier.closetapp.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+    private final AccountExportService accountExportService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AccountExportService accountExportService) {
         this.userService = userService;
+        this.accountExportService = accountExportService;
     }
 
     @GetMapping("/me")
@@ -74,10 +80,21 @@ public class UserController {
         return ResponseEntity.ok(userService.confirmEmailChange(request));
     }
 
-    @PatchMapping("/me/deactivate")
-    public ResponseEntity<Void> deactivateCurrentUser() {
-        userService.deactivateCurrentUser();
+    // Audit H12: real erasure of the account and its data (replaces self-deactivation). POST, not DELETE, so the confirmation and
+    // the proof travel in a body that proxies do not strip.
+    @PostMapping("/me/delete")
+    public ResponseEntity<Void> deleteCurrentAccount(@Valid @RequestBody DeleteAccountRequest request) {
+        userService.deleteCurrentAccount(request);
         return ResponseEntity.noContent().build();
+    }
+
+    // Audit H12: "download my data" - the person's own data as one JSON file.
+    @GetMapping("/me/export")
+    public ResponseEntity<Map<String, Object>> exportMyData() {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"vysvi-my-data.json\"")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(accountExportService.export());
     }
 
     // Admin Endpoints

@@ -13,6 +13,9 @@ public interface ClothingRepository extends JpaRepository<ClothingItem, Long> {
     // The closet: excludes items the owner has deactivated via deleteItem() (soft delete).
     List<ClothingItem> findByOwnerAndIsActiveTrue(User owner);
 
+    // Every garment of the owner, including the ones they deleted (soft-deleted rows): used when the whole account is erased.
+    List<ClothingItem> findByOwner(User owner);
+
     // Task 96: how many garments count against the owner's limit (soft-deleted ones free their slot).
     long countByOwnerAndIsActiveTrue(User owner);
 }

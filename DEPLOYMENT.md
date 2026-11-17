@@ -407,6 +407,24 @@ table with the manifest afterwards ("Restore verified: N tables, M rows"). To go
 the restored copy (`DB_URL=jdbc:postgresql://localhost:5432/vysvi_restore_test`) and sign in. Restoring into
 production is a decision to take by hand, with the API stopped; these scripts will not do it.
 
+### Removing pictures after someone deletes their account
+
+When a person uses **Settings -> Delete my account and data**, everything about them in the database is erased at once. Their garment
+pictures live in Cloudinary, which the API cannot clean (the upload preset is public and the server holds no Cloudinary secret), so the API
+writes the pictures' **addresses** (no link to the person) into the table `image_erasure_queue`. You empty that queue from your own computer
+with `scripts/purge-cloudinary.sh`, now and then (the Privacy text will promise removal within 30 days):
+
+```bash
+export PURGE_DATABASE_URL='postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require'
+export CLOUDINARY_URL='cloudinary://<api key>:<api secret>@<cloud name>'     # Cloudinary dashboard -> Settings -> API keys
+./scripts/purge-cloudinary.sh            # dry run: lists what it would delete, deletes nothing, does not call Cloudinary
+./scripts/purge-cloudinary.sh --apply    # deletes the pictures, then removes them from the queue
+```
+
+Type the export lines yourself; the script never prints or stores them (the secret goes to `curl` through stdin, not the command line). A picture
+Cloudinary reports as already gone counts as done; anything else stays in the queue for next time. Only addresses of **your** cloud are touched.
+Signed uploads with the API removing pictures by itself are the planned replacement once the domain is in place.
+
 ## 6. Settings reference
 
 Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them on.

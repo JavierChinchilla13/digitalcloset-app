@@ -20,4 +20,9 @@ public interface PendingAccountChangeRepository extends JpaRepository<PendingAcc
     @Modifying
     @Query("delete from PendingAccountChange c where c.user.userId = :userId and c.changeType = :changeType")
     void deleteAllByUserIdAndChangeType(@Param("userId") Long userId, @Param("changeType") AccountChangeType changeType);
+
+    // Audit H12: removes every pending change of the user (used when the account is erased).
+    @Modifying
+    @Query("delete from PendingAccountChange c where c.user.userId = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
 }

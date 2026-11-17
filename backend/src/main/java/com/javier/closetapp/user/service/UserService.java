@@ -1,6 +1,12 @@
 package com.javier.closetapp.user.service;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
+import com.javier.closetapp.account.AccountErasureService;
+import com.javier.closetapp.auth.google.GoogleIdentity;
+import com.javier.closetapp.auth.google.GoogleTokenVerifier;
+import com.javier.closetapp.exception.GoogleSignInException;
+import com.javier.closetapp.exception.InvalidInputException;
+import com.javier.closetapp.user.dto.DeleteAccountRequest;
 import com.javier.closetapp.auth.mail.VerificationCodeMailer;
 import com.javier.closetapp.common.enums.AccountChangeType;
 import com.javier.closetapp.common.enums.Plan;
@@ -54,6 +60,8 @@ public class UserService {
     private final VerificationAttemptTracker verificationAttemptTracker;
     private final PlanLimits planLimits;
     private final BillingService billingService;
+    private final GoogleTokenVerifier googleTokenVerifier;
+    private final AccountErasureService accountErasureService;
 
     private final long verificationExpirationMinutes;
     private final long verificationMinIntervalSeconds;
@@ -66,6 +74,8 @@ public class UserService {
                         VerificationAttemptTracker verificationAttemptTracker,
                         PlanLimits planLimits,
                         BillingService billingService,
+                        GoogleTokenVerifier googleTokenVerifier,
+                        AccountErasureService accountErasureService,
                         @Value("${app.account-verification.expiration-minutes:10}") long verificationExpirationMinutes,
                         @Value("${app.account-verification.min-interval-seconds:60}") long verificationMinIntervalSeconds,
                         @Value("${app.account-verification.max-attempts:5}") int verificationMaxAttempts) {
@@ -73,6 +83,8 @@ public class UserService {
         this.verificationAttemptTracker = verificationAttemptTracker;
         this.planLimits = planLimits;
         this.billingService = billingService;
+        this.googleTokenVerifier = googleTokenVerifier;
+        this.accountErasureService = accountErasureService;
         this.outfitRepository = outfitRepository;
         this.pendingChangeRepository = pendingChangeRepository;
         this.passwordEncoder = passwordEncoder;
@@ -282,14 +294,40 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
+    // Audit H12: "delete my account and data" - REAL erasure (it replaces self-deactivation; admins still deactivate others).
+    // The person confirms with the word DELETE and proves who they are: their password, or for a Google-only account a fresh
+    // Google credential for the same Google account. A wrong proof is a 403 (not a 401, which the website reads as "session ended").
     @Transactional
-    public void deactivateCurrentUser() {
+    public void deleteCurrentAccount(DeleteAccountRequest request) {
         User user = getAuthenticatedUser();
-        // Task 103: stop charging an account that is closed (best effort; never blocks the deactivation).
-        billingService.cancelSubscriptionQuietly(user);
-        user.setActive(false);
-        user.bumpTokenVersion();
-        userRepository.save(user);
+        if (!"DELETE".equals(request.getConfirmation())) {
+            throw new InvalidInputException("Type DELETE to confirm.");
+        }
+        if (user.getPassword() != null) {
+            if (request.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new ForbiddenOperationException("Current password is incorrect");
+            }
+        } else {
+            requireFreshGoogleProof(user, request.getGoogleCredential());
+        }
+        accountErasureService.erase(user);
+    }
+
+    // For an account with no password: the Google credential must be valid and belong to the same Google account.
+    private void requireFreshGoogleProof(User user, String credential) {
+        String message = "Google could not confirm it is you. Please try again.";
+        if (credential == null || credential.isBlank() || user.getGoogleId() == null) {
+            throw new ForbiddenOperationException(message);
+        }
+        GoogleIdentity identity;
+        try {
+            identity = googleTokenVerifier.verify(credential);
+        } catch (GoogleSignInException e) {
+            throw new ForbiddenOperationException(message);
+        }
+        if (!user.getGoogleId().equals(identity.subject())) {
+            throw new ForbiddenOperationException(message);
+        }
     }
 
     // Admin methods

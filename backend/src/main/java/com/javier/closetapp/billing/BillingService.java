@@ -211,6 +211,17 @@ public class BillingService {
         }
     }
 
+    // Best effort when an account is erased: delete its Stripe customer. A failure is logged (by id only), never raised: the
+    // erasure itself is not blocked by Stripe being unreachable. Stripe keeps the transaction records it must keep.
+    public void deleteStripeCustomerQuietly(User user) {
+        if (user.getStripeCustomerId() == null || !gateway.isConfigured()) return;
+        try {
+            gateway.deleteCustomer(user.getStripeCustomerId());
+        } catch (RuntimeException e) {
+            log.warn("Could not delete the Stripe customer of user {}: {}", user.getUserId(), e.getClass().getSimpleName());
+        }
+    }
+
     private void requireConfigured() {
         if (!gateway.isConfigured()) {
             throw new BillingException("Payments are not set up yet.");
