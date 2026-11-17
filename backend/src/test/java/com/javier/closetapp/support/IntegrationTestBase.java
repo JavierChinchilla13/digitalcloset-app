@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -96,6 +97,14 @@ public abstract class IntegrationTestBase {
         Map<String, Object> body = new LinkedHashMap<>(base);
         body.putAll(extra);
         return body;
+    }
+
+    // Deactivates an account the way an admin does (users no longer deactivate themselves: they delete their account).
+    protected void deactivateAsAdmin(TestUser target) throws Exception {
+        TestUser admin = registerUser();
+        promoteToAdmin(admin);
+        mockMvc.perform(patch("/api/users/" + target.userId() + "/deactivate").header("Authorization", admin.bearer()))
+                .andExpect(status().is2xxSuccessful());
     }
 
     protected TestUser registerUser() throws Exception {

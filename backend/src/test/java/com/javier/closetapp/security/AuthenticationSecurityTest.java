@@ -167,9 +167,7 @@ class AuthenticationSecurityTest extends IntegrationTestBase {
     @DisplayName("a deactivated user's login is refused")
     void deactivatedUserCannotLogIn() throws Exception {
         TestUser user = registerUser();
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .patch("/api/users/me/deactivate").header("Authorization", user.bearer()))
-                .andExpect(status().is2xxSuccessful());
+        deactivateAsAdmin(user);
 
         int code = login(user.email(), PASSWORD).andReturn().getResponse().getStatus();
 

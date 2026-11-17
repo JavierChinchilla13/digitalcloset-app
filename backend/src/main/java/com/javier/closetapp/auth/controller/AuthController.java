@@ -2,6 +2,7 @@ package com.javier.closetapp.auth.controller;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.auth.dto.ForgotPasswordRequest;
+import com.javier.closetapp.auth.dto.GoogleCompleteRequest;
 import com.javier.closetapp.auth.dto.GoogleLoginRequest;
 import com.javier.closetapp.auth.dto.LoginRequest;
 import com.javier.closetapp.auth.dto.RegisterRequest;
@@ -57,6 +58,19 @@ public class AuthController {
         ageRejectionLimiter.requireNotBlocked(address);
         try {
             return ResponseEntity.ok(authService.register(request));
+        } catch (AgeNotAllowedException refused) {
+            ageRejectionLimiter.recordRejection(address);
+            throw refused;
+        }
+    }
+
+    // Audit H12: the second step of a NEW Google sign-up (birth month/year, acceptances). Same refusal counter as register.
+    @PostMapping("/google/complete")
+    public ResponseEntity<AuthResponse> googleComplete(@Valid @RequestBody GoogleCompleteRequest request, HttpServletRequest http) {
+        String address = http.getRemoteAddr();
+        ageRejectionLimiter.requireNotBlocked(address);
+        try {
+            return ResponseEntity.ok(authService.googleComplete(request));
         } catch (AgeNotAllowedException refused) {
             ageRejectionLimiter.recordRejection(address);
             throw refused;
