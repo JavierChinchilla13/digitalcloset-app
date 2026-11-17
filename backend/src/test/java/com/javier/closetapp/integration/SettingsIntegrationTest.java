@@ -57,7 +57,7 @@ class SettingsIntegrationTest extends IntegrationTestBase {
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", alice.email(), "password", PASSWORD))))
+                        .content(json(registrationBody(alice.email(), PASSWORD))))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("An account with this email already exists"));
 
@@ -72,9 +72,7 @@ class SettingsIntegrationTest extends IntegrationTestBase {
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of(
-                                "email", email, "password", PASSWORD,
-                                "firstName", "Ada", "lastName", "Lovelace"))))
+                        .content(json(withFields(registrationBody(email, PASSWORD), Map.of("firstName", "Ada", "lastName", "Lovelace")))))
                 .andExpect(status().isOk());
 
         String token = objectMapper.readTree(login(email, PASSWORD)

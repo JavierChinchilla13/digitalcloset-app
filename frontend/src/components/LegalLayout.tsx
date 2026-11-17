@@ -26,8 +26,8 @@ const LegalLayout = ({
             role="note"
             className="mt-8 rounded-2xl border border-ink/10 bg-ink/[0.03] p-4 text-text-secondary text-xs leading-relaxed"
           >
-            Draft for review: this page is written in plain language and has not been reviewed by a lawyer. The marked
-            gaps (like {LEGAL.country}) are still to be filled in.
+            Draft for review: this page is written in plain language and has not been reviewed by a lawyer. Items marked
+            [PLACEHOLDER] are facts still to be filled in, and items marked [PROPOSAL] are suggestions still to be confirmed.
           </p>
         )}
 
@@ -41,6 +41,15 @@ const LegalLayout = ({
       </article>
     </SectionWrapper>
   </div>
+);
+
+// A visible gap in a legal text: [PLACEHOLDER: ...] is a fact still to be supplied, [PROPOSAL: ...] a suggestion still to be confirmed.
+// Bold, boxed and spelled out in words, so it can be told apart without colour. A test fails the build if LEGAL_IS_DRAFT is false while
+// any of these is still on a page (see __tests__/legalPages.test.tsx).
+export const Marker = ({ kind, children }: { kind: 'PLACEHOLDER' | 'PROPOSAL'; children: ReactNode }) => (
+  <mark className="rounded border border-ink/30 bg-transparent px-1 font-semibold text-text-primary">
+    [{kind}: {children}]
+  </mark>
 );
 
 // One numbered-looking section of a legal page.

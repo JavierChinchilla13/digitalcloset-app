@@ -44,12 +44,10 @@ class AuthenticationSecurityTest extends IntegrationTestBase {
         String token = objectMapper.readTree(
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(json(Map.of(
-                                        "email", email,
-                                        "password", PASSWORD,
+                                .content(json(withFields(registrationBody(email, PASSWORD), Map.of(
                                         "role", "ROLE_ADMIN",
                                         "roles", new String[]{"ROLE_ADMIN"},
-                                        "admin", true))))
+                                        "admin", true)))))
                         .andExpect(status().isOk())
                         .andReturn().getResponse().getContentAsString()).get("token").asText();
 
@@ -76,7 +74,7 @@ class AuthenticationSecurityTest extends IntegrationTestBase {
 
         int code = mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", user.email(), "password", PASSWORD))))
+                        .content(json(registrationBody(user.email(), PASSWORD))))
                 .andReturn().getResponse().getStatus();
 
         assertTrue(code >= 400 && code < 600, "duplicate registration must not succeed, got " + code);
@@ -87,11 +85,11 @@ class AuthenticationSecurityTest extends IntegrationTestBase {
     void registrationIsValidated() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", "not-an-email", "password", PASSWORD))))
+                        .content(json(registrationBody("not-an-email", PASSWORD))))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", uniqueEmail(), "password", "short"))))
+                        .content(json(registrationBody(uniqueEmail(), "short"))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -169,9 +167,7 @@ class AuthenticationSecurityTest extends IntegrationTestBase {
     @DisplayName("a deactivated user's login is refused")
     void deactivatedUserCannotLogIn() throws Exception {
         TestUser user = registerUser();
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
-                        .patch("/api/users/me/deactivate").header("Authorization", user.bearer()))
-                .andExpect(status().is2xxSuccessful());
+        deactivateAsAdmin(user);
 
         int code = login(user.email(), PASSWORD).andReturn().getResponse().getStatus();
 

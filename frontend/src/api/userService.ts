@@ -1,5 +1,6 @@
 import api from './axios';
 import type { AuthResponse, User } from '../types';
+import type { AgeConsentPayload } from '../hooks/useAgeConsentForm';
 
 // The signed-in user's own account endpoints (UserController /api/users/me).
 // Task 78: the "main outfit" lives on the account, so it follows the user
@@ -45,7 +46,20 @@ export const userService = {
     return response.data;
   },
 
-  deactivateMe: async (): Promise<void> => {
-    await api.patch('/users/me/deactivate');
+  // Audit H12: an account made before the age step records its facts. Under 13 the server erases the account and answers 403 AGE_NOT_ALLOWED.
+  confirmLegal: async (data: AgeConsentPayload): Promise<User> => {
+    const response = await api.post<User>('/users/me/legal', data);
+    return response.data;
+  },
+
+  // Audit H12: deletes the account and its data for good. Proof is the password, or a fresh Google credential for a Google-only account.
+  deleteAccount: async (proof: { password?: string; googleCredential?: string }): Promise<void> => {
+    await api.post('/users/me/delete', { confirmation: 'DELETE', ...proof });
+  },
+
+  // Audit H12: "download my data" (JSON file of everything held about the account).
+  exportMyData: async (): Promise<Blob> => {
+    const response = await api.get<Blob>('/users/me/export', { responseType: 'blob' });
+    return response.data;
   },
 };

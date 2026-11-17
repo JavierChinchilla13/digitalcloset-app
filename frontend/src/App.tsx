@@ -31,27 +31,34 @@ const CategoriesPage = lazy(() => import('./pages/CategoriesPage'));
 const CategoryDetailPage = lazy(() => import('./pages/CategoryDetailPage'));
 const OutfitShowcasePage = lazy(() => import('./pages/OutfitShowcasePage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const ConfirmDetailsPage = lazy(() => import('./pages/ConfirmDetailsPage'));
 
 // Task 22: role-aware route guard. Signed-out visitors go to /login; with
 // requireAdmin, signed-in non-admins are sent home instead (they have no
 // business on an admin page, and the backend would refuse its requests
 // anyway - @PreAuthorize is the real enforcement, this just avoids showing
 // a page that can only fail). isAdmin comes from the role on the last login.
+// Audit H12: an account made before the age/consent step is sent to /confirm-details until it confirms (allowUnconfirmed lets that page
+// and Settings, where the account can instead be deleted, stay reachable). This only steers the screens; the server does not block calls.
 const ProtectedRoute = ({
   children,
   requireAdmin = false,
+  allowUnconfirmed = false,
 }: {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  allowUnconfirmed?: boolean;
 }) => {
-  const { isAuthenticated, isAdmin } = useAuthStore();
+  const { isAuthenticated, isAdmin, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" />;
+  if (!allowUnconfirmed && user?.needsLegalConfirmation) return <Navigate to="/confirm-details" replace />;
   if (requireAdmin && !isAdmin) return <Navigate to="/" replace />;
   return children as React.ReactElement;
 };
 
 function App() {
   const { isAuthenticated } = useAuthStore();
+  const needsConfirmation = useAuthStore((state) => Boolean(state.user?.needsLegalConfirmation));
   const { fetchItems } = useClothingStore();
   const fetchDisplayNames = usePersonaSettingsStore((state) => state.fetchDisplayNames);
 
@@ -91,7 +98,14 @@ function App() {
           {/* "/" is the item-first Attire builder for signed-in users and the
               marketing page for visitors. (Where login lands is decided by
               LoginPage / SignupPage, not here.) */}
-          <Route path="/" element={isAuthenticated ? <FlatOutfitBuilderPage /> : <LandingPage />} />
+          <Route
+            path="/"
+            element={
+              isAuthenticated
+                ? needsConfirmation ? <Navigate to="/confirm-details" replace /> : <FlatOutfitBuilderPage />
+                : <LandingPage />
+            }
+          />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -121,7 +135,9 @@ function App() {
           {/* Task 22: admin-only account management. */}
           <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminUsersPage /></ProtectedRoute>} />
           {/* Task 79: name/email/password/deactivate, reached from UserMenu. */}
-          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute allowUnconfirmed><SettingsPage /></ProtectedRoute>} />
+          {/* Audit H12: existing accounts confirm their birth month/year and acceptances once. */}
+          <Route path="/confirm-details" element={<ProtectedRoute allowUnconfirmed><ConfirmDetailsPage /></ProtectedRoute>} />
           {/* Pages that were removed (the old dashboard and the persona-first
               outfit builder): old bookmarks land on their replacements. */}
           <Route path="/dashboard" element={<Navigate to="/showcase" replace />} />

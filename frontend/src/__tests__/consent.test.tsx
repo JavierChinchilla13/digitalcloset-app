@@ -97,7 +97,7 @@ describe('the footer and the legal pages (signed out)', () => {
     renderApp('/privacy');
 
     expect(screen.getByRole('heading', { level: 1, name: /privacy policy/i })).toBeInTheDocument();
-    for (const word of ['Render', 'Neon', 'Cloudinary', 'Stripe', 'Sentry', 'auth-storage', 'vysvi-consent', 'javidilugo@gmail.com']) {
+    for (const word of ['Render', 'Supabase', 'Cloudinary', 'Stripe', 'Sentry', 'auth-storage', 'vysvi-consent', 'javidilugo@gmail.com']) {
       expect(screen.getAllByText(new RegExp(word)).length, word).toBeGreaterThan(0);
     }
     expect(screen.getByRole('note')).toHaveTextContent(/draft/i);

@@ -40,15 +40,24 @@ class GoogleLoginIntegrationTest extends IntegrationTestBase {
         return google(FakeGoogleTokenVerifier.credential(sub, email, true, "Ada", "Lovelace"));
     }
 
+    // The second step of a NEW Google sign-up: an adult who accepted the Terms and authorised the processing of their data.
+    private ResultActions signUpWithGoogle(String sub, String email) throws Exception {
+        Map<String, Object> body = withFields(registrationBody(email, PASSWORD), Map.of(
+                "credential", FakeGoogleTokenVerifier.credential(sub, email, true, "Ada", "Lovelace")));
+        body.remove("email");
+        body.remove("password");
+        return mockMvc.perform(post("/api/auth/google/complete").contentType(MediaType.APPLICATION_JSON).content(json(body)));
+    }
+
     private String tokenOf(ResultActions result) throws Exception {
         return objectMapper.readTree(result.andReturn().getResponse().getContentAsString()).get("token").asText();
     }
 
     @Test
-    @DisplayName("a first Google sign-in creates a normal FREE account with no password, from the Google profile")
+    @DisplayName("completing a first Google sign-up creates a normal FREE account with no password, from the Google profile")
     void createsAccount() throws Exception {
         String email = uniqueEmail();
-        ResultActions result = google(sub(), email).andExpect(status().isOk()).andExpect(jsonPath("$.email").value(email));
+        ResultActions result = signUpWithGoogle(sub(), email).andExpect(status().isOk()).andExpect(jsonPath("$.email").value(email));
 
         User user = userRepository.findByEmail(email).orElseThrow();
         assertEquals(Role.ROLE_USER, user.getRole());
@@ -70,7 +79,7 @@ class GoogleLoginIntegrationTest extends IntegrationTestBase {
     void secondSignInReusesAccount() throws Exception {
         String sub = sub();
         String email = uniqueEmail();
-        long first = objectMapper.readTree(google(sub, email).andReturn().getResponse().getContentAsString()).get("userId").asLong();
+        long first = objectMapper.readTree(signUpWithGoogle(sub, email).andReturn().getResponse().getContentAsString()).get("userId").asLong();
         long second = objectMapper.readTree(google(sub, email).andReturn().getResponse().getContentAsString()).get("userId").asLong();
 
         assertEquals(first, second);
@@ -123,7 +132,7 @@ class GoogleLoginIntegrationTest extends IntegrationTestBase {
     @DisplayName("a deactivated account cannot sign in with Google, and is not linked or changed")
     void deactivatedAccount() throws Exception {
         TestUser existing = registerUser();
-        mockMvc.perform(patch("/api/users/me/deactivate").header("Authorization", existing.bearer())).andExpect(status().isNoContent());
+        deactivateAsAdmin(existing);
 
         google(sub(), existing.email()).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.message").value("This account has been deactivated."));
 
@@ -137,8 +146,8 @@ class GoogleLoginIntegrationTest extends IntegrationTestBase {
     void deactivatedLinkedAccount() throws Exception {
         String sub = sub();
         String email = uniqueEmail();
-        String token = tokenOf(google(sub, email));
-        mockMvc.perform(patch("/api/users/me/deactivate").header("Authorization", "Bearer " + token)).andExpect(status().isNoContent());
+        TestUser linked = new TestUser(objectMapper.readTree(signUpWithGoogle(sub, email).andReturn().getResponse().getContentAsString()).get("userId").asLong(), email, "unused");
+        deactivateAsAdmin(linked);
 
         google(sub, email).andExpect(status().isUnauthorized());
     }
@@ -156,7 +165,7 @@ class GoogleLoginIntegrationTest extends IntegrationTestBase {
     @DisplayName("a Google-only account cannot password-login, and the password flows explain why")
     void googleOnlyAccountHasNoPassword() throws Exception {
         String email = uniqueEmail();
-        String token = tokenOf(google(sub(), email));
+        String token = tokenOf(signUpWithGoogle(sub(), email));
 
         login(email, "anything-at-all-123").andExpect(status().isUnauthorized());
 
@@ -179,7 +188,7 @@ class GoogleLoginIntegrationTest extends IntegrationTestBase {
     @DisplayName("Forgot password lets a Google-only user add a password")
     void forgotPasswordAddsAPassword() throws Exception {
         String email = uniqueEmail();
-        google(sub(), email).andExpect(status().isOk());
+        signUpWithGoogle(sub(), email).andExpect(status().isOk());
 
         mockMvc.perform(post("/api/auth/forgot-password").contentType(MediaType.APPLICATION_JSON).content(json(Map.of("email", email))))
                 .andExpect(status().isOk());

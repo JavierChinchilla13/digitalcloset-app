@@ -6,10 +6,16 @@ export const LEGAL = {
   contactEmail: 'javidilugo@gmail.com',
   siteName: 'VYSVI',
   siteUrl: 'https://vysvi-web.onrender.com',
-  lastUpdated: 'November 5, 2026',
+  lastUpdated: 'November 16, 2026',
   // The country whose law governs these terms.
   country: 'Costa Rica',
 } as const;
 
-// Flip to false once the owner has reviewed both pages: removes the "draft" notice from them.
+// The version of the Terms and Privacy Policy a person accepts when signing up; stored with the acceptance. It must equal
+// LegalVersion.CURRENT in the backend (a backend test compares the two). While the texts are a draft it reads YYYY-MM-draft-N.
+export const LEGAL_VERSION = '2026-11-draft-1';
+
+// Flip to false once the owner has reviewed both pages and EVERY [PLACEHOLDER: ...] / [PROPOSAL: ...] marker is gone from them: it removes
+// the "draft" notice. A test (legalPages.test.tsx) fails the build if this is false while a marker remains. The notice claims neither a
+// legal review nor compliance, and its replacement ("Last updated <date>") must not either.
 export const LEGAL_IS_DRAFT = true;

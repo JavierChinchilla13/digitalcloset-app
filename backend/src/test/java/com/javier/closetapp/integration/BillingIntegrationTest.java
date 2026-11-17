@@ -280,24 +280,25 @@ class BillingIntegrationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("deactivating a subscribed account cancels its subscription, and Stripe being down does not block it")
-    void deactivationCancelsTheSubscription() throws Exception {
+    @DisplayName("deleting a subscribed account cancels its subscription and deletes the Stripe customer, and Stripe being down does not block it")
+    void deletionCancelsTheSubscriptionAndDeletesTheCustomer() throws Exception {
         TestUser alice = registerUser();
         String subscription = "sub_" + uid();
-        webhook(checkoutCompleted("evt_" + uid(), alice.userId(), "cus_" + uid(), subscription), "valid");
+        String customer = "cus_" + uid();
+        webhook(checkoutCompleted("evt_" + uid(), alice.userId(), customer, subscription), "valid");
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/users/me/deactivate")
-                        .header("Authorization", alice.bearer()))
-                .andExpect(status().is2xxSuccessful());
+        deleteOwnAccount(alice);
+
         assertTrue(stripe.canceledSubscriptions.contains(subscription));
+        assertTrue(stripe.deletedCustomers.contains(customer));
+        assertTrue(userRepository.findByEmail(alice.email()).isEmpty());
 
         stripe.failCancel = true;
+        stripe.failDelete = true;
         TestUser bob = registerUser();
         webhook(checkoutCompleted("evt_" + uid(), bob.userId(), "cus_" + uid(), "sub_" + uid()), "valid");
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/users/me/deactivate")
-                        .header("Authorization", bob.bearer()))
-                .andExpect(status().is2xxSuccessful());
-        assertEquals(false, reload(bob).isActive());
+        deleteOwnAccount(bob);
+        assertTrue(userRepository.findByEmail(bob.email()).isEmpty());
     }
 
     // Puts Stripe's own creation time (epoch seconds) on an event payload.

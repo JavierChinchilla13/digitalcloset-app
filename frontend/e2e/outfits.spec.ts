@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { chooseCookies, registerAccount, seedGarments, signIn } from './helpers';
 
 // Flows 3 and 4: building an outfit from closet pieces and saving it, then seeing it in the saved list and the Showcase.

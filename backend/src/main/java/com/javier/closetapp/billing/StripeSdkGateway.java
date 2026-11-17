@@ -123,6 +123,15 @@ public class StripeSdkGateway implements StripeGateway {
     }
 
     @Override
+    public void deleteCustomer(String customerId) {
+        try {
+            Customer.retrieve(customerId, options()).delete();
+        } catch (StripeException e) {
+            throw new IllegalStateException("Stripe could not delete the customer", e);
+        }
+    }
+
+    @Override
     public BillingEvent parseWebhook(String payload, String signatureHeader) {
         if (webhookSecret.isEmpty()) {
             throw new InvalidWebhookException("Webhook secret is not configured");

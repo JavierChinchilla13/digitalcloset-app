@@ -407,6 +407,40 @@ table with the manifest afterwards ("Restore verified: N tables, M rows"). To go
 the restored copy (`DB_URL=jdbc:postgresql://localhost:5432/vysvi_restore_test`) and sign in. Restoring into
 production is a decision to take by hand, with the API stopped; these scripts will not do it.
 
+### Removing pictures after someone deletes their account
+
+When a person uses **Settings -> Delete my account and data**, everything about them in the database is erased at once. Their garment
+pictures live in Cloudinary, which the API cannot clean (the upload preset is public and the server holds no Cloudinary secret), so the API
+writes the pictures' **addresses** (no link to the person) into the table `image_erasure_queue`. You empty that queue from your own computer
+with `scripts/purge-cloudinary.sh`, now and then (the Privacy text will promise removal within 30 days):
+
+```bash
+export PURGE_DATABASE_URL='postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres?sslmode=require'
+export CLOUDINARY_URL='cloudinary://<api key>:<api secret>@<cloud name>'     # Cloudinary dashboard -> Settings -> API keys
+./scripts/purge-cloudinary.sh            # dry run: lists what it would delete, deletes nothing, does not call Cloudinary
+./scripts/purge-cloudinary.sh --apply    # deletes the pictures, then removes them from the queue
+```
+
+Type the export lines yourself; the script never prints or stores them (the secret goes to `curl` through stdin, not the command line). A picture
+Cloudinary reports as already gone counts as done; anything else stays in the queue for next time. Only addresses of **your** cloud are touched.
+Signed uploads with the API removing pictures by itself are the planned replacement once the domain is in place.
+
+### Erasing accounts that stayed deactivated for 30 days
+
+The Terms say an account an admin deactivated is erased after 30 days. Nothing does it on a schedule: you run `scripts/purge-deactivated.sh` from
+your own computer, now and then. It signs in as your admin account and calls an admin-only endpoint, so each account goes through the same full
+erasure as "Delete my account and data". The time an account was deactivated is kept in `users.deactivated_at` (accounts already deactivated when
+migration V19 ran started their 30 days that day). Admins are never erased, and the server refuses fewer than 30 days.
+
+```bash
+export PURGE_API_URL='https://<your-api-host>'        # no trailing slash, no /api
+export PURGE_ADMIN_EMAIL='<your admin email>'
+./scripts/purge-deactivated.sh            # dry run (default): says how many accounts are due, erases nobody
+./scripts/purge-deactivated.sh --apply    # erases them; then run ./scripts/purge-cloudinary.sh for their pictures
+```
+
+The password is typed when asked (not echoed, not stored, not on a command line). Take a backup first.
+
 ## 6. Settings reference
 
 Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them on.
@@ -431,6 +465,7 @@ Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them 
 | `VITE_ADSTERRA_SCRIPT_URL` / `_KEY` / `_WIDTH` / `_HEIGHT` | with `adsterra` | From the banner unit's code: its `invoke.js` address, key and size. |
 | `RATE_LIMIT_AUTH_MAX` | no | Requests per minute per visitor on the login / register / password-reset endpoints (default 30). |
 | `RATE_LIMIT_PUBLIC_MAX` | no | Requests per minute per visitor on the public shared-outfit endpoint `/api/public/outfits/{token}` (default 120). Separate from the login limit. |
+| `RATE_LIMIT_AGE_REJECTION_ENABLED` / `_MAX` / `_WINDOW_SECONDS` | no | Counts sign-ups **refused for age** per client address (in memory only) and answers 429 after `MAX` (default 5) within the window (default 3600 s). **Off by default** (`false`): behind Render's proxy the address the app sees may be the proxy's, so one counter would be shared by every visitor. To turn it on later: first measure the real client address (audit H2), then set `RATE_LIMIT_AGE_REJECTION_ENABLED=true` on `vysvi-api` and redeploy. Size `MAX` for shared mobile networks. |
 | `JAVA_TOOL_OPTIONS` | no | JVM flags; e.g. `-Xmx512m` on a small machine. |
 
 Never put a secret in a `VITE_` variable: those end up in the public JavaScript.

@@ -1,6 +1,18 @@
 package com.javier.closetapp.user.service;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
+import com.javier.closetapp.auth.service.AuthService;
+import com.javier.closetapp.exception.AgeNotAllowedException;
+import com.javier.closetapp.legal.AccountAge;
+import com.javier.closetapp.legal.AgePolicy;
+import com.javier.closetapp.legal.AgePolicy.AgeBand;
+import com.javier.closetapp.user.dto.LegalConfirmationRequest;
+import com.javier.closetapp.account.AccountErasureService;
+import com.javier.closetapp.auth.google.GoogleIdentity;
+import com.javier.closetapp.auth.google.GoogleTokenVerifier;
+import com.javier.closetapp.exception.GoogleSignInException;
+import com.javier.closetapp.exception.InvalidInputException;
+import com.javier.closetapp.user.dto.DeleteAccountRequest;
 import com.javier.closetapp.auth.mail.VerificationCodeMailer;
 import com.javier.closetapp.common.enums.AccountChangeType;
 import com.javier.closetapp.common.enums.Plan;
@@ -34,7 +46,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
@@ -54,6 +68,8 @@ public class UserService {
     private final VerificationAttemptTracker verificationAttemptTracker;
     private final PlanLimits planLimits;
     private final BillingService billingService;
+    private final GoogleTokenVerifier googleTokenVerifier;
+    private final AccountErasureService accountErasureService;
 
     private final long verificationExpirationMinutes;
     private final long verificationMinIntervalSeconds;
@@ -66,6 +82,8 @@ public class UserService {
                         VerificationAttemptTracker verificationAttemptTracker,
                         PlanLimits planLimits,
                         BillingService billingService,
+                        GoogleTokenVerifier googleTokenVerifier,
+                        AccountErasureService accountErasureService,
                         @Value("${app.account-verification.expiration-minutes:10}") long verificationExpirationMinutes,
                         @Value("${app.account-verification.min-interval-seconds:60}") long verificationMinIntervalSeconds,
                         @Value("${app.account-verification.max-attempts:5}") int verificationMaxAttempts) {
@@ -73,6 +91,8 @@ public class UserService {
         this.verificationAttemptTracker = verificationAttemptTracker;
         this.planLimits = planLimits;
         this.billingService = billingService;
+        this.googleTokenVerifier = googleTokenVerifier;
+        this.accountErasureService = accountErasureService;
         this.outfitRepository = outfitRepository;
         this.pendingChangeRepository = pendingChangeRepository;
         this.passwordEncoder = passwordEncoder;
@@ -282,14 +302,61 @@ public class UserService {
         return mapToResponse(userRepository.save(user));
     }
 
-    @Transactional
-    public void deactivateCurrentUser() {
+    // Audit H12: an EXISTING account gives the facts a new sign-up gives (birth month/year, the guardian declaration for 13-17, the two
+    // acceptances, the version of the texts). If a birth month/year is already recorded it is NOT changed from here. Someone who turns out
+    // to be under the minimum age has the account and all its data ERASED and gets the same uniform 403 as a refused sign-up; the
+    // erasure is committed even though the exception is thrown (noRollbackFor).
+    @Transactional(noRollbackFor = AgeNotAllowedException.class)
+    public UserResponse confirmLegal(LegalConfirmationRequest request) {
         User user = getAuthenticatedUser();
-        // Task 103: stop charging an account that is closed (best effort; never blocks the deactivation).
-        billingService.cancelSubscriptionQuietly(user);
-        user.setActive(false);
-        user.bumpTokenVersion();
-        userRepository.save(user);
+        Integer year = user.getBirthYear() != null ? user.getBirthYear() : request.getBirthYear();
+        Integer month = user.getBirthMonth() != null ? user.getBirthMonth() : request.getBirthMonth();
+
+        AgeBand band = AgePolicy.bandFor(year, month, LocalDate.now(ZoneOffset.UTC));
+        if (band == AgeBand.UNDER_MIN) {
+            accountErasureService.erase(user);
+            throw new AgeNotAllowedException();
+        }
+        AuthService.requireDeclarations(band, request.getGuardianAuthorized(), request.getTermsAccepted(),
+                request.getDataAuthorized(), request.getLegalVersion());
+        AuthService.recordDeclarations(user, band, year, month);
+        return mapToResponse(userRepository.save(user));
+    }
+
+    // Audit H12: "delete my account and data" - REAL erasure (it replaces self-deactivation; admins still deactivate others).
+    // The person confirms with the word DELETE and proves who they are: their password, or for a Google-only account a fresh
+    // Google credential for the same Google account. A wrong proof is a 403 (not a 401, which the website reads as "session ended").
+    @Transactional
+    public void deleteCurrentAccount(DeleteAccountRequest request) {
+        User user = getAuthenticatedUser();
+        if (!"DELETE".equals(request.getConfirmation())) {
+            throw new InvalidInputException("Type DELETE to confirm.");
+        }
+        if (user.getPassword() != null) {
+            if (request.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                throw new ForbiddenOperationException("Current password is incorrect");
+            }
+        } else {
+            requireFreshGoogleProof(user, request.getGoogleCredential());
+        }
+        accountErasureService.erase(user);
+    }
+
+    // For an account with no password: the Google credential must be valid and belong to the same Google account.
+    private void requireFreshGoogleProof(User user, String credential) {
+        String message = "Google could not confirm it is you. Please try again.";
+        if (credential == null || credential.isBlank() || user.getGoogleId() == null) {
+            throw new ForbiddenOperationException(message);
+        }
+        GoogleIdentity identity;
+        try {
+            identity = googleTokenVerifier.verify(credential);
+        } catch (GoogleSignInException e) {
+            throw new ForbiddenOperationException(message);
+        }
+        if (!user.getGoogleId().equals(identity.subject())) {
+            throw new ForbiddenOperationException(message);
+        }
     }
 
     // Admin methods
@@ -305,6 +372,7 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         billingService.cancelSubscriptionQuietly(user);
         user.setActive(false);
+        user.setDeactivatedAt(java.time.LocalDateTime.now(java.time.ZoneOffset.UTC));
         user.bumpTokenVersion();
         return mapToResponse(userRepository.save(user));
     }
@@ -314,6 +382,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         user.setActive(true);
+        user.setDeactivatedAt(null);
         return mapToResponse(userRepository.save(user));
     }
 
@@ -350,7 +419,10 @@ public class UserService {
                 user.getCreatedAt(),
                 user.getMainOutfitId(),
                 user.getPlan(),
-                planLimits.garmentLimit(user)
+                planLimits.garmentLimit(user),
+                AccountAge.needsConfirmation(user),
+                AccountAge.bandOf(user) == null ? null : AccountAge.bandOf(user).name(),
+                user.getPassword() != null
         );
     }
 }

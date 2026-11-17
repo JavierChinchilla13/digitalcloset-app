@@ -1,4 +1,5 @@
 import { expect, type APIRequestContext, type Page } from '@playwright/test';
+import { LEGAL_VERSION } from '../src/config/legal';
 
 // Task 105: shared setup for the end-to-end tests. Every test makes its own account (unique email), so tests
 // never depend on each other or on the order they run in.
@@ -20,7 +21,11 @@ export interface Account {
 export async function registerAccount(request: APIRequestContext, prefix = 'e2e'): Promise<Account> {
   const email = uniqueEmail(prefix);
   const response = await request.post('/api/auth/register', {
-    data: { firstName: 'E2E', lastName: 'Tester', email, password: PASSWORD },
+    // An adult (born May 1990) who accepted the Terms and authorised the processing of their data: the facts the API requires since audit H12.
+    data: {
+      firstName: 'E2E', lastName: 'Tester', email, password: PASSWORD,
+      birthMonth: 5, birthYear: 1990, guardianAuthorized: false, termsAccepted: true, dataAuthorized: true, legalVersion: LEGAL_VERSION,
+    },
   });
   expect(response.ok(), 'register through the API').toBeTruthy();
   const body = await response.json();
@@ -93,3 +98,11 @@ export const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
   'base64'
 );
+
+// Audit H12: fills the age and consent part of the sign-up form in the browser (birth month/year, the two acceptances).
+export async function fillAgeAndConsent(page: Page, yearsAgo: number): Promise<void> {
+  await page.getByLabel(/^month$/i).selectOption({ label: 'January' });
+  await page.getByLabel(/^year$/i).selectOption(String(new Date().getUTCFullYear() - yearsAgo));
+  await page.getByLabel(/i accept the/i).check();
+  await page.getByLabel(/i authorise the processing/i).check();
+}

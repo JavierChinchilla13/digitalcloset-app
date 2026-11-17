@@ -24,10 +24,14 @@ public class FakeStripeGateway implements StripeGateway {
     public final List<String> canceledSubscriptions = new ArrayList<>();
     public final List<String> createdCustomers = new ArrayList<>();
     public volatile boolean failCancel = false;
+    public final List<String> deletedCustomers = new ArrayList<>();
+    public volatile boolean failDelete = false;
 
     public void reset() {
         configured = true;
         failCancel = false;
+        failDelete = false;
+        deletedCustomers.clear();
         canceledSubscriptions.clear();
         createdCustomers.clear();
     }
@@ -63,6 +67,12 @@ public class FakeStripeGateway implements StripeGateway {
     public void cancelSubscription(String subscriptionId) {
         if (failCancel) throw new IllegalStateException("Stripe is down");
         canceledSubscriptions.add(subscriptionId);
+    }
+
+    @Override
+    public void deleteCustomer(String customerId) {
+        if (failDelete) throw new IllegalStateException("Stripe is down");
+        deletedCustomers.add(customerId);
     }
 
     @Override

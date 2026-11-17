@@ -19,11 +19,21 @@ public class UserResponse {
     // i.e. an admin). The garment count is not here: it goes stale, the client counts its own list.
     private Plan plan;
     private Integer garmentLimit;
+    // Audit H12: true when the person must still give (or give again) their birth month/year and acceptances (an account made
+    // before they were asked, or after the texts changed). The website holds them on that step until it is done.
+    private boolean needsLegalConfirmation;
+    // Audit H12: "MINOR" (13-17) or "ADULT", worked out from the recorded birth month/year; null when not recorded. The website
+    // uses it to hide ads for minors and Premium for them; the server enforces the same rule.
+    private String ageBand;
+    // Audit H12: false for an account that signs in only with Google (no password): the website then asks for a fresh Google
+    // confirmation, not a password, before deleting the account. The hash itself is never sent.
+    private boolean hasPassword;
 
     public UserResponse() {}
 
     public UserResponse(Long userId, String email, String firstName, String lastName, Role role, boolean active, LocalDateTime createdAt, Long mainOutfitId,
-                        Plan plan, Integer garmentLimit) {
+                        Plan plan, Integer garmentLimit, boolean needsLegalConfirmation, String ageBand,
+                        boolean hasPassword) {
         this.userId = userId;
         this.email = email;
         this.firstName = firstName;
@@ -34,6 +44,9 @@ public class UserResponse {
         this.mainOutfitId = mainOutfitId;
         this.plan = plan;
         this.garmentLimit = garmentLimit;
+        this.needsLegalConfirmation = needsLegalConfirmation;
+        this.ageBand = ageBand;
+        this.hasPassword = hasPassword;
     }
 
     public Long getUserId() {
@@ -114,5 +127,29 @@ public class UserResponse {
 
     public void setGarmentLimit(Integer garmentLimit) {
         this.garmentLimit = garmentLimit;
+    }
+
+    public boolean isNeedsLegalConfirmation() {
+        return needsLegalConfirmation;
+    }
+
+    public void setNeedsLegalConfirmation(boolean needsLegalConfirmation) {
+        this.needsLegalConfirmation = needsLegalConfirmation;
+    }
+
+    public String getAgeBand() {
+        return ageBand;
+    }
+
+    public void setAgeBand(String ageBand) {
+        this.ageBand = ageBand;
+    }
+
+    public boolean isHasPassword() {
+        return hasPassword;
+    }
+
+    public void setHasPassword(boolean hasPassword) {
+        this.hasPassword = hasPassword;
     }
 }

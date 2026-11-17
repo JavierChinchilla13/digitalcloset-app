@@ -1,7 +1,11 @@
 package com.javier.closetapp.user.controller;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
+import com.javier.closetapp.account.AccountExportService;
+import com.javier.closetapp.account.DeactivatedAccountPurgeService;
 import com.javier.closetapp.user.dto.AdminCreateUserRequest;
+import com.javier.closetapp.user.dto.DeleteAccountRequest;
+import com.javier.closetapp.user.dto.LegalConfirmationRequest;
 import com.javier.closetapp.user.dto.ChangeEmailRequest;
 import com.javier.closetapp.user.dto.ChangePasswordRequest;
 import com.javier.closetapp.user.dto.ConfirmCodeRequest;
@@ -12,20 +16,27 @@ import com.javier.closetapp.user.dto.UserUpdateRequest;
 import com.javier.closetapp.user.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+    private final AccountExportService accountExportService;
+    private final DeactivatedAccountPurgeService purgeService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, AccountExportService accountExportService,
+                          DeactivatedAccountPurgeService purgeService) {
+        this.purgeService = purgeService;
         this.userService = userService;
+        this.accountExportService = accountExportService;
     }
 
     @GetMapping("/me")
@@ -74,10 +85,28 @@ public class UserController {
         return ResponseEntity.ok(userService.confirmEmailChange(request));
     }
 
-    @PatchMapping("/me/deactivate")
-    public ResponseEntity<Void> deactivateCurrentUser() {
-        userService.deactivateCurrentUser();
+    // Audit H12: an existing account gives its birth month/year (if not recorded yet) and the acceptances; the website holds the
+    // person on this step until it succeeds. Under the minimum age: the account is erased and the answer is the uniform 403.
+    @PostMapping("/me/legal")
+    public ResponseEntity<UserResponse> confirmLegal(@Valid @RequestBody LegalConfirmationRequest request) {
+        return ResponseEntity.ok(userService.confirmLegal(request));
+    }
+
+    // Audit H12: real erasure of the account and its data (replaces self-deactivation). POST, not DELETE, so the confirmation and
+    // the proof travel in a body that proxies do not strip.
+    @PostMapping("/me/delete")
+    public ResponseEntity<Void> deleteCurrentAccount(@Valid @RequestBody DeleteAccountRequest request) {
+        userService.deleteCurrentAccount(request);
         return ResponseEntity.noContent().build();
+    }
+
+    // Audit H12: "download my data" - the person's own data as one JSON file.
+    @GetMapping("/me/export")
+    public ResponseEntity<Map<String, Object>> exportMyData() {
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"vysvi-my-data.json\"")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(accountExportService.export());
     }
 
     // Admin Endpoints
@@ -105,6 +134,16 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> reactivateUser(@PathVariable Long id) {
         return ResponseEntity.ok(userService.reactivateUser(id));
+    }
+
+    // Audit H12: erases accounts that have stayed deactivated for `days` (at least 30) or more. Dry run unless dryRun=false is given.
+    // Used by the owner's scripts/purge-deactivated.sh; nothing calls it on a schedule.
+    @PostMapping("/purge-deactivated")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<DeactivatedAccountPurgeService.Result> purgeDeactivated(
+            @RequestParam(defaultValue = "30") int days,
+            @RequestParam(defaultValue = "true") boolean dryRun) {
+        return ResponseEntity.ok(purgeService.purge(days, dryRun));
     }
 
     // Task 96: an admin gives an account the FREE or PREMIUM plan (more garments, no ads).

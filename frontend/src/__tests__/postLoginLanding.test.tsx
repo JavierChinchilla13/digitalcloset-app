@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import LoginPage from '../pages/LoginPage';
 import SignupPage from '../pages/SignupPage';
+import { fillAgeAndConsent } from '../test/ageForm';
 import NotFoundPage from '../pages/NotFoundPage';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/authService';
@@ -81,6 +82,7 @@ describe('where the user lands after authenticating', () => {
 
     await user.type(screen.getByPlaceholderText('fashion@example.com'), 'me@example.com');
     await user.type(screen.getByPlaceholderText('••••••••'), 'Sup3r-secret-pw');
+    await fillAgeAndConsent(user);
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
     expect(await screen.findByText('SHOWCASE PAGE')).toBeInTheDocument();

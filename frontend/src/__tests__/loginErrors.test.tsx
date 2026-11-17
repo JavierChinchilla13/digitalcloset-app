@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
 import LoginPage from '../pages/LoginPage';
 import SignupPage from '../pages/SignupPage';
+import { fillAgeAndConsent } from '../test/ageForm';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/authService';
 import { NETWORK_ERROR_MESSAGE } from '../utils/apiError';
@@ -103,6 +104,7 @@ describe('signup failures are explained', () => {
     await user.type(screen.getByPlaceholderText(/fashion@example\.com/i), 'new@example.com');
     const passwords = screen.getAllByPlaceholderText('••••••••');
     await user.type(passwords[0], 'Sup3r-secret-pw');
+    await fillAgeAndConsent(user);
     await user.click(screen.getByRole('button', { name: /create|sign up|join/i }));
   }
 

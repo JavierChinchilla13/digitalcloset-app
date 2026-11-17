@@ -9,12 +9,13 @@ import GoogleSignInButton from '../components/GoogleSignInButton';
 import { useAuthStore } from '../store/useAuthStore';
 import { authService } from '../api/authService';
 import { makeUser } from '../test/fixtures';
+import { fillAgeAndConsent } from '../test/ageForm';
 
 // Task 98: "Continue with Google" on the login and signup pages. Google's own button is replaced here
 // by one that hands over a fake credential (jsdom has no Google script); GoogleSignInButton's own
 // contract with Google's script is tested separately below.
 vi.mock('../api/authService', () => ({
-  authService: { login: vi.fn(), register: vi.fn(), getCurrentUser: vi.fn(), google: vi.fn() },
+  authService: { login: vi.fn(), register: vi.fn(), getCurrentUser: vi.fn(), google: vi.fn(), googleComplete: vi.fn() },
 }));
 vi.mock('../components/GoogleSignInButton', () => ({
   default: ({ onCredential }: { onCredential: (credential: string) => void }) => (
@@ -109,6 +110,84 @@ describe('the password forms still work through the shared sign-in steps', () =>
   });
 });
 
+// Audit H12: a NEW Google identity gets a second step before anything is created.
+describe('Google sign-up, step 2', () => {
+  const newIdentity = () => auth.google.mockResolvedValue({ needsProfile: true, email: 'ada@example.com' });
+
+  it('a new identity is asked for birth month/year and the acceptances; the account is created only after that', async () => {
+    newIdentity();
+    auth.googleComplete.mockResolvedValue({ token: 'app-token', userId: 7, email: 'ada@example.com' } as never);
+    const user = userEvent.setup();
+    renderAt('/signup');
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
+    expect(await screen.findByText(/one more step/i)).toBeInTheDocument();
+    expect(screen.getByText('ada@example.com')).toBeInTheDocument();
+    expect(auth.googleComplete).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+
+    await fillAgeAndConsent(user);
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByText('SHOWCASE PAGE')).toBeInTheDocument();
+    const sent = auth.googleComplete.mock.calls[0][0];
+    expect(sent).toMatchObject({
+      credential: 'google-id-token',
+      birthMonth: 1,
+      guardianAuthorized: false,
+      termsAccepted: true,
+      dataAuthorized: true,
+    });
+    expect(useAuthStore.getState().token).toBe('app-token');
+  });
+
+  it('refuses to continue without the acceptances and sends nothing', async () => {
+    newIdentity();
+    const user = userEvent.setup();
+    renderAt('/login');
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
+    await screen.findByText(/one more step/i);
+    await fillAgeAndConsent(user, { terms: false, data: false });
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/accept the terms/i);
+    expect(auth.googleComplete).not.toHaveBeenCalled();
+  });
+
+  it('someone under the minimum age gets the uniform message and NOTHING is sent', async () => {
+    newIdentity();
+    const user = userEvent.setup();
+    renderAt('/signup');
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
+    await screen.findByText(/one more step/i);
+    await fillAgeAndConsent(user, { yearsAgo: 9 });
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We can't create an account with this information.");
+    expect(auth.googleComplete).not.toHaveBeenCalled();
+    // The form is locked for this tab, and only a flag (no date) is remembered.
+    expect(screen.getByRole('button', { name: /create account/i })).toBeDisabled();
+    expect(sessionStorage.getItem('vysvi-age-blocked')).toBe('1');
+  });
+
+  it("the server's uniform refusal is shown the same way", async () => {
+    newIdentity();
+    auth.googleComplete.mockRejectedValue({ response: { status: 403, data: { code: 'AGE_NOT_ALLOWED', message: "We can't create an account with this information." } } });
+    const user = userEvent.setup();
+    renderAt('/signup');
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
+    await screen.findByText(/one more step/i);
+    await fillAgeAndConsent(user, { yearsAgo: 30 });
+    await user.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent("We can't create an account with this information.");
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+});
+
 describe('GoogleSignInButton', () => {
   afterEach(() => {
     delete window.google;
@@ -121,14 +200,26 @@ describe('GoogleSignInButton', () => {
     window.google = { accounts: { id: { initialize, renderButton } } };
     return { initialize, renderButton };
   };
+  const real = async () =>
+    (await vi.importActual<typeof import('../components/GoogleSignInButton')>('../components/GoogleSignInButton')).default;
 
-  it('starts Google\'s sign-in with our client id, draws its button, and hands up the credential', async () => {
+  it("loads NOTHING from Google until our own button is clicked (the script is not on the page before)", async () => {
+    const Real = await real();
+    render(<Real clientId={CLIENT_ID} onCredential={() => {}} />);
+
+    expect(document.head.querySelector('script[src*="accounts.google.com"]')).toBeNull();
+    expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
+    expect(screen.queryByTestId('google-button')).not.toBeInTheDocument();
+  });
+
+  it("after the click it starts Google's sign-in with our client id, draws its button, and hands up the credential", async () => {
     const { initialize, renderButton } = stubGoogle();
     const onCredential = vi.fn();
-    // The test file mocks the component for the page tests; the real one is imported below.
-    const Real = (await vi.importActual<typeof import('../components/GoogleSignInButton')>('../components/GoogleSignInButton')).default;
-
+    const Real = await real();
+    const user = userEvent.setup();
     render(<Real clientId={CLIENT_ID} onCredential={onCredential} />);
+
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
 
     await waitFor(() => expect(renderButton).toHaveBeenCalled());
     expect(initialize.mock.calls[0][0].client_id).toBe(CLIENT_ID);
@@ -142,10 +233,12 @@ describe('GoogleSignInButton', () => {
     expect(onCredential).toHaveBeenCalledTimes(1);
   });
 
-  it('says so when Google\'s script cannot be loaded, and email sign-in stays available', async () => {
-    const Real = (await vi.importActual<typeof import('../components/GoogleSignInButton')>('../components/GoogleSignInButton')).default;
+  it("says so when Google's script cannot be loaded, and email sign-in stays available", async () => {
+    const Real = await real();
+    const user = userEvent.setup();
     render(<Real clientId={CLIENT_ID} onCredential={() => {}} />);
 
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
     const script = document.head.querySelector('script[src*="accounts.google.com"]')!;
     expect(script).toBeTruthy();
     script.dispatchEvent(new Event('error'));
@@ -153,11 +246,14 @@ describe('GoogleSignInButton', () => {
     expect(await screen.findByRole('status')).toHaveTextContent(/could not load/i);
   });
 
-  it('only the real component loads Google\'s script, and only once', async () => {
-    const Real = (await vi.importActual<typeof import('../components/GoogleSignInButton')>('../components/GoogleSignInButton')).default;
+  it("the script is added once, however many times the button is shown and clicked", async () => {
+    const Real = await real();
+    const user = userEvent.setup();
     const first = render(<Real clientId={CLIENT_ID} onCredential={() => {}} />);
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
     first.unmount();
     render(<Real clientId={CLIENT_ID} onCredential={() => {}} />);
+    await user.click(screen.getByRole('button', { name: /continue with google/i }));
 
     expect(document.head.querySelectorAll('script[src*="accounts.google.com"]')).toHaveLength(1);
   });

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { chooseCookies, registerAccount, seedGarments, signIn, TINY_PNG } from './helpers';
 
 // Flow 2: the free plan holds 15 garments - the 15th goes in through the upload screen, the 16th is refused.
@@ -7,6 +7,10 @@ test('a free closet takes 15 garments through the upload flow, then says it is f
   await chooseCookies(page);
   const account = await registerAccount(request, 'closet');
   await seedGarments(request, account, 14);
+
+  // The image-compression library asks cdn.jsdelivr.net for its web-worker script (useWebWorker in lib/background-removers). A test must not reach a
+  // real host, so that call is refused explicitly: the library then compresses on the main thread, which is all this test needs.
+  await page.route('https://cdn.jsdelivr.net/**', (route) => route.abort());
 
   // The upload goes to Cloudinary; answer it with a picture the site serves itself.
   await page.route('https://api.cloudinary.com/**', (route) =>

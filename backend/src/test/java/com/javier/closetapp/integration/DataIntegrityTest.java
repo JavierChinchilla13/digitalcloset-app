@@ -220,7 +220,7 @@ class DataIntegrityTest extends IntegrationTestBase {
         TestUser user = registerUser();
 
         mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-                        .content(json(Map.of("email", user.email(), "password", PASSWORD))))
+                        .content(json(registrationBody(user.email(), PASSWORD))))
                 .andExpect(status().isConflict());
     }
 }

@@ -5,6 +5,9 @@ public class AuthResponse {
     private String token;
     private Long userId;
     private String email;
+    // Audit H12: true when a NEW Google identity has been verified but not signed up yet (nothing was created):
+    // the page must collect the birth month/year and the acceptances and call /api/auth/google/complete.
+    private boolean needsProfile = false;
 
     public AuthResponse() {}
 
@@ -12,6 +15,22 @@ public class AuthResponse {
         this.token = token;
         this.userId = userId;
         this.email = email;
+    }
+
+    // The answer for a new Google identity: only the verified email (to show "continuing as ..."), no token, no account.
+    public static AuthResponse needsProfile(String email) {
+        AuthResponse response = new AuthResponse();
+        response.email = email;
+        response.needsProfile = true;
+        return response;
+    }
+
+    public boolean isNeedsProfile() {
+        return needsProfile;
+    }
+
+    public void setNeedsProfile(boolean needsProfile) {
+        this.needsProfile = needsProfile;
     }
 
     public String getToken() {

@@ -38,13 +38,12 @@ class SessionRevocationTest extends IntegrationTestBase {
     }
 
     @Test
-    @DisplayName("a user who deactivates their own account is signed out everywhere at once")
-    void selfDeactivationEndsTheSession() throws Exception {
+    @DisplayName("a user who deletes their own account is signed out everywhere at once")
+    void deletionEndsTheSession() throws Exception {
         TestUser user = registerUser();
         mockMvc.perform(get("/api/clothing").header("Authorization", user.bearer())).andExpect(status().isOk());
 
-        mockMvc.perform(patch("/api/users/me/deactivate").header("Authorization", user.bearer()))
-                .andExpect(status().is2xxSuccessful());
+        deleteOwnAccount(user);
 
         mockMvc.perform(get("/api/clothing").header("Authorization", user.bearer()))
                 .andExpect(status().isUnauthorized());

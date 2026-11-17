@@ -2,12 +2,16 @@ package com.javier.closetapp.auth.controller;
 
 import com.javier.closetapp.auth.dto.AuthResponse;
 import com.javier.closetapp.auth.dto.ForgotPasswordRequest;
+import com.javier.closetapp.auth.dto.GoogleCompleteRequest;
 import com.javier.closetapp.auth.dto.GoogleLoginRequest;
 import com.javier.closetapp.auth.dto.LoginRequest;
 import com.javier.closetapp.auth.dto.RegisterRequest;
 import com.javier.closetapp.auth.dto.ResetPasswordRequest;
 import com.javier.closetapp.auth.service.AuthService;
 import com.javier.closetapp.auth.service.PasswordResetService;
+import com.javier.closetapp.exception.AgeNotAllowedException;
+import com.javier.closetapp.legal.AgeRejectionLimiter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,10 +27,13 @@ public class AuthController {
 
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
+    private final AgeRejectionLimiter ageRejectionLimiter;
 
-    public AuthController(AuthService authService, PasswordResetService passwordResetService) {
+    public AuthController(AuthService authService, PasswordResetService passwordResetService,
+                          AgeRejectionLimiter ageRejectionLimiter) {
         this.authService = authService;
         this.passwordResetService = passwordResetService;
+        this.ageRejectionLimiter = ageRejectionLimiter;
     }
 
     // Always the same response, whether or not the email has an account, so
@@ -45,8 +52,29 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.ok(authService.register(request));
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest http) {
+        // Audit H12: the age-refusal counter (off unless configured) looks at the client address only, in memory.
+        String address = http.getRemoteAddr();
+        ageRejectionLimiter.requireNotBlocked(address);
+        try {
+            return ResponseEntity.ok(authService.register(request));
+        } catch (AgeNotAllowedException refused) {
+            ageRejectionLimiter.recordRejection(address);
+            throw refused;
+        }
+    }
+
+    // Audit H12: the second step of a NEW Google sign-up (birth month/year, acceptances). Same refusal counter as register.
+    @PostMapping("/google/complete")
+    public ResponseEntity<AuthResponse> googleComplete(@Valid @RequestBody GoogleCompleteRequest request, HttpServletRequest http) {
+        String address = http.getRemoteAddr();
+        ageRejectionLimiter.requireNotBlocked(address);
+        try {
+            return ResponseEntity.ok(authService.googleComplete(request));
+        } catch (AgeNotAllowedException refused) {
+            ageRejectionLimiter.recordRejection(address);
+            throw refused;
+        }
     }
 
     // Task 98: "Sign in with Google" - exchanges Google's ID token for this app's own JWT.
