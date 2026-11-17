@@ -14,6 +14,10 @@ vi.mock('../api/adminService', () => ({
   adminService: { getUsers: vi.fn(), deactivateUser: vi.fn(), reactivateUser: vi.fn(), createUser: vi.fn() },
 }));
 
+vi.mock('../api/backupService', () => ({
+  backupService: { getStatus: vi.fn(async () => ({ lastBackupAt: null, daysSinceLastBackup: null, recent: [] })), download: vi.fn() },
+}));
+
 const admin = vi.mocked(adminService);
 
 const ADMIN_SELF: User = {

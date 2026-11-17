@@ -76,6 +76,23 @@ class NimbusGoogleTokenVerifierTest {
         assertTrue(id.emailVerified());
         assertEquals("Ada", id.givenName());
         assertEquals("Lovelace", id.familyName());
+        // The time Google issued the token is carried through (the re-authentication freshness check depends on it).
+        assertTrue(Math.abs(id.issuedAt().getEpochSecond() - Instant.now().getEpochSecond()) < 10);
+    }
+
+    @Test
+    @DisplayName("a token without an issue time gives an identity with issuedAt = null (which the freshness check refuses)")
+    void tokenWithoutIssueTime() throws Exception {
+        JWTClaimsSet noIat = new JWTClaimsSet.Builder()
+                .issuer("https://accounts.google.com")
+                .audience(CLIENT_ID)
+                .subject("1234567890")
+                .claim("email", "ada@example.com")
+                .claim("email_verified", true)
+                .expirationTime(Date.from(Instant.now().plusSeconds(3600)))
+                .build();
+        GoogleIdentity id = verifier.verify(sign(noIat, googleKey));
+        org.junit.jupiter.api.Assertions.assertNull(id.issuedAt());
     }
 
     @Test
