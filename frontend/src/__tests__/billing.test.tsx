@@ -74,6 +74,15 @@ describe('the Premium call to action', () => {
     expect(assign).toHaveBeenCalledWith('https://checkout.stripe.test/abc');
   });
 
+  // Audit H12: Premium is only for declared adults; a minor sees why, with no way to start the checkout.
+  it('a declared minor sees the 18+ note and no upgrade button', async () => {
+    useAuthStore.getState().login('token', makeUser({ ageBand: 'MINOR' }));
+    renderActions();
+
+    expect(await screen.findByText(/premium is available to people who are 18 or older/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /upgrade to premium/i })).not.toBeInTheDocument();
+  });
+
   it('shows nothing when payments are not set up on the server', async () => {
     billing.getStatus.mockResolvedValue({ ...STATUS, enabled: false });
     renderActions();

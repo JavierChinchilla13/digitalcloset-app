@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Settings as SettingsIcon, Shield, Trash2, User as UserIcon } from 'lucide-react';
+import { Loader2, Mail, Settings as SettingsIcon, Shield, User as UserIcon } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
-import { resetAccountStores } from '../utils/resetAccountStores';
+import AccountDataSection from '../components/AccountDataSection';
 import { useToast } from '../components/Toast';
 import { userService } from '../api/userService';
 import { authService } from '../api/authService';
@@ -118,7 +118,7 @@ const CodeConfirmStep = ({
 );
 
 const SettingsPage = () => {
-  const { user, login, logout, setToken } = useAuthStore();
+  const { user, login, setToken } = useAuthStore();
   const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -164,7 +164,6 @@ const SettingsPage = () => {
     // Runs once for the visit that came back from Stripe.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [returnedFromCheckout]);
-  const navigate = useNavigate();
 
   // --- Profile (name) ---
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
@@ -296,23 +295,6 @@ const SettingsPage = () => {
     setConfirmPassword('');
     setPasswordCode('');
     setPasswordStep('form');
-  };
-
-  // --- Account / deactivate ---
-  const [isConfirmingDeactivate, setIsConfirmingDeactivate] = useState(false);
-  const [isDeactivating, setIsDeactivating] = useState(false);
-
-  const deactivate = async () => {
-    setIsDeactivating(true);
-    try {
-      await userService.deactivateMe();
-      logout();
-      resetAccountStores();
-      navigate('/login');
-    } catch (err: unknown) {
-      showToast(getApiErrorMessage(err, "Couldn't deactivate your account"), 'error');
-      setIsDeactivating(false);
-    }
   };
 
   const formatDate = (value?: string) =>
@@ -508,38 +490,8 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-ink/5">
-              {!isConfirmingDeactivate ? (
-                <button
-                  onClick={() => setIsConfirmingDeactivate(true)}
-                  className="w-full py-3.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all"
-                >
-                  <Trash2 size={14} /> Deactivate My Account
-                </button>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-text-secondary text-[10px] uppercase tracking-widest text-center">
-                    This signs you out and deactivates your account. Are you sure?
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      onClick={() => setIsConfirmingDeactivate(false)}
-                      disabled={isDeactivating}
-                      className="py-3 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-[10px] font-medium uppercase tracking-widest rounded-xl transition-all"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={deactivate}
-                      disabled={isDeactivating}
-                      className="py-3 bg-red-500 hover:bg-red-600 text-white text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-60"
-                    >
-                      {isDeactivating ? <Loader2 size={14} className="animate-spin" /> : 'Confirm'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Audit H12: download my data + delete my account and data (replaces the old deactivation). */}
+            <AccountDataSection />
           </SectionCard>
         </div>
       </SectionWrapper>

@@ -36,6 +36,15 @@ const BillingActions = ({ className = '' }: BillingActionsProps) => {
   };
 
   const isFree = user.plan !== Plan.PREMIUM;
+  // Audit H12: Premium is only for declared adults (the server refuses the checkout otherwise). A free account that is not a declared
+  // adult sees why instead of a button.
+  if (isFree && user.ageBand !== 'ADULT') {
+    return (
+      <p className="text-[10px] text-text-secondary normal-case tracking-normal" data-testid="billing-actions">
+        Premium is available to people who are 18 or older.
+      </p>
+    );
+  }
   const endsOn = status.currentPeriodEnd
     ? new Date(status.currentPeriodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null;

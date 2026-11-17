@@ -98,3 +98,11 @@ export const TINY_PNG = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
   'base64'
 );
+
+// Audit H12: fills the age and consent part of the sign-up form in the browser (birth month/year, the two acceptances).
+export async function fillAgeAndConsent(page: Page, yearsAgo: number): Promise<void> {
+  await page.getByLabel(/^month$/i).selectOption({ label: 'January' });
+  await page.getByLabel(/^year$/i).selectOption(String(new Date().getUTCFullYear() - yearsAgo));
+  await page.getByLabel(/i accept the/i).check();
+  await page.getByLabel(/i authorise the processing/i).check();
+}

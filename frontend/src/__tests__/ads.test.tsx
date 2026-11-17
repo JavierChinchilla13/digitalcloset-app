@@ -131,6 +131,19 @@ describe('who sees the ad slot', () => {
     expect(screen.queryByTestId('ad-slot')).not.toBeInTheDocument();
   });
 
+  // Audit H12: no ads for a declared minor, nor for an account that has not yet confirmed its age.
+  it('a declared minor (13-17) does not', () => {
+    useAuthStore.getState().login('t', makeUser({ ageBand: 'MINOR' }));
+    renderSlot();
+    expect(screen.queryByTestId('ad-slot')).not.toBeInTheDocument();
+  });
+
+  it('an account that has not confirmed its age yet does not', () => {
+    useAuthStore.getState().login('t', makeUser({ ageBand: null, needsLegalConfirmation: true }));
+    renderSlot();
+    expect(screen.queryByTestId('ad-slot')).not.toBeInTheDocument();
+  });
+
   it('an admin does not', () => {
     useAuthStore.getState().login('t', makeUser({ role: Role.ROLE_ADMIN, garmentLimit: null }));
     renderSlot();

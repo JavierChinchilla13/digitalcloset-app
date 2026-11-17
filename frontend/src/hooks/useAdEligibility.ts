@@ -12,6 +12,7 @@ export function useAdEligibility(): AdConfig | null {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const user = useAuthStore((state) => state.user);
   const { allowsOptional } = useConsent();
-  if (!allowsOptional || !isAuthenticated || !user || isPaidAccount(user)) return null;
+  // Audit H12: ads only for accounts that declared they are adults; never for a declared minor or an account that has not confirmed.
+  if (!allowsOptional || !isAuthenticated || !user || isPaidAccount(user) || user.ageBand !== 'ADULT') return null;
   return getAdConfig();
 }

@@ -26,6 +26,10 @@ export function makeUser(overrides: Partial<User> = {}): User {
     createdAt: '2026-01-01T00:00:00',
     plan: Plan.FREE,
     garmentLimit: 15,
+    // Audit H12: by default a confirmed adult with a password.
+    ageBand: 'ADULT',
+    needsLegalConfirmation: false,
+    hasPassword: true,
     ...overrides,
   };
 }

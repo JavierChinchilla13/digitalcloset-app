@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { consumeLoginNotice } from '../utils/loginNotice';
+import { AGE_BLOCKED_MESSAGE } from '../utils/ageGate';
 import { authService } from '../api/authService';
 import { consumeSessionExpiredNotice } from '../api/axios';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
@@ -17,7 +19,8 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   // Set when the visitor was sent here because their session ended (read once).
   const [sessionEnded] = useState(consumeSessionExpiredNotice);
-  
+  const [notice] = useState(consumeLoginNotice);
+
   const completeSignIn = useCompleteSignIn();
 
   // Logs in, then (completeSignIn) fetches the profile, stores the session and lands on the Showcase.
@@ -55,12 +58,24 @@ const LoginPage = () => {
           </div>
         )}
 
+        {/* Audit H12: arriving after deleting the account, or after an existing account was refused for age (the one uniform message). */}
+        {notice === 'account-deleted' && !error && (
+          <div role="status" className="mb-8 p-4 bg-ink/5 border border-ink/10 rounded-2xl text-text-secondary text-xs font-bold text-center uppercase tracking-widest">
+            Your account and data have been deleted.
+          </div>
+        )}
+        {notice === 'age-refused' && !error && (
+          <div role="alert" className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-text-primary text-xs font-bold text-center uppercase tracking-widest">
+            {AGE_BLOCKED_MESSAGE}
+          </div>
+        )}
+
         {error && (
           <motion.div
             role="alert"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-red-400 text-xs font-bold text-center uppercase tracking-widest"
+            className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-text-primary text-xs font-bold text-center uppercase tracking-widest"
           >
             {error}
           </motion.div>

@@ -1,5 +1,5 @@
 import api from './axios';
-import type { AuthResponse, User } from '../types';
+import type { AuthResponse, GoogleAuthResponse, User } from '../types';
 
 // Account entry endpoints (AuthController, /api/auth) plus the current-user lookup. register/login both return a JWT + the user.
 export interface LoginRequest {
@@ -12,6 +12,17 @@ export interface RegisterRequest {
   password: string;
   firstName?: string;
   lastName?: string;
+  // Audit H12: birth month/year, the guardian declaration (13-17) and the two acceptances (see useAgeConsentForm).
+  birthMonth: number;
+  birthYear: number;
+  guardianAuthorized: boolean;
+  termsAccepted: boolean;
+  dataAuthorized: boolean;
+  legalVersion: string;
+}
+
+export interface GoogleCompleteRequest extends Omit<RegisterRequest, 'email' | 'password' | 'firstName' | 'lastName'> {
+  credential: string;
 }
 
 export const authService = {
@@ -27,8 +38,15 @@ export const authService = {
 
   // Task 98: "Sign in with Google". `credential` is the signed ID token from Google's button; the backend checks
   // it and answers with this app's own token (creating or linking the account the first time).
-  google: async (credential: string): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/google', { credential });
+  // Audit H12: a NEW Google identity gets { needsProfile: true, email } and nothing is created; see googleComplete.
+  google: async (credential: string): Promise<GoogleAuthResponse> => {
+    const response = await api.post<GoogleAuthResponse>('/auth/google', { credential });
+    return response.data;
+  },
+
+  // Step 2 of a new Google sign-up: the same credential again plus birth month/year and the acceptances.
+  googleComplete: async (body: GoogleCompleteRequest): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/google/complete', body);
     return response.data;
   },
 

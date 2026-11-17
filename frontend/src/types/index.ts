@@ -42,6 +42,12 @@ export interface User {
   // an admin). Absent only on a record from before the server sent them.
   plan?: Plan;
   garmentLimit?: number | null;
+  // Audit H12: true for an account made before the age/consent step existed, until it confirms its details (/confirm-details).
+  needsLegalConfirmation?: boolean;
+  // "MINOR" (13-17) or "ADULT", from the recorded birth month/year; null until an older account confirms. Never the birth date itself.
+  ageBand?: 'MINOR' | 'ADULT' | null;
+  // False for an account that only signs in with Google (deleting it then needs a fresh Google sign-in instead of a password).
+  hasPassword?: boolean;
 }
 
 export interface AuthResponse {
@@ -49,6 +55,12 @@ export interface AuthResponse {
   userId: number;
   email: string;
   role: Role;
+}
+
+// Audit H12: the answer to POST /auth/google. For a Google identity with no account yet nothing is created: `needsProfile` is true and
+// only the verified email comes back (no token). Otherwise it is a normal sign-in.
+export interface GoogleAuthResponse extends Partial<AuthResponse> {
+  needsProfile?: boolean;
 }
 
 // Whether an item can be shown on the persona (Task 29-31, Phase 7 pivot).

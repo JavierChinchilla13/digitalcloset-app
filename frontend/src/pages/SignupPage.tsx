@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { authService } from '../api/authService';
+import { authService, type RegisterRequest } from '../api/authService';
+import AgeAndConsentFields from '../components/AgeAndConsentFields';
+import { useAgeConsentForm } from '../hooks/useAgeConsentForm';
+import { AGE_BLOCKED_MESSAGE, isAgeRefusal } from '../utils/ageGate';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 import GoogleSignInSection from '../components/GoogleSignInSection';
@@ -18,18 +21,39 @@ const SignupPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const completeSignIn = useCompleteSignIn();
+  // Audit H12: birth month/year, guardian declaration (13-17) and the two acceptances.
+  const ageForm = useAgeConsentForm();
+  // True while a new Google sign-up is on its second step: that step has its own age/consent fields, so this form steps aside.
+  const [googleStep, setGoogleStep] = useState(false);
 
   // Registers, then (completeSignIn) fetches the profile, stores the session and lands on the Showcase.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError(null);
 
+    // Under the minimum age: the one uniform refusal, nothing is sent (the server would refuse it the same way).
+    if (ageForm.band === 'UNDER_MIN' || ageForm.blocked) {
+      ageForm.block();
+      setError(AGE_BLOCKED_MESSAGE);
+      return;
+    }
+    const problem = ageForm.validate();
+    if (problem) {
+      setError(problem);
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      const response = await authService.register({ email, password, firstName, lastName });
+      const response = await authService.register({ email, password, firstName, lastName, ...ageForm.payload() } as RegisterRequest);
       await completeSignIn(response.token);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "Couldn't create your account. Please try again."));
+      if (isAgeRefusal(err)) {
+        ageForm.block();
+        setError(AGE_BLOCKED_MESSAGE);
+      } else {
+        setError(getApiErrorMessage(err, "Couldn't create your account. Please try again."));
+      }
       console.error('Signup error:', err);
     } finally {
       setIsLoading(false);
@@ -53,12 +77,13 @@ const SignupPage = () => {
             role="alert"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
-            className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-red-400 text-xs font-bold text-center uppercase tracking-widest"
+            className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-text-primary text-xs font-bold text-center uppercase tracking-widest"
           >
             {error}
           </motion.div>
         )}
 
+        {!googleStep && (
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -114,9 +139,11 @@ const SignupPage = () => {
             />
           </div>
 
-          <button 
+          <AgeAndConsentFields form={ageForm} idPrefix="signup" disabled={isLoading} />
+
+          <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || ageForm.blocked}
             className="w-full py-4 bg-accent text-on-accent font-medium rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-md group disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? (
@@ -129,14 +156,9 @@ const SignupPage = () => {
             )}
           </button>
         </form>
+        )}
 
-        <GoogleSignInSection onError={setError} />
-
-        <p className="mt-8 text-center text-text-secondary text-[10px] tracking-widest uppercase opacity-60">
-          By continuing you agree to the{' '}
-          <Link to="/terms" className="underline underline-offset-2 hover:text-text-primary">Terms</Link> and{' '}
-          <Link to="/privacy" className="underline underline-offset-2 hover:text-text-primary">Privacy Policy</Link>.
-        </p>
+        <GoogleSignInSection onError={setError} onStep2Change={setGoogleStep} />
 
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks, no-empty-pattern -- Playwright's fixture callback is named `use` and takes `{}` as its first argument by design; neither is React. */
 import { expect, test as base, type Browser, type BrowserContext } from '@playwright/test';
 
 // RULE: no test may reach a real external host (Cloudinary, Stripe, Google, fonts, analytics...). Every browser context a test uses is

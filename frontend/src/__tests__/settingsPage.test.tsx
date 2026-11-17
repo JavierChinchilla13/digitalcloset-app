@@ -18,7 +18,8 @@ vi.mock('../api/userService', () => ({
     confirmPasswordChange: vi.fn(),
     requestEmailChange: vi.fn(),
     confirmEmailChange: vi.fn(),
-    deactivateMe: vi.fn(),
+    deleteAccount: vi.fn(),
+    exportMyData: vi.fn(),
   },
 }));
 vi.mock('../api/authService', () => ({
@@ -314,31 +315,85 @@ describe('SettingsPage', () => {
     expect(users.confirmPasswordChange).not.toHaveBeenCalled();
   });
 
-  it('deactivating requires confirmation, then logs out and redirects to /login', async () => {
-    users.deactivateMe.mockResolvedValue(undefined);
+  // Audit H12: deletion replaces deactivation. It needs the word DELETE and the password, and the button stays off until both are given.
+  it('deleting needs DELETE typed and the password, then erases, logs out and redirects to /login', async () => {
+    users.deleteAccount.mockResolvedValue(undefined);
     const user = userEvent.setup();
     renderSettings();
 
-    await user.click(screen.getByRole('button', { name: /deactivate my account/i }));
-    // Still requires an explicit confirm - not deactivated by the first click.
-    expect(users.deactivateMe).not.toHaveBeenCalled();
-    expect(screen.getByText(/are you sure/i)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /delete my account and data/i }));
+    const submit = screen.getByRole('button', { name: /delete everything/i });
+    expect(submit).toBeDisabled();
 
-    await user.click(screen.getByRole('button', { name: /confirm/i }));
+    await user.type(screen.getByLabelText(/type delete to confirm/i), 'delete');
+    await user.type(screen.getByLabelText(/your password/i), 'Sup3r-secret-pw');
+    // Lower case is not the confirmation word.
+    expect(submit).toBeDisabled();
+    expect(users.deleteAccount).not.toHaveBeenCalled();
 
-    await waitFor(() => expect(users.deactivateMe).toHaveBeenCalledTimes(1));
+    await user.clear(screen.getByLabelText(/type delete to confirm/i));
+    await user.type(screen.getByLabelText(/type delete to confirm/i), 'DELETE');
+    await user.click(submit);
+
+    await waitFor(() => expect(users.deleteAccount).toHaveBeenCalledWith({ password: 'Sup3r-secret-pw' }));
     await waitFor(() => expect(useAuthStore.getState().isAuthenticated).toBe(false));
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/login'));
   });
 
-  it('cancelling the deactivate confirmation does nothing', async () => {
+  it('a wrong password shows the error and keeps the session', async () => {
+    users.deleteAccount.mockRejectedValue({ response: { status: 403, data: { message: 'Incorrect password' } } });
     const user = userEvent.setup();
     renderSettings();
 
-    await user.click(screen.getByRole('button', { name: /deactivate my account/i }));
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await user.click(screen.getByRole('button', { name: /delete my account and data/i }));
+    await user.type(screen.getByLabelText(/type delete to confirm/i), 'DELETE');
+    await user.type(screen.getByLabelText(/your password/i), 'nope');
+    await user.click(screen.getByRole('button', { name: /delete everything/i }));
 
-    expect(users.deactivateMe).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(/incorrect password/i);
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
+  it('cancelling the delete form does nothing', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole('button', { name: /delete my account and data/i }));
+    await user.click(screen.getByRole('button', { name: /^cancel$/i }));
+
+    expect(users.deleteAccount).not.toHaveBeenCalled();
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(screen.getByRole('button', { name: /delete my account and data/i })).toBeInTheDocument();
+  });
+
+  it('a Google-only account confirms with Google, and Google\'s script is not on the page until that button is clicked', async () => {
+    vi.stubEnv('VITE_GOOGLE_CLIENT_ID', 'test-client-id.apps.googleusercontent.com');
+    useAuthStore.getState().login('old-token', { ...baseUser, hasPassword: false });
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole('button', { name: /delete my account and data/i }));
+    expect(screen.queryByLabelText(/your password/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /confirm with google/i })).toBeInTheDocument();
+    expect(document.querySelector('script[src*="accounts.google.com"]')).toBeNull();
+    vi.unstubAllEnvs();
+  });
+
+  it('"Download my data" fetches the export and saves it as a file', async () => {
+    users.exportMyData.mockResolvedValue(new Blob(['{}'], { type: 'application/json' }));
+    const createUrl = vi.fn(() => 'blob:test');
+    const revokeUrl = vi.fn();
+    Object.assign(URL, { createObjectURL: createUrl, revokeObjectURL: revokeUrl });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
+    const user = userEvent.setup();
+    renderSettings();
+
+    await user.click(screen.getByRole('button', { name: /download my data/i }));
+
+    await waitFor(() => expect(users.exportMyData).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(click).toHaveBeenCalledTimes(1));
+    expect(createUrl).toHaveBeenCalled();
+    expect(revokeUrl).toHaveBeenCalledWith('blob:test');
+    click.mockRestore();
   });
 });
