@@ -27,6 +27,7 @@ public final class BackupTables {
             "password_reset_tokens",
             "pending_account_changes",
             "reauth_failures",
+            "google_token_uses",
             "backup_downloads");
 
     public static final String FLYWAY_TABLE = "flyway_schema_history";

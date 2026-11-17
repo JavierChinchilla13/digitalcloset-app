@@ -90,6 +90,18 @@ public class NimbusGoogleTokenVerifier implements GoogleTokenVerifier {
         }
         Object verified = jwt.getClaim("email_verified");
         boolean emailVerified = Boolean.TRUE.equals(verified) || "true".equals(verified);
-        return new GoogleIdentity(subject, email.trim(), emailVerified, jwt.getClaimAsString("given_name"), jwt.getClaimAsString("family_name"));
+        return new GoogleIdentity(subject, email.trim(), emailVerified, jwt.getClaimAsString("given_name"), jwt.getClaimAsString("family_name"),
+                issueTimeOf(credential));
+    }
+
+    // The token's own iat claim. Spring's decoder invents an iat (exp - 1 s) when a token has none, which would make a token with no issue
+    // time look brand new, so the claim is read from the token itself (its signature was already checked by the decoder).
+    private static java.time.Instant issueTimeOf(String credential) {
+        try {
+            java.util.Date issued = com.nimbusds.jwt.SignedJWT.parse(credential).getJWTClaimsSet().getIssueTime();
+            return issued == null ? null : issued.toInstant();
+        } catch (java.text.ParseException e) {
+            return null;
+        }
     }
 }

@@ -37,15 +37,17 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final GoogleTokenVerifier googleTokenVerifier;
+    private final GoogleTokenUseLog googleTokenUseLog;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, 
                        JwtService jwtService, AuthenticationManager authenticationManager,
-                       GoogleTokenVerifier googleTokenVerifier) {
+                       GoogleTokenVerifier googleTokenVerifier, GoogleTokenUseLog googleTokenUseLog) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.googleTokenVerifier = googleTokenVerifier;
+        this.googleTokenUseLog = googleTokenUseLog;
     }
 
     // Creates the account (BCrypt-hashed password) and signs it in at once. A taken email is a 409 (DuplicateEmailException).
@@ -146,6 +148,7 @@ public class AuthService {
     @Transactional
     public AuthResponse googleLogin(String credential) {
         GoogleIdentity identity = googleTokenVerifier.verify(credential);
+        googleTokenUseLog.markSeen(credential);     // this token can no longer count as a fresh "it is me" proof
         if (!identity.emailVerified()) {
             throw new GoogleSignInException("Your Google email address is not verified.", 401);
         }
@@ -175,6 +178,7 @@ public class AuthService {
                 request.getDataAuthorized(), request.getLegalVersion());
 
         GoogleIdentity identity = googleTokenVerifier.verify(request.getCredential());
+        googleTokenUseLog.markSeen(request.getCredential());
         if (!identity.emailVerified()) {
             throw new GoogleSignInException("Your Google email address is not verified.", 401);
         }

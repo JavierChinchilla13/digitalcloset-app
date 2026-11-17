@@ -31,15 +31,21 @@ public class ReauthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final GoogleTokenVerifier googleTokenVerifier;
     private final ReauthFailureLog failures;
+    private final GoogleTokenUseLog googleTokenUses;
     private final int maxFailures;
     private final long windowMinutes;
+    private final long googleMaxAgeSeconds;
 
     public ReauthenticationService(PasswordEncoder passwordEncoder, GoogleTokenVerifier googleTokenVerifier, ReauthFailureLog failures,
+                                   GoogleTokenUseLog googleTokenUses,
                                    @Value("${app.reauth.max-failures:5}") int maxFailures,
-                                   @Value("${app.reauth.window-minutes:15}") long windowMinutes) {
+                                   @Value("${app.reauth.window-minutes:15}") long windowMinutes,
+                                   @Value("${app.reauth.google-max-age-seconds:300}") long googleMaxAgeSeconds) {
         this.passwordEncoder = passwordEncoder;
         this.googleTokenVerifier = googleTokenVerifier;
         this.failures = failures;
+        this.googleTokenUses = googleTokenUses;
+        this.googleMaxAgeSeconds = googleMaxAgeSeconds;
         this.maxFailures = maxFailures;
         this.windowMinutes = windowMinutes;
     }
@@ -100,6 +106,16 @@ public class ReauthenticationService {
         }
         if (!user.getGoogleId().equals(identity.subject())) {
             throw new ForbiddenOperationException(message);
+        }
+        // FRESH: Google issued this token only moments ago (a token with no issue time, or one from the future, is refused too)...
+        java.time.Instant issued = identity.issuedAt();
+        java.time.Instant now = java.time.Instant.now();
+        if (issued == null || issued.isBefore(now.minusSeconds(googleMaxAgeSeconds)) || issued.isAfter(now.plusSeconds(60))) {
+            throw new ForbiddenOperationException("Google sign-in is too old to confirm this. Please sign in with Google again.");
+        }
+        // ...and used ONCE: a token that already signed someone in, or already confirmed another action, is refused.
+        if (!googleTokenUses.claimForReauth(credential)) {
+            throw new ForbiddenOperationException("Google sign-in was already used. Please sign in with Google again.");
         }
     }
 }
