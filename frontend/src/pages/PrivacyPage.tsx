@@ -1,4 +1,4 @@
-import LegalLayout, { LegalSection, Marker } from '../components/LegalLayout';
+import LegalLayout, { LegalSection } from '../components/LegalLayout';
 import { useConsentStore } from '../store/useConsentStore';
 import { LEGAL } from '../config/legal';
 
@@ -7,8 +7,8 @@ const list = 'list-disc pl-5 space-y-2';
 
 // The Privacy Policy. Public (no sign-in). It describes what the app really does, checked against the code on the date at the top:
 // the data it asks for, who handles it and where, every outside host the browser contacts, the browser storage keys, deletion and the
-// rights. A DRAFT for the owner to review (see config/legal.ts): anything not yet supplied is a visible [PLACEHOLDER] / [PROPOSAL].
-// Not legal advice, and it claims neither compliance with any law nor a legal review.
+// rights. The owner's facts live in config/legal.ts. Not legal advice, and it claims neither compliance with any law nor a legal review;
+// the questions still open for a lawyer are kept in the owner's own notes.
 const PrivacyPage = () => {
   const reopen = useConsentStore((state) => state.reopen);
 
@@ -22,16 +22,14 @@ const PrivacyPage = () => {
 
       <LegalSection title="1. Who runs the service">
         <p>
-          The service is run by {LEGAL.operator} ("we"), who decides how your data is used. <Marker kind="PLACEHOLDER">confirm
-          the legal name and whether this is an individual or a company</Marker>. <Marker kind="PLACEHOLDER">the address, postal
-          box or other way to reach us that the owner chooses to publish</Marker>.
+          The service is run by {LEGAL.operator}, an individual ("we"), who decides how your data is used. Address: {LEGAL.address}.
         </p>
         <p>
           Contact for privacy requests:{' '}
           <a className="text-text-primary underline underline-offset-2" href={`mailto:${LEGAL.contactEmail}`}>
             {LEGAL.contactEmail}
           </a>
-          . <Marker kind="PLACEHOLDER">who answers these requests</Marker>
+          . {LEGAL.operator} answers these requests personally.
         </p>
       </LegalSection>
 
@@ -86,31 +84,31 @@ const PrivacyPage = () => {
         <ul className={list}>
           <li>
             <strong className={strong}>Render</strong> - hosts the website and the server (your requests, your account data while
-            it is processed). <Marker kind="PLACEHOLDER">Render region</Marker>
+            it is processed). Located in the United States.
           </li>
           <li>
             <strong className={strong}>Supabase</strong> - stores the database: accounts, garment details, outfits, the records of
-            what you agreed to. <Marker kind="PLACEHOLDER">confirm the Supabase region (believed to be us-east-1)</Marker>
+            what you agreed to. Located in the United States.
           </li>
           <li>
-            <strong className={strong}>Cloudinary</strong> - stores and delivers the garment photos you upload.{' '}
-            <Marker kind="PLACEHOLDER">Cloudinary region</Marker>
+            <strong className={strong}>Cloudinary</strong> - stores and delivers the garment photos you upload. Located in the
+            United States.
           </li>
           <li>
             <strong className={strong}>Google</strong> - if you choose "Continue with Google" (your Google identity, email and
             name), and for sending some account emails from our Gmail account (your email address and the message).
           </li>
           <li>
-            <strong className={strong}>Stripe</strong> - payments for Premium, when available (adults only). Stripe keeps the
-            payment records it is required to keep. <Marker kind="PLACEHOLDER">Stripe data location</Marker>
+            <strong className={strong}>Stripe</strong> - payments for Premium (adults only). Planned, not active yet. When it is,
+            Stripe keeps the payment records it is required to keep. Located in the United States.
           </li>
           <li>
-            <strong className={strong}>Sentry</strong> - error reports, only if you allow optional services.{' '}
-            <Marker kind="PLACEHOLDER">Sentry data region (US or EU)</Marker>
+            <strong className={strong}>Sentry</strong> - error reports, only if you allow optional services. Located in the United
+            States.
           </li>
           <li>
-            <strong className={strong}>An advertising network</strong> - ads shown to Free accounts of adults, only if you allow
-            optional services and when ads are switched on. <Marker kind="PLACEHOLDER">name of the ad network</Marker>
+            <strong className={strong}>Google AdSense</strong> - ads shown to Free accounts of adults, only if you allow optional
+            services. Planned, not active yet. Located in the United States.
           </li>
         </ul>
       </LegalSection>
@@ -154,14 +152,11 @@ const PrivacyPage = () => {
             you are sent to Stripe's own page.
           </li>
           <li>
-            <strong className={strong}>Sentry</strong> and <strong className={strong}>the ad network</strong> - only if you choose
-            "Accept all" (section 7). <Marker kind="PLACEHOLDER">the exact Sentry and ad network host names</Marker>
+            <code>sentry.io</code> (error reports) and, once ads are active, Google AdSense's advertising servers - only if you
+            choose "Accept all" (section 7).
           </li>
         </ul>
-        <p>
-          Fonts are served from our own site. <Marker kind="PROPOSAL">re-check this list against the code at every release that
-          adds a feature</Marker>
-        </p>
+        <p>Fonts are served from our own site.</p>
       </LegalSection>
 
       <LegalSection title="7. Cookies and browser storage">
@@ -208,20 +203,18 @@ const PrivacyPage = () => {
         <ul className={list}>
           <li>
             <strong className={strong}>Photos:</strong> their addresses are queued and removed from our image provider by a cleanup
-            we run by hand, <Marker kind="PROPOSAL">within 30 days of the deletion</Marker>. The queue is not linked to you.
+            we run by hand, within 30 days of the deletion. The queue is not linked to you.
           </li>
           <li>
             <strong className={strong}>Payments:</strong> Stripe may keep the payment records it is required to keep.
           </li>
           <li>
-            <strong className={strong}>Backups:</strong> we keep our own backups of the database, and a deleted account can remain
-            in them until they are replaced. <Marker kind="PROPOSAL">we keep the latest 14 backups, so deleted data can remain in
-            them for at most that window; confirm how often they are taken</Marker>.{' '}
-            <Marker kind="PLACEHOLDER">what Supabase itself keeps in its own backups on our plan</Marker>
+            <strong className={strong}>Backups:</strong> we make backups of the database by hand, with no fixed schedule, and keep the
+            latest 14. A deleted account can remain in them until they are replaced, which is at most that window of 14 backups. On
+            our current plan we keep no backups made by the database provider itself.
           </li>
           <li>
-            <strong className={strong}>Accounts we deactivate</strong> (for example for breaking the Terms) are erased after{' '}
-            <Marker kind="PROPOSAL">30 days</Marker>.
+            <strong className={strong}>Accounts we deactivate</strong> (for example for breaking the Terms) are erased after 30 days.
           </li>
           <li>
             <strong className={strong}>Logs</strong> at our hosting providers are kept by them for their own periods.
@@ -257,8 +250,8 @@ const PrivacyPage = () => {
           learn that an account belongs to someone under 13, we erase it.
         </p>
         <p>
-          <Marker kind="PROPOSAL">accounts created before the age question are asked for their birth month and year once, at
-          their next sign-in; if the answer shows they are under 13, the account is erased on the spot</Marker>
+          Accounts created before we asked for the birth month and year are asked for them once, at their next sign-in. If the
+          answer shows the person is under 13, the account is erased on the spot.
         </p>
       </LegalSection>
 
@@ -266,7 +259,7 @@ const PrivacyPage = () => {
         <p>
           If we change this policy in a way that matters (a new use of your data, a new provider, the age rules or how long we keep
           things) we change its version and ask you to confirm it again the next time you sign in. For small corrections we only
-          update the date at the top. <Marker kind="PLACEHOLDER">effective date of this version</Marker>
+          update the date at the top. This version takes effect on {LEGAL.effectiveDate}.
         </p>
         <p>
           Questions or requests: {LEGAL.contactEmail}. Governing law: {LEGAL.country}.

@@ -19,7 +19,7 @@ const LegalLayout = ({
       <article className="mx-auto max-w-3xl">
         <p className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase mb-4">{LEGAL.siteName}</p>
         <h1 className="text-4xl sm:text-5xl font-light tracking-tighter text-text-primary uppercase leading-none">{title}</h1>
-        <p className="mt-4 text-text-secondary text-xs uppercase tracking-widest">Last updated {LEGAL.lastUpdated}</p>
+        <p className="mt-4 text-text-secondary text-xs uppercase tracking-widest">Last updated: {LEGAL.lastUpdated}</p>
 
         {LEGAL_IS_DRAFT && (
           <p

@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 import PrivacyPage from '../pages/PrivacyPage';
 import TermsPage from '../pages/TermsPage';
+import { Marker } from '../components/LegalLayout';
 import { LEGAL, LEGAL_IS_DRAFT } from '../config/legal';
 
 // The Terms and the Privacy Policy: what they must say to match the app, and the rule that the "draft" notice cannot be switched off
@@ -25,30 +26,84 @@ describe('the draft rule', () => {
     }
   });
 
-  it('while it is a draft, the notice is shown and does not name Costa Rica as a gap', () => {
+  it('the texts are final: no marker remains, and the draft notice is gone', () => {
+    expect(LEGAL_IS_DRAFT).toBe(false);
+    for (const page of [privacy(), terms()]) {
+      expect(page).not.toMatch(/\[(PLACEHOLDER|PROPOSAL)/);
+      expect(page).not.toMatch(/Draft for review/i);
+      expect(page).not.toMatch(/has not been reviewed by a lawyer/i);
+    }
     const { container } = render(
       <MemoryRouter>
         <PrivacyPage />
       </MemoryRouter>
     );
-    const note = container.querySelector('[role="note"]');
-    expect(LEGAL_IS_DRAFT).toBe(true);
-    expect(note?.textContent).toMatch(/has not been reviewed by a lawyer/i);
-    expect(note?.textContent).toMatch(/\[PLACEHOLDER\]/);
-    expect(note?.textContent).toMatch(/\[PROPOSAL\]/);
-    expect(note?.textContent).not.toMatch(/costa rica/i);
+    expect(container.querySelector('[role="note"]')).toBeNull();
   });
 
-  it('the markers are spelled out in words (readable without colour)', () => {
-    expect(privacy()).toMatch(/\[PLACEHOLDER: [^\]]+\]/);
-    expect(privacy()).toMatch(/\[PROPOSAL: [^\]]+\]/);
+  it('shows the neutral "Last updated" line', () => {
+    expect(privacy()).toContain('Last updated: November 17, 2026');
+    expect(terms()).toContain('Last updated: November 17, 2026');
   });
 
   it('claims neither compliance nor a legal review', () => {
     for (const page of [privacy(), terms()]) {
       expect(page).not.toMatch(/\bcompl(y|ies|iant|iance)\b/i);
       expect(page).not.toMatch(/(has been|was|is) (legally )?(reviewed|approved|certified) by/i);
+      expect(page).not.toMatch(/lawyer|legal review/i);
     }
+  });
+
+  it('the Marker used for gaps (while a page is a draft) is spelled out in words, readable without colour', () => {
+    const { container } = render(
+      <>
+        <Marker kind="PLACEHOLDER">a fact</Marker>
+        <Marker kind="PROPOSAL">a suggestion</Marker>
+      </>
+    );
+    expect(container.textContent).toBe('[PLACEHOLDER: a fact][PROPOSAL: a suggestion]');
+  });
+});
+
+describe('the owner facts are in the texts', () => {
+  it('an individual runs the service, with the published address, the contact email and who answers', () => {
+    const page = privacy();
+    expect(page).toContain('Javier Chinchilla Lugo, an individual');
+    expect(page).toContain('Address: San José, Costa Rica');
+    expect(page).toContain(LEGAL.contactEmail);
+    expect(page).toContain('Javier Chinchilla Lugo answers these requests personally');
+    expect(terms()).toContain('Javier Chinchilla Lugo, an individual');
+  });
+
+  it('every provider is placed in the United States without naming a region', () => {
+    const page = privacy();
+    expect((page.match(/Located in the United States/g) ?? []).length).toBe(6);
+    expect(page).not.toMatch(/us-east|us-west|eu-|Virginia|Oregon|Ohio/i);
+  });
+
+  it('says Stripe and Google AdSense are planned and not active yet', () => {
+    const page = privacy();
+    expect(page).toMatch(/Stripe[\s\S]{0,80}Planned, not active yet/);
+    expect(page).toMatch(/Google AdSense[\s\S]{0,120}Planned, not active yet/);
+  });
+
+  it('describes the manual backups (no schedule, the latest 14) and the 30-day rules', () => {
+    const page = privacy();
+    expect(page).toMatch(/by hand, with no fixed schedule, and keep the latest 14/);
+    expect(page).toMatch(/at most that window of 14 backups/);
+    expect(page).toMatch(/within 30 days of the deletion/);
+    expect(page).toMatch(/erased after 30 days/);
+    expect(page).toMatch(/keep no backups made by the database provider/);
+  });
+
+  it('keeps the text for existing accounts asked once for birth month and year', () => {
+    expect(privacy()).toMatch(/Accounts created before we asked for the birth month and year are asked for them once, at their next sign-in/);
+  });
+
+  it('states the effective date, the governing law and the courts of San José', () => {
+    expect(privacy()).toContain('takes effect on November 17, 2026');
+    expect(terms()).toContain('takes effect on November 17, 2026');
+    expect(terms()).toMatch(/governed by the law of Costa Rica;\s*the courts of San José, Costa Rica apply/);
   });
 });
 
