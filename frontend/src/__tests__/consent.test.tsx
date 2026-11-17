@@ -100,7 +100,8 @@ describe('the footer and the legal pages (signed out)', () => {
     for (const word of ['Render', 'Supabase', 'Cloudinary', 'Stripe', 'Sentry', 'auth-storage', 'vysvi-consent', 'javidilugo@gmail.com']) {
       expect(screen.getAllByText(new RegExp(word)).length, word).toBeGreaterThan(0);
     }
-    expect(screen.getByRole('note')).toHaveTextContent(/draft/i);
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    expect(screen.getByText(/Last updated: November 17, 2026/)).toBeInTheDocument();
     expect(screen.getAllByText(/Costa Rica/).length).toBeGreaterThan(0);
   });
 

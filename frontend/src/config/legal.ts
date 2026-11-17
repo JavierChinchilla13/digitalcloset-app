@@ -6,7 +6,14 @@ export const LEGAL = {
   contactEmail: 'javidilugo@gmail.com',
   siteName: 'VYSVI',
   siteUrl: 'https://vysvi-web.onrender.com',
-  lastUpdated: 'November 16, 2026',
+  lastUpdated: 'November 17, 2026',
+  // The date this version of the texts takes effect.
+  effectiveDate: 'November 17, 2026',
+  // What is published as the way to reach the person who runs the service (with the contact email). Whether this is enough for the
+  // controller-address rule of Costa Rica's data protection law is an open question for the lawyer (see the lawyer brief).
+  address: 'San José, Costa Rica',
+  // The courts that apply.
+  courts: 'the courts of San José, Costa Rica',
   // The country whose law governs these terms.
   country: 'Costa Rica',
 } as const;
@@ -18,4 +25,4 @@ export const LEGAL_VERSION = '2026-11-draft-1';
 // Flip to false once the owner has reviewed both pages and EVERY [PLACEHOLDER: ...] / [PROPOSAL: ...] marker is gone from them: it removes
 // the "draft" notice. A test (legalPages.test.tsx) fails the build if this is false while a marker remains. The notice claims neither a
 // legal review nor compliance, and its replacement ("Last updated <date>") must not either.
-export const LEGAL_IS_DRAFT = true;
+export const LEGAL_IS_DRAFT = false;
