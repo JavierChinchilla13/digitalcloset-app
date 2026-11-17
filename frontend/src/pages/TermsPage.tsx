@@ -1,21 +1,29 @@
-import LegalLayout, { LegalSection } from '../components/LegalLayout';
+import LegalLayout, { LegalSection, Marker } from '../components/LegalLayout';
 import { LEGAL } from '../config/legal';
 
-// Task 99: the Terms of Service. Public (no sign-in). Includes the subscription, cancellation and
-// refund wording a payment provider asks a site to publish. A DRAFT for the owner to review (see
-// config/legal.ts); the governing-law country is a marked gap.
+// The Terms of Service. Public (no sign-in). Includes the subscription, cancellation and refund wording a payment provider asks a
+// site to publish, the age rules and what deleting an account means. A DRAFT for the owner to review (see config/legal.ts): anything
+// not yet supplied is a visible [PLACEHOLDER] / [PROPOSAL]. Not legal advice; it claims neither a legal review nor compliance.
 const TermsPage = () => (
   <LegalLayout title="Terms of Service" other={{ to: '/privacy', label: 'Read the Privacy Policy' }}>
     <p>
-      These terms are the agreement between you and {LEGAL.operator} ("we") for using {LEGAL.siteName} (the "service"). By
-      creating an account or using the service you agree to them. If you do not agree, please do not use the service.
+      These terms are the agreement between you and {LEGAL.operator} ("we") for using {LEGAL.siteName} (the "service").{' '}
+      <Marker kind="PLACEHOLDER">confirm whether the service is run by an individual or a company, and the address to publish</Marker>.
+      By creating an account or using the service you agree to them. If you do not agree, please do not use the service. When you
+      sign up you tick that you accept these Terms and the Privacy Policy; we record which version you accepted and when.
     </p>
 
     <LegalSection title="1. Your account">
       <p>
         You need an account to save a wardrobe. Give accurate information, keep your password safe, and tell us if you think
-        someone else is using your account. You are responsible for what happens under your account. You must be at least 13
-        years old.
+        someone else is using your account. You are responsible for what happens under your account.
+      </p>
+      <p>
+        You must be at least 13 years old. We ask for your birth month and year when you sign up; if you are under 13 we cannot
+        create an account. If you are 13 to 17 you declare that your father, mother or legal guardian authorises the use of your
+        account and your data. This is a declaration: we do not verify it, and you are responsible for it being true. A parent or
+        guardian can email us at any time to ask for the account to be deleted. People aged 13 to 17 do not see advertising and
+        cannot subscribe to Premium; Premium is for people who declared they are 18 or older.
       </p>
     </LegalSection>
 
@@ -41,8 +49,8 @@ const TermsPage = () => (
 
     <LegalSection title="4. Plans and limits">
       <p>
-        The Free plan lets you keep up to 15 garments and shows advertising. The Premium plan, when available, raises the limit
-        to 300 garments and removes advertising. Limits and features can change; if a change reduces what you have, we will
+        The Free plan lets you keep up to 15 garments and shows advertising to adults who allow it. The Premium plan, when
+        available and only for people who declared they are 18 or older, raises the limit to 300 garments and removes advertising. Limits and features can change; if a change reduces what you have, we will
         not delete what you already saved without telling you first.
       </p>
     </LegalSection>
@@ -61,8 +69,9 @@ const TermsPage = () => (
 
     <LegalSection title="6. Advertising">
       <p>
-        Free accounts may see advertising from a third-party network, only if you allow optional services on the cookie
-        banner. We are not responsible for the ads or the advertisers' sites.
+        Free accounts of people who declared they are 18 or older may see advertising from a third-party network, only if you
+        allow optional services on the cookie banner. People aged 13 to 17 do not see advertising. We are not responsible for the
+        ads or the advertisers' sites.
       </p>
     </LegalSection>
 
@@ -76,8 +85,11 @@ const TermsPage = () => (
 
     <LegalSection title="8. Ending your use">
       <p>
-        You can stop using the service and deactivate your account at any time. We may suspend or end accounts that break these
-        terms. Sections that by their nature should survive (such as responsibility for your content and the limits on our
+        You can stop using the service at any time. In Settings, "Download my data" gives you a copy of your data, and "Delete my
+        account and data" permanently erases your account, garments, outfits and share links and cancels any subscription; it
+        cannot be undone, and the Privacy Policy explains what may remain for a short time (photos at our image provider, backups,
+        payment records at Stripe). We may suspend or end accounts that break these terms; an account we deactivate is erased after{' '}
+        <Marker kind="PROPOSAL">30 days</Marker>. Sections that by their nature should survive (such as responsibility for your content and the limits on our
         liability) continue after that.
       </p>
     </LegalSection>
@@ -91,8 +103,10 @@ const TermsPage = () => (
 
     <LegalSection title="10. Changes, law and contact">
       <p>
-        We may update these terms; the date at the top shows the latest version, and continuing to use the service after a
-        change means you accept it. These terms are governed by the law of {LEGAL.country}. Questions: {LEGAL.contactEmail}.
+        We may update these terms. If a change matters (for example the age rules, what we do with your data, or the plans) we
+        change the version and ask you to accept it again the next time you sign in; for small corrections we only update the date
+        at the top. <Marker kind="PLACEHOLDER">effective date of this version</Marker>. These terms are governed by the law of{' '}
+        {LEGAL.country}; <Marker kind="PLACEHOLDER">the courts or city that apply</Marker>. Questions: {LEGAL.contactEmail}.
       </p>
     </LegalSection>
   </LegalLayout>
