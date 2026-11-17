@@ -441,6 +441,44 @@ export PURGE_ADMIN_EMAIL='<your admin email>'
 
 The password is typed when asked (not echoed, not stored, not on a command line). Take a backup first.
 
+### Admin backup: the downloaded archive and how to restore it
+
+An admin can download an encrypted copy of the whole database from the admin page (Backup -> Download backup; endpoint `POST /api/admin/backup`).
+The file is `vysvi-backup-<date>.vbk`: a tar of one CSV per table plus a manifest (rows, SHA-256 per file, schema version), compressed and sealed with
+AES-256-GCM under a key derived (PBKDF2-HMAC-SHA256, 600,000 iterations, stored in the file header) from a password the admin types at download time.
+**It contains every user's email and password hash: treat it as a secret**, keep it off shared folders, email and chat, store its password in a password
+manager, and delete downloads after 90 days. It is never stored on the server (a private temp file for the length of the request, deleted always). The
+tables `password_reset_tokens` and `pending_account_changes` are not included. Limits: 3 per hour and 10 per day per admin, one at a time, 200 MB.
+For a database too large for that, use `scripts/backup-remote-db.sh` from your computer.
+
+Restoring is for developers, into an EMPTY **local** database only (the script refuses anything else: a non-local host, a database name without
+`test`, `local` or `restore`, tables that are not empty, a schema version different from the archive's, a wrong password, or a file that was changed):
+
+```bash
+createdb vysvi_restore_test                          # an empty database on your computer
+# start the API once against it so Flyway creates the tables, then stop it
+cd backend && ./mvnw -q compile && cd ..             # the archive reader runs from backend/target/classes (JDK only, no network)
+export RESTORE_DATABASE_URL='postgresql://postgres:<password>@localhost:5432/vysvi_restore_test'
+./scripts/restore-from-archive.sh ~/Downloads/vysvi-backup-2026-11-17.vbk      # asks for the archive password, typed hidden
+```
+
+It decrypts and checks every file against the manifest before touching the database, loads everything in ONE transaction (it all happens or none of it
+does; `users.main_outfit_id` is set after the outfits exist), restarts the id sequences after the highest restored id, and finally compares the rows per
+table with the manifest. Then start the API against the restored database and sign in.
+
+**Rehearsal on a real throwaway PostgreSQL (18.4 here), 2026-11-17** — the first run of the `COPY` dumper outside the H2 test suite:
+1. `initdb` a cluster, `createdb` two databases; start the API (test profile, Flyway on, `ddl-auto=validate`, 600,000 iterations) on the first: sign-up, a garment
+   named `Blue "shirt", with comma`, an outfit (so `users.main_outfit_id` is set), an admin (promoted in SQL).
+2. `POST /api/admin/backup` through the real endpoint: 200, `Cache-Control: no-store`, `nosniff`, attachment, 2,401 bytes, the alert logged first, the
+   archive starts with the magic `VYSVIBK1` and contains none of the plain text.
+3. Start the API once on the second (empty) database so Flyway built the tables (schema version 20), stop it, run `restore-from-archive.sh`:
+   "Restore verified: 10 tables, 5 rows, all matching the manifest". The refusals were exercised too: wrong password, one flipped byte, a database name
+   without `test|local|restore`, a non-local host, and a second restore into the now non-empty database all stop with nothing changed.
+4. Start the API on the restored database: sign-in with the original password works (the hashes came back), `/users/me` shows `mainOutfitId: 1`, the garment
+   (comma and quotes intact) and the outfit are there, and a new sign-up gets the next id (the sequences were restarted).
+5. Scale: 150,000 extra wide rows (a 238 MB table) with the API's JVM limited to `-Xmx110m`: the backup finished (200, 5.4 MB, 28 s) with no memory
+   error, and restoring it gave 150,005 rows with an identical hash of the content column in the source and the restored copy.
+
 ## 6. Settings reference
 
 Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them on.

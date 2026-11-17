@@ -37,7 +37,7 @@ public final class ArchiveTool {
             Manifest manifest = ArchiveReader.extractAndVerify(in, password, outDir);
             System.out.println("OK created=" + manifest.createdAt() + " schema=" + manifest.schemaVersion());
             for (Manifest.TableEntry t : manifest.tables()) {
-                System.out.println("TABLE " + t.name() + " " + t.rows());
+                System.out.println("TABLE " + t.name() + " " + t.rows() + " " + String.join(",", t.columns()));
             }
         } catch (IOException e) {
             System.err.println("The backup could not be opened: wrong password, or the file is damaged or has been changed.");
