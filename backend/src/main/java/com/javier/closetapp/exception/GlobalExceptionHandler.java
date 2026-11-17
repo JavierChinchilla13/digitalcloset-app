@@ -183,6 +183,15 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
+    // Audit backup: the in-app backup would be over the hard cap.
+    @ExceptionHandler(BackupTooLargeException.class)
+    public ResponseEntity<Object> handleBackupTooLarge(BackupTooLargeException ex) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage() + " Use scripts/backup-remote-db.sh from your own computer instead.");
+        return new ResponseEntity<>(body, HttpStatus.PAYLOAD_TOO_LARGE);
+    }
+
     // A verification code was requested again too soon (the "Resend" abuse guard).
     @ExceptionHandler(TooManyRequestsException.class)
     public ResponseEntity<Object> handleTooManyRequests(TooManyRequestsException ex) {

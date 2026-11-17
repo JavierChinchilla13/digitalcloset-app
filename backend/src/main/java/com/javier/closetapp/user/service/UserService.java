@@ -8,9 +8,7 @@ import com.javier.closetapp.legal.AgePolicy;
 import com.javier.closetapp.legal.AgePolicy.AgeBand;
 import com.javier.closetapp.user.dto.LegalConfirmationRequest;
 import com.javier.closetapp.account.AccountErasureService;
-import com.javier.closetapp.auth.google.GoogleIdentity;
-import com.javier.closetapp.auth.google.GoogleTokenVerifier;
-import com.javier.closetapp.exception.GoogleSignInException;
+import com.javier.closetapp.auth.service.ReauthenticationService;
 import com.javier.closetapp.exception.InvalidInputException;
 import com.javier.closetapp.user.dto.DeleteAccountRequest;
 import com.javier.closetapp.auth.mail.VerificationCodeMailer;
@@ -68,7 +66,7 @@ public class UserService {
     private final VerificationAttemptTracker verificationAttemptTracker;
     private final PlanLimits planLimits;
     private final BillingService billingService;
-    private final GoogleTokenVerifier googleTokenVerifier;
+    private final ReauthenticationService reauthenticationService;
     private final AccountErasureService accountErasureService;
 
     private final long verificationExpirationMinutes;
@@ -82,7 +80,7 @@ public class UserService {
                         VerificationAttemptTracker verificationAttemptTracker,
                         PlanLimits planLimits,
                         BillingService billingService,
-                        GoogleTokenVerifier googleTokenVerifier,
+                        ReauthenticationService reauthenticationService,
                         AccountErasureService accountErasureService,
                         @Value("${app.account-verification.expiration-minutes:10}") long verificationExpirationMinutes,
                         @Value("${app.account-verification.min-interval-seconds:60}") long verificationMinIntervalSeconds,
@@ -91,7 +89,7 @@ public class UserService {
         this.verificationAttemptTracker = verificationAttemptTracker;
         this.planLimits = planLimits;
         this.billingService = billingService;
-        this.googleTokenVerifier = googleTokenVerifier;
+        this.reauthenticationService = reauthenticationService;
         this.accountErasureService = accountErasureService;
         this.outfitRepository = outfitRepository;
         this.pendingChangeRepository = pendingChangeRepository;
@@ -332,31 +330,8 @@ public class UserService {
         if (!"DELETE".equals(request.getConfirmation())) {
             throw new InvalidInputException("Type DELETE to confirm.");
         }
-        if (user.getPassword() != null) {
-            if (request.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new ForbiddenOperationException("Current password is incorrect");
-            }
-        } else {
-            requireFreshGoogleProof(user, request.getGoogleCredential());
-        }
+        reauthenticationService.requireProof(user, request.getPassword(), request.getGoogleCredential());
         accountErasureService.erase(user);
-    }
-
-    // For an account with no password: the Google credential must be valid and belong to the same Google account.
-    private void requireFreshGoogleProof(User user, String credential) {
-        String message = "Google could not confirm it is you. Please try again.";
-        if (credential == null || credential.isBlank() || user.getGoogleId() == null) {
-            throw new ForbiddenOperationException(message);
-        }
-        GoogleIdentity identity;
-        try {
-            identity = googleTokenVerifier.verify(credential);
-        } catch (GoogleSignInException e) {
-            throw new ForbiddenOperationException(message);
-        }
-        if (!user.getGoogleId().equals(identity.subject())) {
-            throw new ForbiddenOperationException(message);
-        }
     }
 
     // Admin methods
