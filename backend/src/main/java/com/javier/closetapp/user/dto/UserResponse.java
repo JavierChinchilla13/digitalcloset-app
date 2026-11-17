@@ -25,11 +25,15 @@ public class UserResponse {
     // Audit H12: "MINOR" (13-17) or "ADULT", worked out from the recorded birth month/year; null when not recorded. The website
     // uses it to hide ads for minors and Premium for them; the server enforces the same rule.
     private String ageBand;
+    // Audit H12: false for an account that signs in only with Google (no password): the website then asks for a fresh Google
+    // confirmation, not a password, before deleting the account. The hash itself is never sent.
+    private boolean hasPassword;
 
     public UserResponse() {}
 
     public UserResponse(Long userId, String email, String firstName, String lastName, Role role, boolean active, LocalDateTime createdAt, Long mainOutfitId,
-                        Plan plan, Integer garmentLimit, boolean needsLegalConfirmation, String ageBand) {
+                        Plan plan, Integer garmentLimit, boolean needsLegalConfirmation, String ageBand,
+                        boolean hasPassword) {
         this.userId = userId;
         this.email = email;
         this.firstName = firstName;
@@ -42,6 +46,7 @@ public class UserResponse {
         this.garmentLimit = garmentLimit;
         this.needsLegalConfirmation = needsLegalConfirmation;
         this.ageBand = ageBand;
+        this.hasPassword = hasPassword;
     }
 
     public Long getUserId() {
@@ -138,5 +143,13 @@ public class UserResponse {
 
     public void setAgeBand(String ageBand) {
         this.ageBand = ageBand;
+    }
+
+    public boolean isHasPassword() {
+        return hasPassword;
+    }
+
+    public void setHasPassword(boolean hasPassword) {
+        this.hasPassword = hasPassword;
     }
 }

@@ -95,7 +95,8 @@ class GoogleTwoStepIntegrationTest extends IntegrationTestBase {
         assertFalse(user.isGuardianAuthorized());
         mockMvc.perform(get("/api/users/me").header("Authorization", "Bearer " + objectMapper.readTree(body).get("token").asText()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(email));
+                .andExpect(jsonPath("$.email").value(email))
+                .andExpect(jsonPath("$.hasPassword").value(false));
     }
 
     @Test

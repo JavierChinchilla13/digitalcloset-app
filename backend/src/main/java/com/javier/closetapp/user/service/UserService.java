@@ -419,7 +419,8 @@ public class UserService {
                 user.getPlan(),
                 planLimits.garmentLimit(user),
                 AccountAge.needsConfirmation(user),
-                AccountAge.bandOf(user) == null ? null : AccountAge.bandOf(user).name()
+                AccountAge.bandOf(user) == null ? null : AccountAge.bandOf(user).name(),
+                user.getPassword() != null
         );
     }
 }

@@ -77,7 +77,7 @@ class LegalConfirmationIntegrationTest extends IntegrationTestBase {
     @DisplayName("a new sign-up does not need the step; an account without the recorded facts does")
     void legalStatusInMe() throws Exception {
         TestUser fresh = registerUser();
-        me(fresh).andExpect(status().isOk()).andExpect(jsonPath("$.needsLegalConfirmation").value(false)).andExpect(jsonPath("$.ageBand").value("ADULT"));
+        me(fresh).andExpect(status().isOk()).andExpect(jsonPath("$.needsLegalConfirmation").value(false)).andExpect(jsonPath("$.ageBand").value("ADULT")).andExpect(jsonPath("$.hasPassword").value(true));
 
         TestUser old = registerUser();
         makeOld(old);
