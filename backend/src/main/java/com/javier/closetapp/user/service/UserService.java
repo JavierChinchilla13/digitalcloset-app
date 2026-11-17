@@ -369,9 +369,8 @@ public class UserService {
             throw new ForbiddenOperationException(
                     "Your account signs in with Google and has no password yet. Use \"Forgot password\" on the sign-in page to set one.");
         }
-        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new ForbiddenOperationException("Current password is incorrect");
-        }
+        // Counted and throttled per account, like every other "it is me" check (see ReauthenticationService).
+        reauthenticationService.requirePassword(user, currentPassword);
     }
 
     // Admin-only: gives an account the FREE or PREMIUM plan (no payment flow yet). A 404 for an unknown id.

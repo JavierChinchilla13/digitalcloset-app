@@ -26,6 +26,7 @@ public final class BackupTables {
     public static final List<String> EXCLUDED = List.of(
             "password_reset_tokens",
             "pending_account_changes",
+            "reauth_failures",
             "backup_downloads");
 
     public static final String FLYWAY_TABLE = "flyway_schema_history";
