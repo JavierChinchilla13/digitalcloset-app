@@ -4,6 +4,8 @@ import { useStorage } from '../hooks/useStorage';
 import { limitMessage } from '../utils/storage';
 import { useBilling } from '../hooks/useBilling';
 import BillingActions from './BillingActions';
+import PremiumInterestNote from './PremiumInterestNote';
+import { usePremiumInterestEligible } from '../hooks/usePremiumInterestEligible';
 import { Plan } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -13,6 +15,7 @@ import { useAuthStore } from '../store/useAuthStore';
 const StorageLimitModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
   const storage = useStorage();
   const { enabled } = useBilling();
+  const interestEligible = usePremiumInterestEligible();
   const isFree = useAuthStore((state) => state.user?.plan) !== Plan.PREMIUM;
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-md bg-background-secondary border border-ink/5 rounded-2xl shadow-lg">
@@ -33,6 +36,8 @@ const StorageLimitModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () =
         {/* Task 103: with payments set up, the way out is right here; otherwise say more space is planned. */}
         {enabled && isFree ? (
           <BillingActions />
+        ) : isFree && interestEligible ? (
+          <PremiumInterestNote />
         ) : (
           isFree && <p className="text-text-secondary text-xs leading-relaxed">Plans with more space are coming soon.</p>
         )}

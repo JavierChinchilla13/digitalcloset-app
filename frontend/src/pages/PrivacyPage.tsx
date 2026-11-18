@@ -64,6 +64,9 @@ const PrivacyPage = () => {
             type and the page where a problem happened.
           </li>
         </ul>
+        <p>
+          If you request Premium, we record that you asked, and the date, linked to your account; nothing else.
+        </p>
         <p>If someone says they are under 13, nothing about them is saved (see section 11).</p>
       </LegalSection>
 
