@@ -11,6 +11,7 @@ public final class BackupTables {
 
     public static final List<String> INCLUDED = List.of(
             "users",
+            "premium_interest",
             "clothing_items",
             "outfits",
             "outfit_items",

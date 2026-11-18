@@ -4,6 +4,7 @@ import com.javier.closetapp.clothing.service.ClothingService;
 import com.javier.closetapp.collection.service.CollectionService;
 import com.javier.closetapp.outfit.service.OutfitService;
 import com.javier.closetapp.persona.service.PersonaDisplayNameService;
+import com.javier.closetapp.billing.PremiumInterestRepository;
 import com.javier.closetapp.user.entity.User;
 import com.javier.closetapp.user.service.UserService;
 import org.springframework.stereotype.Service;
@@ -24,14 +25,17 @@ public class AccountExportService {
     private final OutfitService outfitService;
     private final CollectionService collectionService;
     private final PersonaDisplayNameService personaDisplayNameService;
+    private final PremiumInterestRepository premiumInterestRepository;
 
     public AccountExportService(UserService userService, ClothingService clothingService, OutfitService outfitService,
-                                CollectionService collectionService, PersonaDisplayNameService personaDisplayNameService) {
+                                CollectionService collectionService, PersonaDisplayNameService personaDisplayNameService,
+                                PremiumInterestRepository premiumInterestRepository) {
         this.userService = userService;
         this.clothingService = clothingService;
         this.outfitService = outfitService;
         this.collectionService = collectionService;
         this.personaDisplayNameService = personaDisplayNameService;
+        this.premiumInterestRepository = premiumInterestRepository;
     }
 
     @Transactional(readOnly = true)
@@ -62,6 +66,12 @@ public class AccountExportService {
         export.put("outfits", outfitService.getAllOutfits());
         export.put("categories", collectionService.getAllCollections());
         export.put("personaNames", personaDisplayNameService.getAll());
+        // "Request Premium": that this account asked for it, and when (null if it did not).
+        Map<String, Object> premiumRequest = new LinkedHashMap<>();
+        var interest = premiumInterestRepository.findByUserId(user.getUserId());
+        premiumRequest.put("requested", interest.isPresent());
+        premiumRequest.put("requestedAt", interest.map(row -> row.getCreatedAt()).orElse(null));
+        export.put("premiumRequest", premiumRequest);
         return export;
     }
 }

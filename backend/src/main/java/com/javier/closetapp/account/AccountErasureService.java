@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.javier.closetapp.auth.repository.PasswordResetTokenRepository;
 import com.javier.closetapp.auth.service.ReauthFailureRepository;
+import com.javier.closetapp.billing.PremiumInterestRepository;
 import com.javier.closetapp.billing.BillingService;
 import com.javier.closetapp.clothing.entity.ClothingItem;
 import com.javier.closetapp.clothing.repository.ClothingRepository;
@@ -42,6 +43,7 @@ public class AccountErasureService {
     private final PersonaDisplayNameRepository personaDisplayNameRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final ReauthFailureRepository reauthFailureRepository;
+    private final PremiumInterestRepository premiumInterestRepository;
     private final PendingAccountChangeRepository pendingChangeRepository;
     private final ImageErasureQueueRepository imageQueue;
     private final BillingService billingService;
@@ -53,7 +55,7 @@ public class AccountErasureService {
                                  OutfitRepository outfitRepository, ClothingRepository clothingRepository,
                                  PersonaDisplayNameRepository personaDisplayNameRepository,
                                  PasswordResetTokenRepository passwordResetTokenRepository,
-                                 ReauthFailureRepository reauthFailureRepository,
+                                 ReauthFailureRepository reauthFailureRepository, PremiumInterestRepository premiumInterestRepository,
                                  PendingAccountChangeRepository pendingChangeRepository,
                                  ImageErasureQueueRepository imageQueue, BillingService billingService,
                                  ImageUrlPolicy imageUrlPolicy, ObjectMapper objectMapper, EntityManager entityManager) {
@@ -64,6 +66,7 @@ public class AccountErasureService {
         this.personaDisplayNameRepository = personaDisplayNameRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.reauthFailureRepository = reauthFailureRepository;
+        this.premiumInterestRepository = premiumInterestRepository;
         this.pendingChangeRepository = pendingChangeRepository;
         this.imageQueue = imageQueue;
         this.billingService = billingService;
@@ -98,6 +101,7 @@ public class AccountErasureService {
         personaDisplayNameRepository.deleteAll(personaDisplayNameRepository.findByOwner(user));
         passwordResetTokenRepository.deleteAllByUserId(userId);
         reauthFailureRepository.deleteByUserId(userId);
+        premiumInterestRepository.deleteByUserId(userId);
         pendingChangeRepository.deleteAllByUserId(userId);
         entityManager.flush();
 
