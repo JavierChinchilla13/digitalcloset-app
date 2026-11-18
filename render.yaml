@@ -1,8 +1,6 @@
-# Task 24: Render "Blueprint" - creates the backend and the website on Render's free
-# plan in one go (New + -> Blueprint -> pick this repo). The DATABASE is not here:
-# Render's free Postgres expires after 30 days, so use Neon (free, no expiry) and
-# paste its connection details below. Step by step: DEPLOYMENT.md, section
-# "Free hosting with Render + Neon".
+# Render "Blueprint" - creates the API and the website on Render in one go (New + -> Blueprint -> pick this
+# repo). The DATABASE is not here: it lives on Supabase (PostgreSQL); paste its connection details below.
+# Step by step: DEPLOYMENT.md, section "2. First deployment".
 #
 # Values marked sync:false are asked for in the dashboard (never stored in git).
 services:
@@ -15,11 +13,9 @@ services:
     dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /actuator/health
     envVars:
-      # Neon: the DIRECT connection (host without "-pooler"), as a JDBC URL:
-      #   jdbc:postgresql://ep-xxxx.region.aws.neon.tech/neondb?sslmode=require
-      # Supabase (no compute-hour limit): the SESSION pooler, user postgres.<project-ref>:
+      # Supabase: the SESSION pooler (not the direct host, not the transaction pooler), user postgres.<project-ref>:
       #   jdbc:postgresql://aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require
-      # See DEPLOYMENT.md, "Moving the database from Neon to Supabase".
+      # See DEPLOYMENT.md, "Step 1 - the database (Supabase)".
       - key: DB_URL
         sync: false
       - key: DB_USERNAME

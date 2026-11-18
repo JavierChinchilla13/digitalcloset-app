@@ -44,7 +44,7 @@ Digital-Closet/
 ├── .env.production.example   Settings template for docker-compose
 ├── scripts/backup-db.sh Database backup helper
 ├── .github/workflows/ci.yml  Tests + production-image smoke test on every push
-├── DEPLOYMENT.md        How to deploy (Docker on one machine, or Render + Neon)
+├── DEPLOYMENT.md        How to deploy (Render + Supabase, or Docker on one machine)
 ├── PROJECT_BLUEPRINT.md The roadmap / task history / decisions
 ├── PROJECT_STRUCTURE.md This file
 ├── CLAUDE.md            Working rules for the AI coding assistant

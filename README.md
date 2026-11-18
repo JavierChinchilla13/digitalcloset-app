@@ -58,10 +58,9 @@ DigitalCloset is a premium full-stack web application designed to help users man
 
 ## Deployment
 
-The whole app (PostgreSQL + Spring Boot API + Caddy web server with automatic
-HTTPS) runs on one machine with `docker compose`. See [DEPLOYMENT.md](DEPLOYMENT.md)
-for the step-by-step guide, the settings reference, backups, and a free hosting
-option.
+The live setup is Render (the API and the website) with PostgreSQL on Supabase, images on Cloudinary and email through a Google Apps Script relay; a single-machine
+`docker compose` stack (PostgreSQL + API + Caddy with automatic HTTPS) also exists. See [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step guide, the settings
+reference, backups and the maintenance scripts.
 
 ## Project structure
 
