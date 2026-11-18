@@ -6,6 +6,7 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
 import CroppedThumbnail from './CroppedThumbnail';
 import PersonaBadge from './PersonaBadge';
+import { useT } from '../i18n';
 
 interface ClothingCardProps {
   item: ClothingItem;
@@ -31,6 +32,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
   showManagement = false,
   fluid = false
 }) => {
+  const { t } = useT();
   const { setEquippedItem, persona } = usePersonaStore();
   const { toggleFavorite } = useClothingStore();
 
@@ -91,7 +93,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
         {/* Favorite Star (Always visible if favorite, otherwise on hover) */}
         <button
           onClick={handleFavorite}
-          aria-label={item.isFavorite ? 'Remove from favourites' : 'Add to favourites'}
+          aria-label={item.isFavorite ? t('card.removeFavorite') : t('card.addFavorite')}
           className={`
             absolute top-2 right-2 p-1.5 touch:p-2.5 rounded-full backdrop-blur-md transition-all z-10
             ${item.isFavorite 
@@ -112,7 +114,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
                 onViewDetails(item);
               }}
               className="p-2 bg-ink/10 hover:bg-ink/20 text-text-primary rounded-lg transition-colors border border-ink/10"
-              title="Details"
+              title={t('card.details')}
             >
               <Info size={14} />
             </button>
@@ -125,7 +127,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
                     onEdit(item);
                   }}
                   className="p-2 bg-ink/10 hover:bg-ink/20 text-text-primary rounded-lg transition-colors border border-ink/10"
-                  title="Edit"
+                  title={t('card.edit')}
                 >
                   <Edit2 size={14} />
                 </button>
@@ -135,7 +137,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
                     onDelete(item);
                   }}
                   className="p-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all border border-rose-500/10"
-                  title="Delete"
+                  title={t('card.delete')}
                 >
                   <Trash2 size={14} />
                 </button>
@@ -148,7 +150,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
             ${isEquipped ? 'bg-accent text-on-accent shadow-lg' : 'bg-ink/10 text-ink/50'}
           `}>
             <Shirt size={10} />
-            <span>{isEquipped ? 'Equipped' : 'Wear'}</span>
+            <span>{isEquipped ? t('card.equipped') : t('card.wear')}</span>
           </div>
         </div>
 
@@ -164,7 +166,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
       <div className="hidden touch:flex gap-2 mb-2">
         <button
           onClick={(e) => { e.stopPropagation(); onViewDetails(item); }}
-          aria-label={`Details of ${item.name}`}
+          aria-label={t('card.detailsOf', { name: item.name })}
           className="flex-1 h-10 flex items-center justify-center rounded-lg bg-ink/5 text-text-primary border border-ink/10"
         >
           <Info size={16} />
@@ -173,14 +175,14 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
           <>
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(item); }}
-              aria-label={`Edit ${item.name}`}
+              aria-label={t('card.editName', { name: item.name })}
               className="flex-1 h-10 flex items-center justify-center rounded-lg bg-ink/5 text-text-primary border border-ink/10"
             >
               <Edit2 size={16} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(item); }}
-              aria-label={`Delete ${item.name}`}
+              aria-label={t('card.deleteName', { name: item.name })}
               className="flex-1 h-10 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-500 border border-rose-500/10"
             >
               <Trash2 size={16} />

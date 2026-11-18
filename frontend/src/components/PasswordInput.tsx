@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useT } from '../i18n';
 
 // A password <input> with a show/hide toggle, used everywhere the app asks
 // for a password (login, signup, reset, Settings, admin create-user). Each
@@ -22,6 +23,7 @@ interface PasswordInputProps extends Omit<React.InputHTMLAttributes<HTMLInputEle
 
 const PasswordInput = ({ icon: Icon, className, toggleTabbable = false, ...rest }: PasswordInputProps) => {
   const [visible, setVisible] = useState(false);
+  const { t } = useT();
 
   return (
     <div className="relative group">
@@ -38,7 +40,7 @@ const PasswordInput = ({ icon: Icon, className, toggleTabbable = false, ...rest 
         // same reasoning as the show/hide buttons in most password fields.
         tabIndex={toggleTabbable ? 0 : -1}
         onClick={() => setVisible((v) => !v)}
-        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-label={visible ? t('common.hide') : t('common.show')}
         className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 rounded"
       >
         {visible ? <EyeOff size={16} /> : <Eye size={16} />}

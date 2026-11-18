@@ -5,6 +5,7 @@ import { authService } from '../api/authService';
 import { Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Same minimum the server enforces on reset (ResetPasswordRequest).
 const MIN_PASSWORD_LENGTH = 8;
@@ -13,6 +14,7 @@ const MIN_PASSWORD_LENGTH = 8;
 // (/reset-password?token=...). Sets the new password, then sends the user to
 // sign in - it deliberately doesn't sign them in itself.
 const ResetPasswordPage = () => {
+  const { t } = useT();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
 
@@ -36,7 +38,7 @@ const ResetPasswordPage = () => {
       return;
     }
     if (password !== confirm) {
-      setError('Passwords do not match.');
+      setError(t('reset.mismatch'));
       return;
     }
 
@@ -45,7 +47,7 @@ const ResetPasswordPage = () => {
       const response = await authService.resetPassword(token, password);
       setDoneMessage(response.message);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
+      setError(getApiErrorMessage(err, t('error.generic')));
       setLinkRejected((err as { response?: { status?: number } }).response?.status === 400);
     } finally {
       setIsLoading(false);
@@ -63,9 +65,9 @@ const ResetPasswordPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">New Password</h1>
+          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">{t('reset.title')}</h1>
           <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">
-            Choose something you'll remember
+            {t('reset.subtitle')}
           </p>
         </div>
 
@@ -81,17 +83,17 @@ const ResetPasswordPage = () => {
               to="/login"
               className="inline-flex items-center gap-2 py-3 px-6 bg-ink text-background-main font-medium rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all"
             >
-              <span>SIGN IN</span>
+              <span>{t('login.submit')}</span>
               <ArrowRight size={16} />
             </Link>
           </motion.div>
         ) : !token ? (
           <div className="p-6 bg-red-500/10 border border-red-500/50 rounded-2xl text-center space-y-4">
             <p className="text-red-400 text-xs font-bold uppercase tracking-widest">
-              This reset link is missing its token
+              {t('reset.missingToken')}
             </p>
             <Link to="/forgot-password" className="text-text-primary text-sm font-bold hover:text-accent transition-colors">
-              Request a new link
+              {t('reset.requestNew')}
             </Link>
           </div>
         ) : (
@@ -106,7 +108,7 @@ const ResetPasswordPage = () => {
                 {linkRejected && (
                   <div className="mt-2 normal-case tracking-normal font-medium">
                     <Link to="/forgot-password" className="underline hover:text-red-300">
-                      Request a new link
+                      {t('reset.requestNew')}
                     </Link>
                   </div>
                 )}
@@ -115,28 +117,28 @@ const ResetPasswordPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">New Password</label>
+                <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('reset.newPassword')}</label>
                 <PasswordInput
                   icon={Lock}
                   required
                   autoComplete="new-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder={t('reset.newPlaceholder')}
                   className={inputClass}
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Confirm Password</label>
+                <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('reset.confirmPassword')}</label>
                 <PasswordInput
                   icon={Lock}
                   required
                   autoComplete="new-password"
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Repeat your new password"
+                  placeholder={t('reset.confirmPlaceholder')}
                   className={inputClass}
                   disabled={isLoading}
                 />
@@ -151,7 +153,7 @@ const ResetPasswordPage = () => {
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
                   <>
-                    <span>UPDATE PASSWORD</span>
+                    <span>{t('reset.submit')}</span>
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </>
                 )}

@@ -15,6 +15,7 @@ import BillingActions from '../components/BillingActions';
 import PremiumInterestNote from '../components/PremiumInterestNote';
 import { useBillingStore } from '../store/useBillingStore';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Task 79: account settings - name, email, password, and account status.
 // Each section is its own small form with its own loading/error state, so
@@ -80,13 +81,15 @@ const CodeConfirmStep = ({
   onCancel: () => void;
   isBusy: boolean;
   confirmLabel: string;
-}) => (
+}) => {
+  const { t } = useT();
+  return (
   <form onSubmit={onConfirm} className="space-y-4">
     <p className="text-text-secondary text-xs leading-relaxed">
-      We sent a 6-digit code to <span className="text-text-primary">{targetEmail}</span>. Enter it below to confirm.
+      {t.rich('settings.codeIntro', { email: (text) => <span className="text-text-primary">{text}</span> }, { email: targetEmail ?? '' })}
     </p>
     <div className="space-y-2">
-      <label className={labelClass}>Verification Code</label>
+      <label className={labelClass}>{t('settings.codeLabel')}</label>
       <input
         type="text"
         inputMode="numeric"
@@ -109,19 +112,21 @@ const CodeConfirmStep = ({
     </button>
     <div className="flex justify-between text-[10px] font-medium uppercase tracking-widest">
       <button type="button" onClick={onCancel} disabled={isBusy} className="text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50">
-        Cancel
+        {t('common.cancel')}
       </button>
       <button type="button" onClick={onResend} disabled={isBusy} className="text-accent hover:text-accent-hover transition-colors disabled:opacity-50">
-        Resend Code
+        {t('settings.resend')}
       </button>
     </div>
   </form>
-);
+  );
+};
 
 const SettingsPage = () => {
   const { user, login, setToken } = useAuthStore();
   const { showToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t, language } = useT();
 
   // Task 103: back from Stripe Checkout (?billing=success). The plan changes when Stripe's webhook reaches
   // the server, which can be a few seconds (or a sleeping free-tier API's minute) after the buyer returns,
@@ -143,7 +148,7 @@ const SettingsPage = () => {
           void useBillingStore.getState().load(true);
           setConfirmingUpgrade(false);
           setSearchParams({}, { replace: true });
-          showToast('Welcome to Premium - your garment limit is now 300', 'success');
+          showToast(t('settings.premiumWelcome'), 'success');
           return;
         }
       } catch {
@@ -153,7 +158,7 @@ const SettingsPage = () => {
       if (attempts >= 20) {
         setConfirmingUpgrade(false);
         setSearchParams({}, { replace: true });
-        showToast("Your payment is still being confirmed. Premium will appear here shortly - refresh in a minute.", 'info');
+        showToast(t('settings.paymentPending'), 'info');
         return;
       }
       setTimeout(poll, 3000);
@@ -177,9 +182,9 @@ const SettingsPage = () => {
     try {
       const updated = await userService.updateProfile({ firstName, lastName });
       login(useAuthStore.getState().token!, updated);
-      showToast('Profile updated', 'success');
+      showToast(t('settings.profile.saved'), 'success');
     } catch (err: unknown) {
-      showToast(getApiErrorMessage(err, "Couldn't update your profile"), 'error');
+      showToast(getApiErrorMessage(err, t('settings.profile.failed')), 'error');
     } finally {
       setIsSavingProfile(false);
     }
@@ -200,9 +205,9 @@ const SettingsPage = () => {
     try {
       await userService.requestEmailChange(newEmail, emailPassword);
       setEmailStep('code');
-      showToast(`Code sent to ${user?.email}`, 'success');
+      showToast(t('settings.codeSentTo', { email: user?.email ?? '' }), 'success');
     } catch (err: unknown) {
-      showToast(getApiErrorMessage(err, "Couldn't start the email change"), 'error');
+      showToast(getApiErrorMessage(err, t('settings.email.startFailed')), 'error');
     } finally {
       setIsSavingEmail(false);
     }
@@ -226,9 +231,9 @@ const SettingsPage = () => {
       const refreshed = await authService.getCurrentUser();
       login(auth.token, refreshed);
       resetEmailCard();
-      showToast('Email updated', 'success');
+      showToast(t('settings.email.updated'), 'success');
     } catch (err: unknown) {
-      showToast(getApiErrorMessage(err, "Couldn't confirm the code"), 'error');
+      showToast(getApiErrorMessage(err, t('settings.codeConfirmFailed')), 'error');
     } finally {
       setIsSavingEmail(false);
     }
@@ -254,9 +259,9 @@ const SettingsPage = () => {
     try {
       await userService.requestPasswordChange(currentPassword, newPassword);
       setPasswordStep('code');
-      showToast(`Code sent to ${user?.email}`, 'success');
+      showToast(t('settings.codeSentTo', { email: user?.email ?? '' }), 'success');
     } catch (err: unknown) {
-      showToast(getApiErrorMessage(err, "Couldn't start the password change"), 'error');
+      showToast(getApiErrorMessage(err, t('settings.password.startFailed')), 'error');
     } finally {
       setIsSavingPassword(false);
     }
@@ -265,7 +270,7 @@ const SettingsPage = () => {
   const requestPassword = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      showToast("New passwords don't match", 'error');
+      showToast(t('settings.password.mismatch'), 'error');
       return;
     }
     void doRequestPassword();
@@ -282,9 +287,9 @@ const SettingsPage = () => {
       const refreshed = await authService.getCurrentUser();
       login(auth.token, refreshed);
       resetPasswordCard();
-      showToast('Password updated', 'success');
+      showToast(t('settings.password.updated'), 'success');
     } catch (err: unknown) {
-      showToast(getApiErrorMessage(err, "Couldn't confirm the code"), 'error');
+      showToast(getApiErrorMessage(err, t('settings.codeConfirmFailed')), 'error');
     } finally {
       setIsSavingPassword(false);
     }
@@ -299,17 +304,19 @@ const SettingsPage = () => {
   };
 
   const formatDate = (value?: string) =>
-    value ? new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'unknown';
+    value
+      ? new Date(value).toLocaleDateString(language === 'es' ? 'es' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : t('settings.unknown');
 
   return (
     <div className="min-h-dvh bg-background-main pt-24 pb-20">
       <SectionWrapper>
         <div className="space-y-4 mb-10">
           <p className="flex items-center gap-2 text-[10px] font-medium tracking-[0.3em] text-accent uppercase">
-            <SettingsIcon size={14} /> Account
+            <SettingsIcon size={14} /> {t('settings.eyebrow')}
           </p>
           <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
-            SETTINGS
+            {t('settings.title')}
           </h1>
         </div>
 
@@ -318,11 +325,11 @@ const SettingsPage = () => {
             centering it inside - it sat flush against the left edge instead
             of in the middle of the page. */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <SectionCard icon={UserIcon} title="Profile" description="Your display name" testId="profile-section">
+          <SectionCard icon={UserIcon} title={t('settings.profile.title')} description={t('settings.profile.desc')} testId="profile-section">
             <form onSubmit={saveProfile} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <label className={labelClass}>First Name</label>
+                  <label className={labelClass}>{t('field.firstName')}</label>
                   <input
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
@@ -331,7 +338,7 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={labelClass}>Last Name</label>
+                  <label className={labelClass}>{t('field.lastName')}</label>
                   <input
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
@@ -345,16 +352,16 @@ const SettingsPage = () => {
                 disabled={isSavingProfile}
                 className="w-full py-3.5 bg-ink text-background-main text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
               >
-                {isSavingProfile ? <Loader2 size={14} className="animate-spin" /> : 'Save Profile'}
+                {isSavingProfile ? <Loader2 size={14} className="animate-spin" /> : t('settings.profile.save')}
               </button>
             </form>
           </SectionCard>
 
-          <SectionCard icon={Mail} title="Email" description={`Currently ${user?.email}`} testId="email-section">
+          <SectionCard icon={Mail} title={t('settings.email.title')} description={t('settings.email.desc', { email: user?.email ?? '' })} testId="email-section">
             {emailStep === 'form' ? (
               <form onSubmit={requestEmail} className="space-y-4">
                 <div className="space-y-2">
-                  <label className={labelClass}>New Email</label>
+                  <label className={labelClass}>{t('settings.email.new')}</label>
                   <input
                     type="email"
                     required
@@ -366,7 +373,7 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={labelClass}>Current Password</label>
+                  <label className={labelClass}>{t('settings.password.current')}</label>
                   <PasswordInput
                     required
                     value={emailPassword}
@@ -381,7 +388,7 @@ const SettingsPage = () => {
                   disabled={isSavingEmail}
                   className="w-full py-3.5 bg-ink text-background-main text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
                 >
-                  {isSavingEmail ? <Loader2 size={14} className="animate-spin" /> : 'Send Code'}
+                  {isSavingEmail ? <Loader2 size={14} className="animate-spin" /> : t('settings.sendCode')}
                 </button>
               </form>
             ) : (
@@ -393,16 +400,16 @@ const SettingsPage = () => {
                 onResend={() => void doRequestEmail()}
                 onCancel={resetEmailCard}
                 isBusy={isSavingEmail}
-                confirmLabel="Confirm Email Change"
+                confirmLabel={t('settings.email.confirm')}
               />
             )}
           </SectionCard>
 
-          <SectionCard icon={Shield} title="Password" description="Change your password" testId="password-section">
+          <SectionCard icon={Shield} title={t('settings.password.title')} description={t('settings.password.desc')} testId="password-section">
             {passwordStep === 'form' ? (
               <form onSubmit={requestPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <label className={labelClass}>Current Password</label>
+                  <label className={labelClass}>{t('settings.password.current')}</label>
                   <PasswordInput
                     required
                     value={currentPassword}
@@ -413,19 +420,19 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={labelClass}>New Password</label>
+                  <label className={labelClass}>{t('settings.password.new')}</label>
                   <PasswordInput
                     required
                     minLength={8}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 8 characters"
+                    placeholder={t('settings.password.newPlaceholder')}
                     disabled={isSavingPassword}
                     className={passwordFieldClass}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className={labelClass}>Confirm New Password</label>
+                  <label className={labelClass}>{t('settings.password.confirmNew')}</label>
                   <PasswordInput
                     required
                     value={confirmPassword}
@@ -440,7 +447,7 @@ const SettingsPage = () => {
                   disabled={isSavingPassword}
                   className="w-full py-3.5 bg-ink text-background-main text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-50"
                 >
-                  {isSavingPassword ? <Loader2 size={14} className="animate-spin" /> : 'Send Code'}
+                  {isSavingPassword ? <Loader2 size={14} className="animate-spin" /> : t('settings.sendCode')}
                 </button>
               </form>
             ) : (
@@ -452,30 +459,30 @@ const SettingsPage = () => {
                 onResend={() => void doRequestPassword()}
                 onCancel={resetPasswordCard}
                 isBusy={isSavingPassword}
-                confirmLabel="Confirm Password Change"
+                confirmLabel={t('settings.password.confirm')}
               />
             )}
           </SectionCard>
 
-          <SectionCard icon={SettingsIcon} title="Account" description="Account details" testId="account-section">
+          <SectionCard icon={SettingsIcon} title={t('settings.account.title')} description={t('settings.account.desc')} testId="account-section">
             <div className="space-y-3 text-[10px] uppercase tracking-widest">
               <div className="flex justify-between">
-                <span className="text-text-secondary opacity-50">Email</span>
+                <span className="text-text-secondary opacity-50">{t('settings.account.email')}</span>
                 <span className="text-text-primary">{user?.email}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-text-secondary opacity-50">Role</span>
-                <span className="text-text-primary">{user?.role === Role.ROLE_ADMIN ? 'Admin' : 'User'}</span>
+                <span className="text-text-secondary opacity-50">{t('settings.account.role')}</span>
+                <span className="text-text-primary">{user?.role === Role.ROLE_ADMIN ? t('settings.account.roleAdmin') : t('settings.account.roleUser')}</span>
               </div>
               <div className="flex justify-between" data-testid="plan-row">
-                <span className="text-text-secondary opacity-50">Plan</span>
+                <span className="text-text-secondary opacity-50">{t('settings.account.plan')}</span>
                 <span className="text-text-primary">
-                  {user?.role === Role.ROLE_ADMIN ? 'Admin (unlimited space)' : user?.plan === Plan.PREMIUM ? 'Premium' : 'Free'}
+                  {user?.role === Role.ROLE_ADMIN ? t('settings.account.planAdmin') : user?.plan === Plan.PREMIUM ? t('settings.account.planPremium') : t('settings.account.planFree')}
                 </span>
               </div>
               {confirmingUpgrade && (
                 <p role="status" className="text-text-secondary normal-case tracking-normal text-xs flex items-center gap-2">
-                  <Loader2 size={12} className="animate-spin" /> Confirming your payment...
+                  <Loader2 size={12} className="animate-spin" /> {t('settings.account.confirmingPayment')}
                 </p>
               )}
               <BillingActions />
@@ -483,12 +490,12 @@ const SettingsPage = () => {
               <PremiumInterestNote />
               {user?.garmentLimit != null && (
                 <div className="flex justify-between items-center gap-6" data-testid="storage-row">
-                  <span className="text-text-secondary opacity-50">Storage</span>
+                  <span className="text-text-secondary opacity-50">{t('settings.account.storage')}</span>
                   <StorageMeter className="w-40 text-right" />
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-text-secondary opacity-50">Member since</span>
+                <span className="text-text-secondary opacity-50">{t('settings.account.since')}</span>
                 <span className="text-text-primary">{formatDate(user?.createdAt)}</span>
               </div>
             </div>

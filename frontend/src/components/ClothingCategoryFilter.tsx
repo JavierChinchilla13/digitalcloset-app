@@ -1,3 +1,4 @@
+import { useT, type MessageKey } from '../i18n';
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { ClothingCategory } from '../types';
@@ -15,12 +16,14 @@ interface ClothingCategoryFilterProps {
   onChange: (value: string) => void;
 }
 
-function formatCategoryLabel(value: string): string {
-  if (value === 'ALL') return 'All';
-  return value.charAt(0) + value.slice(1).toLowerCase();
+// "TOP" -> "Top", "PARTE SUPERIOR" -> "Parte superior": the category's text in the language on screen, in sentence case.
+function sentenceCase(text: string): string {
+  return text.charAt(0) + text.slice(1).toLowerCase();
 }
 
 const ClothingCategoryFilter = ({ value, onChange }: ClothingCategoryFilterProps) => {
+  const { t } = useT();
+  const formatCategoryLabel = (key: string) => sentenceCase(t(`cat.${key}` as MessageKey));
   const [isOpen, setIsOpen] = useState(false);
   const categories = Object.values(ClothingCategory);
 
@@ -50,7 +53,7 @@ const ClothingCategoryFilter = ({ value, onChange }: ClothingCategoryFilterProps
                 value === 'ALL' ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-ink/5 hover:text-text-primary'
               }`}
             >
-              <span>All</span>
+              <span>{formatCategoryLabel('ALL')}</span>
               {value === 'ALL' && <Check size={12} className="flex-shrink-0" />}
             </button>
             {categories.map((cat) => (

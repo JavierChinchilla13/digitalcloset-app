@@ -8,6 +8,8 @@ import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
 import StorageMeter from './StorageMeter';
 import { NAV_LINKS } from './navLinks';
+import LanguageToggle from './LanguageToggle';
+import { useT, type MessageKey } from '../i18n';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -25,6 +27,7 @@ interface MobileMenuProps {
 const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
   const { isAdmin, user, logout } = useAuthStore();
   const { pathname } = useLocation();
+  const { t } = useT();
 
   // Follow the route: choosing a page (or the browser back button) closes the sheet.
   useEffect(() => {
@@ -55,13 +58,13 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
       active ? 'bg-accent/15 text-accent' : 'text-text-primary hover:bg-ink/5 active:bg-ink/10'
     );
 
-  const links = [
-    { name: 'Showcase', path: '/showcase', icon: Sparkles },
+  const links: { labelKey: MessageKey; path: string; icon: typeof Sparkles }[] = [
+    { labelKey: 'nav.showcase', path: '/showcase', icon: Sparkles },
     ...NAV_LINKS.filter((link) => link.protected),
-    { name: 'Categories', path: '/categories', icon: Tag },
-    { name: 'Persona', path: '/persona', icon: UserCircle },
-    ...(isAdmin ? [{ name: 'Admin', path: '/admin', icon: ShieldCheck }] : []),
-    { name: 'Settings', path: '/settings', icon: SettingsIcon },
+    { labelKey: 'menu.categories', path: '/categories', icon: Tag },
+    { labelKey: 'menu.persona', path: '/persona', icon: UserCircle },
+    ...(isAdmin ? [{ labelKey: 'menu.admin' as MessageKey, path: '/admin', icon: ShieldCheck }] : []),
+    { labelKey: 'menu.settings', path: '/settings', icon: SettingsIcon },
   ];
 
   return (
@@ -70,7 +73,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
         <motion.div
           role="dialog"
           aria-modal="true"
-          aria-label="Menu"
+          aria-label={t('menu.mobileLabel')}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -84,7 +87,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close menu"
+              aria-label={t('nav.closeMenu')}
               className="shrink-0 w-11 h-11 rounded-full border border-ink/10 flex items-center justify-center text-text-primary hover:bg-ink/5"
             >
               <X size={20} />
@@ -99,7 +102,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               const Icon = link.icon;
               return (
                 <Link key={link.path} to={link.path} className={rowClass(isActive(link.path))} aria-current={isActive(link.path) ? 'page' : undefined}>
-                  <Icon size={18} /> {link.name}
+                  <Icon size={18} /> {t(link.labelKey)}
                 </Link>
               );
             })}
@@ -108,8 +111,9 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
 
             <div className={rowClass(false)}>
               <ThemeToggle />
-              <span>Theme</span>
+              <span>{t('theme.row')}</span>
             </div>
+            <LanguageToggle variant="row" />
             <button
               type="button"
               onClick={() => {
@@ -119,7 +123,7 @@ const MobileMenu = ({ isOpen, onClose }: MobileMenuProps) => {
               }}
               className={cn(rowClass(false), 'w-full text-left')}
             >
-              <LogOut size={18} /> Log out
+              <LogOut size={18} /> {t('menu.mobileLogout')}
             </button>
           </nav>
         </motion.div>

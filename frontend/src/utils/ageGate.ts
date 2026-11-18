@@ -1,6 +1,10 @@
+import { translate } from '../i18n';
+
 // Audit H12: the one answer given to anyone refused for the birth month/year they entered. It never says why, nor what the minimum age is
 // (a neutral age screen: the form must not teach people what to type).
 export const AGE_BLOCKED_MESSAGE = "We can't create an account with this information.";
+// The same sentence in the language on screen (the constant above is the English one, kept for tests).
+export const ageBlockedMessage = () => translate('age.blocked');
 
 const KEY = 'vysvi-age-blocked';
 

@@ -1,3 +1,4 @@
+import { useT, type MessageKey } from '../i18n';
 import { lazy, useEffect, useState, useMemo } from "react";
 import {
   Plus,
@@ -35,6 +36,7 @@ const EditClothingModal = lazy(() => import("../components/EditClothingModal"));
 // edited or deleted through its own modal (one modal open at a time, for
 // `selectedItem`). Items come from useClothingStore; a failed load shows ErrorState.
 const ClosetPage = () => {
+  const { t } = useT();
   const { items, isLoading, error, fetchItems } = useClothingStore();
   const firstRun = useFirstRun();
   const { persona } = usePersonaStore();
@@ -127,18 +129,18 @@ const ClosetPage = () => {
               className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
-              Back to Attire
+              {t('closet.back')}
             </button>
             {/* Task 72: was "DIGITAL CLOSET" - the app's old name, not this
                 page's own title (the nav link is just "Closet"). Renamed
                 to match "Complete Wardrobe Management" right below it,
                 rather than repeating the new VYSVI brand name here too. */}
             <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
-              MY <br /> <span className="text-accent">WARDROBE</span>
+              {t('closet.titleA')} <br /> <span className="text-accent">{t('closet.titleB')}</span>
             </h1>
             <div className="flex items-center gap-4 pt-2">
               <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">
-                Complete Wardrobe Management // {items.length} Unique Pieces
+                {t('closet.subtitle', { count: items.length })}
               </p>
               <div className="h-4 w-px bg-ink/10" />
               <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full">
@@ -147,7 +149,7 @@ const ClosetPage = () => {
                     since the label right next to it already names the persona. */}
                 <div className="w-1.5 h-1.5 rounded-full bg-accent" />
                 <span className="text-[10px] font-medium uppercase tracking-widest text-accent">
-                  Active Persona: {getDisplayName(persona.type)}
+                  {t('closet.activePersona', { name: getDisplayName(persona.type) })}
                 </span>
               </div>
             </div>
@@ -163,7 +165,7 @@ const ClosetPage = () => {
               className="group-hover:rotate-90 transition-transform duration-500"
             />
             <span className="text-[11px] tracking-[0.2em] uppercase">
-              Add New Garment
+              {t('closet.add')}
             </span>
           </button>
         </div>
@@ -178,7 +180,7 @@ const ClosetPage = () => {
               />
               <input
                 type="text"
-                placeholder="SEARCH YOUR COLLECTION..."
+                placeholder={t('closet.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-6 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/[0.08] transition-all"
@@ -200,7 +202,7 @@ const ClosetPage = () => {
                 size={16}
                 fill={showOnlyFavorites ? "currentColor" : "none"}
               />
-              Favorites Only
+              {t('closet.favorites')}
             </button>
           </div>
 
@@ -223,7 +225,7 @@ const ClosetPage = () => {
                   }
                 `}
               >
-                {cat}
+                {t(`cat.${cat}` as MessageKey)}
               </button>
             ))}
           </div>
@@ -233,7 +235,7 @@ const ClosetPage = () => {
             <div className="px-3 sm:px-6 w-full sm:w-auto justify-center flex items-center gap-2 text-text-secondary sm:border-r border-ink/10 sm:mr-2">
               <Users size={14} className="text-accent" />
               <span className="text-[10px] font-medium uppercase tracking-widest">
-                Persona Filter
+                {t('closet.personaFilter')}
               </span>
             </div>
             <div className="flex gap-2">
@@ -250,7 +252,7 @@ const ClosetPage = () => {
                     }
                   `}
                 >
-                  {p}
+                  {t(`persona.${p}` as MessageKey)}
                 </button>
               ))}
             </div>
@@ -262,13 +264,13 @@ const ClosetPage = () => {
           <div className="py-40 flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-accent mb-4" size={48} />
             <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">
-              Syncing Collection...
+              {t('closet.syncing')}
             </p>
           </div>
         ) : error && items.length === 0 ? (
           <ErrorState
-            title="We couldn't load your closet"
-            message="Check your connection and try again."
+            title={t('closet.loadErrorTitle')}
+            message={t('closet.loadErrorMessage')}
             onRetry={fetchItems}
           />
         ) : items.length === 0 && firstRun.show ? (
@@ -282,10 +284,10 @@ const ClosetPage = () => {
               <Shirt size={40} className="text-text-secondary" />
             </div>
             <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">
-              No garments found
+              {t('closet.emptyTitle')}
             </h3>
             <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase">
-              Try adjusting your filters or add a new piece to your collection
+              {t('closet.emptyText')}
             </p>
           </div>
         ) : (

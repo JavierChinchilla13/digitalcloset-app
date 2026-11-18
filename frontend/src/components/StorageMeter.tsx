@@ -1,22 +1,24 @@
 import { useStorage } from '../hooks/useStorage';
+import { useT } from '../i18n';
 
 // Task 96: "7 / 15 garments" with a thin bar, for accounts that have a limit. Shows nothing
 // for unlimited accounts (admins) or before the limit is known. `compact` is the one-line
 // version for the menus.
 const StorageMeter = ({ compact = false, className = '' }: { compact?: boolean; className?: string }) => {
   const { used, limit, atLimit } = useStorage();
+  const { t } = useT();
   if (limit === null) return null;
 
   const percent = Math.min(100, Math.round((used / limit) * 100));
   return (
     <div className={className} data-testid="storage-meter">
       <p className={`text-[10px] font-medium uppercase tracking-widest ${atLimit ? 'text-red-400' : 'text-text-secondary'}`}>
-        {used} / {limit} garments
+        {t('storage.garments', { used, limit })}
       </p>
       {!compact && (
         <div
           role="progressbar"
-          aria-label="Garment storage used"
+          aria-label={t('storage.aria')}
           aria-valuemin={0}
           aria-valuemax={limit}
           aria-valuenow={Math.min(used, limit)}

@@ -6,9 +6,6 @@ export const ADULT_AGE = 18;
 
 export type AgeBand = 'UNDER_MIN' | 'MINOR' | 'ADULT';
 
-export const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
-];
 
 // The band for a birth month/year, or null when the date is not usable (month outside 1-12, before 1900, or in the future).
 export function ageBandFor(birthYear: number, birthMonth: number, today: Date = new Date()): AgeBand | null {
