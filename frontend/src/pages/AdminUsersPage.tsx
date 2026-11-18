@@ -8,6 +8,7 @@ import SectionWrapper from '../components/SectionWrapper';
 import ErrorState from '../components/ErrorState';
 import CreateUserModal from '../components/CreateUserModal';
 import AdminBackupSection from '../components/AdminBackupSection';
+import AdminPremiumInterest from '../components/AdminPremiumInterest';
 import { Plan, Role, type User } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
 
@@ -97,9 +98,12 @@ const AdminUsersPage = () => {
             USER <span className="text-accent">ACCOUNTS</span>
           </h1>
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">
-              {users.length} {users.length === 1 ? 'account' : 'accounts'}
-            </p>
+            <div className="space-y-2">
+              <p className="text-text-secondary text-xs font-medium uppercase tracking-widest">
+                {users.length} {users.length === 1 ? 'account' : 'accounts'}
+              </p>
+              <AdminPremiumInterest />
+            </div>
             {/* Task 79: the only way to create an admin account - an existing
                 admin explicitly picks the role in the modal. */}
             <button

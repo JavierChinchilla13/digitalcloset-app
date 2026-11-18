@@ -162,6 +162,14 @@ The plan changes only when Stripe's signed webhook arrives (the page the buyer r
 keeps Premium until the paid period ends. Deactivating or deleting an account cancels its subscription. A Premium plan given by an admin has no subscription and is never
 changed by Stripe events.
 
+### "Request Premium" while Stripe is off
+
+Until `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` and `STRIPE_WEBHOOK_SECRET` are all set, signed-in **adults with confirmed details** see "Premium is coming soon. Want it? Let us know."
+and a **Request Premium** button in Settings and in the "closet is full" dialog. Each request is one row (`premium_interest`, migration **V23**: account number and date, nothing
+else), idempotent, and emails the owner at the contact address (`CONTACT_EMAIL`) with subject "New Premium request" and the running total (no name or email in it; if the mail
+fails the request is still kept). The admin page shows "Premium requests: N (latest <date>)". The row is erased with the account, appears in "Download my data", and is included
+in admin backups. When all three Stripe settings are set, the note and the button disappear and the normal Upgrade button shows; no code needs to change.
+
 ### Ads for free accounts
 
 Free accounts of declared adults see one banner above the footer; Premium accounts, admins and minors never do (and never download the ad script). Nothing shows until you pick
@@ -187,7 +195,7 @@ Render rebuilds when the branch it follows changes (or on **Manual Deploy**). Th
 wait for `/actuator/health`, then the website.
 
 Database changes ship as Flyway migrations (`backend/src/main/resources/db/migration`) and are applied automatically when the API starts. **They are not reversible, so take a
-backup before any deploy that changes the database** (section 5). The latest migration is **V22**; the recent ones:
+backup before any deploy that changes the database** (section 5). The latest migration is **V23**; the recent ones:
 
 | Migration | Adds |
 |---|---|
@@ -197,6 +205,7 @@ backup before any deploy that changes the database** (section 5). The latest mig
 | V20 | `backup_downloads`: the last 50 admin backup downloads |
 | V21 | `reauth_failures`: wrong "it is me" attempts, counted per account |
 | V22 | `google_token_uses`: fingerprints of Google tokens already used as proof |
+| V23 | `premium_interest`: one row per account that asked for Premium while payments are off |
 
 If a deploy fails with Flyway complaining about an existing schema without history, do not "baseline" production by hand: ask what state the database is in first.
 

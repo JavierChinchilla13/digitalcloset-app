@@ -19,6 +19,9 @@ import { makeItems, makeUser } from '../test/fixtures';
 vi.mock('../api/billingService', () => ({
   billingService: { getStatus: vi.fn(), startCheckout: vi.fn(), openPortal: vi.fn() },
 }));
+vi.mock('../api/premiumInterestService', () => ({
+  premiumInterestService: { getState: vi.fn(async () => ({ requested: false, requestedAt: null })), request: vi.fn(), getAdminSummary: vi.fn() },
+}));
 vi.mock('../api/authService', () => ({
   authService: { getCurrentUser: vi.fn(), login: vi.fn(), register: vi.fn() },
 }));
@@ -164,7 +167,8 @@ describe('the closet-full dialog', () => {
     expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });
 
-  it('says more space is planned when payments are not set up', async () => {
+  it('says more space is planned when payments are not set up (for an account that cannot ask for Premium)', async () => {
+    useAuthStore.getState().login('token', makeUser({ ageBand: 'MINOR' }));
     billing.getStatus.mockResolvedValue({ ...STATUS, enabled: false });
     render(
       <ToastProvider>

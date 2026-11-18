@@ -12,6 +12,7 @@ import PasswordInput from '../components/PasswordInput';
 import { Plan, Role } from '../types';
 import StorageMeter from '../components/StorageMeter';
 import BillingActions from '../components/BillingActions';
+import PremiumInterestNote from '../components/PremiumInterestNote';
 import { useBillingStore } from '../store/useBillingStore';
 import { getApiErrorMessage } from '../utils/apiError';
 
@@ -478,6 +479,8 @@ const SettingsPage = () => {
                 </p>
               )}
               <BillingActions />
+              {/* While payments are off: "Premium is coming soon" + Request Premium (adults only; hides itself otherwise). */}
+              <PremiumInterestNote />
               {user?.garmentLimit != null && (
                 <div className="flex justify-between items-center gap-6" data-testid="storage-row">
                   <span className="text-text-secondary opacity-50">Storage</span>
