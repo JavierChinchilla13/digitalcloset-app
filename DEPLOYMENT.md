@@ -489,6 +489,14 @@ table with the manifest. Then start the API against the restored database and si
 5. Scale: 150,000 extra wide rows (a 238 MB table) with the API's JVM limited to `-Xmx110m`: the backup finished (200, 5.4 MB, 28 s) with no memory
    error, and restoring it gave 150,005 rows with an identical hash of the content column in the source and the restored copy.
 
+### "Request Premium" while Stripe is off
+
+Until `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID` and `STRIPE_WEBHOOK_SECRET` are all set, signed-in **adults with confirmed details** see "Premium is coming soon. Want it? Let us know."
+and a **Request Premium** button in Settings and in the "closet is full" dialog. Each request is one row (`premium_interest`, migration **V23**: account number and date, nothing
+else), idempotent, and emails the owner at the contact address (`CONTACT_EMAIL`) with subject "New Premium request" and the running total (no name or email in it; if the mail
+fails the request is still kept). The admin page shows "Premium requests: N (latest <date>)". The row is erased with the account, appears in "Download my data", and is included
+in admin backups. When all three Stripe settings are set, the note and the button disappear and the normal Upgrade button shows; no code needs to change.
+
 ## 6. Settings reference
 
 Set in `.env` (see `.env.production.example`); `docker-compose.yml` passes them on.
