@@ -4,7 +4,7 @@
 // WARDROBE" lockup underneath (see the user's frontend/public/logo.png) -
 // but that file has a solid light background baked in, so it can't be
 // dropped straight into a dark navbar. The plan's own resolution for this
-// (open dependency, see PROJECT_BLUEPRINT.md's Phase 9.6 section) was: a
+// (an open dependency, see the project history) was: a
 // text wordmark now, swapped for the real image once transparent PNG/SVG
 // files (plus a dark-ink variant for light mode) are available.
 //

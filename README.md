@@ -8,7 +8,7 @@ DigitalCloset is a premium full-stack web application designed to help users man
 - **High-Density Virtual Closet**: Efficiently manage hundreds of garments with a compact, responsive grid. Features instant search, category filtering, and a personalized Favorites system.
 - **Advanced Modular Outerwear**: Redesigned jacket system with AI-powered segmentation, allowing independent sleeve manipulation and realistic "open-jacket" layering.
 - **Precision Footwear Engine**: Specialized shoe studio supporting symmetrical/asymmetrical pairs with independent left/right fitting.
-- **Local Style Orchestration**: Create, save, duplicate, and edit outfit combinations. Uses a hybrid storage approach with local persistence for rapid style iteration.
+- **Style Orchestration**: Create, save, duplicate, edit and share outfit combinations. Outfits are stored in the database (PostgreSQL), per account.
 - **Cloudinary Integration**: Secure, direct-to-cloud image uploads with real-time previews and automatic metadata synchronization.
 - **Modern "Fashion-Tech" UI**: A dark luxury aesthetic built with Framer Motion for cinematic transitions, glass-morphic elements, and studio-grade lighting effects.
 
@@ -49,12 +49,12 @@ DigitalCloset is a premium full-stack web application designed to help users man
 - **Phase 3: Image Infrastructure**: Completed (Cloudinary integration, interactive uploads).
 - **Phase 4: Persona Evolution**: Completed (PNG-based layering, 2D mannequin system).
 - **Phase 5: Wardrobe Management**: Completed (High-density closet, Search, Favorites, Full Management Page).
-- **Phase 6: Style Orchestration**: Completed (Local Outfit Store, Multi-page navigation flow).
+- **Phase 6: Style Orchestration**: Completed (Outfit store, Multi-page navigation flow).
 - **Phase 7: Fabric Studio Evolution**: Completed (Fabric.js 2D Editor, Absolute Virtual Engine, High-Precision Cropping).
 - **Phase 8: Multi-Item Architecture**: Completed (Layered Equipping, Array-based item slots, Independent Shoe Pairs).
 - **Phase 9: Modular Fashion AI**: Completed (Transformers.js Segmentation, Mesh Warping/Puppet Warp, Dynamic Center Opening Masks).
 - **Phase 10: Resilient AI & Pro-Cleanup**: Completed (Hugging Face Inference Integration, 100% Local SegFormer Fallback, Manual Magic Pen Cleanup Studio, Standardized Layer Centering).
-- **Phase 12: Stabilization & Security Hardening**: Completed (fixed a build-breaking regression and a TypeScript baseline of real bugs, removed dead code/dependencies, closed a registration privilege-escalation vulnerability and an outfit-ownership IDOR gap, externalized all secrets, moved schema management to Flyway, added soft-delete for clothing items, proper 404/403 exception handling, request validation, explicit CORS configuration, and hardened the Python AI microservice). See `PROJECT_BLUEPRINT.md` for the full history.
+- **Phase 12: Stabilization & Security Hardening**: Completed (fixed a build-breaking regression and a TypeScript baseline of real bugs, removed dead code/dependencies, hardened sign-up and authorization rules, externalized all secrets, moved schema management to Flyway, added soft-delete for clothing items, proper 404/403 exception handling, request validation, explicit CORS configuration, and hardened the Python AI microservice).
 
 ## Deployment
 
