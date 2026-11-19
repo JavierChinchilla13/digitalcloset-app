@@ -20,6 +20,7 @@ import { exportCanvasToImage, CANVAS_PAD } from '../editor/CanvasUtils';
 import { cloudinaryService } from '../../api/cloudinaryService';
 import { retargetTransform } from '../../utils/meshWarp';
 import { serializeWarpData, type WarpData } from '../../utils/warpData';
+import { useT } from '../../i18n';
 
 interface FittingEditorProps {
   imageUrl: string;
@@ -57,6 +58,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
   onSave,
   onBack
 }) => {
+  const { t } = useT();
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [transform, setTransform] = useState<ClothingTransform>(
@@ -171,7 +173,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
         <div className="flex items-center gap-3 md:gap-6">
           <button 
             onClick={onBack}
-            aria-label="Back"
+            aria-label={t('studio.back')}
             className="p-3 hover:bg-ink/5 rounded-2xl text-text-secondary hover:text-text-primary transition-all border border-ink/5"
           >
             <ChevronLeft size={20} />
@@ -179,9 +181,9 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
           <div className="space-y-1">
             <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic flex items-center gap-2">
               <Sparkles size={16} className="text-accent" />
-              Fabric Studio
+              {t('studio.fabric')}
             </h2>
-            <p className="hidden sm:block text-[10px] font-medium text-text-secondary tracking-[0.4em] uppercase opacity-40">Precision Garment Digitization</p>
+            <p className="hidden sm:block text-[10px] font-medium text-text-secondary tracking-[0.4em] uppercase opacity-40">{t('studio.precision')}</p>
           </div>
         </div>
 
@@ -211,7 +213,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
           <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-4 sm:p-5 xl:p-8 space-y-6 xl:space-y-10">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-5 xl:pb-6">
               <div className="w-2 h-2 bg-accent rounded-full" />
-              <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">Geometric Calibration</h3>
+              <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">{t('studio.calibration')}</h3>
             </div>
             
             <TransformPanel 
@@ -273,7 +275,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
           <div className="bg-background-secondary/20 border border-ink/5 rounded-2xl p-4 sm:p-5 xl:p-8 space-y-6 xl:space-y-8">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-5 xl:pb-6">
               <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-              <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">Garment Identity</h3>
+              <h3 className="text-[10px] font-medium tracking-[0.3em] text-text-primary uppercase">{t('studio.identity')}</h3>
             </div>
 
             <div className="space-y-8">
@@ -281,14 +283,14 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <Type size={14} className="text-accent" />
-                  <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Identity Name</label>
+                  <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">{t('studio.identityName')}</label>
                 </div>
                 <input 
                   type="text"
                   value={name}
                   maxLength={100}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Vintage Oversized Tee"
+                  placeholder={t('studio.namePlaceholder')}
                   className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-4 sm:py-5 px-5 sm:px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all uppercase tracking-widest"
                 />
               </div>
@@ -297,14 +299,14 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <AlignLeft size={14} className="text-accent" />
-                  <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Description</label>
+                  <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">{t('studio.description')}</label>
                 </div>
                 <textarea 
                   rows={4}
                   value={description}
                   maxLength={255}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Details about material, fit, etc."
+                  placeholder={t('studio.descPlaceholder')}
                   className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-xs text-ink/70 focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all resize-none leading-relaxed"
                 />
               </div>
@@ -330,7 +332,7 @@ const FittingEditor: React.FC<FittingEditorProps> = ({
               `}
             >
               <Save size={18} />
-              <span>Archive Style</span>
+              <span>{t('studio.archive')}</span>
             </button>
           </div>
         </aside>

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles, X } from 'lucide-react';
 import ModalShell from './ModalShell';
+import { useT } from '../i18n';
 
 interface DemoSignupModalProps {
   isOpen: boolean;
@@ -26,27 +27,28 @@ const DemoSignupModal = ({
   onClose,
   reason,
   mediaSrc = '/marketing/outfit-builder-demo.gif',
-  mediaAlt = 'Building an outfit in VYSVI and previewing it on a digital persona',
+  mediaAlt,
 }: DemoSignupModalProps) => {
+  const { t } = useT();
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-lg bg-background-secondary border border-ink/5 rounded-2xl shadow-lg" backdropClassName="bg-background-main/90 backdrop-blur-sm">
             <div className="aspect-video w-full bg-background-main">
               <img
                 src={mediaSrc}
-                alt={mediaAlt}
+                alt={mediaAlt ?? t('demoSignup.alt')}
                 className="w-full h-full object-cover"
               />
             </div>
 
             <div className="p-8">
               <span className="inline-flex items-center gap-2 text-accent text-[10px] font-medium tracking-[0.3em] uppercase mb-4">
-                <Sparkles size={12} /> Free to create
+                <Sparkles size={12} /> {t('demoSignup.free')}
               </span>
               <h2 className="text-2xl font-light tracking-tight text-text-primary mb-3">
-                Create a free account {reason}
+                {t('demoSignup.title', { reason })}
               </h2>
               <p className="text-text-secondary text-sm leading-relaxed mb-8">
-                This demo closet is temporary and lives only in your browser - nothing here is saved. Sign up to build your own permanent digital closet, save outfits, and keep everything across visits.
+                {t('demoSignup.body')}
               </p>
 
               <div className="flex flex-col gap-3">
@@ -54,19 +56,20 @@ const DemoSignupModal = ({
                   to="/signup"
                   className="w-full py-4 bg-accent hover:bg-accent-hover text-on-accent text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all flex items-center justify-center gap-2"
                 >
-                  Create Free Account <ArrowRight size={14} />
+                  {t('demoSignup.create')} <ArrowRight size={14} />
                 </Link>
                 <button
                   onClick={onClose}
                   className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all"
                 >
-                  Keep Exploring The Demo
+                  {t('demoSignup.keep')}
                 </button>
               </div>
             </div>
 
             <button
               onClick={onClose}
+              aria-label={t('common.close')}
               className="absolute top-4 right-4 p-2 bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors"
             >
               <X size={20} />

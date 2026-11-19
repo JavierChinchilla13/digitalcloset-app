@@ -34,7 +34,7 @@ const ResetPasswordPage = () => {
     setLinkRejected(false);
 
     if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+      setError(t('reset.tooShort', { min: MIN_PASSWORD_LENGTH }));
       return;
     }
     if (password !== confirm) {

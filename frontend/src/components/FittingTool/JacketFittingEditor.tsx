@@ -13,6 +13,7 @@ import { PersonaType, type ClothingTransform, type ModularJacketData } from '../
 import JacketCanvas from '../editor/JacketCanvas';
 import TransformPanel from '../editor/TransformPanel';
 import { exportCanvasToImage, CANVAS_PAD, stageWidth, stageHeight } from '../editor/CanvasUtils';
+import { useT } from '../../i18n';
 
 interface JacketFittingEditorProps {
   segments: Record<string, string>;
@@ -36,6 +37,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
   onSave, 
   onBack 
 }) => {
+  const { t } = useT();
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [activePart, setActivePart] = useState<string>('torso');
@@ -172,7 +174,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
         <div className="flex items-center gap-3 lg:gap-6">
           <button 
             onClick={onBack}
-            aria-label="Back"
+            aria-label={t('studio.back')}
             className="p-3 hover:bg-ink/5 rounded-2xl text-text-secondary hover:text-text-primary transition-all border border-ink/5"
           >
             <ChevronLeft size={20} />
@@ -180,9 +182,9 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
           <div className="space-y-1">
             <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic flex items-center gap-2">
               <Layers size={16} className="text-accent" />
-              Modular Jacket Studio
+              {t('jacketStudio.title')}
             </h2>
-            <p className="hidden sm:block text-[8px] font-black text-text-secondary tracking-[0.4em] uppercase opacity-40">Precision Segment Orchestration</p>
+            <p className="hidden sm:block text-[8px] font-black text-text-secondary tracking-[0.4em] uppercase opacity-40">{t('jacketStudio.subtitle')}</p>
           </div>
         </div>
 
@@ -214,7 +216,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
                     : 'text-text-secondary hover:text-text-primary'
                 }`}
               >
-                All
+                {t('jacketStudio.all')}
               </button>
            </div>
         </div>
@@ -227,7 +229,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
             <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
               <div className={`w-2 h-2 rounded-full ${isGroupMode ? 'text-emerald-400 bg-emerald-400' : 'text-accent bg-accent'}`} />
               <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">
-                {isGroupMode ? 'Global Calibration' : `${activePart.replace(/([A-Z])/g, ' $1')} Calibration`}
+                {isGroupMode ? t('jacketStudio.global') : t('jacketStudio.part', { part: activePart.replace(/([A-Z])/g, ' $1') })}
               </h3>
             </div>
             
@@ -242,11 +244,11 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
             <div className="pt-6 border-t border-ink/5 space-y-6">
                <div className="flex items-center gap-2">
                  <Scissors size={12} className="text-accent" />
-                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-primary">Center Opening</span>
+                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-primary">{t('jacketStudio.opening')}</span>
                </div>
                <div className="space-y-4">
                  <div className="flex justify-between text-[10px] font-mono text-ink/50">
-                    <span>Closed</span>
+                    <span>{t('jacketStudio.closed')}</span>
                     <span>{Math.round((modularData.openness || 0) * 100)}%</span>
                  </div>
                  <input 
@@ -263,7 +265,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
           <div className="hidden lg:flex mt-auto bg-accent/5 border border-accent/10 rounded-3xl p-6 gap-4">
             <Info size={16} className="text-accent shrink-0" />
             <p className="text-[9px] text-text-secondary leading-relaxed uppercase tracking-widest font-bold opacity-60">
-              Use Group Mode to position the entire jacket. Use Center Opening to show inner clothing.
+              {t('jacketStudio.tip')}
             </p>
           </div>
         </aside>
@@ -295,21 +297,21 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
           <div className="bg-background-secondary/20 border border-ink/5 rounded-3xl lg:rounded-[2.5rem] p-5 lg:p-8 space-y-6 lg:space-y-8">
             <div className="flex items-center gap-3 border-b border-ink/5 pb-6">
               <div className="w-2 h-2 bg-emerald-400 rounded-full" />
-              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">Modular Identity</h3>
+              <h3 className="text-[10px] font-black tracking-[0.3em] text-text-primary uppercase">{t('jacketStudio.identity')}</h3>
             </div>
 
             <div className="space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <Type size={14} className="text-accent" />
-                  <label className="text-[9px] font-black tracking-[0.3em] text-accent uppercase">Identity Name</label>
+                  <label className="text-[9px] font-black tracking-[0.3em] text-accent uppercase">{t('studio.identityName')}</label>
                 </div>
                 <input 
                   type="text"
                   value={name}
                   maxLength={100}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Leather Biker Jacket"
+                  placeholder={t('jacketStudio.namePlaceholder')}
                   className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-sm text-text-primary focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all uppercase tracking-widest"
                 />
               </div>
@@ -317,14 +319,14 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               <div className="space-y-4">
                 <div className="flex items-center gap-2 px-1">
                   <AlignLeft size={14} className="text-accent" />
-                  <label className="text-[9px] font-black tracking-[0.3em] text-accent uppercase">Description</label>
+                  <label className="text-[9px] font-black tracking-[0.3em] text-accent uppercase">{t('studio.description')}</label>
                 </div>
                 <textarea 
                   rows={4}
                   value={description}
                   maxLength={255}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Details about material, modular fit, etc."
+                  placeholder={t('jacketStudio.descPlaceholder')}
                   className="w-full bg-ink/[0.03] border border-ink/5 rounded-2xl py-5 px-6 text-xs text-ink/70 focus:outline-none focus:border-accent/50 focus:bg-ink/[0.05] transition-all resize-none leading-relaxed"
                 />
               </div>
@@ -342,7 +344,7 @@ const JacketFittingEditor: React.FC<JacketFittingEditorProps> = ({
               `}
             >
               <Save size={18} />
-              <span>Initialize Modular Asset</span>
+              <span>{t('jacketStudio.initialize')}</span>
             </button>
           </div>
         </aside>

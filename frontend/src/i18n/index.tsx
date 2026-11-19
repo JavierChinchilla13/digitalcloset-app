@@ -1,10 +1,17 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useMemo, type ReactNode } from 'react';
 import { create } from 'zustand';
 import { shell } from './areas/shell';
 import { auth } from './areas/auth';
 import { landing } from './areas/landing';
 import { settings } from './areas/settings';
 import { closet } from './areas/closet';
+import { shared } from './areas/shared';
+import { parts } from './areas/parts';
+import { studio } from './areas/studio';
+import { categories } from './areas/categories';
+import { persona } from './areas/persona';
+import { outfits } from './areas/outfits';
+import { garment } from './areas/garment';
 
 // The site's language: English by default, Spanish (neutral Latin American, informal "tú") on request. The choice is kept in this browser's
 // localStorage only (no account field, no server, no personal data) and sets <html lang>. A tiny typed dictionary instead of a library:
@@ -14,7 +21,7 @@ export type Language = 'en' | 'es';
 
 export const LANGUAGE_STORAGE_KEY = 'vysvi-language';
 
-const AREAS = [shell, auth, landing, settings, closet];
+const AREAS = [shell, auth, landing, settings, closet, shared, parts, garment, outfits, persona, categories, studio];
 
 // Every English text and every Spanish text, merged. (Exported for the parity test.)
 export const dictionaries: Record<Language, Record<string, string>> = {
@@ -27,7 +34,14 @@ export type MessageKey =
   | keyof typeof auth.en
   | keyof typeof landing.en
   | keyof typeof settings.en
-  | keyof typeof closet.en;
+  | keyof typeof closet.en
+  | keyof typeof shared.en
+  | keyof typeof parts.en
+  | keyof typeof garment.en
+  | keyof typeof outfits.en
+  | keyof typeof persona.en
+  | keyof typeof categories.en
+  | keyof typeof studio.en;
 
 const readStoredLanguage = (): Language => {
   try {
@@ -106,9 +120,14 @@ export function renderRich(text: string, components: Record<string, (content: st
 export function useT() {
   const language = useLanguageStore((state) => state.language);
   // t.rich('key', { terms: (text) => <Link ...>{text}</Link> })
-  const t = Object.assign((key: MessageKey, params?: Params) => lookup(language, key, params), {
-    rich: (key: MessageKey, components: Record<string, (content: string) => ReactNode>, params?: Params) =>
-      renderRich(lookup(language, key, params), components),
-  });
+  // One function per language (not a new one every render), so a component can list `t` in a hook's dependencies.
+  const t = useMemo(
+    () =>
+      Object.assign((key: MessageKey, params?: Params) => lookup(language, key, params), {
+        rich: (key: MessageKey, components: Record<string, (content: string) => ReactNode>, params?: Params) =>
+          renderRich(lookup(language, key, params), components),
+      }),
+    [language],
+  );
   return { t, language };
 }

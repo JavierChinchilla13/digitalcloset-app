@@ -34,6 +34,7 @@ const JacketFittingEditor = lazy(() => import('./JacketFittingEditor'));
 const GarmentCleanup = lazy(() => import('./GarmentCleanup'));
 import ErrorBoundary from '../ErrorBoundary';
 import ErrorState from '../ErrorState';
+import { useT } from '../../i18n';
 
 // The message for a failed save: our own "closet is full" sentence, else what the server said
 // (a 403 GARMENT_LIMIT carries a readable message), else the step's own fallback.
@@ -57,6 +58,7 @@ const CATEGORY_ICONS: Record<ClothingCategory, React.ElementType> = {
 };
 
 const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
+  const { t } = useT();
   const [step, setStep] = useState<Step>('UPLOAD');
   const [file, setFile] = useState<File | null>(null);
   
@@ -199,7 +201,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     
     try {
       if (category === ClothingCategory.SHOES) {
-         setProcessingStatus('Digitizing pair...');
+         setProcessingStatus(t('upload.digitizingPair'));
          const leftResult = await removeBackground(file, {
            onProgress: (status) => setProcessingStatus(status)
          });
@@ -214,17 +216,17 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
          // was loaded (not a race, not a backend issue - just a missing
          // upload). Same fetch -> blob -> uploadImage pattern used
          // elsewhere in this file.
-         setProcessingStatus('Uploading left shoe...');
+         setProcessingStatus(t('upload.uploadingLeft'));
          const leftBlob = await (await fetch(leftResult.url)).blob();
          const leftUrl = await cloudinaryService.uploadImage(leftBlob);
          setLeftProcessedUrl(leftUrl);
 
          if (isAsymmetrical && rightFile) {
-            setProcessingStatus('Processing right shoe...');
+            setProcessingStatus(t('upload.processingRight'));
             const rightResult = await removeBackground(rightFile, {
-              onProgress: (status) => setProcessingStatus(`Right Shoe: ${status}`)
+              onProgress: (status) => setProcessingStatus(t('upload.rightStatus', { status }))
             });
-            setProcessingStatus('Uploading right shoe...');
+            setProcessingStatus(t('upload.uploadingRight'));
             const rightBlob = await (await fetch(rightResult.url)).blob();
             const rightUrl = await cloudinaryService.uploadImage(rightBlob);
             setRightProcessedUrl(rightUrl);
@@ -235,7 +237,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
          }
          setStep('SHOE_FITTING');
       } else {
-         setProcessingStatus('Analyzing garment...');
+         setProcessingStatus(t('upload.analyzing'));
          const result = await removeBackground(file, {
            onProgress: (status) => setProcessingStatus(status)
          });
@@ -251,7 +253,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
          }
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Processing failed. Please try again.';
+      const message = err instanceof Error ? err.message : t('upload.processFailedRetry');
       setError(message);
     }
   };
@@ -259,13 +261,13 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   const continueWithOriginal = async () => {
     if (!file) return;
     setError(null);
-    setProcessingStatus('Optimizing for cleanup...');
+    setProcessingStatus(t('upload.optimizing'));
     try {
       const optimizedFile = await optimizeImage(file);
       const localUrl = URL.createObjectURL(optimizedFile);
       
       if (category === ClothingCategory.SHOES) {
-        setProcessingStatus('Uploading original image...');
+        setProcessingStatus(t('upload.uploadingOriginal'));
         const url = await cloudinaryService.uploadImage(optimizedFile);
         setLeftProcessedUrl(url);
         setRightProcessedUrl(url);
@@ -275,14 +277,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         setStep('GARMENT_CLEANUP');
       }
     } catch {
-      setError('Upload failed.');
+      setError(t('upload.uploadFailed'));
     }
   };
 
   const handleCleanupComplete = async (cleanedDataUrl: string) => {
     try {
       setStep('PROCESSING');
-      setProcessingStatus('Finalizing cleaned asset...');
+      setProcessingStatus(t('upload.finalizingCleaned'));
       
       // Upload cleaned image to Cloudinary
       const response = await fetch(cleanedDataUrl);
@@ -295,7 +297,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       
       if (category === ClothingCategory.JACKET) {
         // Now perform modular analysis on the final cleaned image
-        setProcessingStatus('Analyzing modular structure...');
+        setProcessingStatus(t('upload.analyzingModular'));
         const fileFinal = new File([blob], 'cleaned_jacket.png', { type: 'image/png' });
         
         const segments = await segmentJacket(fileFinal);
@@ -319,7 +321,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       }
     } catch (err) {
       console.error('Final cleanup processing failed:', err);
-      setError('Failed to process cleaned image.');
+      setError(t('upload.cleanedFailed'));
     }
   };
 
@@ -327,7 +329,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     if (!backgroundRemovedUrl) return;
     try {
       setStep('PROCESSING');
-      setProcessingStatus('Finalizing asset...');
+      setProcessingStatus(t('upload.finalizing'));
       
       // Fetch the blob from the local ObjectURL or Cloudinary URL
       const response = await fetch(backgroundRemovedUrl);
@@ -335,7 +337,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       const finalUrl = await cloudinaryService.uploadImage(blob);
 
       if (category === ClothingCategory.JACKET) {
-        setProcessingStatus('Analyzing garment structure...');
+        setProcessingStatus(t('upload.analyzingStructure'));
         const fileForAI = new File([blob], 'jacket.png', { type: 'image/png' });
         
         const segments = await segmentJacket(fileForAI);
@@ -353,7 +355,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         setStep('FITTING');
       }
     } catch {
-      setError('Failed to process image.');
+      setError(t('upload.imageFailed'));
     }
   };
 
@@ -371,7 +373,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     setError(null);
     try {
       setStep('PROCESSING');
-      setProcessingStatus('Saving to closet...');
+      setProcessingStatus(t('upload.savingToCloset'));
 
       let finalUrl: string;
       if (skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT) {
@@ -386,7 +388,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       }
 
       await createItemAndMaybeAddToCollection({
-        name: skipName || 'Untitled Garment',
+        name: skipName || t('upload.untitled'),
         description: skipDescription,
         category,
         personaType,
@@ -396,7 +398,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       });
       handleClose();
     } catch (err: unknown) {
-      setError(saveErrorMessage(err, 'Failed to save garment.'));
+      setError(saveErrorMessage(err, t('upload.saveFailed')));
       setStep('SKIP_PERSONA');
     }
   };
@@ -414,13 +416,13 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   const startProcessingStandard = async () => {
     if (!file) return;
     setStep('PROCESSING');
-    setProcessingStatus('Finalizing single-layer asset...');
+    setProcessingStatus(t('upload.finalizingSingle'));
     try {
       const url = await cloudinaryService.uploadImage(file);
       setProcessedImageUrl(url);
       setStep('FITTING');
     } catch {
-      setError('Failed to upload image.');
+      setError(t('upload.uploadImageFailed'));
     }
   };
 
@@ -455,7 +457,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       });
       handleClose();
     } catch (err: unknown) {
-      setError(saveErrorMessage(err, 'Failed to save garment.'));
+      setError(saveErrorMessage(err, t('upload.saveFailed')));
     }
   };
 
@@ -473,7 +475,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
     const room = freshStorage();
     if (!room.canAdd(needed)) {
       setError(
-        `A shoe pair uses ${needed} slots and you have ${room.remaining} left. Skip one shoe to save just one, or delete a garment first.`
+        t('upload.pairSlots', { needed, left: room.remaining ?? 0 })
       );
       return;
     }
@@ -502,7 +504,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       }
       handleClose();
     } catch (err: unknown) {
-      setError(saveErrorMessage(err, 'Failed to save shoe pair.'));
+      setError(saveErrorMessage(err, t('upload.pairFailed')));
     }
   };
 
@@ -514,7 +516,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
   }) => {
     try {
       setStep('PROCESSING');
-      setProcessingStatus('Finalizing modular asset...');
+      setProcessingStatus(t('upload.finalizingModular'));
       
       // For modular jackets, the user wants the closet thumbnail to be the 
       // RAW AI extraction (background removed), NOT the manual cleanup.
@@ -527,7 +529,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
          thumbnailImageUrl = await cloudinaryService.uploadImage(blob);
       }
 
-      if (!thumbnailImageUrl) throw new Error('Missing thumbnail image source.');
+      if (!thumbnailImageUrl) throw new Error(t('upload.noThumbnail'));
 
       await createItemAndMaybeAddToCollection({
         name: data.name,
@@ -541,7 +543,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       });
       handleClose();
     } catch (err: unknown) {
-      setError(saveErrorMessage(err, 'Failed to save modular jacket.'));
+      setError(saveErrorMessage(err, t('upload.jacketFailed')));
     }
   };
 
@@ -571,7 +573,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
       >
         <button 
           onClick={handleClose}
-          aria-label="Close"
+          aria-label={t('upload.close')}
           className="absolute top-2 right-2 sm:top-8 sm:right-8 p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary z-50"
         >
           <X size={20} />
@@ -604,19 +606,19 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
         <div className={`flex-1 min-h-0 flex flex-col overflow-y-auto no-scrollbar ${
           isStudioStep ? 'p-3 pt-12 sm:p-8 md:p-12' : 'p-5 pt-14 sm:p-8 md:p-12'
         }`}>
-          <Suspense fallback={<div className="flex-1 h-full min-h-[40vh] flex items-center justify-center" role="status" aria-label="Loading the editor">
+          <Suspense fallback={<div className="flex-1 h-full min-h-[40vh] flex items-center justify-center" role="status" aria-label={t('upload.loading')}>
                 <Loader2 className="animate-spin text-accent" size={28} />
               </div>}>
           <AnimatePresence mode="wait">
             {step === 'UPLOAD' && (
               <motion.div key="upload" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 1 — Initial Intake</h2>
-                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Drop your garment to begin digitization</p>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">{t('upload.step1')}</h2>
+                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">{t('upload.drop')}</p>
                 </div>
                 {storage.atLimit ? (
                   <div role="alert" className="rounded-[2.5rem] border border-ink/10 bg-ink/[0.02] p-8 text-center space-y-3">
-                    <p className="text-text-primary font-bold tracking-tight text-lg">Your closet is full</p>
+                    <p className="text-text-primary font-bold tracking-tight text-lg">{t('upload.full')}</p>
                     <p className="text-text-secondary text-xs leading-relaxed">{limitMessage(storage)}</p>
                   </div>
                 ) : (
@@ -625,7 +627,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <div className="w-20 h-20 rounded-full bg-ink/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-accent/10 transition-all duration-500">
                     <Upload className="text-accent" size={32} />
                   </div>
-                  <p className="text-text-primary font-bold tracking-tight text-lg">Select Image</p>
+                  <p className="text-text-primary font-bold tracking-tight text-lg">{t('upload.select')}</p>
                 </div>
                 )}
               </motion.div>
@@ -634,14 +636,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'CONFIG' && (
               <motion.div key="config" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8 sm:space-y-12">
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 2 — Architecture</h2>
-                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Define garment category and persona target</p>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">{t('upload.step2')}</h2>
+                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">{t('upload.define')}</p>
                 </div>
                 <div className="space-y-10">
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 px-1">
                       <Layers size={14} className="text-accent" />
-                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Garment Category</label>
+                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">{t('upload.category')}</label>
                     </div>
                     <div className="grid grid-cols-3 sm:flex sm:flex-wrap sm:justify-center gap-2 sm:gap-3">
                       {Object.values(ClothingCategory).map((cat) => {
@@ -649,7 +651,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                         return (
                           <button key={cat} onClick={() => setCategory(cat)} className={`flex flex-col items-center gap-3 p-3 sm:p-4 sm:w-24 rounded-2xl border transition-all ${category === cat ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'}`}>
                             <Icon size={18} />
-                            <span className="text-[8px] font-black uppercase tracking-widest">{cat}</span>
+                            <span className="text-[8px] font-black uppercase tracking-widest">{t(`cat.${cat}`)}</span>
                           </button>
                         );
                       })}
@@ -657,18 +659,18 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   </div>
                   {category === ClothingCategory.SHOES && storage.remaining !== null && storage.remaining < 2 && (
                     <p role="note" className="px-1 text-text-secondary text-[10px] uppercase tracking-widest leading-relaxed">
-                      A shoe pair uses 2 slots and you have {storage.remaining} left - you can save a single shoe.
+                      {t('upload.pairNote', { count: storage.remaining })}
                     </p>
                   )}
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 px-1">
                       <User size={14} className="text-accent" />
-                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Persona Target</label>
+                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">{t('upload.personaTarget')}</label>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       {[PersonaType.MALE, PersonaType.FEMALE].map((type) => (
                         <button key={type} onClick={() => setPersonaType(type)} className={`flex items-center justify-center gap-4 py-6 rounded-[2rem] border transition-all ${personaType === type ? 'bg-accent/10 border-accent text-text-primary' : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'}`}>
-                          <span className="text-xs font-black uppercase tracking-[0.3em]">{type}</span>
+                          <span className="text-xs font-black uppercase tracking-[0.3em]">{t(`persona.${type}`)}</span>
                         </button>
                       ))}
                     </div>
@@ -676,7 +678,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 px-1">
                       <Layers size={14} className="text-accent" />
-                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">Category (Optional)</label>
+                      <label className="text-[10px] font-black tracking-[0.3em] text-accent uppercase">{t('upload.categoryOptional')}</label>
                     </div>
                     <CategoryPicker
                       collections={collections}
@@ -693,14 +695,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                 </div>
                 <button onClick={handleNextAfterConfig} className="w-full py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3">
                   <Sparkles size={18} />
-                  <span>Next Step</span>
+                  <span>{t('upload.next')}</span>
                 </button>
                 {category !== ClothingCategory.SHOES && (
                   <button
                     onClick={handleSkipBackgroundRemoval}
                     className="w-full py-4 bg-ink/[0.02] hover:bg-ink/5 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                   >
-                    Skip Background Removal — Keep Original, No Persona
+                    {t('upload.skipRemoval')}
                   </button>
                 )}
               </motion.div>
@@ -734,15 +736,15 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'SHOE_UPLOAD_RIGHT' && (
               <motion.div key="upload-right" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8">
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Second Asset</h2>
-                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Upload the RIGHT shoe image</p>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">{t('upload.step3b')}</h2>
+                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">{t('upload.uploadRight')}</p>
                 </div>
                 <div onClick={() => document.getElementById('right-file-input')?.click()} className="aspect-video rounded-[2.5rem] border-2 border-dashed border-ink/10 bg-ink/[0.02] hover:bg-ink/[0.05] hover:border-emerald-500/50 transition-all duration-500 cursor-pointer flex flex-col items-center justify-center group">
                   <input id="right-file-input" type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && (setRightFile(e.target.files[0]), startProcessing())} />
                   <div className="w-20 h-20 rounded-full bg-ink/5 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-emerald-500/10 transition-all duration-500">
                     <Upload className="text-emerald-500" size={32} />
                   </div>
-                  <p className="text-text-primary font-bold tracking-tight text-lg">Select Right Shoe</p>
+                  <p className="text-text-primary font-bold tracking-tight text-lg">{t('upload.selectRight')}</p>
                 </div>
               </motion.div>
             )}
@@ -765,7 +767,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                   <div className="text-center space-y-6 max-w-sm">
                     <AlertCircle size={40} className="text-red-500 mx-auto" />
                     <div className="space-y-2">
-                      <p className="text-text-primary font-bold tracking-tight text-lg">Processing Failed</p>
+                      <p className="text-text-primary font-bold tracking-tight text-lg">{t('upload.failedTitle')}</p>
                       <p className="text-text-secondary text-[10px] uppercase tracking-widest leading-relaxed">{error}</p>
                     </div>
                     
@@ -774,14 +776,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                         onClick={startProcessing} 
                         className="w-full py-4 bg-accent hover:bg-accent-hover text-on-accent rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all shadow-lg"
                       >
-                        Retry Removal
+                        {t('upload.retry')}
                       </button>
                       
                       <button 
                         onClick={continueWithOriginal} 
                         className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all"
                       >
-                        Continue with Original
+                        {t('upload.continueOriginal')}
                       </button>
                     </div>
                   </div>
@@ -792,22 +794,22 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
             {step === 'PREVIEW' && backgroundRemovedUrl && (
               <motion.div key="preview" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-8 sm:space-y-12">
                 <div className="text-center space-y-2">
-                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Analysis Preview</h2>
-                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Compare AI extraction with original source</p>
+                  <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">{t('upload.step3')}</h2>
+                  <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">{t('upload.compare')}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:gap-8 h-[34dvh] sm:h-[40vh]">
                   <div className="space-y-4">
-                    <p className="text-[10px] font-black tracking-widest text-text-secondary uppercase text-center opacity-50">Original Source</p>
+                    <p className="text-[10px] font-black tracking-widest text-text-secondary uppercase text-center opacity-50">{t('upload.original')}</p>
                     <div className="flex-1 h-full rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-4">
-                      <img src={originalPreviewUrl!} alt="Original" className="max-w-full max-h-full object-contain" />
+                      <img src={originalPreviewUrl!} alt={t('upload.originalAlt')} className="max-w-full max-h-full object-contain" />
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <p className="text-[10px] font-black tracking-widest text-accent uppercase text-center">AI Extraction</p>
+                    <p className="text-[10px] font-black tracking-widest text-accent uppercase text-center">{t('upload.ai')}</p>
                     <div className="flex-1 h-full rounded-[2rem] border border-accent/20 bg-accent/5 overflow-hidden flex items-center justify-center p-4 relative">
                       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
-                      <img src={backgroundRemovedUrl} alt="Processed" className="max-w-full max-h-full object-contain relative z-10" />
+                      <img src={backgroundRemovedUrl} alt={t('upload.processedAlt')} className="max-w-full max-h-full object-contain relative z-10" />
                     </div>
                   </div>
                 </div>
@@ -818,14 +820,14 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     className="w-full py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl flex items-center justify-center gap-3"
                   >
                     <Sparkles size={18} />
-                    <span>Confirm & Continue</span>
+                    <span>{t('upload.confirm')}</span>
                   </button>
 
                   <button
                     onClick={() => { setSkipPersonaStatus(PersonaStatus.NOT_FITTED); setStep('SKIP_PERSONA'); }}
                     className="w-full py-4 bg-ink/[0.02] hover:bg-ink/5 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                   >
-                    Skip Persona Fitting — Save for Flat Builder Only
+                    {t('upload.skipFitting')}
                   </button>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -833,13 +835,13 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                       onClick={startProcessing}
                       className="py-4 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                     >
-                      Retry Removal
+                      {t('upload.retry')}
                     </button>
                     <button
                       onClick={continueWithOriginal}
                       className="py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                     >
-                      Skip AI Results
+                      {t('upload.skipAi')}
                     </button>
                   </div>
                 </div>
@@ -850,19 +852,19 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
               <motion.div key="skip-persona" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-10">
                 <div className="text-center space-y-2">
                   <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">
-                    {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'Save Original As-Is' : 'Save Without Fitting'}
+                    {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? t('upload.saveOriginal') : t('upload.saveWithoutFitting')}
                   </h2>
                   <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">
                     {skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT
-                      ? "No background was removed, so this item can't be shown on the persona"
-                      : "This item won't appear on the persona until fitted later"}
+                      ? t('upload.noCutout')
+                      : t('upload.notFitted')}
                   </p>
                 </div>
 
                 <div className="rounded-[2rem] border border-ink/5 bg-ink/[0.02] overflow-hidden flex items-center justify-center p-4 sm:p-6 h-[26dvh] sm:h-[30vh]">
                   <img
                     src={(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? originalPreviewUrl : backgroundRemovedUrl) ?? undefined}
-                    alt="Preview"
+                    alt={t('upload.previewAlt')}
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
@@ -873,7 +875,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     value={skipName}
                     maxLength={100}
                     onChange={(e) => setSkipName(e.target.value)}
-                    placeholder="Garment name"
+                    placeholder={t('upload.namePlaceholder')}
                     className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-text-primary placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
                   />
                   <input
@@ -881,7 +883,7 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     value={skipDescription}
                     maxLength={255}
                     onChange={(e) => setSkipDescription(e.target.value)}
-                    placeholder="Description (optional)"
+                    placeholder={t('upload.descPlaceholder')}
                     className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-text-primary placeholder:text-text-secondary/50 text-sm focus:outline-none focus:border-accent/50"
                   />
                 </div>
@@ -900,13 +902,13 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
                     className="w-full py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.4em] uppercase transition-all shadow-xl flex items-center justify-center gap-3"
                   >
                     <Sparkles size={18} />
-                    <span>Save to Closet</span>
+                    <span>{t('upload.saveCloset')}</span>
                   </button>
                   <button
                     onClick={() => setStep(skipPersonaStatus === PersonaStatus.INELIGIBLE_NO_CUTOUT ? 'CONFIG' : 'PREVIEW')}
                     className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-2xl font-black text-[10px] tracking-widest uppercase transition-all border border-ink/5"
                   >
-                    Back
+                    {t('upload.back')}
                   </button>
                 </div>
               </motion.div>
@@ -947,7 +949,9 @@ const UploadFlowContent: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
 // with the modal stuck open. The boundary keeps the modal frame, says what
 // happened, and offers Try Again (restarts the flow from step 1) or Close. It
 // also resets whenever the modal is reopened.
-const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => (
+const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => {
+  const { t } = useT();
+  return (
   <ErrorBoundary
     resetKeys={[isOpen]}
     fallback={({ reset }) =>
@@ -956,11 +960,11 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => (
           <div className="absolute inset-0 bg-background-main/90 backdrop-blur-2xl" onClick={onClose} />
           <div className="relative w-full max-w-2xl bg-background-secondary border border-ink/5 rounded-[3rem] shadow-2xl">
             <ErrorState
-              title="The upload hit a problem"
-              message="Nothing was saved. You can start over, or close this and try again later."
+              title={t('upload.problem')}
+              message={t('upload.problemBody')}
               onRetry={reset}
-              retryLabel="Start Over"
-              secondaryLabel="Close"
+              retryLabel={t('upload.startOver')}
+              secondaryLabel={t('upload.close')}
               onSecondary={onClose}
             />
           </div>
@@ -970,6 +974,7 @@ const UploadFlow: React.FC<UploadFlowProps> = ({ isOpen, onClose }) => (
   >
     <UploadFlowContent isOpen={isOpen} onClose={onClose} />
   </ErrorBoundary>
-);
+  );
+};
 
 export default UploadFlow;

@@ -1,5 +1,6 @@
 import { PersonaStatus, PersonaType } from '../types';
 import type { ClothingItem } from '../types';
+import { translate } from '../i18n';
 
 // Task 77: the "which persona is this garment for?" sign shown on every
 // garment card. Pure, so the wording rules live in one testable place and every
@@ -33,20 +34,20 @@ export function personaSign(
   switch (item.personaStatus) {
     case PersonaStatus.INELIGIBLE_NO_CUTOUT:
       return {
-        label: 'Unassigned',
-        title: 'Saved without a persona (original photo, no cutout)',
+        label: translate('personaSign.unassigned'),
+        title: translate('personaSign.unassignedTitle'),
         tone: 'unassigned',
       };
     case PersonaStatus.NOT_FITTED:
       return {
-        label: 'Not fitted',
-        title: `Saved for ${personaName} but not fitted onto it yet`,
+        label: translate('personaSign.notFitted'),
+        title: translate('personaSign.notFittedTitle', { name: personaName }),
         tone: 'not-fitted',
       };
     default:
       return {
         label: personaName,
-        title: `Fitted to ${personaName}`,
+        title: translate('personaSign.fittedTitle', { name: personaName }),
         tone: 'persona',
       };
   }

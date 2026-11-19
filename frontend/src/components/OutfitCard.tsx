@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Edit2, Trash2, Copy, Play, Calendar, Info, Maximize2, AlertTriangle, Star, MoreHorizontal, Share2 } from 'lucide-react';
 import type { ClothingItem, Outfit } from '../types';
 
-const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
 import { useOutfitStore, equippedFromOutfitItems } from '../store/useOutfitStore';
 import { usePersonaStore } from '../store/usePersonaStore';
 import { useClothingStore } from '../store/useClothingStore';
@@ -15,6 +14,7 @@ import CroppedThumbnail from './CroppedThumbnail';
 import { computePersonaEligibility, buildOutfitPersona } from '../utils/personaEligibility';
 import { useSafeAction } from '../hooks/useSafeAction';
 import MountOnFirstOpen from './MountOnFirstOpen';
+import { useT } from '../i18n';
 
 // Task 102: the share dialog (and the canvas code behind its picture) loads the first time it opens.
 const ShareOutfitModal = lazy(() => import('./ShareOutfitModal'));
@@ -24,6 +24,8 @@ interface OutfitCardProps {
 }
 
 const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
+  const { t, language } = useT();
+  const MAIN_OUTFIT_EXPLAINER = t('outfitCard.explainer');
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPersona, setShowPersona] = useState(false);
   // Touch screens only: the "..." menu with the less common actions (see below).
@@ -44,7 +46,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(language === 'es' ? 'es' : 'en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -84,8 +86,8 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
 
   const hiddenCount = eligibility.ineligibleItems.length + eligibility.wrongPersonaItems.length;
   const hiddenReasons = [
-    eligibility.ineligibleItems.length > 0 && `${eligibility.ineligibleItems.length} not fitted`,
-    eligibility.wrongPersonaItems.length > 0 && `${eligibility.wrongPersonaItems.length} for the other persona`,
+    eligibility.ineligibleItems.length > 0 && t('outfitCard.notFitted', { count: eligibility.ineligibleItems.length }),
+    eligibility.wrongPersonaItems.length > 0 && t('outfitCard.otherPersona', { count: eligibility.wrongPersonaItems.length }),
   ].filter(Boolean).join(', ');
 
   // Task 75: extracted into utils/personaEligibility.ts's buildOutfitPersona
@@ -137,7 +139,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             title={MAIN_OUTFIT_EXPLAINER}
             className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-on-accent shadow-md text-[9px] font-medium tracking-[0.2em] uppercase"
           >
-            <Star size={10} fill="currentColor" /> Main
+            <Star size={10} fill="currentColor" /> {t('outfitCard.main')}
           </span>
         )}
 
@@ -188,44 +190,44 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             <button 
               onClick={() => setShowPersona(!showPersona)}
               className={`p-2.5 rounded-xl transition-all border ${showPersona ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 hover:bg-ink/10 text-text-primary border-ink/5'}`}
-              title={showPersona ? "Show Items" : "More Info"}
+              title={showPersona ? t('outfitCard.showItems') : t('outfitCard.moreInfo')}
             >
               <Info size={14} />
             </button>
             <button
-              onClick={() => runSafely(() => setMainOutfit(outfit.outfitId), "Couldn't set your main outfit")}
+              onClick={() => runSafely(() => setMainOutfit(outfit.outfitId), t('outfitCard.setMainFailed'))}
               disabled={isMain}
               className={`p-2.5 rounded-xl transition-all border disabled:pointer-events-none ${isMain ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 hover:bg-ink/10 text-text-primary border-ink/5'}`}
-              title={isMain ? MAIN_OUTFIT_EXPLAINER : `Set as main outfit - ${MAIN_OUTFIT_EXPLAINER}`}
+              title={isMain ? MAIN_OUTFIT_EXPLAINER : t('outfitCard.setMainTitle', { explainer: MAIN_OUTFIT_EXPLAINER })}
             >
               <Star size={14} fill={isMain ? 'currentColor' : 'none'} />
             </button>
             <button
-              onClick={() => runSafely(() => duplicateOutfit(outfit), "Couldn't duplicate this outfit")}
+              onClick={() => runSafely(() => duplicateOutfit(outfit), t('outfitCard.duplicateFailed'))}
               className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
-              title="Duplicate"
+              title={t('outfitCard.duplicate')}
             >
               <Copy size={14} />
             </button>
             <button
               onClick={() => setIsSharing(true)}
               className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
-              title="Share"
-              aria-label="Share outfit"
+              title={t('outfitCard.share')}
+              aria-label={t('outfitCard.shareOutfit')}
             >
               <Share2 size={14} />
             </button>
             <button
               onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
               className="p-2.5 bg-ink/5 hover:bg-ink/10 rounded-xl text-text-primary transition-colors border border-ink/5"
-              title="Edit"
+              title={t('outfitCard.edit')}
             >
               <Edit2 size={14} />
             </button>
             <button 
               onClick={() => setIsDeleting(true)}
               className="p-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-xl transition-all border border-rose-500/10"
-              title="Delete"
+              title={t('outfitCard.delete')}
             >
               <Trash2 size={14} />
             </button>
@@ -237,7 +239,7 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               className="w-full py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl tracking-[0.2em] flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
             >
               <Play size={12} fill="currentColor" />
-              WEAR STYLE
+              {t('outfitCard.wearStyle')}
             </button>
           </div>
         </div>
@@ -254,28 +256,28 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
               <div className="bg-rose-500/20 p-4 rounded-full mb-4">
                 <Trash2 size={24} className="text-rose-500" />
               </div>
-              <p className="text-text-primary text-[12px] font-medium uppercase tracking-widest mb-2">Delete Outfit?</p>
+              <p className="text-text-primary text-[12px] font-medium uppercase tracking-widest mb-2">{t('outfitCard.deleteTitle')}</p>
               <p className="text-ink/60 text-[10px] uppercase tracking-widest mb-6 leading-relaxed">
-                This action is permanent and cannot be undone.
+                {t('outfitCard.deleteBody')}
               </p>
               <div className="flex gap-4 w-full">
                 <button
                   onClick={async () => {
                     // Only close the confirm prompt on success - on failure the
                     // toast explains and the user can retry from here.
-                    if (await runSafely(() => removeOutfit(outfit.outfitId), "Couldn't delete this outfit")) {
+                    if (await runSafely(() => removeOutfit(outfit.outfitId), t('outfitCard.deleteFailed'))) {
                       setIsDeleting(false);
                     }
                   }}
                   className="flex-grow py-3 bg-rose-500 text-white text-[10px] font-medium uppercase tracking-[0.2em] rounded-xl shadow-lg active:scale-95 transition-all"
                 >
-                  DELETE
+                  {t('outfitCard.deleteConfirm')}
                 </button>
                 <button 
                   onClick={() => setIsDeleting(false)}
                   className="flex-grow py-3 bg-ink/10 text-text-primary text-[10px] font-medium uppercase tracking-[0.2em] rounded-xl border border-ink/10 active:scale-95 transition-all"
                 >
-                  CANCEL
+                  {t('outfitCard.cancel')}
                 </button>
               </div>
             </motion.div>
@@ -291,19 +293,19 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             onClick={handleApply}
             className="flex-1 h-10 rounded-xl bg-ink text-background-main font-medium text-[10px] tracking-[0.15em] flex items-center justify-center gap-1.5 active:scale-95 transition-all"
           >
-            <Play size={12} fill="currentColor" /> WEAR
+            <Play size={12} fill="currentColor" /> {t('outfitCard.wear')}
           </button>
           <button
-            onClick={() => runSafely(() => setMainOutfit(outfit.outfitId), "Couldn't set your main outfit")}
+            onClick={() => runSafely(() => setMainOutfit(outfit.outfitId), t('outfitCard.setMainFailed'))}
             disabled={isMain}
-            aria-label={isMain ? 'Main outfit' : 'Set as main outfit'}
+            aria-label={isMain ? t('outfitCard.mainLabel') : t('outfitCard.setMainLabel')}
             className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border disabled:pointer-events-none ${isMain ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 text-text-primary border-ink/10'}`}
           >
             <Star size={16} fill={isMain ? 'currentColor' : 'none'} />
           </button>
           <button
             onClick={() => setMenuOpen((open) => !open)}
-            aria-label="More actions"
+            aria-label={t('outfitCard.moreActions')}
             aria-expanded={menuOpen}
             className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-ink/10 bg-ink/5 text-text-primary"
           >
@@ -316,10 +318,10 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
             <div role="menu" className="absolute right-0 bottom-full mb-2 w-44 z-30 rounded-xl bg-background-secondary border border-ink/10 shadow-lg p-1.5">
               {[
                 { label: showPersona ? 'Show items' : 'On persona', icon: Info, run: () => setShowPersona(!showPersona) },
-                { label: 'Share', icon: Share2, run: () => setIsSharing(true) },
-                { label: 'Duplicate', icon: Copy, run: () => runSafely(() => duplicateOutfit(outfit), "Couldn't duplicate this outfit") },
-                { label: 'Edit', icon: Edit2, run: () => navigate(`/outfits/flat/edit/${outfit.outfitId}`) },
-                { label: 'Delete', icon: Trash2, run: () => setIsDeleting(true), danger: true },
+                { label: t('outfitCard.share'), icon: Share2, run: () => setIsSharing(true) },
+                { label: t('outfitCard.duplicate'), icon: Copy, run: () => runSafely(() => duplicateOutfit(outfit), t('outfitCard.duplicateFailed')) },
+                { label: t('outfitCard.edit'), icon: Edit2, run: () => navigate(`/outfits/flat/edit/${outfit.outfitId}`) },
+                { label: t('outfitCard.delete'), icon: Trash2, run: () => setIsDeleting(true), danger: true },
               ].map(({ label, icon: Icon, run, danger }) => (
                 <button
                   key={label}
@@ -354,11 +356,11 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
         {showPersona && hiddenCount > 0 && (
           <button
             onClick={() => navigate(`/outfits/flat/edit/${outfit.outfitId}`)}
-            title={`${hiddenReasons} - open in the editor to fix`}
+            title={t('outfitCard.hiddenTitle', { reasons: hiddenReasons })}
             className="flex items-center gap-1.5 pt-1 text-[10px] font-medium uppercase tracking-widest text-amber-400 hover:text-amber-300 transition-colors"
           >
             <AlertTriangle size={10} />
-            {hiddenCount} {hiddenCount === 1 ? 'item' : 'items'} hidden · Fix
+            {t(hiddenCount === 1 ? 'outfitCard.hiddenOne' : 'outfitCard.hiddenMany', { count: hiddenCount })}
           </button>
         )}
       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle, RotateCcw } from 'lucide-react';
+import { useT } from '../i18n';
 
 interface ErrorStateProps {
   title?: string;
@@ -20,15 +21,16 @@ interface ErrorStateProps {
 // screen after something fails - say what happened and offer a way forward.
 // Used by ErrorBoundary and by pages whose data failed to load.
 const ErrorState: React.FC<ErrorStateProps> = ({
-  title = "We couldn't complete this action",
-  message = 'Something went wrong on our side. Please try again.',
+  title,
+  message,
   onRetry,
-  retryLabel = 'Try Again',
+  retryLabel,
   secondaryLabel,
   onSecondary,
   compact = false,
   className = '',
 }) => {
+  const { t } = useT();
   return (
     <div
       role="alert"
@@ -48,10 +50,10 @@ const ErrorState: React.FC<ErrorStateProps> = ({
         <h2
           className={`font-light tracking-tight text-text-primary ${compact ? 'text-sm' : 'text-2xl'}`}
         >
-          {title}
+          {title ?? t('errorState.title')}
         </h2>
         <p className={`text-text-secondary leading-relaxed ${compact ? 'text-[11px]' : 'text-sm'}`}>
-          {message}
+          {message ?? t('errorState.message')}
         </p>
       </div>
 
@@ -65,7 +67,7 @@ const ErrorState: React.FC<ErrorStateProps> = ({
               }`}
             >
               <RotateCcw size={compact ? 12 : 14} />
-              {retryLabel}
+              {retryLabel ?? t('errorState.retry')}
             </button>
           )}
           {onSecondary && secondaryLabel && (

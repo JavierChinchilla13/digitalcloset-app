@@ -1,4 +1,5 @@
 import type { ClothingTransform } from '../types';
+import { translate } from '../i18n';
 
 // Mesh warp (Task 56 prototype). A 3x3 grid of control points, in the SOURCE
 // image's pixel space, defines a smooth surface (biquadratic Lagrange through
@@ -212,14 +213,14 @@ export async function bakeWarp(
   const width = Math.ceil(b.maxX - b.minX);
   const height = Math.ceil(b.maxY - b.minY);
   if (width < 4 || height < 4 || width > MAX_BAKE_SIZE || height > MAX_BAKE_SIZE) {
-    throw new Error('The warp is too extreme - move the points back toward the image.');
+    throw new Error(translate('warp.extreme'));
   }
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas is not available in this browser.');
+  if (!ctx) throw new Error(translate('warp.noCanvas'));
 
   renderWarpedMesh(ctx, img, srcWidth, srcHeight, grid, { ...IDENTITY_AFFINE, e: -b.minX, f: -b.minY }, 32);
 

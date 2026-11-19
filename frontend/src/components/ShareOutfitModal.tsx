@@ -7,6 +7,7 @@ import { useClothingStore } from '../store/useClothingStore';
 import { buildOutfitPersona } from '../utils/personaEligibility';
 import { renderOutfitToBlob } from '../utils/outfitImage';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 interface ShareOutfitModalProps {
   outfitId: number | null;
@@ -29,6 +30,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
   const unshareOutfit = useOutfitStore((state) => state.unshareOutfit);
   const closetItems = useClothingStore((state) => state.items);
   const { showToast } = useToast();
+  const { t } = useT();
 
   const [blob, setBlob] = useState<Blob | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -55,7 +57,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
         setPreviewUrl(URL.createObjectURL(result));
       })
       .catch(() => {
-        if (!cancelled) setImageError("The picture couldn't be created. You can still share the link.");
+        if (!cancelled) setImageError(t('share.pictureFailed'));
       });
     return () => {
       cancelled = true;
@@ -95,7 +97,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
     } catch (err) {
       // Closing the share sheet is an AbortError, not a failure.
       if (!(err instanceof DOMException && err.name === 'AbortError')) {
-        showToast("Couldn't open the share sheet", 'error');
+        showToast(t('share.sheetFailed'), 'error');
       }
     }
   };
@@ -106,7 +108,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
     try {
       await shareOutfit(outfit.outfitId);
     } catch (err) {
-      setLinkError(getApiErrorMessage(err, "Couldn't create the link. Please try again."));
+      setLinkError(getApiErrorMessage(err, t('share.linkFailed')));
     } finally {
       setLinkBusy(false);
     }
@@ -119,7 +121,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
       await unshareOutfit(outfit.outfitId);
       setCopied(false);
     } catch (err) {
-      setLinkError(getApiErrorMessage(err, "Couldn't turn the link off. Please try again."));
+      setLinkError(getApiErrorMessage(err, t('share.offFailed')));
     } finally {
       setLinkBusy(false);
     }
@@ -130,32 +132,32 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
     try {
       await navigator.clipboard.writeText(link);
       setCopied(true);
-      showToast('Link copied', 'success');
+      showToast(t('share.copiedToast'), 'success');
     } catch {
-      showToast('Copy is blocked here - select the link and copy it', 'info');
+      showToast(t('share.blocked'), 'info');
     }
   };
 
   return (
     <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-md bg-background-secondary border border-ink/5 rounded-2xl shadow-lg">
-      <div role="dialog" aria-modal="true" aria-label="Share outfit" className="relative p-6 sm:p-8 space-y-5">
+      <div role="dialog" aria-modal="true" aria-label={t('share.dialog')} className="relative p-6 sm:p-8 space-y-5">
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close"
+          aria-label={t('common.close')}
           className="absolute top-3 right-3 w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-text-primary hover:bg-ink/5"
         >
           <X size={18} />
         </button>
-        <h2 className="text-text-primary text-lg font-light tracking-tight uppercase pr-8">Share this outfit</h2>
+        <h2 className="text-text-primary text-lg font-light tracking-tight uppercase pr-8">{t('share.title')}</h2>
 
         <div className="aspect-[3/4] w-full max-w-[16rem] mx-auto rounded-xl overflow-hidden bg-ink/5 border border-ink/5 flex items-center justify-center">
           {previewUrl ? (
-            <img src={previewUrl} alt={`${outfit.name} on the figure`} className="w-full h-full object-contain" />
+            <img src={previewUrl} alt={t('share.alt', { name: outfit.name })} className="w-full h-full object-contain" />
           ) : imageError ? (
             <p className="px-4 text-center text-xs text-text-secondary">{imageError}</p>
           ) : (
-            <Loader2 className="animate-spin text-accent" size={24} aria-label="Preparing the picture" />
+            <Loader2 className="animate-spin text-accent" size={24} aria-label={t('share.preparing')} />
           )}
         </div>
 
@@ -166,7 +168,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
             disabled={!previewUrl}
             className="flex-1 min-w-[8rem] py-3 bg-ink text-background-main text-[10px] font-medium uppercase tracking-widest rounded-xl disabled:opacity-40 inline-flex items-center justify-center gap-2"
           >
-            <Download size={14} /> Download image
+            <Download size={14} /> {t('share.download')}
           </button>
           {canNativeShare && (
             <button
@@ -174,20 +176,20 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
               onClick={handleNativeShare}
               className="flex-1 min-w-[8rem] py-3 border border-ink/15 text-text-primary text-[10px] font-medium uppercase tracking-widest rounded-xl inline-flex items-center justify-center gap-2"
             >
-              <Share2 size={14} /> Share
+              <Share2 size={14} /> {t('share.share')}
             </button>
           )}
         </div>
 
         <div className="border-t border-ink/5 pt-5 space-y-3">
-          <p className="text-[10px] uppercase tracking-widest text-text-secondary">Public link</p>
+          <p className="text-[10px] uppercase tracking-widest text-text-secondary">{t('share.publicLink')}</p>
           {link ? (
             <>
               <div className="flex gap-2">
                 <input
                   readOnly
                   value={link}
-                  aria-label="Public link"
+                  aria-label={t('share.publicLink')}
                   onFocus={(e) => e.currentTarget.select()}
                   className="flex-1 min-w-0 px-3 py-2.5 rounded-xl bg-ink/5 border border-ink/10 text-xs text-text-primary"
                 />
@@ -196,11 +198,11 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
                   onClick={handleCopy}
                   className="px-3 rounded-xl border border-ink/15 text-text-primary inline-flex items-center gap-2 text-[10px] uppercase tracking-widest"
                 >
-                  {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}
+                  {copied ? <Check size={14} /> : <Copy size={14} />} {copied ? t('share.copied') : t('share.copy')}
                 </button>
               </div>
               <p className="text-[11px] text-text-secondary leading-relaxed">
-                Anyone with this link can see this outfit. It shows the outfit and its pieces, not your account.
+                {t('share.visible')}
               </p>
               <button
                 type="button"
@@ -208,13 +210,13 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
                 disabled={linkBusy}
                 className="text-[10px] uppercase tracking-widest text-rose-500 disabled:opacity-40"
               >
-                {linkBusy ? 'Turning off...' : 'Turn off link'}
+                {linkBusy ? t('share.turningOff') : t('share.turnOff')}
               </button>
             </>
           ) : (
             <>
               <p className="text-[11px] text-text-secondary leading-relaxed">
-                Make a link that anyone can open without an account. You can turn it off whenever you want.
+                {t('share.makeLink')}
               </p>
               <button
                 type="button"
@@ -222,7 +224,7 @@ const ShareOutfitModal = ({ outfitId, isOpen, onClose }: ShareOutfitModalProps) 
                 disabled={linkBusy}
                 className="w-full py-3 border border-ink/15 text-text-primary text-[10px] font-medium uppercase tracking-widest rounded-xl disabled:opacity-40 inline-flex items-center justify-center gap-2"
               >
-                {linkBusy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} Create public link
+                {linkBusy ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} {t('share.create')}
               </button>
             </>
           )}

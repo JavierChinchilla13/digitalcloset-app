@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Tag, Check, Plus, X } from 'lucide-react';
 import type { Collection } from '../types';
+import { useT } from '../i18n';
 
 // Shared by UploadFlow (Task 50) and FlatOutfitBuilderPage (Task 51) - both
 // need the same "optionally link to a category at save time" control. No
@@ -29,13 +30,14 @@ const CategoryPicker = ({
   collections, selectedIds, onToggle, isCreating, onStartCreating,
   newName, onNewNameChange, onConfirmCreate, onCancelCreate,
 }: CategoryPickerProps) => {
+  const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
 
   const buttonLabel = selectedIds.length === 0
-    ? 'No Category'
+    ? t('picker.none')
     : selectedIds.length === 1
-      ? collections.find((c) => c.collectionId === selectedIds[0])?.name ?? 'No Category'
-      : `${selectedIds.length} Categories`;
+      ? collections.find((c) => c.collectionId === selectedIds[0])?.name ?? t('picker.none')
+      : t('picker.many', { count: selectedIds.length });
 
   return (
     <div className="relative">
@@ -53,7 +55,7 @@ const CategoryPicker = ({
           <div className="absolute right-0 top-full mt-2 w-56 bg-background-secondary border border-ink/10 rounded-2xl shadow-lg p-2 z-40 space-y-1 max-h-64 overflow-y-auto no-scrollbar">
             {collections.length === 0 && !isCreating && (
               <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-text-secondary opacity-50">
-                No categories yet
+                {t('picker.empty')}
               </p>
             )}
             {collections.map((c) => {
@@ -80,7 +82,7 @@ const CategoryPicker = ({
                     maxLength={100}
                     onChange={(e) => onNewNameChange(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && onConfirmCreate()}
-                    placeholder="CATEGORY NAME"
+                    placeholder={t('picker.namePlaceholder')}
                     className="flex-grow min-w-0 bg-ink/5 border border-ink/10 rounded-lg px-2 py-1.5 text-text-primary text-[9px] font-medium tracking-widest uppercase focus:outline-none focus:border-accent/50"
                   />
                   <button onClick={onConfirmCreate} className="p-1.5 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent transition-colors">
@@ -95,7 +97,7 @@ const CategoryPicker = ({
                   onClick={onStartCreating}
                   className="w-full flex items-center gap-2 text-left px-3 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest text-accent hover:bg-accent/10 transition-colors"
                 >
-                  <Plus size={12} /> New Category
+                  <Plus size={12} /> {t('picker.new')}
                 </button>
               )}
             </div>

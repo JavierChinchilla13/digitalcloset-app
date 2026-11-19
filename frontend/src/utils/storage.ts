@@ -1,5 +1,6 @@
 import { Plan, Role } from '../types';
 import type { User } from '../types';
+import { translate } from '../i18n';
 
 // Task 96: how much garment space an account has left. The backend decides the limit (15 free,
 // 300 paying, none for admins) and sends it as `user.garmentLimit`; this only does the arithmetic
@@ -56,5 +57,5 @@ export class StorageLimitError extends Error {
 // The sentence shown when a free or paying account has no room left.
 export function limitMessage(storage: StorageUsage): string {
   if (storage.limit === null) return '';
-  return `You've used ${storage.used} of ${storage.limit} garments. Delete a garment to add another.`;
+  return translate('storage.limitMessage', { used: storage.used, limit: storage.limit });
 }
