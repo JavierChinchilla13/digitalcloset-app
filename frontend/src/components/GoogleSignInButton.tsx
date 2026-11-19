@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useT } from '../i18n';
 
 // The part of Google Identity Services we use (https://accounts.google.com/gsi/client).
 interface GoogleIdApi {
@@ -50,7 +51,9 @@ interface GoogleSignInButtonProps {
 
 // Task 98 + audit H12: "Continue with Google" in two clicks. The first click is on OUR button: only then is Google's script loaded.
 // Google's own button then appears in its place and the second click opens its popup. Nothing is loaded from Google before the first click.
-const GoogleSignInButton = ({ clientId, onCredential, label = 'Continue with Google' }: GoogleSignInButtonProps) => {
+const GoogleSignInButton = ({ clientId, onCredential, label }: GoogleSignInButtonProps) => {
+  const { t } = useT();
+  const buttonLabel = label ?? t('google.continue');
   const container = useRef<HTMLDivElement>(null);
   // The latest callback, so the effect below does not restart the button on every render.
   const callback = useRef(onCredential);
@@ -91,7 +94,7 @@ const GoogleSignInButton = ({ clientId, onCredential, label = 'Continue with Goo
   if (stage === 'failed') {
     return (
       <p role="status" className="text-center text-text-secondary text-[10px] uppercase tracking-widest">
-        Google sign-in could not load. You can still use your email and password.
+        {t('google.loadFailed')}
       </p>
     );
   }
@@ -106,7 +109,7 @@ const GoogleSignInButton = ({ clientId, onCredential, label = 'Continue with Goo
       className="w-full min-h-[48px] rounded-full border border-ink/15 bg-background-secondary text-sm font-medium text-text-primary flex items-center justify-center gap-2 transition-[background-color,transform] hover:bg-ink/5 active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-60"
     >
       {stage === 'loading' ? <Loader2 className="animate-spin" size={16} aria-hidden /> : null}
-      <span>{label}</span>
+      <span>{buttonLabel}</span>
     </button>
   );
 };

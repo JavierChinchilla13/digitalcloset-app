@@ -4,6 +4,7 @@ import { premiumInterestService } from '../api/premiumInterestService';
 import { usePremiumInterestEligible } from '../hooks/usePremiumInterestEligible';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 type Phase = 'checking' | 'idle' | 'sending' | 'requested';
 
@@ -17,6 +18,7 @@ interface PremiumInterestNoteProps {
 // (the server answers "requested" again), and a failure says so in words and leaves the button usable.
 const PremiumInterestNote = ({ className = '' }: PremiumInterestNoteProps) => {
   const eligible = usePremiumInterestEligible();
+  const { t } = useT();
   const userId = useAuthStore((state) => state.user?.userId);
   const [phase, setPhase] = useState<Phase>('checking');
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ const PremiumInterestNote = ({ className = '' }: PremiumInterestNoteProps) => {
       const state = await premiumInterestService.request();
       setPhase(state.requested ? 'requested' : 'idle');
     } catch (err) {
-      setError(getApiErrorMessage(err, "Couldn't send your request. Please try again."));
+      setError(getApiErrorMessage(err, t('interest.failed')));
       setPhase('idle');
     }
   };
@@ -60,7 +62,7 @@ const PremiumInterestNote = ({ className = '' }: PremiumInterestNoteProps) => {
       className={`rounded-xl border border-ink/10 bg-ink/[0.03] p-4 space-y-3 normal-case tracking-normal ${className}`}
       data-testid="premium-interest"
     >
-      <p className="text-sm text-text-primary leading-snug">Premium is coming soon. Want it? Let us know.</p>
+      <p className="text-sm text-text-primary leading-snug">{t('interest.note')}</p>
       <button
         type="button"
         onClick={send}
@@ -70,21 +72,21 @@ const PremiumInterestNote = ({ className = '' }: PremiumInterestNoteProps) => {
       >
         {sending ? (
           <>
-            <Loader2 size={14} className="animate-spin" aria-hidden /> Sending...
+            <Loader2 size={14} className="animate-spin" aria-hidden /> {t('interest.sending')}
           </>
         ) : requested ? (
           <>
-            <Check size={14} aria-hidden /> Requested
+            <Check size={14} aria-hidden /> {t('interest.requested')}
           </>
         ) : (
           <>
-            <Sparkles size={14} aria-hidden /> Request Premium
+            <Sparkles size={14} aria-hidden /> {t('interest.request')}
           </>
         )}
       </button>
       {/* One live region for the result: the thank-you, or what went wrong. */}
       <div id="premium-interest-result" role="status" aria-live="polite" className="text-xs leading-snug">
-        {requested && <p className="text-text-secondary">Thanks, we&apos;ll let you know.</p>}
+        {requested && <p className="text-text-secondary">{t('interest.thanks')}</p>}
         {error && (
           <p role="alert" className="text-rose-400">
             {error}

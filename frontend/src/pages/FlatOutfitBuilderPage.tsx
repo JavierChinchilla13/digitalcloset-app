@@ -29,6 +29,7 @@ import ErrorState from '../components/ErrorState';
 import PersonaBadge from '../components/PersonaBadge';
 import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Task 100: heavy editor code, downloaded on first use (see MountOnFirstOpen).
 const EditClothingModal = lazy(() => import('../components/EditClothingModal'));
@@ -54,6 +55,7 @@ const EditClothingModal = lazy(() => import('../components/EditClothingModal'));
 // matching one persona type, unchanged).
 
 const FlatOutfitBuilderPage = () => {
+  const { t } = useT();
   const { id } = useParams();
   const navigate = useNavigate();
   // Task 41: this page also renders at "/" itself (Task 39's post-login
@@ -82,7 +84,7 @@ const FlatOutfitBuilderPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
-  const [outfitName, setOutfitName] = useState('New Style');
+  const [outfitName, setOutfitName] = useState(() => t('builder.defaultName'));
   const [isSaving, setIsSaving] = useState(false);
   const [outfitsReady, setOutfitsReady] = useState(false);
 
@@ -169,7 +171,7 @@ const FlatOutfitBuilderPage = () => {
   // route (not "/") so the main outfit is not loaded straight back in.
   const handleNewOutfit = () => {
     clearDraft();
-    setOutfitName('New Style');
+    setOutfitName(t('builder.defaultName'));
     navigate('/outfits/flat/new');
   };
 
@@ -200,7 +202,7 @@ const FlatOutfitBuilderPage = () => {
       // used to swallow its errors - fixed in Task 22 - so an edit that
       // failed to save still cleared the draft and navigated away). A
       // failed save now lands here instead.
-      showToast(getApiErrorMessage(err, 'Failed to save outfit'), 'error');
+      showToast(getApiErrorMessage(err, t('builder.saveFailed')), 'error');
     } finally {
       setIsSaving(false);
     }
@@ -231,12 +233,12 @@ const FlatOutfitBuilderPage = () => {
         .filter((item) => cats.includes(item.category))
         .sort((a, b) => cats.indexOf(a.category) - cats.indexOf(b.category));
     return [
-      { label: 'Top', items: byCategories(BROWSE_TOP_ORDER) },
-      { label: 'Bottom', items: byCategories([ClothingCategory.BOTTOM]) },
-      { label: 'Shoes', items: byCategories([ClothingCategory.SHOES]) },
-      { label: 'Accessories', items: byCategories([ClothingCategory.ACCESSORY]) },
+      { label: t('builder.top'), items: byCategories(BROWSE_TOP_ORDER) },
+      { label: t('builder.bottom'), items: byCategories([ClothingCategory.BOTTOM]) },
+      { label: t('builder.shoes'), items: byCategories([ClothingCategory.SHOES]) },
+      { label: t('builder.accessories'), items: byCategories([ClothingCategory.ACCESSORY]) },
     ].filter((section) => section.items.length > 0);
-  }, [filteredItems, BROWSE_TOP_ORDER]);
+  }, [filteredItems, BROWSE_TOP_ORDER, t]);
 
   // Scroll-hint affordance (Task 76) - the browse column is narrow enough
   // that Accessories (and often Shoes) sit below the fold once there's a
@@ -282,10 +284,10 @@ const FlatOutfitBuilderPage = () => {
         .filter((item) => cats.includes(item.category))
         .sort((a, b) => cats.indexOf(a.category) - cats.indexOf(b.category));
     return [
-      { label: 'Top', items: byCategories(TOP_MERGE_ORDER) },
-      { label: 'Bottom', items: byCategories([ClothingCategory.BOTTOM]) },
+      { label: t('builder.top'), items: byCategories(TOP_MERGE_ORDER) },
+      { label: t('builder.bottom'), items: byCategories([ClothingCategory.BOTTOM]) },
     ].filter((section) => section.items.length > 0);
-  }, [selectedItems, TOP_MERGE_ORDER]);
+  }, [selectedItems, TOP_MERGE_ORDER, t]);
   const shoeItems = useMemo(
     () => selectedItems.filter((item) => item.category === ClothingCategory.SHOES),
     [selectedItems]
@@ -337,8 +339,8 @@ const FlatOutfitBuilderPage = () => {
     if (replaced.length > 0) {
       const incoming = items.find((item) => item.itemId === itemId);
       const label = (item: ClothingItem | undefined) =>
-        item ? `${item.name}${item.side ? ` (${item.side})` : ''}` : 'shoe';
-      showToast(`Replaced ${replaced.map(label).join(' and ')} with ${label(incoming)}`, 'info');
+        item ? `${item.name}${item.side ? ` (${item.side})` : ''}` : t('builder.shoe');
+      showToast(t('builder.replaced', { old: replaced.map(label).join(t('builder.and')), new: label(incoming) }), 'info');
     }
   };
 
@@ -353,20 +355,20 @@ const FlatOutfitBuilderPage = () => {
   const handleRandomOutfit = () => {
     const { ids, missing } = pickRandomOutfit(items, persona.type);
     if (ids.length === 0) {
-      showToast(`Add some ${persona.type.toLowerCase()} clothes to your closet first`, 'info');
+      showToast(t('builder.addSome', { persona: t(`builder.personaAdj.${persona.type}`) }), 'info');
       // Task 101: a completely empty closet has nowhere else to go - take them to it.
       if (items.length === 0) navigate('/closet');
       return;
     }
     if (editId) {
-      setOutfitName('New Style');
+      setOutfitName(t('builder.defaultName'));
       navigate('/outfits/flat/new');
     }
     setDraft(ids, null);
     setSelectedLayerId(null);
     setShowPersonaPreview(true);
     setPhoneTab('outfit');
-    if (missing.length > 0) showToast(`No ${missing.join(', ')} in your closet for this persona yet`, 'info');
+    if (missing.length > 0) showToast(t('builder.missing', { list: missing.map((m) => t(`builder.missing.${m}`)).join(', ') }), 'info');
   };
 
   // An outfit loaded from before the rule may name two shoes for one foot: keep
@@ -377,7 +379,7 @@ const FlatOutfitBuilderPage = () => {
     const cleaned = normalizeShoes(selectedItemIds, items);
     if (cleaned.length !== selectedItemIds.length) {
       setDraft(cleaned, layerOrder);
-      showToast('A foot can only have one shoe - kept the latest', 'info');
+      showToast(t('builder.oneShoe'), 'info');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItemIds, items]);
@@ -418,7 +420,7 @@ const FlatOutfitBuilderPage = () => {
     if (!showPersonaPreview) return;
     const totalExcluded = excludedIneligibleCount + excludedWrongPersonaCount;
     if (totalExcluded > 0) {
-      showToast(`${totalExcluded} ${totalExcluded === 1 ? 'item' : 'items'} can't be shown on persona`, 'info');
+      showToast(t(totalExcluded === 1 ? 'builder.cantShowOne' : 'builder.cantShowMany', { count: totalExcluded }), 'info');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showPersonaPreview]);
@@ -435,9 +437,9 @@ const FlatOutfitBuilderPage = () => {
   useEffect(() => {
     if (!isMixedPersona) return;
     const labels = selectedPersonaTypes
-      .map((type) => type.charAt(0) + type.slice(1).toLowerCase())
-      .join(' and ');
-    showToast(`This outfit mixes ${labels} garments`, 'info');
+      .map((type) => t(`personaSwitch.${type}`))
+      .join(t('builder.and'));
+    showToast(t('builder.mixes', { labels }), 'info');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMixedPersona]);
 
@@ -447,20 +449,20 @@ const FlatOutfitBuilderPage = () => {
     <>
       <button
         onClick={handleRandomOutfit}
-        aria-label="Create random outfit"
-        title="Create random outfit"
+        aria-label={t('builder.random')}
+        title={t('builder.random')}
         className="px-3.5 lg:px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
       >
-        <Shuffle size={16} /> <span className="hidden lg:inline">Create random outfit</span>
+        <Shuffle size={16} /> <span className="hidden lg:inline">{t('builder.random')}</span>
       </button>
       {editId && (
         <button
           onClick={handleNewOutfit}
-          aria-label="New outfit"
-          title="New outfit"
+          aria-label={t('builder.newOutfit')}
+          title={t('builder.newOutfit')}
           className="px-3.5 lg:px-6 py-3 rounded-xl border border-ink/10 hover:border-ink/30 text-text-secondary hover:text-text-primary text-[10px] font-medium tracking-[0.2em] uppercase flex items-center gap-2 transition-all"
         >
-          <Plus size={16} /> <span className="hidden lg:inline">New outfit</span>
+          <Plus size={16} /> <span className="hidden lg:inline">{t('builder.newOutfit')}</span>
         </button>
       )}
       {!editId && (
@@ -480,7 +482,7 @@ const FlatOutfitBuilderPage = () => {
         onClick={clearDraft}
         disabled={selectedItemIds.length === 0}
         className="p-3 hover:bg-ink/5 rounded-xl text-text-secondary hover:text-text-primary transition-colors border border-ink/5 disabled:opacity-20 disabled:pointer-events-none"
-        title="Clear Selection"
+        title={t('builder.clear')}
       >
         <RotateCcw size={18} />
       </button>
@@ -502,7 +504,7 @@ const FlatOutfitBuilderPage = () => {
           {!isLandingRoute && (
             <button
               onClick={() => navigate('/outfits')}
-              aria-label="Back to outfits"
+              aria-label={t('builder.backToOutfits')}
               className="shrink-0 p-2.5 lg:p-3 hover:bg-ink/5 rounded-xl text-text-secondary transition-colors border border-ink/5"
             >
               <ChevronLeft size={20} />
@@ -514,23 +516,23 @@ const FlatOutfitBuilderPage = () => {
               maxLength={100}
               onChange={(e) => setOutfitName(e.target.value)}
               className="w-full min-w-0 bg-transparent text-xl font-light text-text-primary tracking-widest uppercase focus:outline-none border-b border-transparent focus:border-accent/50 transition-all"
-              placeholder="ENTER STYLE NAME"
+              placeholder={t('builder.namePlaceholder')}
             />
             {isEditingMainOutfit && (
               <span className="lg:hidden inline-flex items-center gap-1 text-[9px] font-medium tracking-[0.2em] uppercase text-accent">
-                <Star size={9} fill="currentColor" /> Main outfit
+                <Star size={9} fill="currentColor" /> {t('builder.mainOutfit')}
               </span>
             )}
             <div className="hidden lg:flex items-center gap-3">
               <p className="text-[10px] font-medium text-accent tracking-[0.4em] uppercase">
-                {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
+                {t(selectedItemIds.length === 1 ? 'builder.selectedOne' : 'builder.selectedMany', { count: selectedItemIds.length })}
               </p>
               {isEditingMainOutfit && (
                 <span
-                  title="This is your main outfit - it's the one shown first on Showcase. Saving here updates it; use New Outfit to start a different one instead."
+                  title={t('builder.mainExplainer')}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent text-on-accent text-[9px] font-medium tracking-[0.2em] uppercase"
                 >
-                  <Star size={10} fill="currentColor" /> Main outfit
+                  <Star size={10} fill="currentColor" /> {t('builder.mainOutfit')}
                 </span>
               )}
             </div>
@@ -545,8 +547,8 @@ const FlatOutfitBuilderPage = () => {
             className="justify-center px-4 lg:px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em] disabled:opacity-30 disabled:pointer-events-none"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            <span className="lg:hidden">{editId ? 'UPDATE' : 'SAVE'}</span>
-            <span className="hidden lg:inline">{editId ? 'UPDATE STYLE' : 'SAVE TO COLLECTION'}</span>
+            <span className="lg:hidden">{editId ? t('builder.update') : t('builder.save')}</span>
+            <span className="hidden lg:inline">{editId ? t('builder.updateStyle') : t('builder.saveToCollection')}</span>
           </button>
         </div>
       </header>
@@ -554,10 +556,10 @@ const FlatOutfitBuilderPage = () => {
       <div className="flex-grow min-h-0 flex flex-col lg:flex-row overflow-hidden">
         {/* Phone only (below lg): switch between the closet and the outfit. */}
         <div className="lg:hidden shrink-0 px-3 py-1.5 border-b border-ink/5 bg-background-secondary/20">
-          <div role="tablist" aria-label="Outfit builder" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-ink/5">
+          <div role="tablist" aria-label={t('builder.tabs')} className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-ink/5">
             {([
-              ['closet', 'Closet'],
-              ['outfit', `Outfit (${selectedItemIds.length})`],
+              ['closet', t('builder.tabCloset')],
+              ['outfit', t('builder.tabOutfit', { count: selectedItemIds.length })],
             ] as const).map(([tab, label]) => (
               <button
                 key={tab}
@@ -599,13 +601,13 @@ const FlatOutfitBuilderPage = () => {
         <aside className={`${phoneTab === 'closet' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-96 lg:shrink-0 flex-1 min-h-0 lg:flex-none lg:border-r border-ink/5 bg-background-secondary/5`}>
           <div className="p-3 lg:p-6 border-b border-ink/5 flex items-center gap-2 lg:block lg:space-y-4">
             <h3 className="hidden lg:block text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
-              Available Pieces
+              {t('builder.available')}
             </h3>
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
               <input
                 type="text"
-                placeholder="SEARCH..."
+                placeholder={t('builder.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
@@ -624,13 +626,13 @@ const FlatOutfitBuilderPage = () => {
               {isLoading && items.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20">
                   <Loader2 className="animate-spin text-accent" size={24} />
-                  <p className="text-[10px] font-medium uppercase tracking-widest">Syncing Wardrobe...</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest">{t('builder.syncing')}</p>
                 </div>
               ) : itemsError && items.length === 0 ? (
                 <ErrorState
                   compact
-                  title="We couldn't load your closet"
-                  message="Check your connection and try again."
+                  title={t('builder.loadFailed')}
+                  message={t('saved.loadFailedBody')}
                   onRetry={fetchItems}
                 />
               ) : items.length === 0 && firstRun.show ? (
@@ -639,7 +641,7 @@ const FlatOutfitBuilderPage = () => {
               ) : browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                   <Shirt size={32} className="text-text-secondary" />
-                  <p className="text-[10px] font-medium uppercase tracking-widest">No pieces found</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest">{t('builder.noPieces')}</p>
                 </div>
               ) : (
                 browseSections.map((section) => (
@@ -718,12 +720,12 @@ const FlatOutfitBuilderPage = () => {
                 <button
                   type="button"
                   onClick={() => setPhoneTab('outfit')}
-                  aria-label="Preview the outfit on the persona"
+                  aria-label={t('builder.previewPhone')}
                   className="shrink-0 w-[3.75rem] h-[5.5rem] rounded-xl bg-ink/5 border border-ink/10 overflow-hidden"
                 >
                   <PersonaRenderer persona={previewPersona} className="h-[5.5rem]" />
                 </button>
-                <div className="flex-1 min-w-0 flex gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label="Selected pieces">
+                <div className="flex-1 min-w-0 flex gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label={t('builder.selectedPieces')}>
                   {selectedItems.map((item) => (
                     <div key={item.itemId} className="shrink-0 w-11 h-[3.75rem] rounded-lg overflow-hidden bg-ink/5 border border-accent/30">
                       <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full" />
@@ -733,10 +735,10 @@ const FlatOutfitBuilderPage = () => {
                 <button
                   type="button"
                   onClick={() => setPhoneTab('outfit')}
-                  aria-label={`View outfit (${selectedItemIds.length})`}
+                  aria-label={t('builder.viewOutfit', { count: selectedItemIds.length })}
                   className="shrink-0 h-12 px-3.5 rounded-xl bg-ink text-background-main text-[10px] font-medium uppercase tracking-[0.15em] leading-tight flex flex-col items-center justify-center"
                 >
-                  <span>Outfit</span>
+                  <span>{t('builder.outfit')}</span>
                   <span className="opacity-70">{selectedItemIds.length}</span>
                 </button>
               </div>
@@ -758,7 +760,7 @@ const FlatOutfitBuilderPage = () => {
             {!isWide && <div className="flex flex-wrap items-center gap-2 mb-3">{secondaryActions}</div>}
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
-                {showPersonaPreview ? 'Persona Preview' : 'Your Selection'}
+                {showPersonaPreview ? t('builder.personaPreview') : t('builder.yourSelection')}
               </h3>
               <button
                 onClick={() => setShowPersonaPreview((v) => !v)}
@@ -766,7 +768,7 @@ const FlatOutfitBuilderPage = () => {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20 disabled:opacity-20 disabled:pointer-events-none"
               >
                 {showPersonaPreview ? <LayoutGrid size={12} /> : <User size={12} />}
-                {showPersonaPreview ? 'List View' : 'Preview On Persona'}
+                {showPersonaPreview ? t('builder.listView') : t('builder.previewOnPersona')}
               </button>
             </div>
 
@@ -780,7 +782,7 @@ const FlatOutfitBuilderPage = () => {
                 default on whatever the global persona type currently is. */}
             <div className="flex items-center gap-2 mb-4">
               <span className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
-                Persona
+                {t('builder.persona')}
               </span>
               <PersonaTypeSwitcher value={genderFilter} onChange={handleGenderFilterChange} />
             </div>
@@ -789,8 +791,8 @@ const FlatOutfitBuilderPage = () => {
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
                 <Shirt size={40} className="text-text-secondary" />
                 <p className="text-[10px] font-medium uppercase tracking-widest">
-                  <span className="lg:hidden">Pick pieces in the Closet tab to build an outfit</span>
-                  <span className="hidden lg:inline">Select pieces from the left to build an outfit</span>
+                  <span className="lg:hidden">{t('builder.pickPhone')}</span>
+                  <span className="hidden lg:inline">{t('builder.pickWide')}</span>
                 </p>
                 {/* Task 101: with nothing in the closet there is nothing to pick - say where to go. */}
                 {items.length === 0 && (
@@ -799,7 +801,7 @@ const FlatOutfitBuilderPage = () => {
                     onClick={() => navigate('/closet')}
                     className="mt-2 px-6 py-3 rounded-full bg-ink text-background-main text-[10px] uppercase tracking-widest font-medium opacity-100"
                   >
-                    Go to your closet
+                    {t('builder.goCloset')}
                   </button>
                 )}
               </div>
@@ -808,14 +810,14 @@ const FlatOutfitBuilderPage = () => {
                 {/* Phone: the pieces in the outfit as small thumbnails (tap the x to take
                     one off) - the persona preview alone doesn't say what is on it. */}
                 {!isWide && (
-                  <div className="flex gap-2 overflow-x-auto no-scrollbar py-1" aria-label="Pieces in this outfit">
+                  <div className="flex gap-2 overflow-x-auto no-scrollbar py-1" aria-label={t('builder.piecesIn')}>
                     {selectedItems.map((item) => (
                       <div key={item.itemId} className="relative shrink-0 w-14 h-[4.5rem] rounded-xl overflow-hidden bg-ink/5 border border-accent/30">
                         <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full" />
                         <button
                           type="button"
                           onClick={() => removeItem(item.itemId)}
-                          aria-label={`Remove ${item.name} from outfit`}
+                          aria-label={t('selection.removeNamed', { name: item.name })}
                           className="absolute top-0.5 right-0.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/70 text-white"
                         >
                           <X size={12} />
@@ -827,7 +829,7 @@ const FlatOutfitBuilderPage = () => {
                 {(excludedIneligibleCount > 0 || excludedWrongPersonaCount > 0) && (
                   <div className="px-5 py-4 rounded-2xl bg-ink/[0.02] border border-ink/5 text-[10px] font-bold text-text-secondary uppercase tracking-widest leading-relaxed">
                     {excludedIneligibleCount > 0 && (
-                      <p>{excludedIneligibleCount} {excludedIneligibleCount === 1 ? 'item' : 'items'} hidden — not persona-fitted yet.</p>
+                      <p>{t(excludedIneligibleCount === 1 ? 'builder.hiddenNotFittedOne' : 'builder.hiddenNotFittedMany', { count: excludedIneligibleCount })}</p>
                     )}
                     {notFittedExcluded.length > 0 && (
                       <div className="space-y-2 pt-1">
@@ -835,16 +837,16 @@ const FlatOutfitBuilderPage = () => {
                           <div key={item.itemId} className="flex items-center gap-2 flex-wrap">
                             <span className="normal-case tracking-normal text-ink/60">{item.name}</span>
                             <button
-                              onClick={() => runSafely(() => markItemAsFitted(item.itemId), "Couldn't update this item")}
+                              onClick={() => runSafely(() => markItemAsFitted(item.itemId), t('builder.updateFailed'))}
                               className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
-                              Mark as Fitted
+                              {t('builder.markFitted')}
                             </button>
                             <button
                               onClick={() => setFitModalItem(item)}
                               className="px-3 py-1.5 rounded-full bg-accent/10 hover:bg-accent/20 text-accent text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
-                              Adjust &amp; Fit
+                              {t('builder.adjustFit')}
                             </button>
                           </div>
                         ))}
@@ -859,14 +861,14 @@ const FlatOutfitBuilderPage = () => {
                               onClick={() => removeItem(item.itemId)}
                               className="px-3 py-1.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-medium uppercase tracking-widest transition-colors"
                             >
-                              Remove From Outfit
+                              {t('builder.removeFromOutfit')}
                             </button>
                           </div>
                         ))}
                       </div>
                     )}
                     {excludedWrongPersonaCount > 0 && (
-                      <p>{excludedWrongPersonaCount} {excludedWrongPersonaCount === 1 ? 'item' : 'items'} hidden — for the other persona ({persona.type === 'MALE' ? 'FEMALE' : 'MALE'}).</p>
+                      <p>{t(excludedWrongPersonaCount === 1 ? 'builder.hiddenOtherOne' : 'builder.hiddenOtherMany', { count: excludedWrongPersonaCount, persona: t(persona.type === 'MALE' ? 'persona.FEMALE' : 'persona.MALE') })}</p>
                     )}
                   </div>
                 )}
@@ -923,7 +925,7 @@ const FlatOutfitBuilderPage = () => {
                 {shoeItems.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
-                      Shoes
+                      {t('builder.shoes')}
                     </p>
                     <ShoeSubRow items={shoeItems} onRemove={removeItem} />
                   </div>
@@ -932,7 +934,7 @@ const FlatOutfitBuilderPage = () => {
                 {accessoryItems.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
-                      Accessories
+                      {t('builder.accessories')}
                     </p>
                     <div className="flex flex-wrap gap-4 justify-center">
                       {accessoryItems.map((item) => (

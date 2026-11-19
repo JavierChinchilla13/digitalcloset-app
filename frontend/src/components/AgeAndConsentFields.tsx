@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { AgeConsentForm } from '../hooks/useAgeConsentForm';
-import { birthYearOptions, MONTH_NAMES } from '../utils/age';
+import { birthYearOptions } from '../utils/age';
+import { useT, type MessageKey } from '../i18n';
 
 // Audit H12: the age and consent part of every sign-up: birth month and year (never the day), the guardian declaration for 13-17 and
 // the two separate, never pre-ticked acceptances. Used by the sign-up form, the second step of a new Google sign-up and the
@@ -26,6 +27,7 @@ interface AgeAndConsentFieldsProps {
 
 const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = false }: AgeAndConsentFieldsProps) => {
   const { values, setField, band } = form;
+  const { t } = useT();
   const off = disabled || form.blocked;
   const years = birthYearOptions();
   const helpId = `${idPrefix}-dob-help`;
@@ -34,10 +36,10 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
     <div className="space-y-6">
       {!birthKnown && (
         <fieldset className="space-y-2" disabled={off}>
-          <legend className={`${labelClass} pl-4 mb-2`}>Date of birth</legend>
+          <legend className={`${labelClass} pl-4 mb-2`}>{t('age.dob')}</legend>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label htmlFor={`${idPrefix}-month`} className="block text-xs text-text-secondary pl-4">Month</label>
+              <label htmlFor={`${idPrefix}-month`} className="block text-xs text-text-secondary pl-4">{t('age.month')}</label>
               <select
                 id={`${idPrefix}-month`}
                 name="birthMonth"
@@ -48,14 +50,14 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
                 onChange={(e) => setField('birthMonth', e.target.value)}
                 className={selectClass}
               >
-                <option value="">Choose</option>
-                {MONTH_NAMES.map((name, index) => (
-                  <option key={name} value={index + 1}>{name}</option>
+                <option value="">{t('age.choose')}</option>
+                {Array.from({ length: 12 }, (_, index) => (
+                  <option key={index + 1} value={index + 1}>{t(`month.${index + 1}` as MessageKey)}</option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label htmlFor={`${idPrefix}-year`} className="block text-xs text-text-secondary pl-4">Year</label>
+              <label htmlFor={`${idPrefix}-year`} className="block text-xs text-text-secondary pl-4">{t('age.year')}</label>
               <select
                 id={`${idPrefix}-year`}
                 name="birthYear"
@@ -66,7 +68,7 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
                 onChange={(e) => setField('birthYear', e.target.value)}
                 className={selectClass}
               >
-                <option value="">Choose</option>
+                <option value="">{t('age.choose')}</option>
                 {years.map((year) => (
                   <option key={year} value={year}>{year}</option>
                 ))}
@@ -74,7 +76,7 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
             </div>
           </div>
           <p id={helpId} className="text-xs text-text-secondary leading-relaxed pl-4">
-            We ask for your birth month and year to set up your account. We never keep the day.
+            {t('age.help')}
           </p>
         </fieldset>
       )}
@@ -93,11 +95,11 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
                 className={checkBox}
               />
               <span className="text-sm text-text-primary leading-snug">
-                My father, mother or legal guardian authorises the use of my account and my data.
+                {t('age.guardian')}
               </span>
             </label>
             <p className="text-xs text-text-secondary leading-relaxed pl-8">
-              This is a declaration: VYSVI does not verify it.
+              {t('age.guardianNote')}
             </p>
           </div>
         )}
@@ -114,15 +116,18 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
             className={checkBox}
           />
           <span className="text-sm text-text-primary leading-snug">
-            I accept the{' '}
-            <Link to="/terms" target="_blank" rel="noopener noreferrer" className={linkClass}>
-              Terms<span className="sr-only"> (opens in a new tab)</span>
-            </Link>{' '}
-            and the{' '}
-            <Link to="/privacy" target="_blank" rel="noopener noreferrer" className={linkClass}>
-              Privacy Policy<span className="sr-only"> (opens in a new tab)</span>
-            </Link>
-            .
+            {t.rich('age.accept', {
+              terms: (text) => (
+                <Link to="/terms" target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  {text}<span className="sr-only">{t('age.newTab')}</span>
+                </Link>
+              ),
+              privacy: (text) => (
+                <Link to="/privacy" target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  {text}<span className="sr-only">{t('age.newTab')}</span>
+                </Link>
+              ),
+            })}
           </span>
         </label>
         <label className={checkRow}>
@@ -135,8 +140,7 @@ const AgeAndConsentFields = ({ form, idPrefix, disabled = false, birthKnown = fa
             className={checkBox}
           />
           <span className="text-sm text-text-primary leading-snug">
-            I authorise the processing of my data and its transfer to the providers listed in the Privacy Policy, some of which are outside
-            Costa Rica.
+            {t('age.data')}
           </span>
         </label>
       </div>

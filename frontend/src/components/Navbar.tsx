@@ -9,10 +9,12 @@ import UserMenu from './UserMenu';
 import MobileMenu from './MobileMenu';
 import { NAV_LINKS } from './navLinks';
 import { Menu } from 'lucide-react';
+import { useT } from '../i18n';
 
 const Navbar = () => {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
+  const { t } = useT();
 
   // Phone navigation (Task 91): below md the links don't fit in the pill, so a menu
   // button opens MobileMenu (a full-screen sheet) instead.
@@ -55,7 +57,7 @@ const Navbar = () => {
                   isActive ? "text-accent" : "text-text-secondary hover:text-text-primary"
                 )}
               >
-                {link.name}
+                {t(link.labelKey)}
                 <AnimatePresence>
                   {isActive && (
                     <motion.div 
@@ -90,7 +92,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() => setMenuOpen(true)}
-                aria-label="Open menu"
+                aria-label={t('nav.openMenu')}
                 aria-haspopup="dialog"
                 aria-expanded={menuOpen}
                 className="md:hidden w-11 h-11 -my-1 rounded-full flex items-center justify-center text-text-primary hover:bg-ink/5 active:bg-ink/10 transition-colors"
@@ -107,13 +109,13 @@ const Navbar = () => {
                 to="/login" 
                 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
               >
-                Login
+                {t('nav.login')}
               </Link>
               <Link 
                 to="/signup" 
                 className="bg-accent hover:bg-accent-hover text-on-accent px-4 sm:px-6 py-2.5 rounded-full text-[10px] font-medium uppercase tracking-widest transition-all transform hover:scale-105 active:scale-95 shadow-lg"
               >
-                Join
+                {t('nav.join')}
               </Link>
             </>
           )}

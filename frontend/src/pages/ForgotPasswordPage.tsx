@@ -4,11 +4,13 @@ import { Link } from 'react-router-dom';
 import { authService } from '../api/authService';
 import { Mail, ArrowRight, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Step 1 of password reset (Task 21): ask for a reset link. The backend
 // answers identically whether or not the email has an account, so this page
 // does too - it never says "no such user".
 const ForgotPasswordPage = () => {
+  const { t } = useT();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ const ForgotPasswordPage = () => {
       setSentTo(submitted);
       setSentMessage(response.message);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
+      setError(getApiErrorMessage(err, t('error.generic')));
     } finally {
       setIsLoading(false);
     }
@@ -43,9 +45,9 @@ const ForgotPasswordPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">Reset Password</h1>
+          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">{t('forgot.title')}</h1>
           <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">
-            We'll email you a link to choose a new one
+            {t('forgot.subtitle')}
           </p>
         </div>
 
@@ -59,12 +61,12 @@ const ForgotPasswordPage = () => {
             <p className="text-text-primary text-sm leading-relaxed">{sentMessage}</p>
 
             <div className="rounded-xl bg-background-secondary border border-ink/5 px-4 py-3 space-y-1">
-              <p className="text-text-secondary text-[10px] tracking-[0.3em] uppercase">You entered</p>
+              <p className="text-text-secondary text-[10px] tracking-[0.3em] uppercase">{t('forgot.entered')}</p>
               <p className="text-text-primary text-sm font-medium break-all">{sentTo}</p>
             </div>
 
             <p className="text-text-secondary text-[10px] tracking-widest uppercase">
-              The link expires in 30 minutes
+              {t('forgot.expires')}
             </p>
 
             <button
@@ -72,7 +74,7 @@ const ForgotPasswordPage = () => {
               onClick={() => setSentMessage(null)}
               className="text-text-secondary text-xs hover:text-text-primary underline underline-offset-4 transition-colors"
             >
-              Wrong email? Try again
+              {t('forgot.wrongEmail')}
             </button>
           </motion.div>
         ) : (
@@ -89,7 +91,7 @@ const ForgotPasswordPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
+                <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('field.email')}</label>
                 <div className="relative group">
                   <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
                   <input
@@ -113,7 +115,7 @@ const ForgotPasswordPage = () => {
                   <Loader2 className="animate-spin" size={18} />
                 ) : (
                   <>
-                    <span>SEND RESET LINK</span>
+                    <span>{t('forgot.submit')}</span>
                     <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -128,7 +130,7 @@ const ForgotPasswordPage = () => {
             className="inline-flex items-center gap-2 text-text-secondary text-sm hover:text-text-primary transition-colors"
           >
             <ArrowLeft size={14} />
-            Back to sign in
+            {t('forgot.back')}
           </Link>
         </div>
       </motion.div>

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useConsentStore } from '../store/useConsentStore';
+import { useT } from '../i18n';
 
 // Task 99: the cookie / privacy choice. A slim bar at the bottom that does not cover the page (it
 // is not a modal), with two equally prominent buttons so declining is as easy as accepting. It
@@ -10,6 +11,7 @@ const ConsentBanner = () => {
   const reopened = useConsentStore((state) => state.reopened);
   const accept = useConsentStore((state) => state.accept);
   const reject = useConsentStore((state) => state.reject);
+  const { t } = useT();
 
   if (choice !== 'unset' && !reopened) return null;
 
@@ -19,16 +21,15 @@ const ConsentBanner = () => {
   return (
     <div
       role="dialog"
-      aria-label="Privacy choices"
+      aria-label={t('consent.region')}
       data-testid="consent-banner"
       className="fixed inset-x-0 bottom-0 z-50 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6"
     >
       <div className="mx-auto max-w-3xl rounded-2xl border border-ink/10 bg-background-secondary/95 backdrop-blur-xl shadow-lg p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
         <p className="text-text-secondary text-xs leading-relaxed">
-          VYSVI keeps you signed in and remembers your settings using your browser's storage. With your permission it
-          also uses optional services (ads for free accounts and error reports).{' '}
+          {t('consent.text')}{' '}
           <Link to="/privacy" className="text-text-primary underline underline-offset-2">
-            Privacy Policy
+            {t('consent.policy')}
           </Link>
         </p>
         <div className="flex gap-2 shrink-0">
@@ -37,14 +38,14 @@ const ConsentBanner = () => {
             onClick={reject}
             className={`${buttonClass} bg-ink/5 hover:bg-ink/10 text-text-primary border border-ink/10`}
           >
-            Only essentials
+            {t('consent.essentials')}
           </button>
           <button
             type="button"
             onClick={accept}
             className={`${buttonClass} bg-ink text-background-main hover:opacity-90`}
           >
-            Accept all
+            {t('consent.all')}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import type { ClothingItem } from '../types';
 import CroppedThumbnail from './CroppedThumbnail';
 import PersonaBadge from './PersonaBadge';
 import ModalShell from './ModalShell';
+import { useT } from '../i18n';
 
 interface ClothingDetailsModalProps {
   item: ClothingItem | null;
@@ -13,7 +14,9 @@ interface ClothingDetailsModalProps {
 
 // Read-only details of one garment: picture, category, persona sign, description and when it was added.
 const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpen, onClose }) => {
+  const { t, language } = useT();
   if (!item) return null;
+  const dateLocale = language === 'es' ? 'es' : 'en-US';
 
   // Turns the upload date into "May 20, 2026". The backend has sent the date in several
   // shapes over time (ISO string, a Jackson [y, m, d, ...] array, a Postgres timestamp
@@ -31,14 +34,14 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
     const actualDate = findDate(dateValue);
     
     if (!actualDate) {
-      return 'Date not available';
+      return t('details.noDate');
     }
     
     try {
       // 2. Handle array format [yyyy, mm, dd, ...] if sent by Jackson
       if (Array.isArray(actualDate)) {
         const [year, month, day] = actualDate;
-        return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        return new Date(year, month - 1, day).toLocaleDateString(dateLocale, {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -62,23 +65,23 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
           const simplified = actualDate.split('.')[0].replace(' ', 'T');
           const date2 = new Date(simplified);
           if (!isNaN(date2.getTime())) {
-            return date2.toLocaleDateString('en-US', {
+            return date2.toLocaleDateString(dateLocale, {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
             });
           }
         }
-        return 'Recently added';
+        return t('details.recent');
       }
       
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(dateLocale, {
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       });
     } catch {
-      return 'Processing...';
+      return t('details.processing');
     }
   };
 
@@ -86,6 +89,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
     <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-2xl bg-background-secondary border border-ink/10 rounded-xl shadow-lg shadow-black/50" backdropClassName="bg-background-main/80 backdrop-blur-md">
             <button
               onClick={onClose}
+              aria-label={t('common.close')}
               className="absolute top-6 right-6 z-10 p-2 bg-black/20 hover:bg-black/40 text-white rounded-full transition-colors backdrop-blur-md"
             >
               <X size={20} />
@@ -107,7 +111,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <span className="px-3 py-1 bg-accent/10 text-accent text-[10px] font-medium tracking-widest uppercase rounded-full border border-accent/20">
-                      {item.category}
+                      {t(`cat.${item.category}`)}
                     </span>
                   </div>
                   
@@ -116,7 +120,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                   </h2>
                   
                   <p className="text-text-secondary text-sm leading-relaxed mb-8">
-                    {item.description || "No description provided for this premium garment."}
+                    {item.description || t('details.noDescription')}
                   </p>
 
                   <div className="space-y-4">
@@ -125,7 +129,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                         <Calendar size={14} />
                       </div>
                       <div>
-                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Upload Date</p>
+                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">{t('details.uploadDate')}</p>
                         <p className="text-text-primary font-medium">{formatDate(item.uploadDate)}</p>
                       </div>
                     </div>
@@ -135,8 +139,8 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                         <Layers size={14} />
                       </div>
                       <div>
-                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Category</p>
-                        <p className="text-text-primary font-medium uppercase tracking-widest">{item.category}</p>
+                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">{t('details.category')}</p>
+                        <p className="text-text-primary font-medium uppercase tracking-widest">{t(`cat.${item.category}`)}</p>
                       </div>
                     </div>
 
@@ -146,7 +150,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
                         <Layers size={14} />
                       </div>
                       <div>
-                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">Persona</p>
+                        <p className="text-text-secondary/50 font-bold uppercase tracking-tighter text-[10px]">{t('details.persona')}</p>
                         <PersonaBadge item={item} positioned={false} />
                       </div>
                     </div>
@@ -155,7 +159,7 @@ const ClothingDetailsModal: React.FC<ClothingDetailsModalProps> = ({ item, isOpe
 
                 <div className="mt-12 pt-8 border-t border-ink/5">
                   <p className="text-[10px] text-text-secondary font-medium tracking-[0.2em] uppercase opacity-30">
-                    VYSVI Collection 2026
+                    {t('details.collection')}
                   </p>
                 </div>
               </div>

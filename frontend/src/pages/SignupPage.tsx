@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import { authService, type RegisterRequest } from '../api/authService';
 import AgeAndConsentFields from '../components/AgeAndConsentFields';
 import { useAgeConsentForm } from '../hooks/useAgeConsentForm';
-import { AGE_BLOCKED_MESSAGE, isAgeRefusal } from '../utils/ageGate';
+import { ageBlockedMessage, isAgeRefusal } from '../utils/ageGate';
+import { useT } from '../i18n';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import PasswordInput from '../components/PasswordInput';
 import GoogleSignInSection from '../components/GoogleSignInSection';
@@ -21,6 +22,7 @@ const SignupPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const completeSignIn = useCompleteSignIn();
+  const { t } = useT();
   // Audit H12: birth month/year, guardian declaration (13-17) and the two acceptances.
   const ageForm = useAgeConsentForm();
   // True while a new Google sign-up is on its second step: that step has its own age/consent fields, so this form steps aside.
@@ -34,7 +36,7 @@ const SignupPage = () => {
     // Under the minimum age: the one uniform refusal, nothing is sent (the server would refuse it the same way).
     if (ageForm.band === 'UNDER_MIN' || ageForm.blocked) {
       ageForm.block();
-      setError(AGE_BLOCKED_MESSAGE);
+      setError(ageBlockedMessage());
       return;
     }
     const problem = ageForm.validate();
@@ -50,9 +52,9 @@ const SignupPage = () => {
     } catch (err: unknown) {
       if (isAgeRefusal(err)) {
         ageForm.block();
-        setError(AGE_BLOCKED_MESSAGE);
+        setError(ageBlockedMessage());
       } else {
-        setError(getApiErrorMessage(err, "Couldn't create your account. Please try again."));
+        setError(getApiErrorMessage(err, t('signup.failed')));
       }
       console.error('Signup error:', err);
     } finally {
@@ -68,8 +70,8 @@ const SignupPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">Join the Future</h1>
-          <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">Create your digital identity</p>
+          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">{t('signup.title')}</h1>
+          <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">{t('signup.subtitle')}</p>
         </div>
 
         {error && (
@@ -87,7 +89,7 @@ const SignupPage = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">First Name</label>
+              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('field.firstName')}</label>
               <input 
                 type="text" 
                 value={firstName}
@@ -98,7 +100,7 @@ const SignupPage = () => {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Last Name</label>
+              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('field.lastName')}</label>
               <input 
                 type="text" 
                 value={lastName}
@@ -111,7 +113,7 @@ const SignupPage = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
+            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('field.email')}</label>
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
               <input 
@@ -127,7 +129,7 @@ const SignupPage = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Password</label>
+            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('field.password')}</label>
             <PasswordInput
               icon={Lock}
               required
@@ -150,7 +152,7 @@ const SignupPage = () => {
               <Loader2 className="animate-spin" size={18} />
             ) : (
               <>
-                <span>CREATE ACCOUNT</span>
+                <span>{t('signup.submit')}</span>
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </>
             )}
@@ -162,8 +164,8 @@ const SignupPage = () => {
 
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">
-            Already have an account? {' '}
-            <Link to="/login" className="text-text-primary font-bold hover:text-accent transition-colors">Sign in here</Link>
+            {t('signup.haveAccount')} {' '}
+            <Link to="/login" className="text-text-primary font-bold hover:text-accent transition-colors">{t('signup.signInHere')}</Link>
           </p>
         </div>
       </motion.div>

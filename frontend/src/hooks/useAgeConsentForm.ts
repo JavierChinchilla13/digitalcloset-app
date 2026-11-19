@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { LEGAL_VERSION } from '../config/legal';
 import { ageBandFor, type AgeBand } from '../utils/age';
 import { isAgeBlocked, markAgeBlocked } from '../utils/ageGate';
+import { translate } from '../i18n';
 
 // Audit H12: the facts every sign-up gives: birth month and year, the guardian declaration (for 13-17), and the two separate acceptances.
 // Shared by the sign-up form, the second step of a new Google sign-up and the "confirm your details" page.
@@ -52,12 +53,12 @@ export function useAgeConsentForm({ birthKnown = false, knownBand = null }: Opti
   // nothing to fix: the caller treats `band === 'UNDER_MIN'` separately (a uniform refusal, nothing sent).
   const validate = useCallback((): string | null => {
     if (!birthKnown) {
-      if (!values.birthMonth || !values.birthYear) return 'Please choose your birth month and year.';
-      if (band === null) return 'Please check your birth month and year.';
+      if (!values.birthMonth || !values.birthYear) return translate('age.err.choose');
+      if (band === null) return translate('age.err.check');
     }
-    if (band === 'MINOR' && !values.guardian) return 'Please confirm that a parent or legal guardian authorises the use of your account and data.';
-    if (!values.terms) return 'Please accept the Terms and the Privacy Policy.';
-    if (!values.data) return 'Please authorise the processing of your data to continue.';
+    if (band === 'MINOR' && !values.guardian) return translate('age.err.guardian');
+    if (!values.terms) return translate('age.err.terms');
+    if (!values.data) return translate('age.err.data');
     return null;
   }, [birthKnown, band, values]);
 

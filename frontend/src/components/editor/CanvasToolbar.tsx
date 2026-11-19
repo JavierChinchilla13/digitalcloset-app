@@ -7,6 +7,7 @@ import {
   RotateCcw,
   Grid3x3
 } from 'lucide-react';
+import { useT } from '../../i18n';
 
 interface CanvasToolbarProps {
   activeTool: string;
@@ -33,10 +34,11 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   hasWarp = false,
   onRestoreWarp
 }) => {
+  const { t } = useT();
   const tools = [
-    { id: 'select', icon: MousePointer2, label: 'Select' },
-    { id: 'crop', icon: Crop, label: 'Crop & Mask' },
-    ...(canWarp ? [{ id: 'warp', icon: Grid3x3, label: 'Warp' }] : []),
+    { id: 'select', icon: MousePointer2, label: t('toolbar.select') },
+    { id: 'crop', icon: Crop, label: t('toolbar.crop') },
+    ...(canWarp ? [{ id: 'warp', icon: Grid3x3, label: t('toolbar.warp') }] : []),
   ];
 
   return (
@@ -70,12 +72,12 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           <button
             onClick={onResetCrop}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-text-secondary hover:bg-ink/5 hover:text-text-primary"
-            title="Reset Crop"
-            aria-label="Reset Crop"
+            title={t('toolbar.resetCrop')}
+            aria-label={t('toolbar.resetCrop')}
           >
             <Undo2 size={16} />
             <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
-              Reset Crop
+              {t('toolbar.resetCrop')}
             </span>
           </button>
         )}
@@ -83,12 +85,12 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
           <button
             onClick={onRestoreWarp}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl transition-all text-text-secondary hover:bg-ink/5 hover:text-text-primary"
-            title="Restore Original (undo warp)"
-            aria-label="Restore Original (undo warp)"
+            title={t('toolbar.restore')}
+            aria-label={t('toolbar.restore')}
           >
             <RotateCcw size={16} />
             <span className="text-[9px] font-black uppercase tracking-widest hidden md:block">
-              Restore Original
+              {t('toolbar.restoreShort')}
             </span>
           </button>
         )}
@@ -98,12 +100,12 @@ const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
         <div className="h-6 w-[1px] bg-ink/5 mx-1 sm:mx-2" />
         <button 
           onClick={onExport}
-          aria-label="Capture Preview"
-          title="Capture Preview"
+          aria-label={t('toolbar.capture')}
+          title={t('toolbar.capture')}
           className="flex items-center gap-2 px-4 py-2.5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl transition-all border border-ink/5"
         >
           <Download size={14} className="text-accent" />
-          <span className="hidden sm:inline text-[9px] font-black uppercase tracking-widest">Capture Preview</span>
+          <span className="hidden sm:inline text-[9px] font-black uppercase tracking-widest">{t('toolbar.capture')}</span>
         </button>
       </div>
     </div>

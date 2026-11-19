@@ -1,4 +1,5 @@
 import { Shirt, LayoutPanelTop, PlayCircle, UserCircle } from 'lucide-react';
+import type { MessageKey } from '../i18n';
 
 // The main places in the app, shared by the desktop navbar (Navbar.tsx) and the
 // phone menu (MobileMenu.tsx) so the two can't drift apart.
@@ -8,7 +9,8 @@ import { Shirt, LayoutPanelTop, PlayCircle, UserCircle } from 'lucide-react';
 // /persona (a separate, standalone persona-type picker) is no longer in the primary
 // nav - it lives in the account menu.
 export interface NavLink {
-  name: string;
+  // The dictionary key of the link's text (translated where it is shown).
+  labelKey: MessageKey;
   path: string;
   icon: typeof Shirt;
   // Only shown when signed in.
@@ -18,8 +20,8 @@ export interface NavLink {
 }
 
 export const NAV_LINKS: NavLink[] = [
-  { name: 'Attire', path: '/', icon: UserCircle, protected: true },
-  { name: 'Closet', path: '/closet', icon: Shirt, protected: true },
-  { name: 'Outfits', path: '/outfits', icon: LayoutPanelTop, protected: true },
-  { name: 'Demo', path: '/demo', icon: PlayCircle, protected: false, publicOnly: true },
+  { labelKey: 'nav.attire', path: '/', icon: UserCircle, protected: true },
+  { labelKey: 'nav.closet', path: '/closet', icon: Shirt, protected: true },
+  { labelKey: 'nav.outfits', path: '/outfits', icon: LayoutPanelTop, protected: true },
+  { labelKey: 'nav.demo', path: '/demo', icon: PlayCircle, protected: false, publicOnly: true },
 ];

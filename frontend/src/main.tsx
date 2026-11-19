@@ -15,6 +15,7 @@ import ErrorBoundary from './components/ErrorBoundary.tsx'
 import ErrorState from './components/ErrorState.tsx'
 import { initTheme } from './store/useThemeStore.ts'
 import { initMonitoring } from './monitoring/sentry.ts'
+import { translate } from './i18n';
 
 // Task 67: apply the saved/device theme and keep following the device.
 // Entry point of the app. Order matters: the theme is applied first (so the first paint
@@ -35,10 +36,10 @@ createRoot(document.getElementById('root')!).render(
       fallback={() => (
         <div className="min-h-dvh bg-background-main flex items-center justify-center">
           <ErrorState
-            title="Something went wrong"
-            message="VYSVI hit an unexpected problem. Reloading usually fixes it."
+            title={translate('boundary.appTitle')}
+            message={translate('boundary.appBody')}
             onRetry={() => window.location.reload()}
-            retryLabel="Reload"
+            retryLabel={translate('boundary.reload')}
           />
         </div>
       )}

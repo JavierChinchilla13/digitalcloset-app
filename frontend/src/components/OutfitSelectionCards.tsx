@@ -4,6 +4,7 @@ import type { ClothingItem } from '../types';
 import { pairShoesForDisplay } from '../utils/selectionDisplay';
 import CroppedThumbnail from './CroppedThumbnail';
 import PersonaBadge from './PersonaBadge';
+import { useT } from '../i18n';
 
 // Extracted from FlatOutfitBuilderPage (Task 76 follow-ups; see that file's
 // history for the sizing/centering rationale) so the Demo page's selection
@@ -16,7 +17,9 @@ interface CardProps {
   showPersonaBadge?: boolean;
 }
 
-export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardProps) => (
+export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardProps) => {
+  const { t } = useT();
+  return (
   <motion.div
     initial={{ opacity: 0, scale: 0.9 }}
     animate={{ opacity: 1, scale: 1 }}
@@ -27,8 +30,8 @@ export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardP
     <button
       onClick={() => onRemove(item.itemId)}
       className="absolute top-1.5 right-1.5 p-1 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
-      title="Remove from outfit"
-      aria-label={`Remove ${item.name} from outfit`}
+      title={t('selection.remove')}
+      aria-label={t('selection.removeNamed', { name: item.name })}
     >
       <X size={10} />
     </button>
@@ -36,7 +39,8 @@ export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardP
       <p className="text-[10px] font-bold text-white line-clamp-1 uppercase tracking-wider">{item.name}</p>
     </div>
   </motion.div>
-);
+  );
+};
 
 // Shoes get their own 2-up sub-row (left/right paired via
 // pairShoesForDisplay) instead of the generic grid; any unpaired items (no

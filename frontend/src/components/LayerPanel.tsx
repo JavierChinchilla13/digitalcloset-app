@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, GripVertical, RotateCcw } from 'lucide-react';
 import { ClothingCategory, type ClothingItem } from '../types';
 import CroppedThumbnail from './CroppedThumbnail';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useT } from '../i18n';
 
 // Task 86: the stacking order of the pieces on the persona, front first. Pick a
 // piece here (or by clicking it on the persona) and move it toward the front or
@@ -30,6 +31,7 @@ interface LayerPanelProps {
 }
 
 const LayerPanel: React.FC<LayerPanelProps> = ({ stack, items, selectedId, onSelect, onMove, onReorder, isCustom, onReset }) => {
+  const { t } = useT();
   const byId = new Map(items.map((item) => [item.itemId, item]));
   // Front-most first, like the layers list in an image editor.
   const rows = [...stack].reverse();
@@ -85,21 +87,21 @@ const LayerPanel: React.FC<LayerPanelProps> = ({ stack, items, selectedId, onSel
   return (
     <div data-testid="layer-panel" className="w-full md:w-64 shrink-0 space-y-3">
       <div className="flex items-center justify-between">
-        <h4 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">Layers</h4>
+        <h4 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">{t('layers.title')}</h4>
         {isCustom && (
           <button
             onClick={onReset}
             className="flex items-center gap-1.5 text-[9px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
-            title="Back to the default order"
+            title={t('layers.resetTitle')}
           >
-            <RotateCcw size={10} /> Reset order
+            <RotateCcw size={10} /> {t('layers.reset')}
           </button>
         )}
       </div>
 
       <p className="text-[9px] leading-relaxed text-text-secondary opacity-60 uppercase tracking-widest">
-        <span className="touch:hidden">Drag a piece to reorder it, or click it (here or on the persona) and use the arrows.</span>
-        <span className="hidden touch:inline">Drag the handle to reorder a piece, or tap it (here or on the persona) and use the arrows.</span>
+        <span className="touch:hidden">{t('layers.hintMouse')}</span>
+        <span className="hidden touch:inline">{t('layers.hintTouch')}</span>
       </p>
 
       <ul className="space-y-1.5">
@@ -175,8 +177,8 @@ const LayerPanel: React.FC<LayerPanelProps> = ({ stack, items, selectedId, onSel
                 </p>
                 <div className="flex flex-col gap-1 touch:flex-row touch:gap-1.5" onClick={(e) => e.stopPropagation()}>
                   <button
-                    aria-label={`Bring ${item.name} forward`}
-                    title="Bring forward"
+                    aria-label={t('layers.forwardNamed', { name: item.name })}
+                    title={t('layers.forward')}
                     disabled={isFront}
                     onClick={() => onMove(id, 'up')}
                     className="p-1 touch:w-10 touch:h-10 touch:flex touch:items-center touch:justify-center rounded-md bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary disabled:opacity-20 disabled:pointer-events-none transition-all"
@@ -184,8 +186,8 @@ const LayerPanel: React.FC<LayerPanelProps> = ({ stack, items, selectedId, onSel
                     <ArrowUp size={12} />
                   </button>
                   <button
-                    aria-label={`Send ${item.name} back`}
-                    title="Send back"
+                    aria-label={t('layers.backNamed', { name: item.name })}
+                    title={t('layers.back')}
                     disabled={isBack}
                     onClick={() => onMove(id, 'down')}
                     className="p-1 touch:w-10 touch:h-10 touch:flex touch:items-center touch:justify-center rounded-md bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary disabled:opacity-20 disabled:pointer-events-none transition-all"

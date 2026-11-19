@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Check, Sparkles } from 'lucide-react';
 import { useFirstRun } from '../hooks/useFirstRun';
+import { useT } from '../i18n';
 
 interface FirstRunPanelProps {
   // Saved outfits, where known (Showcase); makes "build an outfit" tick once there is one.
@@ -13,33 +14,34 @@ interface FirstRunPanelProps {
 // an outfit, see it in the Showcase). (Sample garments were tried and removed: they did not sit well
 // on the figure.) Renders nothing once the account has what it needs or the guide was hidden.
 const FirstRunPanel = ({ outfitCount, compact = false }: FirstRunPanelProps) => {
+  const { t } = useT();
   const { show, dismiss, hasGarments, hasOutfit } = useFirstRun(outfitCount);
 
   if (!show) return null;
 
   const steps = [
-    { done: hasGarments, label: 'Add a few pieces', hint: 'Upload photos of your own clothes.', to: '/closet', cta: 'Upload your own' },
-    { done: hasOutfit, label: 'Build an outfit', hint: 'Pick a top, bottoms and shoes and see them on the figure.', to: '/outfits/flat/new', cta: 'Open the builder' },
-    { done: hasOutfit, label: 'See it in your Showcase', hint: 'Saved outfits take center stage here.', to: '/showcase', cta: 'Open the Showcase' },
+    { done: hasGarments, label: t('firstRun.s1.label'), hint: t('firstRun.s1.hint'), to: '/closet', cta: t('firstRun.s1.cta') },
+    { done: hasOutfit, label: t('firstRun.s2.label'), hint: t('firstRun.s2.hint'), to: '/outfits/flat/new', cta: t('firstRun.s2.cta') },
+    { done: hasOutfit, label: t('firstRun.s3.label'), hint: t('firstRun.s3.hint'), to: '/showcase', cta: t('firstRun.s3.cta') },
   ];
 
   return (
     <section
       data-testid="first-run-panel"
-      aria-label="Getting started"
+      aria-label={t('firstRun.label')}
       className={`w-full text-left border border-accent/20 bg-accent/5 rounded-2xl ${compact ? 'p-4' : 'p-5 sm:p-8'}`}
     >
       <div className="flex items-start justify-between gap-4 mb-5">
         <div className="flex items-center gap-2 text-accent">
           <Sparkles size={16} />
-          <h2 className="text-[11px] font-medium uppercase tracking-[0.3em]">Getting started</h2>
+          <h2 className="text-[11px] font-medium uppercase tracking-[0.3em]">{t('firstRun.title')}</h2>
         </div>
         <button
           type="button"
           onClick={dismiss}
           className="text-[10px] uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
         >
-          Hide this guide
+          {t('firstRun.hide')}
         </button>
       </div>
 
@@ -47,7 +49,7 @@ const FirstRunPanel = ({ outfitCount, compact = false }: FirstRunPanelProps) => 
         {steps.map((step, index) => (
           <li key={step.label} className="flex items-start gap-3">
             <span
-              aria-label={step.done ? 'Done' : `Step ${index + 1}`}
+              aria-label={step.done ? t('firstRun.done') : t('firstRun.step', { n: index + 1 })}
               className={`mt-0.5 w-5 h-5 shrink-0 rounded-full border flex items-center justify-center text-[10px] ${
                 step.done ? 'bg-accent border-accent text-on-accent' : 'border-ink/20 text-text-secondary'
               }`}

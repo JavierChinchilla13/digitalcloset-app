@@ -9,6 +9,7 @@ import { resetAccountStores } from '../utils/resetAccountStores';
 import { useToast } from './Toast';
 import GoogleSignInButton from './GoogleSignInButton';
 import PasswordInput from './PasswordInput';
+import { useT } from '../i18n';
 
 // Audit H12: the two rights every account has in Settings: "Download my data" (a JSON file of everything held about the account) and
 // "Delete my account and data" (permanent; replaces the old deactivation). Deleting asks for proof it is really the owner: the password,
@@ -18,6 +19,7 @@ const AccountDataSection = () => {
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { t } = useT();
   const googleClientId = String(import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '').trim();
   // Only a confirmed-false hasPassword means Google-only (an older copy of the account without the field is treated as having one).
   const googleOnly = user?.hasPassword === false;
@@ -44,7 +46,7 @@ const AccountDataSection = () => {
       link.remove();
       URL.revokeObjectURL(url);
     } catch (err) {
-      showToast(getApiErrorMessage(err, "Couldn't prepare your data. Please try again."), 'error');
+      showToast(getApiErrorMessage(err, t('data.downloadFailed')), 'error');
     } finally {
       setIsExporting(false);
     }
@@ -61,7 +63,7 @@ const AccountDataSection = () => {
       resetAccountStores();
       navigate('/login', { replace: true });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Couldn't delete your account. Please try again."));
+      setError(getApiErrorMessage(err, t('data.deleteFailed')));
       setIsDeleting(false);
     }
   };
@@ -87,10 +89,10 @@ const AccountDataSection = () => {
     <div className="pt-4 border-t border-ink/5 space-y-6" data-testid="account-data-section">
       <div className="space-y-2">
         <p className="text-text-secondary text-xs leading-relaxed normal-case tracking-normal">
-          You can download a copy of everything we hold about your account.
+          {t('data.intro')}
         </p>
         <button type="button" onClick={download} disabled={isExporting} className={ghost}>
-          {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} Download my data
+          {isExporting ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />} {t('data.download')}
         </button>
       </div>
 
@@ -100,23 +102,22 @@ const AccountDataSection = () => {
           onClick={() => setIsOpen(true)}
           className="w-full min-h-[44px] py-3.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
         >
-          <Trash2 size={14} /> Delete my account and data
+          <Trash2 size={14} /> {t('data.delete')}
         </button>
       ) : (
         <form onSubmit={submitPassword} className="space-y-4" aria-labelledby="delete-title">
           <div className="space-y-1">
             <h3 id="delete-title" className="text-sm font-medium text-text-primary normal-case tracking-normal">
-              Delete my account and data
+              {t('data.delete')}
             </h3>
             <p className="text-text-secondary text-xs leading-relaxed normal-case tracking-normal">
-              This permanently deletes your account, your garments, outfits and photos, and cancels any subscription. It cannot be undone.
-              Download your data first if you want a copy.
+              {t('data.deleteText')}
             </p>
           </div>
 
           <div className="space-y-1">
             <label htmlFor="delete-confirm" className="block text-xs text-text-secondary normal-case tracking-normal">
-              Type DELETE to confirm
+              {t('data.typeDelete')}
             </label>
             <input
               id="delete-confirm"
@@ -134,13 +135,13 @@ const AccountDataSection = () => {
           {googleOnly ? (
             <div className="space-y-2">
               <p className="text-xs text-text-secondary normal-case tracking-normal">
-                Your account signs in with Google, so confirm it is you by signing in with Google again.
+                {t('data.googleIntro')}
               </p>
               {googleClientId ? (
                 <div className={confirmed && !isDeleting ? '' : 'opacity-50 pointer-events-none'} aria-disabled={!confirmed || isDeleting}>
                   <GoogleSignInButton
                     clientId={googleClientId}
-                    label="Confirm with Google"
+                    label={t('data.googleConfirm')}
                     onCredential={(googleCredential) => {
                       if (confirmed) void erase({ googleCredential });
                     }}
@@ -148,14 +149,14 @@ const AccountDataSection = () => {
                 </div>
               ) : (
                 <p role="alert" className="text-xs text-rose-400 normal-case tracking-normal">
-                  Google sign-in is not available right now, so the account cannot be deleted from here.
+                  {t('data.googleUnavailable')}
                 </p>
               )}
             </div>
           ) : (
             <div className="space-y-1">
               <label htmlFor="delete-password" className="block text-xs text-text-secondary normal-case tracking-normal">
-                Your password
+                {t('data.password')}
               </label>
               <PasswordInput
                 id="delete-password"
@@ -176,7 +177,7 @@ const AccountDataSection = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <button type="button" onClick={close} disabled={isDeleting} className={ghost}>
-              Cancel
+              {t('common.cancel')}
             </button>
             {!googleOnly && (
               <button
@@ -184,7 +185,7 @@ const AccountDataSection = () => {
                 disabled={!confirmed || !password || isDeleting}
                 className="min-h-[44px] py-3 bg-red-500 hover:bg-red-600 text-white text-[10px] font-medium uppercase tracking-widest rounded-xl flex items-center justify-center gap-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60 disabled:opacity-50"
               >
-                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : 'Delete everything'}
+                {isDeleting ? <Loader2 size={14} className="animate-spin" /> : t('data.everything')}
               </button>
             )}
           </div>

@@ -13,6 +13,7 @@ import PersonaBadge, { ItemPersonaBadge } from '../components/PersonaBadge';
 import { ClothingCategory, PersonaType } from '../types';
 import type { ClothingItem, Collection, Outfit } from '../types';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Category detail view (Phase 9 follow-up, point 3). Reached from
 // CategoriesPage's cards at /categories/:id. Shows one Collection's items
@@ -21,6 +22,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 // upload flow or outfit-save, never after the fact from something already
 // in the closet/saved outfits.
 const CategoryDetailPage = () => {
+  const { t } = useT();
   const { id } = useParams();
   const navigate = useNavigate();
   const { collections, fetchCollections, removeItem, removeOutfit } = useCollectionStore();
@@ -55,13 +57,13 @@ const CategoryDetailPage = () => {
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
               <Tag size={40} className="text-text-secondary" />
             </div>
-            <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">Category not found</h3>
+            <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">{t('catDetail.notFound')}</h3>
             <button
               onClick={() => navigate('/categories')}
               className="flex items-center gap-2 text-accent hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
-              Back to Categories
+              {t('catDetail.back')}
             </button>
           </div>
         </SectionWrapper>
@@ -79,13 +81,13 @@ const CategoryDetailPage = () => {
               className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
-              Back to Categories
+              {t('catDetail.back')}
             </button>
             <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none break-words">
               {collection.name}
             </h1>
             <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
-              {collection.items.length} {collection.items.length === 1 ? 'item' : 'items'} · {collection.outfits.length} {collection.outfits.length === 1 ? 'outfit' : 'outfits'}
+              {t('cats.counts', { items: t(collection.items.length === 1 ? 'cats.itemOne' : 'cats.itemMany', { count: collection.items.length }), outfits: t(collection.outfits.length === 1 ? 'cats.outfitOne' : 'cats.outfitMany', { count: collection.outfits.length }) })}
             </p>
           </div>
 
@@ -94,7 +96,7 @@ const CategoryDetailPage = () => {
             className="group px-8 py-4 bg-ink text-background-main font-medium rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5"
           >
             <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-            <span className="text-[10px] tracking-[0.2em] uppercase">Add to Category</span>
+            <span className="text-[10px] tracking-[0.2em] uppercase">{t('catDetail.add')}</span>
           </button>
         </div>
 
@@ -103,10 +105,9 @@ const CategoryDetailPage = () => {
             <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
               <Shirt size={40} className="text-text-secondary" />
             </div>
-            <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">Nothing here yet</h3>
+            <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">{t('catDetail.emptyTitle')}</h3>
             <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase mb-4">
-              Add existing items or outfits above, or link one in from the
-              upload flow or outfit save
+              {t('catDetail.emptyBody')}
             </p>
           </div>
         ) : (
@@ -115,7 +116,7 @@ const CategoryDetailPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-text-secondary opacity-50">
                   <Shirt size={14} />
-                  <span className="text-[10px] font-medium uppercase tracking-widest">Items</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest">{t('catDetail.items')}</span>
                 </div>
                 <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                   {collection.items.map((item) => (
@@ -123,9 +124,9 @@ const CategoryDetailPage = () => {
                       <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5" />
                       <ItemPersonaBadge itemId={item.itemId} compact />
                       <button
-                        onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
+                        onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), t('catDetail.removeItemFailed'))}
                         className="absolute top-1.5 right-1.5 p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
-                        title="Remove from category"
+                        title={t('catDetail.remove')}
                       >
                         <X size={12} />
                       </button>
@@ -142,7 +143,7 @@ const CategoryDetailPage = () => {
               <div className="space-y-4">
                 <div className="flex items-center gap-2 text-text-secondary opacity-50">
                   <LayoutGrid size={14} />
-                  <span className="text-[10px] font-medium uppercase tracking-widest">Outfits</span>
+                  <span className="text-[10px] font-medium uppercase tracking-widest">{t('catDetail.outfits')}</span>
                 </div>
                 <div className="flex flex-wrap gap-3">
                   {collection.outfits.map((outfit) => (
@@ -152,9 +153,9 @@ const CategoryDetailPage = () => {
                     >
                       {outfit.outfitName}
                       <button
-                        onClick={() => runSafely(() => removeOutfit(collection.collectionId, outfit.outfitId), "Couldn't remove this outfit")}
+                        onClick={() => runSafely(() => removeOutfit(collection.collectionId, outfit.outfitId), t('catDetail.removeOutfitFailed'))}
                         className="text-text-secondary hover:text-rose-400 transition-colors"
-                        title="Remove from category"
+                        title={t('catDetail.remove')}
                       >
                         <X size={12} />
                       </button>
@@ -244,6 +245,7 @@ const OutfitPreviewThumb = ({ outfit }: { outfit: Outfit }) => {
 };
 
 const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategoryModalProps) => {
+  const { t } = useT();
   const { addItem, removeItem, addOutfit, removeOutfit } = useCollectionStore();
   const runSafely = useSafeAction();
   const { outfits } = useOutfitStore();
@@ -299,7 +301,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
     try {
       await addItem(collection.collectionId, itemId);
     } catch (err) {
-      showToast(getApiErrorMessage(err, 'Failed to add item to category'), 'error');
+      showToast(getApiErrorMessage(err, t('catDetail.addItemFailed')), 'error');
     } finally {
       setAddingItemId(null);
     }
@@ -310,7 +312,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
     try {
       await addOutfit(collection.collectionId, outfitId);
     } catch (err) {
-      showToast(getApiErrorMessage(err, 'Failed to add outfit to category'), 'error');
+      showToast(getApiErrorMessage(err, t('catDetail.addOutfitFailed')), 'error');
     } finally {
       setAddingOutfitId(null);
     }
@@ -320,9 +322,9 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
     <ModalShell isOpen={isOpen} onClose={onClose} className="max-w-3xl max-h-[85dvh] bg-background-secondary border border-ink/5 rounded-2xl shadow-lg flex flex-col" backdropClassName="bg-background-main/90 backdrop-blur-sm">
             <div className="flex justify-between items-center p-8 pb-6 border-b border-ink/5 flex-shrink-0">
               <div>
-                <h2 className="text-2xl font-light tracking-tighter text-text-primary uppercase">Add to Category</h2>
+                <h2 className="text-2xl font-light tracking-tighter text-text-primary uppercase">{t('catDetail.add')}</h2>
                 <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase mt-1 opacity-50">
-                  To "{collection.name}"
+                  {t('catDetail.to', { name: collection.name })}
                 </p>
               </div>
               <button onClick={onClose} className="p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary">
@@ -332,15 +334,15 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
 
             <div className="px-8 pt-5 flex-shrink-0">
               <div className="flex gap-2 p-1 bg-ink/[0.02] border border-ink/5 rounded-xl w-fit">
-                {(['ITEMS', 'OUTFITS'] as const).map((t) => (
+                {(['ITEMS', 'OUTFITS'] as const).map((tabName) => (
                   <button
-                    key={t}
-                    onClick={() => setTab(t)}
+                    key={tabName}
+                    onClick={() => setTab(tabName)}
                     className={`px-5 py-2 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-colors ${
-                      tab === t ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text-primary'
+                      tab === tabName ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
-                    {t === 'ITEMS' ? 'Items' : 'Outfits'}
+                    {tabName === 'ITEMS' ? t('catDetail.items') : t('catDetail.outfits')}
                   </button>
                 ))}
               </div>
@@ -353,7 +355,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={tab === 'ITEMS' ? 'SEARCH ITEMS...' : 'SEARCH OUTFITS...'}
+                  placeholder={tab === 'ITEMS' ? t('catDetail.searchItems') : t('catDetail.searchOutfits')}
                   className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-12 pr-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all"
                 />
               </div>
@@ -370,7 +372,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                             : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'
                         }`}
                       >
-                        {cat}
+                        {t(`cat.${cat}`)}
                       </button>
                     ))}
                   </div>
@@ -385,7 +387,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                             : 'bg-ink/[0.02] border-ink/5 text-text-secondary hover:border-ink/20'
                         }`}
                       >
-                        {type}
+                        {t(`persona.${type}`)}
                       </button>
                     ))}
                   </div>
@@ -402,10 +404,10 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                         <Shirt size={32} className="text-text-secondary mb-4" />
                         <p className="text-[10px] font-medium uppercase tracking-widest">
                           {items.length === 0
-                            ? 'No items in your closet yet'
+                            ? t('catDetail.noItems')
                             : items.length === existingItemIds.size
-                              ? 'Every item is already in this category'
-                              : 'No items match these filters'}
+                              ? t('catDetail.allItemsIn')
+                              : t('catDetail.noItemMatch')}
                         </p>
                       </div>
                     ) : (
@@ -443,7 +445,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                   {collection.items.length > 0 && (
                     <div className="space-y-3 pt-6 border-t border-ink/5">
                       <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
-                        Already in this category ({collection.items.length})
+                        {t('catDetail.already', { count: collection.items.length })}
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {collection.items.map((item) => (
@@ -451,9 +453,9 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                             <CroppedThumbnail imageUrl={item.imageUrl} alt={item.itemName} className="w-full h-full bg-ink/5 opacity-70" />
                             <ItemPersonaBadge itemId={item.itemId} compact />
                             <button
-                              onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), "Couldn't remove this item")}
+                              onClick={() => runSafely(() => removeItem(collection.collectionId, item.itemId), t('catDetail.removeItemFailed'))}
                               className="absolute top-1.5 right-1.5 p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
-                              title="Remove from category"
+                              title={t('catDetail.remove')}
                             >
                               <X size={12} />
                             </button>
@@ -474,10 +476,10 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                         <LayoutGrid size={32} className="text-text-secondary mb-4" />
                         <p className="text-[10px] font-medium uppercase tracking-widest">
                           {outfits.length === 0
-                            ? 'No saved outfits yet'
+                            ? t('catDetail.noOutfits')
                             : outfits.length === existingOutfitIds.size
-                              ? 'Every outfit is already in this category'
-                              : 'No outfits match this search'}
+                              ? t('catDetail.allOutfitsIn')
+                              : t('catDetail.noOutfitMatch')}
                         </p>
                       </div>
                     ) : (
@@ -514,7 +516,7 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                   {collection.outfits.length > 0 && (
                     <div className="space-y-3 pt-6 border-t border-ink/5">
                       <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50">
-                        Already in this category ({collection.outfits.length})
+                        {t('catDetail.already', { count: collection.outfits.length })}
                       </p>
                       <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-4">
                         {collection.outfits.map((collectionOutfit) => {
@@ -528,9 +530,9 @@ const AddToCategoryModal = ({ isOpen, onClose, collection, items }: AddToCategor
                             <div key={collectionOutfit.collectionOutfitId} className="relative aspect-[4/5] rounded-xl overflow-hidden border border-ink/5 group">
                               {fullOutfit ? <OutfitPreviewThumb outfit={fullOutfit} /> : <div className="w-full h-full bg-ink/5" />}
                               <button
-                                onClick={() => runSafely(() => removeOutfit(collection.collectionId, collectionOutfit.outfitId), "Couldn't remove this outfit")}
+                                onClick={() => runSafely(() => removeOutfit(collection.collectionId, collectionOutfit.outfitId), t('catDetail.removeOutfitFailed'))}
                                 className="absolute top-1.5 right-1.5 p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white opacity-0 group-hover:opacity-100 touch:opacity-100 transition-opacity"
-                                title="Remove from category"
+                                title={t('catDetail.remove')}
                               >
                                 <X size={12} />
                               </button>

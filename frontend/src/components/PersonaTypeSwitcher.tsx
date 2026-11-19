@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
 import { PersonaType } from '../types';
+import { useT } from '../i18n';
 
 // Task 76 follow-up (Phase 9.7): a small control to switch which persona
 // type ("Male"/"Female") the outfit builder's Persona Preview targets,
@@ -32,12 +33,9 @@ interface PersonaTypeSwitcherProps {
   onChange: (value: PersonaFilterValue) => void;
 }
 
-function formatPersonaLabel(value: PersonaFilterValue): string {
-  if (value === 'ANY') return 'Any';
-  return value.charAt(0) + value.slice(1).toLowerCase();
-}
-
 const PersonaTypeSwitcher = ({ value, onChange }: PersonaTypeSwitcherProps) => {
+  const { t } = useT();
+  const formatPersonaLabel = (v: PersonaFilterValue): string => (v === 'ANY' ? t('personaSwitch.any') : t(`personaSwitch.${v}`));
   const [isOpen, setIsOpen] = useState(false);
   const options: PersonaFilterValue[] = ['ANY', ...Object.values(PersonaType)];
 
@@ -51,7 +49,7 @@ const PersonaTypeSwitcher = ({ value, onChange }: PersonaTypeSwitcherProps) => {
       <button
         onClick={() => setIsOpen((v) => !v)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-medium uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20"
-        title="Persona type"
+        title={t('personaSwitch.title')}
       >
         <span>{formatPersonaLabel(value)}</span>
         <ChevronDown size={10} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} />

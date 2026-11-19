@@ -12,6 +12,7 @@
 // image files land, this component is where <img> tags keyed off
 // data-theme replace the text below, not a new component.
 import { cn } from '../utils/cn';
+import { useT } from '../i18n';
 
 interface BrandMarkProps {
   className?: string;
@@ -22,6 +23,7 @@ interface BrandMarkProps {
 }
 
 const BrandMark = ({ className, withSubline = false }: BrandMarkProps) => {
+  const { t } = useT();
   return (
     <span className={cn('inline-flex flex-col leading-none', className)}>
       <span className="font-display text-xl tracking-[0.3em] text-text-primary">
@@ -29,7 +31,7 @@ const BrandMark = ({ className, withSubline = false }: BrandMarkProps) => {
       </span>
       {withSubline && (
         <span className="mt-1 text-[9px] font-medium tracking-[0.4em] text-text-secondary uppercase">
-          Digital Wardrobe
+          {t('brand.subline')}
         </span>
       )}
     </span>

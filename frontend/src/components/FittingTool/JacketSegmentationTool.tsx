@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Check, RefreshCw, Scissors, CheckCircle2 } from 'lucide-react';
 import { segmentationService } from '../../utils/segmentationService';
 import { cloudinaryService } from '../../api/cloudinaryService';
+import { useT } from '../../i18n';
 
 interface JacketSegmentationToolProps {
   originalFile: File;
@@ -15,6 +16,7 @@ interface JacketSegmentationToolProps {
 // browser as soon as it mounts, lets the user pick which parts to keep, uploads
 // those to Cloudinary and reports { partName: url } through `onComplete`.
 const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ originalFile, onComplete, onBack }) => {
+  const { t } = useT();
   const [segments, setSegments] = useState<Map<string, Blob>>(new Map());
   const [segmentUrls, setSegmentUrls] = useState<Map<string, string>>(new Map()); // Preview URLs
   const [isSegmenting, setIsSegmenting] = useState(true);
@@ -50,14 +52,14 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
 
   // Uploads each selected part (one at a time, showing which) and returns the URLs; an upload failure keeps the tool open.
   const handleFinish = async () => {
-    setUploadingStatus('Uploading segments to cloud...');
+    setUploadingStatus(t('segment.uploadingCloud'));
     const finalUrls: Record<string, string> = {};
     
     try {
       for (const segmentName of Array.from(selectedSegments)) {
         const blob = segments.get(segmentName);
         if (blob) {
-          setUploadingStatus(`Uploading ${segmentName}...`);
+          setUploadingStatus(t('segment.uploading', { name: segmentName }));
           const url = await cloudinaryService.uploadImage(blob);
           finalUrls[segmentName] = url;
         }
@@ -89,8 +91,8 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
           />
         </div>
         <div className="text-center space-y-2">
-          <h3 className="text-2xl font-light tracking-tight text-text-primary uppercase italic">AI Semantic Analysis</h3>
-          <p className="text-text-secondary text-[10px] font-black tracking-[0.4em] uppercase opacity-40">Parsing jacket architecture...</p>
+          <h3 className="text-2xl font-light tracking-tight text-text-primary uppercase italic">{t('segment.analysis')}</h3>
+          <p className="text-text-secondary text-[10px] font-black tracking-[0.4em] uppercase opacity-40">{t('segment.parsing')}</p>
         </div>
       </div>
     );
@@ -99,8 +101,8 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
   return (
     <div className="flex flex-col h-full space-y-8">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Step 3 — Architecture Decomposition</h2>
-        <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">Select identified regions for independent manipulation</p>
+        <h2 className="text-2xl sm:text-3xl font-light tracking-tighter text-text-primary uppercase italic">{t('segment.step')}</h2>
+        <p className="text-text-secondary text-[10px] font-black tracking-widest uppercase opacity-40">{t('segment.select')}</p>
       </div>
 
       <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 overflow-y-auto no-scrollbar p-1">
@@ -136,7 +138,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
           <div className="col-span-full flex flex-col items-center justify-center py-20 text-text-secondary border-2 border-dashed border-ink/10 rounded-[2.5rem]">
             <Scissors size={48} className="opacity-20 mb-4" />
             <p className="text-xs font-black uppercase tracking-widest opacity-40 text-center px-8">
-              AI could not decompose this jacket automatically.<br/>Falling back to rigid single-layer mode.
+              {t('segment.none1')}<br />{t('segment.none2')}
             </p>
           </div>
         )}
@@ -155,7 +157,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
             onClick={onBack}
             className="flex-1 py-4 sm:py-6 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-[2rem] font-black text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase transition-all"
           >
-            Back
+            {t('segment.back')}
           </button>
           <button
             onClick={handleFinish}
@@ -163,7 +165,7 @@ const JacketSegmentationTool: React.FC<JacketSegmentationToolProps> = ({ origina
             className="flex-[2] py-4 sm:py-6 bg-accent hover:bg-accent-hover text-on-accent rounded-[2rem] font-black text-xs tracking-[0.2em] sm:tracking-[0.4em] uppercase transition-all shadow-xl active:scale-[0.98] flex items-center justify-center gap-3"
           >
             {uploadingStatus ? <RefreshCw className="animate-spin" size={18} /> : <Sparkles size={18} />}
-            <span>{segmentUrls.size > 0 ? 'Initialize Modular Studio' : 'Proceed Rigid'}</span>
+            <span>{segmentUrls.size > 0 ? t('segment.initialize') : t('segment.rigid')}</span>
           </button>
         </div>
       </div>

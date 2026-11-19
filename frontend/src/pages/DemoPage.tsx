@@ -10,6 +10,7 @@ import DemoSignupModal from '../components/DemoSignupModal';
 import { SelectionCard } from '../components/OutfitSelectionCards';
 import { toggleWithShoeRule } from '../utils/shoeSelection';
 import { useMediaQuery } from '../hooks/useMediaQuery';
+import { useT, type MessageKey } from '../i18n';
 
 // Task 81: a genuinely-working outfit builder for signed-out visitors,
 // mirroring FlatOutfitBuilderPage's browse-grid-left / selection-panel-right
@@ -23,17 +24,18 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 // the demo. "View on Persona" instead opens the sign-up modal with a recorded
 // clip of garments being put on the persona (Task 87) - the real thing, one
 // account away - and its Create Free Account button.
-const PERSONA_REASON = 'to see your outfit on your own persona';
+type GateReason = 'saveOutfit' | 'addClothes' | 'editClothes' | 'deleteClothes' | 'persona';
 const PERSONA_GIF = '/marketing/persona-demo.gif';
 
-const SECTIONS: { label: string; categories: ClothingCategory[] }[] = [
-  { label: 'Top', categories: [ClothingCategory.DRESS, ClothingCategory.TOP, ClothingCategory.JACKET] },
-  { label: 'Bottom', categories: [ClothingCategory.BOTTOM] },
-  { label: 'Shoes', categories: [ClothingCategory.SHOES] },
-  { label: 'Accessories', categories: [ClothingCategory.ACCESSORY] },
+const SECTIONS: { labelKey: MessageKey; categories: ClothingCategory[] }[] = [
+  { labelKey: 'builder.top', categories: [ClothingCategory.DRESS, ClothingCategory.TOP, ClothingCategory.JACKET] },
+  { labelKey: 'builder.bottom', categories: [ClothingCategory.BOTTOM] },
+  { labelKey: 'builder.shoes', categories: [ClothingCategory.SHOES] },
+  { labelKey: 'builder.accessories', categories: [ClothingCategory.ACCESSORY] },
 ];
 
 const DemoPage = () => {
+  const { t } = useT();
   const { items } = useDemoStore();
   const { selectedItemIds, removeItem, clearDraft, setDraft } = useOutfitDraftStore();
   // Task 86: one shoe per foot - choosing another shoe swaps it, and says so.
@@ -43,7 +45,7 @@ const DemoPage = () => {
     setDraft(ids);
     const incoming = items.find((item) => item.itemId === itemId);
     setSwapNote(
-      replaced.length > 0 && incoming ? `Replaced ${replaced.map((r) => r.name).join(' and ')} with ${incoming.name}` : null
+      replaced.length > 0 && incoming ? t('demo.replaced', { old: replaced.map((r) => r.name).join(t('builder.and')), new: incoming.name }) : null
     );
   };
 
@@ -59,7 +61,7 @@ const DemoPage = () => {
   const [activeTab, setActiveTab] = useState<'attire' | 'closet'>('attire');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
-  const [gateReason, setGateReason] = useState<string | null>(null);
+  const [gateReason, setGateReason] = useState<GateReason | null>(null);
   // Task 92: on a phone the Attire tab is two screens (the closet to pick from, and
   // your outfit), like the real builder; wide screens (lg+) show both side by side.
   const [phoneTab, setPhoneTab] = useState<'closet' | 'outfit'>('closet');
@@ -83,7 +85,7 @@ const DemoPage = () => {
 
   const browseSections = useMemo(
     () => SECTIONS
-      .map((s) => ({ label: s.label, items: groupByCategories(filteredItems, s.categories) }))
+      .map((s) => ({ labelKey: s.labelKey, items: groupByCategories(filteredItems, s.categories) }))
       .filter((s) => s.items.length > 0),
     [filteredItems]
   );
@@ -97,7 +99,7 @@ const DemoPage = () => {
 
   const selectionSections = useMemo(
     () => SECTIONS
-      .map((s) => ({ label: s.label, items: groupByCategories(selectedItems, s.categories) }))
+      .map((s) => ({ labelKey: s.labelKey, items: groupByCategories(selectedItems, s.categories) }))
       .filter((s) => s.items.length > 0),
     [selectedItems]
   );
@@ -113,14 +115,14 @@ const DemoPage = () => {
         <div className="flex items-center gap-3 lg:gap-6 min-w-0">
           <div className="flex items-center gap-1 p-1 rounded-xl bg-ink/5 border border-ink/5">
             <button onClick={() => setActiveTab('attire')} className={tabClass('attire')}>
-              <Shirt size={14} /> Attire
+              <Shirt size={14} /> {t('demo.attire')}
             </button>
             <button onClick={() => setActiveTab('closet')} className={tabClass('closet')}>
-              <LayoutGrid size={14} /> Closet
+              <LayoutGrid size={14} /> {t('demo.closet')}
             </button>
           </div>
           <p className="hidden lg:block text-[10px] font-medium text-accent tracking-[0.4em] uppercase whitespace-nowrap">
-            {selectedItemIds.length} {selectedItemIds.length === 1 ? 'Item' : 'Items'} Selected
+            {t(selectedItemIds.length === 1 ? 'demo.selectedOne' : 'demo.selectedMany', { count: selectedItemIds.length })}
           </p>
           {swapNote && (
             <p role="status" className="order-last basis-full lg:order-none lg:basis-auto text-[10px] font-medium text-text-secondary tracking-widest uppercase">
@@ -131,16 +133,16 @@ const DemoPage = () => {
 
         <div className="flex items-center gap-2 lg:gap-4">
           <span
-            title="This demo closet lives only in your browser - nothing is saved."
+            title={t('demo.badgeTitle')}
             className="hidden md:inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-ink/10 bg-ink/[0.03] text-[9px] font-medium tracking-[0.25em] uppercase text-text-secondary"
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" /> Demo · nothing is saved
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" /> {t('demo.badge')}
           </span>
           <button
-            onClick={() => setGateReason('to save this outfit')}
+            onClick={() => setGateReason('saveOutfit')}
             className="justify-center px-4 lg:px-8 py-3 bg-ink text-background-main font-medium text-[10px] rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5 tracking-[0.2em]"
           >
-            <Save size={16} /> <span className="lg:hidden">SAVE</span><span className="hidden lg:inline">SAVE OUTFIT</span>
+            <Save size={16} /> <span className="lg:hidden">{t('demo.save')}</span><span className="hidden lg:inline">{t('demo.saveOutfit')}</span>
           </button>
         </div>
       </header>
@@ -149,10 +151,10 @@ const DemoPage = () => {
         <div className="flex-grow min-h-0 flex flex-col lg:flex-row overflow-hidden">
           {/* Phone only (below lg): switch between the closet and the outfit. */}
           <div className="lg:hidden shrink-0 px-3 py-1.5 border-b border-ink/5 bg-background-secondary/20">
-            <div role="tablist" aria-label="Demo outfit builder" className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-ink/5">
+            <div role="tablist" aria-label={t('demo.tabs')} className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-ink/5">
               {([
-                ['closet', 'Pieces'],
-                ['outfit', `Outfit (${selectedItemIds.length})`],
+                ['closet', t('demo.tabPieces')],
+                ['outfit', t('builder.tabOutfit', { count: selectedItemIds.length })],
               ] as const).map(([tab, label]) => (
                 <button
                   key={tab}
@@ -175,13 +177,13 @@ const DemoPage = () => {
               {isWide && (
                 <div className="flex items-center justify-between">
                   <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
-                    Available Pieces
+                    {t('builder.available')}
                   </h3>
                   <button
-                    onClick={() => setGateReason('to add your own clothes')}
+                    onClick={() => setGateReason('addClothes')}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest text-accent hover:bg-accent/10 transition-colors"
                   >
-                    <Plus size={12} /> Add Garment
+                    <Plus size={12} /> {t('demo.addGarment')}
                   </button>
                 </div>
               )}
@@ -189,7 +191,7 @@ const DemoPage = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
                 <input
                   type="text"
-                  placeholder="SEARCH..."
+                  placeholder={t('builder.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-ink/5 border border-ink/10 rounded-xl py-3 pl-9 pr-4 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
@@ -200,8 +202,8 @@ const DemoPage = () => {
               </div>
               {!isWide && (
                 <button
-                  onClick={() => setGateReason('to add your own clothes')}
-                  aria-label="Add garment"
+                  onClick={() => setGateReason('addClothes')}
+                  aria-label={t('demo.addGarmentLabel')}
                   className="shrink-0 w-11 h-11 flex items-center justify-center rounded-xl border border-ink/10 text-accent"
                 >
                   <Plus size={18} />
@@ -212,13 +214,13 @@ const DemoPage = () => {
               {browseSections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-4 opacity-20 text-center">
                   <Shirt size={32} className="text-text-secondary" />
-                  <p className="text-[10px] font-medium uppercase tracking-widest">No pieces found</p>
+                  <p className="text-[10px] font-medium uppercase tracking-widest">{t('builder.noPieces')}</p>
                 </div>
               ) : (
                 browseSections.map((section) => (
-                  <div key={section.label} className="space-y-2 lg:space-y-3">
+                  <div key={section.labelKey} className="space-y-2 lg:space-y-3">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
-                      {section.label}
+                      {t(section.labelKey)}
                     </p>
                     <div className="grid grid-cols-3 gap-2 lg:grid-cols-2 lg:gap-4">
                       {section.items.map((item) => {
@@ -237,16 +239,16 @@ const DemoPage = () => {
                             <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full object-cover" />
                             <div className="absolute top-1.5 right-1.5 z-10 flex gap-1 opacity-0 group-hover:opacity-100 touch:hidden transition-opacity">
                               <button
-                                onClick={(e) => { e.stopPropagation(); setGateReason('to edit this item'); }}
+                                onClick={(e) => { e.stopPropagation(); setGateReason('editClothes'); }}
                                 className="p-1.5 touch:p-2.5 bg-black/60 hover:bg-black/80 rounded-full text-white"
-                                title="Edit"
+                                title={t('demo.edit')}
                               >
                                 <Pencil size={10} />
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); setGateReason('to delete this item'); }}
+                                onClick={(e) => { e.stopPropagation(); setGateReason('deleteClothes'); }}
                                 className="p-1.5 touch:p-2.5 bg-black/60 hover:bg-red-500/80 rounded-full text-white"
-                                title="Delete"
+                                title={t('demo.delete')}
                               >
                                 <Trash2 size={10} />
                               </button>
@@ -274,7 +276,7 @@ const DemoPage = () => {
             {!isWide && selectedItemIds.length > 0 && (
               <div className="shrink-0 border-t border-ink/10 bg-background-main px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex-1 min-w-0 flex gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label="Selected pieces">
+                  <div className="flex-1 min-w-0 flex gap-1.5 overflow-x-auto no-scrollbar py-1" aria-label={t('builder.selectedPieces')}>
                     {selectedItems.map((item) => (
                       <div key={item.itemId} className="shrink-0 w-11 h-[3.75rem] rounded-lg overflow-hidden bg-ink/5 border border-accent/30">
                         <CroppedThumbnail imageUrl={item.imageUrl} transform={item.transform} alt={item.name} className="w-full h-full" />
@@ -284,10 +286,10 @@ const DemoPage = () => {
                   <button
                     type="button"
                     onClick={() => setPhoneTab('outfit')}
-                    aria-label={`View outfit (${selectedItemIds.length})`}
+                    aria-label={t('builder.viewOutfit', { count: selectedItemIds.length })}
                     className="shrink-0 h-12 px-3.5 rounded-xl bg-ink text-background-main text-[10px] font-medium uppercase tracking-[0.15em] leading-tight flex flex-col items-center justify-center"
                   >
-                    <span>Outfit</span>
+                    <span>{t('builder.outfit')}</span>
                     <span className="opacity-70">{selectedItemIds.length}</span>
                   </button>
                 </div>
@@ -298,14 +300,14 @@ const DemoPage = () => {
           <main className={`${phoneTab === 'outfit' ? 'block' : 'hidden'} lg:block flex-1 min-h-0 relative bg-background-main overflow-y-auto no-scrollbar p-4 lg:p-6`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[10px] font-medium text-text-primary tracking-[0.3em] uppercase opacity-50">
-                Your Selection
+                {t('builder.yourSelection')}
               </h3>
               <button
-                onClick={() => setGateReason(PERSONA_REASON)}
+                onClick={() => setGateReason('persona')}
                 disabled={selectedItems.length === 0}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all border border-ink/5 bg-ink/[0.02] text-text-secondary hover:text-text-primary hover:border-ink/20 disabled:opacity-20 disabled:pointer-events-none"
               >
-                <User size={12} /> View on Persona
+                <User size={12} /> {t('showcase.viewOnPersona')}
               </button>
             </div>
 
@@ -313,16 +315,16 @@ const DemoPage = () => {
               <div className="flex flex-col items-center justify-center py-32 gap-4 opacity-20 text-center">
                 <Shirt size={40} className="text-text-secondary" />
                 <p className="text-[10px] font-medium uppercase tracking-widest">
-                  <span className="lg:hidden">Pick pieces in the Pieces tab to build an outfit</span>
-                  <span className="hidden lg:inline">Select pieces from the left to build an outfit</span>
+                  <span className="lg:hidden">{t('demo.pickPieces')}</span>
+                  <span className="hidden lg:inline">{t('builder.pickWide')}</span>
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 {selectionSections.map((section) => (
-                  <div key={section.label} className="space-y-1.5">
+                  <div key={section.labelKey} className="space-y-1.5">
                     <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
-                      {section.label}
+                      {t(section.labelKey)}
                     </p>
                     <div className="flex flex-wrap gap-4 justify-center">
                       {section.items.map((item) => (
@@ -341,17 +343,17 @@ const DemoPage = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
               <div className="space-y-2">
                 <h1 className="text-4xl font-light tracking-tighter text-text-primary uppercase">
-                  Demo <span className="text-accent">Wardrobe</span>
+                  {t('demo.wardrobeA')} <span className="text-accent">{t('demo.wardrobeB')}</span>
                 </h1>
                 <p className="text-text-secondary text-[10px] font-medium uppercase tracking-widest">
-                  {filteredItems.length} Pieces // This Is How Your Closet Would Work
+                  {t('demo.piecesCount', { count: filteredItems.length })}
                 </p>
               </div>
               <button
-                onClick={() => setGateReason('to add your own clothes')}
+                onClick={() => setGateReason('addClothes')}
                 className="px-8 py-4 bg-ink text-background-main font-medium rounded-xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 text-[10px] tracking-[0.2em] uppercase"
               >
-                <Plus size={16} /> Add New Garment
+                <Plus size={16} /> {t('closet.add')}
               </button>
             </div>
 
@@ -360,7 +362,7 @@ const DemoPage = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
                 <input
                   type="text"
-                  placeholder="SEARCH YOUR COLLECTION..."
+                  placeholder={t('closet.search')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-11 pr-6 text-text-primary text-[10px] font-medium tracking-widest focus:outline-none focus:border-accent/50 transition-all"
@@ -386,7 +388,7 @@ const DemoPage = () => {
             {filteredItems.length === 0 ? (
               <div className="py-32 flex flex-col items-center justify-center text-center border-2 border-dashed border-ink/5 rounded-2xl">
                 <Shirt size={40} className="text-text-secondary opacity-20 mb-6" />
-                <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase">No garments found</p>
+                <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase">{t('demo.noGarments')}</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
@@ -401,16 +403,16 @@ const DemoPage = () => {
                         <div className="absolute inset-0 bg-background-main/60 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 touch:hidden transition-all duration-300 flex flex-col items-center justify-center gap-3">
                           <div className="flex gap-2">
                             <button
-                              onClick={(e) => { e.stopPropagation(); setGateReason('to edit this item'); }}
+                              onClick={(e) => { e.stopPropagation(); setGateReason('editClothes'); }}
                               className="p-2 bg-ink/10 hover:bg-ink/20 text-text-primary rounded-lg transition-colors border border-ink/10"
-                              title="Edit"
+                              title={t('demo.edit')}
                             >
                               <Pencil size={14} />
                             </button>
                             <button
-                              onClick={(e) => { e.stopPropagation(); setGateReason('to delete this item'); }}
+                              onClick={(e) => { e.stopPropagation(); setGateReason('deleteClothes'); }}
                               className="p-2 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white rounded-lg transition-all border border-rose-500/10"
-                              title="Delete"
+                              title={t('demo.delete')}
                             >
                               <Trash2 size={14} />
                             </button>
@@ -419,22 +421,22 @@ const DemoPage = () => {
                             active ? 'bg-accent text-on-accent shadow-lg' : 'bg-ink/10 text-ink/50'
                           }`}>
                             <Shirt size={10} />
-                            <span>{active ? 'Selected' : 'Select'}</span>
+                            <span>{active ? t('demo.selected') : t('demo.select')}</span>
                           </div>
                         </div>
                         {/* Touch screens have no hover: small always-visible actions instead of the overlay. */}
                         <div className="hidden touch:flex absolute top-2 right-2 z-10 gap-2">
                           <button
-                            onClick={(e) => { e.stopPropagation(); setGateReason('to edit this item'); }}
+                            onClick={(e) => { e.stopPropagation(); setGateReason('editClothes'); }}
                             className="p-2.5 bg-black/60 rounded-full text-white"
-                            aria-label={`Edit ${item.name}`}
+                            aria-label={t('demo.editNamed', { name: item.name })}
                           >
                             <Pencil size={14} />
                           </button>
                           <button
-                            onClick={(e) => { e.stopPropagation(); setGateReason('to delete this item'); }}
+                            onClick={(e) => { e.stopPropagation(); setGateReason('deleteClothes'); }}
                             className="p-2.5 bg-black/60 rounded-full text-white"
-                            aria-label={`Delete ${item.name}`}
+                            aria-label={t('demo.deleteNamed', { name: item.name })}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -460,10 +462,10 @@ const DemoPage = () => {
       <DemoSignupModal
         isOpen={gateReason !== null}
         onClose={() => setGateReason(null)}
-        reason={gateReason ?? ''}
-        {...(gateReason === PERSONA_REASON && {
+        reason={gateReason ? t(`demoSignup.reason.${gateReason}`) : ''}
+        {...(gateReason === 'persona' && {
           mediaSrc: PERSONA_GIF,
-          mediaAlt: 'Garments being put on the VYSVI persona one by one',
+          mediaAlt: t('demoSignup.personaAlt'),
         })}
       />
     </div>

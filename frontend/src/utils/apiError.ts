@@ -5,6 +5,9 @@
 //   - a validation failure said only "Validation failed" (the reasons are in `errors`);
 //   - the stores showed axios's own text ("Request failed with status code 500").
 
+import { translate } from '../i18n';
+
+// (The English sentences below are the exported constants; the messages returned are looked up in the language on screen.)
 export const NETWORK_ERROR_MESSAGE =
   "Can't reach the server. Check your connection, or wait a minute if the site was idle, then try again.";
 export const RATE_LIMIT_MESSAGE = 'Too many attempts. Please wait a minute and try again.';
@@ -54,18 +57,20 @@ export function getApiErrorMessage(err: unknown, fallback: string, options: { ow
 
   if (response) {
     const status = typeof response.status === 'number' ? response.status : 0;
-    if (status === 502 || status === 503 || status === 504) return NETWORK_ERROR_MESSAGE;
+    if (status === 502 || status === 503 || status === 504) return translate('error.network');
     if (status >= 500) return fallback;
     const data = response.data ?? undefined;
+    // A stable error code has its own translated sentence (the server's text is English only).
+    if ((data as { code?: unknown } | undefined)?.code === 'AGE_NOT_ALLOWED') return translate('age.blocked');
     const reason = (status === 400 ? firstFieldError(data?.errors) : null) ?? asText(data?.message);
     if (reason) return reason;
-    if (status === 429) return RATE_LIMIT_MESSAGE;
+    if (status === 429) return translate('error.rateLimit');
     return fallback;
   }
 
   // A request that never got an answer.
   if (e.isAxiosError === true || e.code === 'ERR_NETWORK' || e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT') {
-    return NETWORK_ERROR_MESSAGE;
+    return translate('error.network');
   }
   return options.ownMessages ? (asText(e.message) ?? fallback) : fallback;
 }

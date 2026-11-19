@@ -18,6 +18,7 @@ import { useFabricCanvas, measureContainerWithRetry } from '../../hooks/useFabri
 import { getStageAccentHex } from '../../utils/themeColors';
 import { rescaleObjects } from '../editor/CanvasUtils';
 import { alphaBounds, padBox } from '../../utils/alphaBounds';
+import { useT } from '../../i18n';
 
 // What the edit flow ('image-bounds' export) reports besides the picture.
 export interface CleanupResult {
@@ -189,8 +190,9 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
   onSkip,
   onBack,
   exportMode = 'canvas',
-  skipLabel = 'Skip AI',
+  skipLabel,
 }) => {
+  const { t } = useT();
   // No aspectRatio passed - this editor sizes its canvas once at creation
   // (see measureContainerWithRetry below) and never resizes it afterward,
   // unlike the other editors, so it doesn't use the hook's resize-fitting.
@@ -593,18 +595,18 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <Sparkles className="text-accent" size={20} />
-            <h2 className="text-xl lg:text-3xl font-light tracking-tighter text-text-primary uppercase italic">Cleanup Studio</h2>
+            <h2 className="text-xl lg:text-3xl font-light tracking-tighter text-text-primary uppercase italic">{t('cleanup.title')}</h2>
           </div>
           <div className="hidden sm:flex items-center gap-2 text-[10px] font-medium tracking-widest text-text-secondary uppercase opacity-40">
             <Info size={10} />
-            <span>Erase mannequin pieces, inner shirts, or artifacts</span>
+            <span>{t('cleanup.hint')}</span>
           </div>
         </div>
 
         <div className="grid grid-cols-3 lg:flex bg-ink/5 rounded-2xl p-1 border border-ink/5">
-           <button onClick={() => setMode('erase')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all ${mode === 'erase' ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text-primary'}`}><Eraser size={12} /><span>Erase</span></button>
-           <button onClick={() => setMode('restore')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all ${mode === 'restore' ? 'bg-emerald-500 text-white' : 'text-text-secondary hover:text-text-primary'}`}><Brush size={12} /><span>Restore</span></button>
-           <button onClick={() => setMode('pan')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all ${mode === 'pan' ? 'bg-ink/10 text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}><Hand size={12} /><span>Pan</span></button>
+           <button onClick={() => setMode('erase')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all ${mode === 'erase' ? 'bg-accent text-on-accent' : 'text-text-secondary hover:text-text-primary'}`}><Eraser size={12} /><span>{t('cleanup.erase')}</span></button>
+           <button onClick={() => setMode('restore')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all ${mode === 'restore' ? 'bg-emerald-500 text-white' : 'text-text-secondary hover:text-text-primary'}`}><Brush size={12} /><span>{t('cleanup.restore')}</span></button>
+           <button onClick={() => setMode('pan')} className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-medium uppercase tracking-widest transition-all ${mode === 'pan' ? 'bg-ink/10 text-text-primary' : 'text-text-secondary hover:text-text-primary'}`}><Hand size={12} /><span>{t('cleanup.pan')}</span></button>
         </div>
       </div>
 
@@ -626,8 +628,8 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `radial-gradient(${getStageAccentHex()} 1px, transparent 1px)`, backgroundSize: '24px 24px' }} />
           <canvas ref={canvasRef} />
           <div className="absolute bottom-3 left-3 lg:bottom-8 lg:left-8 flex items-center gap-2 lg:gap-4">
-             <div className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/5 text-[10px] font-medium uppercase text-white/50">Zoom: {Math.round(zoom * 100)}%</div>
-             <div className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/5 text-[10px] font-medium uppercase text-white/50">Mode: {mode}</div>
+             <div className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/5 text-[10px] font-medium uppercase text-white/50">{t('cleanup.zoom', { percent: Math.round(zoom * 100) })}</div>
+             <div className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/5 text-[10px] font-medium uppercase text-white/50">{t('cleanup.mode', { mode: t(`cleanup.${mode}`) })}</div>
           </div>
         </main>
 
@@ -636,7 +638,7 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-accent">
                 <Brush size={14} />
-                <span className="text-[10px] font-medium uppercase tracking-[0.2em]">Brush Size</span>
+                <span className="text-[10px] font-medium uppercase tracking-[0.2em]">{t('cleanup.brush')}</span>
               </div>
               <div className="flex justify-between text-[10px] font-medium text-text-secondary opacity-60"><span>{brushSize}px</span></div>
               <input type="range" min="5" max="150" value={brushSize} onChange={(e) => setBrushSize(parseInt(e.target.value))} className="w-full h-1 touch:h-2 touch:my-2 bg-ink/5 rounded-full appearance-none cursor-pointer accent-accent" />
@@ -646,12 +648,12 @@ const GarmentCleanup: React.FC<GarmentCleanupProps> = ({
           <div className="lg:mt-auto space-y-3 lg:space-y-4 pb-2">
             <button onClick={handleFinish} disabled={isProcessing} className="w-full py-4 lg:py-7 bg-accent hover:bg-accent-hover text-on-accent rounded-2xl font-medium text-xs tracking-[0.3em] lg:tracking-[0.5em] uppercase transition-all shadow-lg flex items-center justify-center gap-3">
               {isProcessing ? <Loader2 className="animate-spin" size={20} /> : <Save size={18} />}
-              <span>Finalize & Next</span>
+              <span>{t('cleanup.finalize')}</span>
             </button>
             <div className="grid grid-cols-2 gap-3 lg:gap-4">
-              <button onClick={onBack} className={`py-4 lg:py-5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl font-medium text-[10px] tracking-[0.3em] uppercase transition-all ${onSkip ? '' : 'col-span-2'}`}>Back</button>
+              <button onClick={onBack} className={`py-4 lg:py-5 bg-ink/5 hover:bg-ink/10 text-text-primary rounded-xl font-medium text-[10px] tracking-[0.3em] uppercase transition-all ${onSkip ? '' : 'col-span-2'}`}>{t('cleanup.back')}</button>
               {onSkip && (
-                <button onClick={onSkip} className="py-4 lg:py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-xl font-medium text-[10px] uppercase transition-all">{skipLabel}</button>
+                <button onClick={onSkip} className="py-4 lg:py-5 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary rounded-xl font-medium text-[10px] uppercase transition-all">{skipLabel ?? t('cleanup.skipAi')}</button>
               )}
             </div>
           </div>

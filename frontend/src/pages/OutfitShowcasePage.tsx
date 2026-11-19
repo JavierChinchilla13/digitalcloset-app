@@ -26,11 +26,11 @@ import MountOnFirstOpen from "../components/MountOnFirstOpen";
 import { useToast } from "../components/Toast";
 import type { ClothingItem, Outfit, PersonaState } from "../types";
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Task 102: the share dialog loads the first time it opens.
 const ShareOutfitModal = lazy(() => import("../components/ShareOutfitModal"));
 
-const MAIN_OUTFIT_EXPLAINER = "Your main outfit is the one shown first on Showcase and the one Attire opens automatically so you can keep refining it.";
 
 // Outfit Showcase (Task 75, Phase 9.7) - reachable by clicking the navbar
 // logo while signed in ("a landing page that is basically an outfit
@@ -370,6 +370,7 @@ const ShowcaseSlot = ({
       .filter((item): item is ClothingItem => !!item);
   }, [outfit.items, items]);
 
+  const { t } = useT();
   const rows = useMemo(() => buildShowcaseRows(outfitItems), [outfitItems]);
   const accessoryCount = useMemo(
     () => outfitItems.filter((item) => item.category === "ACCESSORY").length,
@@ -422,8 +423,7 @@ const ShowcaseSlot = ({
                   ))}
                   {accessoryCount > 0 && (
                     <p className="pt-3 text-center text-[10px] font-medium uppercase tracking-widest text-text-secondary">
-                      + {accessoryCount}{" "}
-                      {accessoryCount === 1 ? "Accessory" : "Accessories"}
+                {t(accessoryCount === 1 ? 'showcase.accessoryOne' : 'showcase.accessoryMany', { count: accessoryCount })}
                     </p>
                   )}
                 </motion.div>
@@ -453,7 +453,7 @@ const ShowcaseSlot = ({
             className="w-full py-4 mt-2 border-t border-ink/5 flex items-center justify-center gap-2 text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary hover:bg-ink/[0.02] transition-all rounded-xl"
           >
             {showPersona ? <LayoutList size={14} /> : <User size={14} />}
-            {showPersona ? "Show Pieces" : "View on Persona"}
+            {showPersona ? t('showcase.showPieces') : t('showcase.viewOnPersona')}
           </button>
         </div>
       ) : (
@@ -494,6 +494,8 @@ const ShowcaseSlot = ({
 };
 
 const OutfitShowcasePage = () => {
+  const { t } = useT();
+  const MAIN_OUTFIT_EXPLAINER = t('outfitCard.explainer');
   const {
     outfits: allOutfits,
     mainOutfitId,
@@ -623,10 +625,10 @@ const OutfitShowcasePage = () => {
     if (!displayedOutfit) return;
     try {
       await setMainOutfit(displayedOutfit.outfitId);
-      showToast(`"${displayedOutfit.name}" is now your main outfit`, "success");
+      showToast(t('showcase.nowMain', { name: displayedOutfit.name }), "success");
     } catch (err) {
       console.error("Failed to set main outfit:", err);
-      showToast(getApiErrorMessage(err, "Couldn't set your main outfit"), "error");
+      showToast(getApiErrorMessage(err, t('showcase.setMainFailed')), "error");
     }
   };
 
@@ -645,8 +647,8 @@ const OutfitShowcasePage = () => {
     return (
       <div className="min-h-dvh flex items-center justify-center px-6">
         <ErrorState
-          title="We couldn't load your outfits"
-          message="Check your connection and try again."
+          title={t('showcase.loadFailed')}
+          message={t('saved.loadFailedBody')}
           onRetry={loadShowcase}
         />
       </div>
@@ -665,7 +667,7 @@ const OutfitShowcasePage = () => {
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
           <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-8 bg-accent/5 uppercase">
-            Your Showcase
+            {t('showcase.title')}
           </span>
           <img
             src="/logo.png"
@@ -673,7 +675,7 @@ const OutfitShowcasePage = () => {
             className="w-40 sm:w-48 mx-auto mb-8"
           />
           <p className="text-text-secondary text-base sm:text-lg max-w-md mx-auto mb-10 font-light leading-relaxed">
-            Save your first outfit and it will take center stage here.
+            {t('showcase.empty')}
           </p>
           <button
             onClick={() => navigate("/")}
@@ -681,7 +683,7 @@ const OutfitShowcasePage = () => {
           >
             <Sparkles size={18} />
             <span className="text-[11px] tracking-[0.2em] uppercase">
-              Let's Get Started
+              {t('showcase.start')}
             </span>
           </button>
           {/* Task 101: the first-run guide (three steps); hides itself once dismissed. */}
@@ -702,7 +704,7 @@ const OutfitShowcasePage = () => {
     <div className="min-h-dvh flex flex-col items-center px-6 pb-16">
       <div className="text-center mb-8">
         <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-4 bg-accent/5 uppercase">
-          Your Showcase
+          {t('showcase.title')}
         </span>
         <h1 className="text-4xl sm:text-5xl font-display font-light tracking-tighter text-text-primary">
           {displayedOutfit?.name}
@@ -713,14 +715,14 @@ const OutfitShowcasePage = () => {
             weight as an ordinary button) didn't read as different enough from
             "Set as main outfit" at a glance - user feedback, 2026-09-28. The tag is
             now solid-accent with a glow so it pops, and both carry the explanation. */}
-        <div className="flex items-center justify-center gap-3 mt-5">
+        <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
           {isShownOutfitMain ? (
             <span
               data-testid="main-outfit-tag"
               title={MAIN_OUTFIT_EXPLAINER}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-on-accent shadow-lg shadow-accent/30 text-[10px] font-medium tracking-[0.25em] uppercase"
             >
-              <Star size={12} fill="currentColor" /> Main outfit
+              <Star size={12} fill="currentColor" /> {t('showcase.mainTag')}
             </span>
           ) : (
             <button
@@ -728,23 +730,23 @@ const OutfitShowcasePage = () => {
               title={MAIN_OUTFIT_EXPLAINER}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-ink/15 text-text-secondary hover:text-text-primary hover:border-ink/30 text-[10px] font-medium tracking-[0.25em] uppercase transition-all"
             >
-              <Star size={12} /> Set as main outfit
+              <Star size={12} /> {t('showcase.setMain')}
             </button>
           )}
           {/* Task 102: share the shown outfit as a picture or a public link. */}
           <button
             onClick={() => setIsSharing(true)}
-            title="Share this outfit as a picture or a link"
+            title={t('showcase.shareTitle')}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-ink/15 text-text-secondary hover:text-text-primary hover:border-ink/30 text-[10px] font-medium tracking-[0.25em] uppercase transition-all"
           >
-            <Share2 size={12} /> Share
+            <Share2 size={12} /> {t('showcase.share')}
           </button>
           <button
             onClick={() => displayedOutfit && navigate(`/outfits/flat/edit/${displayedOutfit.outfitId}`)}
-            title="Open this outfit in Attire to change what it's wearing"
+            title={t('showcase.editTitle')}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ink text-background-main text-[10px] font-medium tracking-[0.25em] uppercase transition-all hover:scale-105 active:scale-95"
           >
-            <Pencil size={12} /> Edit outfit
+            <Pencil size={12} /> {t('showcase.edit')}
           </button>
         </div>
       </div>
@@ -767,7 +769,7 @@ const OutfitShowcasePage = () => {
           onClick={goToPrev}
           disabled={n < 2}
           className="hidden sm:block shrink-0 p-3 rounded-full border border-ink/10 text-text-secondary hover:text-text-primary hover:border-ink/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
-          title="Previous outfit"
+          title={t('showcase.prev')}
         >
           <ChevronLeft size={20} />
         </button>
@@ -861,7 +863,7 @@ const OutfitShowcasePage = () => {
           onClick={goToNext}
           disabled={n < 2}
           className="hidden sm:block shrink-0 p-3 rounded-full border border-ink/10 text-text-secondary hover:text-text-primary hover:border-ink/20 transition-all disabled:opacity-20 disabled:pointer-events-none"
-          title="Next outfit"
+          title={t('showcase.next')}
         >
           <ChevronRight size={20} />
         </button>
@@ -873,7 +875,7 @@ const OutfitShowcasePage = () => {
           <button
             onClick={goToPrev}
             className="sm:hidden w-11 h-11 mr-2 flex items-center justify-center rounded-full border border-ink/10 text-text-secondary active:text-text-primary"
-            aria-label="Previous outfit"
+            aria-label={t('showcase.prev')}
           >
             <ChevronLeft size={20} />
           </button>
@@ -883,7 +885,7 @@ const OutfitShowcasePage = () => {
               onClick={() => setActiveIndex(i)}
               className="p-2 group/dot"
               title={o.name}
-              aria-label={`Show ${o.name}`}
+              aria-label={t('showcase.show', { name: o.name })}
             >
               <span
                 className={`block h-1.5 rounded-full transition-all ${
@@ -897,7 +899,7 @@ const OutfitShowcasePage = () => {
           <button
             onClick={goToNext}
             className="sm:hidden w-11 h-11 ml-2 flex items-center justify-center rounded-full border border-ink/10 text-text-secondary active:text-text-primary"
-            aria-label="Next outfit"
+            aria-label={t('showcase.next')}
           >
             <ChevronRight size={20} />
           </button>

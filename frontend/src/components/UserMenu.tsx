@@ -5,6 +5,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { resetAccountStores } from '../utils/resetAccountStores';
 import ThemeToggle from './ThemeToggle';
 import StorageMeter from './StorageMeter';
+import LanguageToggle from './LanguageToggle';
+import { useT } from '../i18n';
 
 // Task 79: the navbar used to lay Persona/Categories/Admin/Logout out as
 // separate always-visible icons next to the user avatar - "too cluttered."
@@ -18,6 +20,7 @@ const CLOSE_DELAY_MS = 150;
 
 const UserMenu = () => {
   const { isAdmin, user, logout } = useAuthStore();
+  const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -55,7 +58,7 @@ const UserMenu = () => {
         onClick={open}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-label="Account menu"
+        aria-label={t('menu.account')}
         className="w-7 h-7 rounded-full bg-accent/20 border border-accent/40 flex items-center justify-center text-accent text-[10px] font-medium hover:bg-accent/30 transition-colors"
       >
         {user?.email[0].toUpperCase()}
@@ -86,6 +89,8 @@ const UserMenu = () => {
             <div className="px-3 py-2 text-[9px] font-bold text-text-secondary/60 uppercase tracking-widest truncate">
               {user?.email}
             </div>
+            {/* Right under the user: the language button (shows the OTHER language). */}
+            <LanguageToggle variant="menu" />
             {/* Task 96: how full the closet is, for accounts that have a limit. */}
             <StorageMeter compact className="px-3 pb-2" />
 
@@ -95,18 +100,18 @@ const UserMenu = () => {
             </div>
 
             <Link to="/persona" onClick={close} className={itemClass}>
-              <UserCircle size={14} /> Persona
+              <UserCircle size={14} /> {t('menu.persona')}
             </Link>
             <Link to="/categories" onClick={close} className={itemClass}>
-              <Tag size={14} /> Categories
+              <Tag size={14} /> {t('menu.categories')}
             </Link>
             {isAdmin && (
               <Link to="/admin" onClick={close} className={itemClass}>
-                <ShieldCheck size={14} /> Admin
+                <ShieldCheck size={14} /> {t('menu.admin')}
               </Link>
             )}
             <Link to="/settings" onClick={close} className={itemClass}>
-              <SettingsIcon size={14} /> Settings
+              <SettingsIcon size={14} /> {t('menu.settings')}
             </Link>
 
             <div className="h-px bg-ink/10 my-1" />
@@ -120,7 +125,7 @@ const UserMenu = () => {
               }}
               className={itemClass}
             >
-              <LogOut size={14} /> Logout
+              <LogOut size={14} /> {t('menu.logout')}
             </button>
           </div>
         </>
@@ -131,11 +136,14 @@ const UserMenu = () => {
 
 // ThemeToggle is a self-contained icon button; this wraps it with a label so
 // it reads as a normal menu row instead of a lone icon.
-const ThemeToggleRow = () => (
-  <div className="flex items-center gap-3 w-full">
-    <ThemeToggle />
-    <span>Theme</span>
-  </div>
-);
+const ThemeToggleRow = () => {
+  const { t } = useT();
+  return (
+    <div className="flex items-center gap-3 w-full">
+      <ThemeToggle />
+      <span>{t('theme.row')}</span>
+    </div>
+  );
+};
 
 export default UserMenu;

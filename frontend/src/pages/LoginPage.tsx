@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { consumeLoginNotice } from '../utils/loginNotice';
-import { AGE_BLOCKED_MESSAGE } from '../utils/ageGate';
+import { useT } from '../i18n';
 import { authService } from '../api/authService';
 import { consumeSessionExpiredNotice } from '../api/axios';
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
@@ -19,6 +19,7 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
   // Set when the visitor was sent here because their session ended (read once).
   const [sessionEnded] = useState(consumeSessionExpiredNotice);
+  const { t } = useT();
   const [notice] = useState(consumeLoginNotice);
 
   const completeSignIn = useCompleteSignIn();
@@ -33,7 +34,7 @@ const LoginPage = () => {
       const response = await authService.login({ email, password });
       await completeSignIn(response.token);
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, "Couldn't sign you in. Please try again."));
+      setError(getApiErrorMessage(err, t('login.failed')));
       console.error('Login error:', err);
     } finally {
       setIsLoading(false);
@@ -48,25 +49,25 @@ const LoginPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">Welcome Back</h1>
-          <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">Access your digital sanctuary</p>
+          <h1 className="text-4xl font-light tracking-tighter mb-4 uppercase text-text-primary">{t('login.title')}</h1>
+          <p className="text-text-secondary text-sm tracking-widest uppercase opacity-60">{t('login.subtitle')}</p>
         </div>
 
         {sessionEnded && !error && (
           <div role="status" className="mb-8 p-4 bg-ink/5 border border-ink/10 rounded-2xl text-text-secondary text-xs font-bold text-center uppercase tracking-widest">
-            Your session has ended. Please sign in again.
+            {t('login.sessionEnded')}
           </div>
         )}
 
         {/* Audit H12: arriving after deleting the account, or after an existing account was refused for age (the one uniform message). */}
         {notice === 'account-deleted' && !error && (
           <div role="status" className="mb-8 p-4 bg-ink/5 border border-ink/10 rounded-2xl text-text-secondary text-xs font-bold text-center uppercase tracking-widest">
-            Your account and data have been deleted.
+            {t('login.accountDeleted')}
           </div>
         )}
         {notice === 'age-refused' && !error && (
           <div role="alert" className="mb-8 p-4 bg-red-500/10 border border-red-500/50 rounded-2xl text-text-primary text-xs font-bold text-center uppercase tracking-widest">
-            {AGE_BLOCKED_MESSAGE}
+            {t('age.blocked')}
           </div>
         )}
 
@@ -83,7 +84,7 @@ const LoginPage = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">Email Address</label>
+            <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase pl-4">{t('field.email')}</label>
             <div className="relative group">
               <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-accent transition-colors" size={18} />
               <input 
@@ -100,8 +101,8 @@ const LoginPage = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between items-end px-4">
-              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Password</label>
-              <Link to="/forgot-password" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">Forgot?</Link>
+              <label className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">{t('field.password')}</label>
+              <Link to="/forgot-password" className="text-[10px] font-medium tracking-widest text-text-secondary hover:text-text-primary uppercase transition-colors">{t('login.forgot')}</Link>
             </div>
             <PasswordInput
               icon={Lock}
@@ -123,7 +124,7 @@ const LoginPage = () => {
               <Loader2 className="animate-spin" size={18} />
             ) : (
               <>
-                <span>SIGN IN</span>
+                <span>{t('login.submit')}</span>
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </>
             )}
@@ -133,15 +134,16 @@ const LoginPage = () => {
         <GoogleSignInSection onError={setError} />
 
         <p className="mt-8 text-center text-text-secondary text-[10px] tracking-widest uppercase opacity-60">
-          By continuing you agree to the{' '}
-          <Link to="/terms" className="underline underline-offset-2 hover:text-text-primary">Terms</Link> and{' '}
-          <Link to="/privacy" className="underline underline-offset-2 hover:text-text-primary">Privacy Policy</Link>.
+          {t.rich('login.agree', {
+            terms: (text) => <Link to="/terms" className="underline underline-offset-2 hover:text-text-primary">{text}</Link>,
+            privacy: (text) => <Link to="/privacy" className="underline underline-offset-2 hover:text-text-primary">{text}</Link>,
+          })}
         </p>
 
         <div className="mt-12 text-center">
           <p className="text-text-secondary text-sm">
-            Don't have an account? {' '}
-            <Link to="/signup" className="text-text-primary font-bold hover:text-accent transition-colors">Create one now</Link>
+            {t('login.noAccount')} {' '}
+            <Link to="/signup" className="text-text-primary font-bold hover:text-accent transition-colors">{t('login.createOne')}</Link>
           </p>
         </div>
       </motion.div>

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { translate } from '../i18n';
 
 // Image storage. Garment pictures go straight from the browser to Cloudinary using an
 // UNSIGNED upload preset, so the backend never handles image bytes. The two values
@@ -28,7 +29,7 @@ export const cloudinaryService = {
     } catch (error: unknown) {
       console.error('Cloudinary upload error:', error);
       const detail = (error as { response?: { data?: { error?: { message?: string } } } }).response?.data?.error?.message;
-      throw new Error(detail || 'Failed to upload image to Cloudinary', { cause: error });
+      throw new Error(detail || translate('upload.cloudFailed'), { cause: error });
     }
   }
 };

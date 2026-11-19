@@ -5,6 +5,7 @@ import { useBilling } from '../hooks/useBilling';
 import { useAuthStore } from '../store/useAuthStore';
 import { getApiErrorMessage } from '../utils/apiError';
 import { Plan, Role } from '../types';
+import { useT } from '../i18n';
 
 interface BillingActionsProps {
   // 'block' fills the width (the Settings card, the closet-full dialog).
@@ -17,6 +18,7 @@ interface BillingActionsProps {
 // admins, and nothing at all when payments are not set up on the server.
 const BillingActions = ({ className = '' }: BillingActionsProps) => {
   const user = useAuthStore((state) => state.user);
+  const { t, language } = useT();
   const { status, enabled } = useBilling();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +43,12 @@ const BillingActions = ({ className = '' }: BillingActionsProps) => {
   if (isFree && user.ageBand !== 'ADULT') {
     return (
       <p className="text-[10px] text-text-secondary normal-case tracking-normal" data-testid="billing-actions">
-        Premium is available to people who are 18 or older.
+        {t('billing.minor')}
       </p>
     );
   }
   const endsOn = status.currentPeriodEnd
-    ? new Date(status.currentPeriodEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    ? new Date(status.currentPeriodEnd).toLocaleDateString(language === 'es' ? 'es' : 'en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : null;
 
   return (
@@ -55,32 +57,32 @@ const BillingActions = ({ className = '' }: BillingActionsProps) => {
         <button
           type="button"
           disabled={busy}
-          onClick={() => go(billingService.startCheckout, "Couldn't open the checkout. Please try again.")}
+          onClick={() => go(billingService.startCheckout, t('billing.checkoutFailed'))}
           className="w-full py-3.5 bg-accent text-on-accent text-[10px] font-medium uppercase tracking-widest rounded-xl inline-flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {busy ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-          Upgrade to Premium{status.priceLabel ? ` - ${status.priceLabel}` : ''}
+          {t('billing.upgrade')}{status.priceLabel ? ` - ${status.priceLabel}` : ''}
         </button>
       )}
       {!isFree && status.canManage && (
         <>
           {status.cancelAtPeriodEnd && endsOn && (
             <p className="text-[10px] text-text-secondary normal-case tracking-normal">
-              Premium ends on {endsOn} and will not renew.
+              {t('billing.endsOn', { date: endsOn })}
             </p>
           )}
           {status.subscriptionStatus === 'past_due' && (
             <p className="text-[10px] text-amber-400 normal-case tracking-normal">
-              Your last payment failed. Update your card to keep Premium.
+              {t('billing.pastDue')}
             </p>
           )}
           <button
             type="button"
             disabled={busy}
-            onClick={() => go(billingService.openPortal, "Couldn't open the billing page. Please try again.")}
+            onClick={() => go(billingService.openPortal, t('billing.portalFailed'))}
             className="w-full py-3.5 border border-ink/15 text-text-primary text-[10px] font-medium uppercase tracking-widest rounded-xl inline-flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            {busy && <Loader2 size={14} className="animate-spin" />} Manage billing
+            {busy && <Loader2 size={14} className="animate-spin" />} {t('billing.manage')}
           </button>
         </>
       )}

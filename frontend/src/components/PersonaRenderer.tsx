@@ -9,6 +9,7 @@ import ErrorBoundary from './ErrorBoundary';
 import ErrorState from './ErrorState';
 import { useOcclusionMasks, pickLayerAt } from '../hooks/useOcclusionMasks';
 import { buildPersonaLayers } from '../utils/personaLayers';
+import { translate } from '../i18n';
 
 interface PersonaRendererProps {
   persona?: PersonaState;
@@ -114,8 +115,8 @@ const PersonaRenderer: React.FC<PersonaRendererProps> = (props) => (
       <div className={`flex items-center justify-center ${props.className ?? "h-[600px] md:h-[800px]"}`}>
         <ErrorState
           compact
-          title="Couldn't show this preview"
-          message="Something went wrong drawing the persona. Your items are safe."
+          title={translate('boundary.previewTitle')}
+          message={translate('boundary.previewBody')}
           onRetry={reset}
         />
       </div>

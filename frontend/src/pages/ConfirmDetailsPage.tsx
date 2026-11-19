@@ -10,6 +10,7 @@ import { isAgeRefusal } from '../utils/ageGate';
 import { getApiErrorMessage } from '../utils/apiError';
 import { setLoginNotice } from '../utils/loginNotice';
 import { resetAccountStores } from '../utils/resetAccountStores';
+import { useT } from '../i18n';
 
 // Audit H12: accounts made before the age step ask for the same facts once: birth month/year (unless already recorded), the guardian
 // declaration for 13-17 and the two acceptances. Until then the app steers every screen here (the server does not block calls).
@@ -20,6 +21,7 @@ const ConfirmDetailsPage = () => {
   const token = useAuthStore((state) => state.token);
   const logout = useAuthStore((state) => state.logout);
   const navigate = useNavigate();
+  const { t } = useT();
 
   const birthKnown = Boolean(user?.ageBand);
   const form = useAgeConsentForm({ birthKnown, knownBand: user?.ageBand ?? null });
@@ -31,7 +33,9 @@ const ConfirmDetailsPage = () => {
     return (
       <div className="min-h-[60dvh] flex items-center justify-center p-6 text-center">
         <p className="text-text-secondary text-sm">
-          Your details are confirmed. <Link to="/showcase" className="text-text-primary underline underline-offset-2">Continue</Link>
+          {t.rich('confirm.done', {
+            continue: (text) => <Link to="/showcase" className="text-text-primary underline underline-offset-2">{text}</Link>,
+          })}
         </p>
       </div>
     );
@@ -61,7 +65,7 @@ const ConfirmDetailsPage = () => {
         setLoginNotice('age-refused');
         navigate('/login', { replace: true });
       } else {
-        setError(getApiErrorMessage(err, "Couldn't save your details. Please try again."));
+        setError(getApiErrorMessage(err, t('confirm.failed')));
       }
     } finally {
       setIsLoading(false);
@@ -72,9 +76,9 @@ const ConfirmDetailsPage = () => {
     <div className="min-h-[80dvh] flex items-center justify-center p-6">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-light tracking-tighter mb-4 uppercase text-text-primary text-balance">Confirm your details</h1>
+          <h1 className="text-3xl font-light tracking-tighter mb-4 uppercase text-text-primary text-balance">{t('confirm.title')}</h1>
           <p className="text-text-secondary text-sm leading-relaxed text-pretty">
-            We added a few questions since you joined. Please answer them once to keep using your account.
+            {t('confirm.intro')}
           </p>
         </div>
 
@@ -91,13 +95,14 @@ const ConfirmDetailsPage = () => {
             disabled={isLoading}
             className="w-full min-h-[48px] py-4 bg-accent text-on-accent font-medium rounded-2xl flex items-center justify-center gap-2 transition-[transform,opacity] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50"
           >
-            {isLoading ? <Loader2 className="animate-spin" size={18} /> : (<><span>CONFIRM AND CONTINUE</span><ArrowRight size={18} /></>)}
+            {isLoading ? <Loader2 className="animate-spin" size={18} /> : (<><span>{t('confirm.submit')}</span><ArrowRight size={18} /></>)}
           </button>
         </form>
 
         <p className="mt-8 text-center text-text-secondary text-sm">
-          Prefer not to?{' '}
-          <Link to="/settings" className="text-text-primary underline underline-offset-2 hover:text-accent">Delete my account</Link>
+          {t.rich('confirm.prefer', {
+            delete: (text) => <Link to="/settings" className="text-text-primary underline underline-offset-2 hover:text-accent">{text}</Link>,
+          })}
         </p>
       </motion.div>
     </div>

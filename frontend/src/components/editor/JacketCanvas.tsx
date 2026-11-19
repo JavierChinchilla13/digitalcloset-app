@@ -23,6 +23,7 @@ interface ModifiedEventLike {
   transform?: { action?: string };
 }
 import { getStageAccentHex } from '../../utils/themeColors';
+import { useT } from '../../i18n';
 
 interface JacketCanvasProps {
   segments: Record<string, string>;
@@ -45,6 +46,7 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
   activePart = 'torso',
   isGroupMode = false
 }) => {
+  const { t } = useT();
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     resizeThreshold: 5,
@@ -447,8 +449,8 @@ const JacketCanvas: React.FC<JacketCanvasProps> = ({
           matching comment in ClothingCanvas.tsx. */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
-          <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">Modular Jacket Engine</p>
-          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">Synchronized Layer Orchestration</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">{t('canvas.jacketEngine')}</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">{t('canvas.syncLayers')}</p>
         </div>
       </div>
     </div>

@@ -15,6 +15,7 @@ import {
 import type { WarpData } from '../../utils/warpData';
 import { CANVAS_PAD, toCanvasCoord, toCanvasX } from './CanvasUtils';
 import { getStageAccentHex } from '../../utils/themeColors';
+import { useT } from '../../i18n';
 
 export interface WarpApplyResult {
   grid: WarpPoint[];
@@ -105,6 +106,7 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
   onApply,
   onCancel,
 }) => {
+  const { t } = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const dragIndexRef = useRef<number | null>(null);
@@ -127,12 +129,14 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
       setGrid((prev) => (prev.length === WARP_GRID * WARP_GRID ? prev : identityGrid(img.naturalWidth, img.naturalHeight)));
     };
     img.onerror = () => {
-      if (!cancelled) setLoadError('Could not load the image to warp.');
+      if (!cancelled) setLoadError(t('warp.loadFailed'));
     };
     img.src = sourceUrl;
     return () => {
       cancelled = true;
     };
+    // The image is loaded again only for a new source, not when the language changes (t is read at the moment of an error).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceUrl]);
 
   const canvasW = stageW + 2 * CANVAS_PAD;
@@ -293,7 +297,7 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
       const bake = await bakeWarp(img, size.w, size.h, grid);
       await onApply({ grid, sourceWidth: size.w, sourceHeight: size.h, bake });
     } catch (err: unknown) {
-      setApplyError(err instanceof Error ? err.message : 'Could not apply the warp.');
+      setApplyError(err instanceof Error ? err.message : t('warp.applyFailed'));
       setBusy(false);
     }
   };
@@ -329,8 +333,8 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
         </div>
       ) : (
         <p className={`${pill} top-3 px-4 py-2 text-center text-white/70 pointer-events-none ${label}`}>
-          Drag the points to bend the garment
-          {hasCrop ? ' - applying a warp clears the crop' : ''}
+          {t('warp.drag')}
+          {hasCrop ? t('warp.clearsCrop') : ''}
         </p>
       )}
 
@@ -342,14 +346,14 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
             disabled={busy}
             className={`${label} px-4 py-2.5 rounded-xl text-white/70 hover:bg-white/10 transition-all disabled:opacity-40`}
           >
-            Cancel
+            {t('warp.cancel')}
           </button>
           <button
             onClick={() => size && setGrid(identityGrid(size.w, size.h))}
             disabled={busy || !ready}
             className={`${label} px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all disabled:opacity-40`}
           >
-            Reset Points
+            {t('warp.reset')}
           </button>
           <button
             onClick={handleApply}
@@ -357,7 +361,7 @@ const WarpPanel: React.FC<WarpPanelProps> = ({
             className={`${label} px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-on-accent shadow-lg transition-all disabled:opacity-60 flex items-center gap-2`}
           >
             {busy && <Loader2 className="animate-spin" size={14} />}
-            {busy ? 'Applying...' : 'Apply Warp'}
+            {busy ? t('warp.applying') : t('warp.apply')}
           </button>
         </div>
       </div>

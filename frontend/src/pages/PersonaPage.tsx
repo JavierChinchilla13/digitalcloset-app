@@ -6,10 +6,12 @@ import { usePersonaStore } from '../store/usePersonaStore';
 import { usePersonaSettingsStore } from '../store/usePersonaSettingsStore';
 import { PersonaType } from '../types';
 import SectionWrapper from '../components/SectionWrapper';
+import { useT } from '../i18n';
 
 // Pick the active persona (male / female) and rename them (display names are stored on
 // the account and shown across the app). Reachable from the user menu.
 const PersonaPage = () => {
+  const { t } = useT();
   const navigate = useNavigate();
   const { persona, setPersonaType } = usePersonaStore();
   // Task 60, Phase 9.5: display names are a separate, backend-synced
@@ -41,12 +43,12 @@ const PersonaPage = () => {
   const types = [
     {
       id: PersonaType.MALE,
-      description: 'Defined silhouette with classic tailoring metrics.',
+      description: t('personaPage.maleDesc'),
       icon: '/personas/male-base.png'
     },
     {
       id: PersonaType.FEMALE,
-      description: 'Elegant silhouette optimized for fluid layering.',
+      description: t('personaPage.femaleDesc'),
       icon: '/personas/female-base.png'
     }
   ];
@@ -61,16 +63,16 @@ const PersonaPage = () => {
             className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
           >
             <ChevronLeft size={14} />
-            Back to Attire
+            {t('personaPage.back')}
           </button>
           <div className="flex items-center gap-3">
             <Sparkles size={20} className="text-accent" />
             <h1 className="text-5xl font-light tracking-tighter text-text-primary uppercase leading-none">
-              PERSONA <span className="text-accent">STUDIO</span>
+              {t('personaPage.titleA')} <span className="text-accent">{t('personaPage.titleB')}</span>
             </h1>
           </div>
           <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
-            Configure your digital twin // Core Silhouette & Biometrics
+            {t('personaPage.subtitle')}
           </p>
         </div>
 
@@ -78,7 +80,7 @@ const PersonaPage = () => {
         <div className="max-w-4xl">
           <div className="flex items-center gap-4 mb-10">
             <User size={16} className="text-accent" />
-            <span className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">Select Silhouette Core</span>
+            <span className="text-[10px] font-medium tracking-[0.3em] text-accent uppercase">{t('personaPage.select')}</span>
             <div className="h-[1px] flex-grow bg-ink/5" />
           </div>
 
@@ -142,7 +144,7 @@ const PersonaPage = () => {
                         <button
                           onClick={(e) => { e.stopPropagation(); startRename(type.id); }}
                           className="p-1.5 rounded-lg hover:bg-ink/5 text-text-secondary hover:text-text-primary opacity-0 group-hover:opacity-100 touch:opacity-100 transition-all"
-                          title="Rename"
+                          title={t('personaPage.rename')}
                         >
                           <Pencil size={13} />
                         </button>
@@ -169,7 +171,7 @@ const PersonaPage = () => {
         {/* Footer Note */}
         <div className="mt-24 p-12 rounded-2xl border border-ink/5 bg-ink/[0.01] max-w-4xl text-center">
           <p className="text-[10px] font-medium tracking-[0.5em] text-text-secondary uppercase">
-            Advanced biometric customization (Height, Hair, Skin Tone) coming in next cycle.
+            {t('personaPage.soon')}
           </p>
         </div>
       </SectionWrapper>

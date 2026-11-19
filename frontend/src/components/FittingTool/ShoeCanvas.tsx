@@ -17,6 +17,7 @@ import {
 import { customizeFabricControls, lockObject } from '../editor/FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
 import { getStageAccentHex, getStageAccentRgba } from '../../utils/themeColors';
+import { useT } from '../../i18n';
 
 interface ShoeCanvasProps {
   leftImageUrl: string;
@@ -41,6 +42,7 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
   activeSide,
   onSideSelect
 }) => {
+  const { t } = useT();
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
@@ -326,8 +328,8 @@ const ShoeCanvas: React.FC<ShoeCanvasProps> = ({
           matching comment in ClothingCanvas.tsx. */}
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
-          <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">SHOE STUDIO ENGINE</p>
-          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">DUAL ASSET PIPELINE</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">{t('canvas.shoeEngine')}</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">{t('canvas.dualAsset')}</p>
         </div>
       </div>
     </div>

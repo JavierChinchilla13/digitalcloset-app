@@ -11,6 +11,7 @@ import ModalShell from '../components/ModalShell';
 import type { Collection } from '../types';
 import ErrorState from '../components/ErrorState';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Categories management page (Task 49, Phase 9; refined in the Phase 9
 // follow-up). Create/rename/delete a Collection (Task 48) and search the
@@ -19,6 +20,7 @@ import { getApiErrorMessage } from '../utils/apiError';
 // expand here, so a category card's job is purely list-level: name, counts,
 // rename, delete, and a click-through to the detail page.
 const CategoriesPage = () => {
+  const { t } = useT();
   const navigate = useNavigate();
   const {
     collections, fetchCollections, createCollection,
@@ -81,9 +83,9 @@ const CategoriesPage = () => {
       await createCollection(name);
       setNewName('');
       setShowCreateForm(false);
-      showToast(`Category "${name}" created`, 'success');
+      showToast(t('cats.created', { name }), 'success');
     } catch (err) {
-      showToast(getApiErrorMessage(err, 'Failed to create category'), 'error');
+      showToast(getApiErrorMessage(err, t('cats.createFailed')), 'error');
     } finally {
       setIsCreating(false);
     }
@@ -108,7 +110,7 @@ const CategoriesPage = () => {
       setRenamingId(null);
     } catch (err) {
       // Keep the rename box open so the user can retry.
-      showToast(getApiErrorMessage(err, "Couldn't rename this category"), 'error');
+      showToast(getApiErrorMessage(err, t('cats.renameFailed')), 'error');
     }
   };
 
@@ -117,10 +119,10 @@ const CategoriesPage = () => {
     setIsDeleting(true);
     try {
       await deleteCollection(pendingDelete.id);
-      showToast(`Category "${pendingDelete.name}" deleted`, 'success');
+      showToast(t('cats.deleted', { name: pendingDelete.name }), 'success');
       setPendingDelete(null);
     } catch (err) {
-      showToast(getApiErrorMessage(err, 'Failed to delete category'), 'error');
+      showToast(getApiErrorMessage(err, t('cats.deleteFailed')), 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -136,13 +138,13 @@ const CategoriesPage = () => {
               className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors text-[10px] font-medium uppercase tracking-widest"
             >
               <ChevronLeft size={14} />
-              Back to Attire
+              {t('cats.back')}
             </button>
             <h1 className="text-4xl sm:text-6xl font-light tracking-tighter text-text-primary uppercase leading-none">
-              MY <br /> <span className="text-accent">CATEGORIES</span>
+              {t('cats.titleA')} <br /> <span className="text-accent">{t('cats.titleB')}</span>
             </h1>
             <p className="text-text-secondary text-xs font-medium max-w-md uppercase tracking-widest">
-              Organize your closet // {collections.length} {collections.length === 1 ? 'category' : 'categories'}
+              {t(collections.length === 1 ? 'cats.subtitleOne' : 'cats.subtitleMany', { count: collections.length })}
             </p>
           </div>
 
@@ -158,14 +160,14 @@ const CategoriesPage = () => {
                     if (e.key === 'Enter') handleCreate();
                     if (e.key === 'Escape') cancelCreate();
                   }}
-                  placeholder="CATEGORY NAME"
+                  placeholder={t('cats.namePlaceholder')}
                   className="bg-ink/5 border border-ink/10 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all w-full min-w-0 flex-1 sm:flex-none sm:w-56"
                 />
                 <button
                   onClick={handleCreate}
                   disabled={isCreating || !newName.trim()}
                   className="p-4 rounded-2xl bg-accent/10 hover:bg-accent/20 text-accent transition-all disabled:opacity-30 disabled:pointer-events-none"
-                  title="Confirm"
+                  title={t('cats.confirm')}
                 >
                   {isCreating ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
                 </button>
@@ -173,7 +175,7 @@ const CategoriesPage = () => {
                   onClick={cancelCreate}
                   disabled={isCreating}
                   className="p-4 rounded-2xl hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-all"
-                  title="Cancel"
+                  title={t('cats.cancel')}
                 >
                   <X size={18} />
                 </button>
@@ -184,7 +186,7 @@ const CategoriesPage = () => {
                 className="group px-8 py-4 bg-ink text-background-main font-medium rounded-2xl flex items-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-ink/5"
               >
                 <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-                <span className="text-[10px] tracking-[0.2em] uppercase">Create</span>
+                <span className="text-[10px] tracking-[0.2em] uppercase">{t('cats.create')}</span>
               </button>
             )}
           </div>
@@ -196,7 +198,7 @@ const CategoriesPage = () => {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="SEARCH CATEGORIES..."
+            placeholder={t('cats.search')}
             className="w-full bg-ink/5 border border-ink/10 rounded-2xl py-4 pl-12 pr-4 text-text-primary text-[10px] font-medium tracking-widest uppercase placeholder:text-ink/20 focus:outline-none focus:border-accent/50 transition-all"
           />
         </div>
@@ -211,13 +213,13 @@ const CategoriesPage = () => {
               className="py-32 flex flex-col items-center justify-center text-center"
             >
               <Loader2 className="animate-spin text-accent mb-4" size={40} />
-              <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">Synchronizing...</p>
+              <p className="text-[10px] font-medium tracking-[0.4em] text-text-primary uppercase opacity-20">{t('cats.syncing')}</p>
             </motion.div>
           ) : loadFailed && collections.length === 0 ? (
             <ErrorState
               key="error"
-              title="We couldn't load your categories"
-              message="Check your connection and try again."
+              title={t('cats.loadFailed')}
+              message={t('saved.loadFailedBody')}
               onRetry={loadCollections}
             />
           ) : collections.length === 0 ? (
@@ -230,9 +232,9 @@ const CategoriesPage = () => {
               <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
                 <Tag size={40} className="text-text-secondary" />
               </div>
-              <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">No categories yet</h3>
+              <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">{t('cats.emptyTitle')}</h3>
               <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase mb-4">
-                Create one above to start organizing your closet
+                {t('cats.emptyBody')}
               </p>
             </motion.div>
           ) : filteredCollections.length === 0 ? (
@@ -245,9 +247,9 @@ const CategoriesPage = () => {
               <div className="w-24 h-24 rounded-full bg-ink/5 flex items-center justify-center mb-8 opacity-20">
                 <Search size={40} className="text-text-secondary" />
               </div>
-              <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">No matches</h3>
+              <h3 className="text-xl font-light text-text-primary tracking-[0.3em] uppercase mb-4">{t('cats.noMatches')}</h3>
               <p className="text-text-secondary text-[10px] font-medium tracking-widest uppercase mb-4">
-                No categories match "{searchQuery}"
+                {t('cats.noMatchesBody', { query: searchQuery })}
               </p>
             </motion.div>
           ) : (
@@ -281,11 +283,9 @@ const CategoriesPage = () => {
                 <div className="w-20 h-20 bg-rose-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-rose-500">
                   <Trash2 size={40} />
                 </div>
-                <h2 className="text-2xl font-light tracking-tight text-text-primary mb-2">Delete Category?</h2>
+                <h2 className="text-2xl font-light tracking-tight text-text-primary mb-2">{t('cats.deleteTitle')}</h2>
                 <p className="text-text-secondary text-sm leading-relaxed mb-8">
-                  Are you sure you want to remove{' '}
-                  <span className="text-text-primary font-bold">"{pendingDelete?.name}"</span>?
-                  Its items and outfits stay in your closet - only the category itself is deleted.
+                  {t.rich('cats.deleteBody', { name: (text) => <span className="text-text-primary font-bold">{text}</span> }, { name: pendingDelete?.name ?? '' })}
                 </p>
                 <div className="flex flex-col gap-3">
                   <button
@@ -293,14 +293,14 @@ const CategoriesPage = () => {
                     disabled={isDeleting}
                     className="w-full py-4 bg-rose-500 hover:bg-rose-600 text-white text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all flex items-center justify-center gap-2 shadow-lg shadow-rose-500/20"
                   >
-                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : 'Confirm Deletion'}
+                    {isDeleting ? <Loader2 size={16} className="animate-spin" /> : t('cats.deleteConfirm')}
                   </button>
                   <button
                     onClick={() => setPendingDelete(null)}
                     disabled={isDeleting}
                     className="w-full py-4 bg-ink/5 hover:bg-ink/10 text-text-secondary hover:text-text-primary text-xs font-medium uppercase tracking-[0.2em] rounded-full transition-all"
                   >
-                    Cancel
+                    {t('cats.cancel')}
                   </button>
                 </div>
               </div>
@@ -331,6 +331,7 @@ const CollectionCard = ({
   collection, isRenaming, renameValue, onRenameValueChange, onStartRename,
   onConfirmRename, onCancelRename, onRequestDelete, onOpenDetail,
 }: CollectionCardProps) => {
+  const { t } = useT();
   return (
     <motion.div
       layout
@@ -364,15 +365,15 @@ const CollectionCard = ({
             <h3 className="text-lg font-bold text-text-primary truncate">{collection.name}</h3>
           )}
           <p className="text-[10px] font-medium text-text-secondary uppercase tracking-widest opacity-50 mt-1">
-            {collection.items.length} {collection.items.length === 1 ? 'item' : 'items'} · {collection.outfits.length} {collection.outfits.length === 1 ? 'outfit' : 'outfits'}
+            {t('cats.counts', { items: t(collection.items.length === 1 ? 'cats.itemOne' : 'cats.itemMany', { count: collection.items.length }), outfits: t(collection.outfits.length === 1 ? 'cats.outfitOne' : 'cats.outfitMany', { count: collection.outfits.length }) })}
           </p>
         </div>
         {!isRenaming && (
           <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-            <button onClick={onStartRename} className="p-2 rounded-lg hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-colors" title="Rename">
+            <button onClick={onStartRename} className="p-2 rounded-lg hover:bg-ink/5 text-text-secondary hover:text-text-primary transition-colors" title={t('cats.rename')}>
               <Pencil size={14} />
             </button>
-            <button onClick={onRequestDelete} className="p-2 rounded-lg hover:bg-rose-500/10 text-text-secondary hover:text-rose-400 transition-colors" title="Delete">
+            <button onClick={onRequestDelete} className="p-2 rounded-lg hover:bg-rose-500/10 text-text-secondary hover:text-rose-400 transition-colors" title={t('cats.delete')}>
               <Trash2 size={14} />
             </button>
           </div>

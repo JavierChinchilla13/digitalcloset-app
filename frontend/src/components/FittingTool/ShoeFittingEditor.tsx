@@ -13,6 +13,7 @@ import { PersonaType, type ClothingTransform } from '../../types';
 import ShoeCanvas from './ShoeCanvas';
 import TransformPanel from '../editor/TransformPanel';
 import { SHOE_PAIR_PRESETS } from './Presets';
+import { useT } from '../../i18n';
 
 interface ShoeFittingEditorProps {
   leftImageUrl: string;
@@ -40,6 +41,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
   onSave, 
   onBack 
 }) => {
+  const { t } = useT();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [activeSide, setActiveSide] = useState<'left' | 'right'>('left');
@@ -72,14 +74,14 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
         <div className="flex items-center gap-3 lg:gap-6">
           <button 
             onClick={onBack}
-            aria-label="Back"
+            aria-label={t('studio.back')}
             className="p-3 hover:bg-ink/5 rounded-2xl transition-all text-text-secondary hover:text-text-primary"
           >
             <ChevronLeft size={20} />
           </button>
           <div>
-            <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic">Shoe Studio</h2>
-            <p className="hidden sm:block text-[9px] text-text-secondary font-black tracking-widest uppercase opacity-40">Precision Alignment Engine</p>
+            <h2 className="text-xl font-light tracking-tighter text-text-primary uppercase italic">{t('shoeStudio.title')}</h2>
+            <p className="hidden sm:block text-[9px] text-text-secondary font-black tracking-widest uppercase opacity-40">{t('shoeStudio.subtitle')}</p>
           </div>
         </div>
 
@@ -89,13 +91,13 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
                 onClick={() => setActiveSide('left')}
                 className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSide === 'left' ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
               >
-                Left Foot
+                {t('shoeStudio.leftFoot')}
               </button>
               <button 
                 onClick={() => setActiveSide('right')}
                 className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeSide === 'right' ? 'bg-accent text-on-accent shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
               >
-                Right Foot
+                {t('shoeStudio.rightFoot')}
               </button>
            </div>
         </div>
@@ -112,7 +114,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
           `}
         >
           <Sparkles size={16} />
-          Complete Pair
+          {t('shoeStudio.complete')}
         </button>
       </header>
 
@@ -125,14 +127,14 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-text-secondary">
                 <Type size={14} className="text-accent" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Identify Piece</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{t('shoeStudio.identify')}</span>
               </div>
               <input 
                 type="text"
                 value={name}
                 maxLength={100}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Leather Oxford Shoes"
+                placeholder={t('shoeStudio.namePlaceholder')}
                 className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-black tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all"
               />
             </div>
@@ -140,13 +142,13 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-text-secondary">
                 <AlignLeft size={14} className="text-accent" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Details</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{t('shoeStudio.details')}</span>
               </div>
               <textarea 
                 value={description}
                 maxLength={255}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add style notes..."
+                placeholder={t('shoeStudio.notesPlaceholder')}
                 rows={3}
                 className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary text-[10px] font-black tracking-widest focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all resize-none"
               />
@@ -158,7 +160,7 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
           <div className="space-y-6">
             <div className="flex items-center gap-2 text-text-secondary">
               <Footprints size={14} className="text-accent" />
-              <span className="text-[10px] font-black uppercase tracking-widest">Foot Management</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">{t('shoeStudio.management')}</span>
             </div>
             
             <div className="grid grid-cols-1 gap-3">
@@ -166,14 +168,14 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
                 onClick={() => setSkipLeft(!skipLeft)}
                 className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${skipLeft ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-ink/5 border-ink/5 text-text-secondary hover:border-ink/10'}`}
               >
-                <span className="text-[8px] font-black uppercase">Left: {skipLeft ? 'Skipped' : 'Active'}</span>
+                <span className="text-[8px] font-black uppercase">{t('shoeStudio.leftState', { state: skipLeft ? t('shoeStudio.skipped') : t('shoeStudio.active') })}</span>
                 {skipLeft ? <Undo2 size={12} /> : <Trash size={12} />}
               </button>
               <button 
                 onClick={() => setSkipRight(!skipRight)}
                 className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${skipRight ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-ink/5 border-ink/5 text-text-secondary hover:border-ink/10'}`}
               >
-                <span className="text-[8px] font-black uppercase">Right: {skipRight ? 'Skipped' : 'Active'}</span>
+                <span className="text-[8px] font-black uppercase">{t('shoeStudio.rightState', { state: skipRight ? t('shoeStudio.skipped') : t('shoeStudio.active') })}</span>
                 {skipRight ? <Undo2 size={12} /> : <Trash size={12} />}
               </button>
             </div>
@@ -182,10 +184,10 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
           <div className="hidden lg:block p-6 bg-accent/5 border border-accent/10 rounded-3xl space-y-3">
              <div className="flex items-center gap-2 text-accent">
                <Info size={14} />
-               <span className="text-[9px] font-black uppercase tracking-widest">Usage Note</span>
+               <span className="text-[9px] font-black uppercase tracking-widest">{t('shoeStudio.usageNote')}</span>
              </div>
              <p className="text-[8px] text-text-secondary leading-relaxed uppercase tracking-[0.15em] font-medium opacity-60">
-               Changes to {activeSide} transform only affect the selected asset. You can toggle between shoes at any time.
+               {t(activeSide === 'left' ? 'shoeStudio.usageBodyLeft' : 'shoeStudio.usageBodyRight')}
              </p>
           </div>
         </aside>
@@ -208,14 +210,14 @@ const ShoeFittingEditor: React.FC<ShoeFittingEditorProps> = ({
         <aside className="order-2 lg:order-3 w-full lg:w-80 shrink-0 border-t lg:border-t-0 lg:border-l border-ink/5 bg-ink/5 lg:overflow-y-auto no-scrollbar p-5 lg:p-8">
            <div className="mb-6 lg:mb-10 flex items-center justify-between">
               <h3 className="text-[10px] font-black text-text-primary uppercase tracking-[0.3em]">
-                {activeSide === 'left' ? 'LEFT FOOT' : 'RIGHT FOOT'}
+                {activeSide === 'left' ? t('shoeStudio.leftHeading') : t('shoeStudio.rightHeading')}
               </h3>
               {/* Task 71: was a blue/emerald badge keyed off which foot is
                   active - off-palette, and redundant next to the "LEFT
                   FOOT"/"RIGHT FOOT" heading right above it (same reasoning
                   as ClosetPage's persona dot, Task 70). */}
               <div className="px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-widest bg-accent/10 text-accent">
-                Calibrating...
+                {t('shoeStudio.calibrating')}
               </div>
            </div>
            

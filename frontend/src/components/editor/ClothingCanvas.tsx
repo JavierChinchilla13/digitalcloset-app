@@ -17,6 +17,7 @@ import {
 import { customizeFabricControls, lockObject } from './FabricControls';
 import { useFabricCanvas } from '../../hooks/useFabricCanvas';
 import { getStageAccentHex, getStageAccentRgba } from '../../utils/themeColors';
+import { useT } from '../../i18n';
 
 interface ClothingCanvasProps {
   imageUrl: string;
@@ -40,6 +41,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
   activeTool = 'select',
   overlay
 }) => {
+  const { t } = useT();
   const { canvasRef, fabricCanvasRef, containerRef, canvasSize, setFabricCanvas } = useFabricCanvas({
     aspectRatio: ASPECT_RATIO,
     onResize: (size, canvas) => {
@@ -594,7 +596,7 @@ const ClothingCanvas: React.FC<ClothingCanvasProps> = ({
       <div className="absolute bottom-6 left-6 flex items-center gap-4 opacity-40 pointer-events-none">
         <div className="flex flex-col gap-1">
           <p className="text-[10px] font-medium tracking-[0.4em] text-white/80 uppercase">Fabric.js v7.4 Core</p>
-          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">Absolute Virtual Engine</p>
+          <p className="text-[10px] font-medium tracking-[0.4em] text-stage-accent uppercase">{t('canvas.virtualEngine')}</p>
         </div>
       </div>
     </div>

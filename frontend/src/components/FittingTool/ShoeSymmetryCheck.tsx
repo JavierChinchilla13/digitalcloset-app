@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Layers, Copy, Sparkles, Footprints } from 'lucide-react';
+import { useT } from '../../i18n';
 
 interface ShoeSymmetryCheckProps {
   onSelect: (isDifferent: boolean) => void;
@@ -11,6 +12,7 @@ interface ShoeSymmetryCheckProps {
 // yes, the user will upload a second picture. Either way each foot can still be
 // positioned separately in the fitting step.
 const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
+  const { t } = useT();
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -21,9 +23,9 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
         <div className="inline-flex p-4 bg-accent/10 rounded-3xl text-accent mb-4">
           <Footprints size={32} />
         </div>
-        <h2 className="text-3xl sm:text-4xl font-light tracking-tighter text-text-primary uppercase italic">Pair Configuration</h2>
+        <h2 className="text-3xl sm:text-4xl font-light tracking-tighter text-text-primary uppercase italic">{t('symmetry.title')}</h2>
         <p className="text-text-secondary text-xs font-medium uppercase tracking-[0.2em] opacity-40 max-w-md mx-auto">
-          Is the other shoe visually different? 
+          {t('symmetry.question')}
         </p>
       </div>
 
@@ -42,17 +44,17 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
               <Copy size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-text-primary uppercase tracking-tighter">No, Mirror This</h3>
-              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest mt-2 opacity-50">Standard identical pair</p>
+              <h3 className="text-xl font-bold text-text-primary uppercase tracking-tighter">{t('symmetry.mirror')}</h3>
+              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest mt-2 opacity-50">{t('symmetry.mirrorHint')}</p>
             </div>
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-text-secondary">
                 <div className="w-1 h-1 bg-accent rounded-full" />
-                Auto-Horizontal Flip
+                {t('symmetry.flip')}
               </li>
               <li className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-text-secondary">
                 <div className="w-1 h-1 bg-accent rounded-full" />
-                Single Image Source
+                {t('symmetry.single')}
               </li>
             </ul>
           </div>
@@ -72,17 +74,17 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
               <Layers size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-text-primary uppercase tracking-tighter">Yes, Upload Second</h3>
-              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest mt-2 opacity-50">Asymmetrical or custom design</p>
+              <h3 className="text-xl font-bold text-text-primary uppercase tracking-tighter">{t('symmetry.different')}</h3>
+              <p className="text-[10px] text-text-secondary font-black uppercase tracking-widest mt-2 opacity-50">{t('symmetry.differentHint')}</p>
             </div>
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-text-secondary">
                 <div className="w-1 h-1 bg-emerald-400 rounded-full" />
-                Unique Left/Right Assets
+                {t('symmetry.unique')}
               </li>
               <li className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-text-secondary">
                 <div className="w-1 h-1 bg-emerald-400 rounded-full" />
-                Independent Color/Pattern
+                {t('symmetry.independent')}
               </li>
             </ul>
           </div>
@@ -92,7 +94,7 @@ const ShoeSymmetryCheck: React.FC<ShoeSymmetryCheckProps> = ({ onSelect }) => {
       <div className="bg-accent/5 border border-accent/10 rounded-3xl p-6 flex gap-4 items-start">
         <Sparkles size={16} className="text-accent shrink-0 mt-0.5" />
         <p className="text-[9px] text-text-secondary leading-relaxed uppercase tracking-widest font-bold opacity-60">
-          Tip: You can still independently adjust position, scale, and rotation for each foot in the next step, even if you mirror the image.
+          {t('symmetry.tip')}
         </p>
       </div>
     </motion.div>

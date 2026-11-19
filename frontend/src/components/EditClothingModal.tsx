@@ -26,6 +26,7 @@ import { segmentJacket } from '../utils/lazyServices';
 import { parseWarpData } from '../utils/warpData';
 import { cloudinaryService } from '../api/cloudinaryService';
 import { getApiErrorMessage } from '../utils/apiError';
+import { useT } from '../i18n';
 
 // Task 100: the studios (Fabric canvases) are separate chunks, downloaded when the editor view opens.
 const FittingEditor = lazy(() => import('./FittingTool/FittingEditor'));
@@ -53,16 +54,8 @@ const CATEGORY_ICONS: Record<ClothingCategory, LucideIcon> = {
   [ClothingCategory.DRESS]: Layers,
 };
 
-const CATEGORY_LABELS: Record<ClothingCategory, string> = {
-  [ClothingCategory.TOP]: 'Top',
-  [ClothingCategory.BOTTOM]: 'Bottom',
-  [ClothingCategory.SHOES]: 'Shoes',
-  [ClothingCategory.JACKET]: 'Jacket',
-  [ClothingCategory.ACCESSORY]: 'Accessory',
-  [ClothingCategory.DRESS]: 'Dress',
-};
-
 const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onClose, promoteToFittedOnSave }) => {
+  const { t } = useT();
   const [status, setStatus] = useState<'idle' | 'updating' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const { showToast } = useToast();
@@ -117,7 +110,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
   // the add-garment flow uses), uploads each and opens the Modular Jacket
   // Studio. Returns false when the model found nothing to split.
   const splitJacket = async (blob: Blob): Promise<boolean> => {
-    setCleanupBusy('Splitting the jacket into sections...');
+    setCleanupBusy(t('edit.splitting'));
     const parts = await segmentJacket(new File([blob], 'jacket.png', { type: 'image/png' }));
     if (parts.size === 0) return false;
     const urls: Record<string, string> = {};
@@ -143,21 +136,21 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
     try {
       const changed = result ? result.edited || !!result.trim : true;
       if (category === ClothingCategory.JACKET) {
-        setCleanupBusy('Preparing the jacket...');
+        setCleanupBusy(t('edit.preparing'));
         const source = changed ? dataUrl : cleanedImageUrl ?? item?.imageUrl ?? '';
         const blob = await (await fetch(source)).blob();
         if (await splitJacket(blob)) return;
         // Nothing to split: carry on with a single image below.
       }
       if (changed) {
-        setCleanupBusy('Saving image...');
+        setCleanupBusy(t('edit.saving'));
         const blob = await (await fetch(dataUrl)).blob();
         setCleanedImageUrl(await cloudinaryService.uploadImage(blob));
         if (result?.trim && transform) setTransform(retargetForTrim(transform, result.trim));
       }
       setView('studio');
     } catch (err: unknown) {
-      setCleanupError(getApiErrorMessage(err, 'Failed to process the image.', { ownMessages: true }));
+      setCleanupError(getApiErrorMessage(err, t('edit.processFailed'), { ownMessages: true }));
     } finally {
       setCleanupBusy(null);
     }
@@ -179,14 +172,14 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
         personaStatus: promoteToFittedOnSave ? PersonaStatus.FITTED : undefined
       });
       setStatus('success');
-      showToast(`${data.name} updated successfully`, 'success');
+      showToast(t('edit.updated', { name: data.name }), 'success');
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (err: unknown) {
       setStatus('error');
-      setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
-      showToast('Failed to update garment', 'error');
+      setErrorMessage(getApiErrorMessage(err, t('edit.updateFailed'), { ownMessages: true }));
+      showToast(t('edit.updateFailedToast'), 'error');
     }
   };
 
@@ -227,14 +220,14 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
       });
 
       setStatus('success');
-      showToast(`${finalName} updated successfully`, 'success');
+      showToast(t('edit.updated', { name: finalName }), 'success');
       setTimeout(() => {
         onClose();
       }, 1500);
     } catch (err: unknown) {
       setStatus('error');
-      setErrorMessage(getApiErrorMessage(err, 'Failed to update garment.', { ownMessages: true }));
-      showToast('Failed to update garment', 'error');
+      setErrorMessage(getApiErrorMessage(err, t('edit.updateFailed'), { ownMessages: true }));
+      showToast(t('edit.updateFailedToast'), 'error');
     }
   };
 
@@ -261,7 +254,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
             }`}
             onClick={(e) => e.stopPropagation()}
           >
-            <Suspense fallback={<div className="flex-1 h-full min-h-[40vh] flex items-center justify-center" role="status" aria-label="Loading the editor">
+            <Suspense fallback={<div className="flex-1 h-full min-h-[40vh] flex items-center justify-center" role="status" aria-label={t('edit.loading')}>
                 <Loader2 className="animate-spin text-accent" size={28} />
               </div>}>
             {view === 'form' ? (
@@ -269,11 +262,12 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                 {/* Header */}
                 <div className="flex justify-between items-center p-5 sm:p-8 border-b border-ink/5 shrink-0">
                   <div>
-                    <h2 className="text-2xl font-light tracking-tight text-text-primary">Edit Garment</h2>
-                    <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase mt-1 opacity-50">Refining your collection</p>
+                    <h2 className="text-2xl font-light tracking-tight text-text-primary">{t('edit.title')}</h2>
+                    <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase mt-1 opacity-50">{t('edit.subtitle')}</p>
                   </div>
                   <button 
                     onClick={onClose}
+                    aria-label={t('common.close')}
                     className="p-3 hover:bg-ink/5 rounded-full transition-colors text-text-secondary hover:text-text-primary"
                   >
                     <X size={20} />
@@ -288,15 +282,15 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                         <Sparkles size={20} />
                       </div>
                       <div>
-                        <h4 className="text-[10px] font-medium uppercase tracking-widest text-text-primary">Fabric Studio</h4>
-                        <p className="text-[10px] text-text-secondary uppercase tracking-widest opacity-60">Clean up, resize and reposition garment</p>
+                        <h4 className="text-[10px] font-medium uppercase tracking-widest text-text-primary">{t('edit.studio')}</h4>
+                        <p className="text-[10px] text-text-secondary uppercase tracking-widest opacity-60">{t('edit.studioHint')}</p>
                       </div>
                     </div>
                     <button 
                       onClick={handleOpenStudio}
                       className="px-6 py-3.5 bg-accent hover:bg-accent-hover text-on-accent text-[10px] font-medium uppercase tracking-widest rounded-xl transition-all shadow-lg"
                     >
-                      Open Studio
+                      {t('edit.openStudio')}
                     </button>
                   </div>
 
@@ -304,7 +298,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-medium">
                       <Shirt size={12} className="text-accent" />
-                      <span>Category</span>
+                      <span>{t('edit.category')}</span>
                     </div>
                     <div className="flex flex-wrap justify-center gap-3">
                       {Object.values(ClothingCategory)
@@ -326,7 +320,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                             `}
                           >
                             <Icon size={20} />
-                            <span className="text-[10px] font-medium uppercase tracking-widest">{CATEGORY_LABELS[cat]}</span>
+                            <span className="text-[10px] font-medium uppercase tracking-widest">{t(`catLabel.${cat}`)}</span>
                           </motion.button>
                         );
                       })}
@@ -337,14 +331,14 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-medium">
                       <Type size={12} className="text-accent" />
-                      <span>Garment Name</span>
+                      <span>{t('edit.name')}</span>
                     </div>
                     <input 
                       type="text"
                       value={name}
                       maxLength={100}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Oversized Cashmere Sweater"
+                      placeholder={t('edit.namePlaceholder')}
                       className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary placeholder:text-ink/20 focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all"
                     />
                   </div>
@@ -353,13 +347,13 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                   <div className="space-y-4">
                     <div className="flex items-center gap-2 text-text-secondary uppercase tracking-[0.2em] text-[10px] font-medium">
                       <AlignLeft size={12} className="text-accent" />
-                      <span>Description</span>
+                      <span>{t('edit.description')}</span>
                     </div>
                     <textarea 
                       value={description}
                       maxLength={255}
                       onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Add details about fit, material, or style..."
+                      placeholder={t('edit.descriptionPlaceholder')}
                       rows={4}
                       className="w-full bg-ink/5 border border-ink/5 rounded-2xl px-6 py-4 text-text-primary placeholder:text-ink/20 focus:outline-none focus:border-accent/50 focus:bg-ink/10 transition-all resize-none"
                     />
@@ -372,13 +366,13 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                     {status === 'updating' && (
                       <div className="flex items-center gap-2 text-accent">
                         <Loader2 size={16} className="animate-spin" />
-                        <span className="text-[10px] font-medium uppercase tracking-widest">Updating...</span>
+                        <span className="text-[10px] font-medium uppercase tracking-widest">{t('edit.updating')}</span>
                       </div>
                     )}
                     {status === 'success' && (
                       <div className="flex items-center gap-2 text-emerald-400">
                         <CheckCircle2 size={16} />
-                        <span className="text-[10px] font-medium uppercase tracking-widest">Saved Successfully</span>
+                        <span className="text-[10px] font-medium uppercase tracking-widest">{t('edit.saved')}</span>
                       </div>
                     )}
                     {status === 'error' && (
@@ -394,7 +388,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                       onClick={onClose}
                       className="flex-1 sm:flex-none px-4 sm:px-8 py-4 text-text-secondary hover:text-text-primary text-[10px] font-medium uppercase tracking-widest transition-colors"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                     <button 
                       onClick={() => handleUpdate()}
@@ -407,7 +401,7 @@ const EditClothingModal: React.FC<EditClothingModalProps> = ({ item, isOpen, onC
                         }
                       `}
                     >
-                      Save Changes
+                      {t('edit.save')}
                     </button>
                   </div>
                 </div>

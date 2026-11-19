@@ -8,6 +8,8 @@ import AdSlot from '../components/ads/AdSlot';
 import ConsentBanner from '../components/ConsentBanner';
 import { useConsentStore } from '../store/useConsentStore';
 import { useAuthStore } from '../store/useAuthStore';
+import LanguageToggle, { LanguageAnnouncer } from '../components/LanguageToggle';
+import { useT } from '../i18n';
 
 // The frame of every page: navbar on top, the routed page in the middle, footer below.
 const MainLayout = () => {
@@ -15,6 +17,7 @@ const MainLayout = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const reopenConsent = useConsentStore((state) => state.reopen);
+  const { t } = useT();
 
   return (
     <div className="min-h-dvh bg-background-main flex flex-col">
@@ -28,10 +31,10 @@ const MainLayout = () => {
           resetKeys={[location.pathname]}
           fallback={({ reset }) => (
             <ErrorState
-              title="This page ran into a problem"
-              message="Something went wrong while showing this page. You can try again, or head back home."
+              title={t('layout.errorTitle')}
+              message={t('layout.errorMessage')}
               onRetry={reset}
-              secondaryLabel="Go home"
+              secondaryLabel={t('layout.goHome')}
               onSecondary={() => navigate(isAuthenticated ? '/showcase' : '/')}
             />
           )}
@@ -40,7 +43,7 @@ const MainLayout = () => {
               chunk that fails to load lands in the error state above like any other render error. */}
           <Suspense
             fallback={
-              <div className="flex justify-center py-32" role="status" aria-label="Loading">
+              <div className="flex justify-center py-32" role="status" aria-label={t('common.loading')}>
                 <Loader2 className="animate-spin text-accent" size={28} />
               </div>
             }
@@ -55,17 +58,20 @@ const MainLayout = () => {
 
       <footer className="py-12 border-t border-ink/5 text-center text-text-secondary text-sm space-y-4">
         {/* Task 99: legal pages and the way back to the cookie choice. */}
-        <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-widest">
-          <Link to="/privacy" className="hover:text-text-primary transition-colors">Privacy</Link>
-          <Link to="/terms" className="hover:text-text-primary transition-colors">Terms</Link>
+        <nav aria-label={t('footer.nav')} className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[10px] uppercase tracking-widest">
+          <Link to="/privacy" className="hover:text-text-primary transition-colors">{t('footer.privacy')}</Link>
+          <Link to="/terms" className="hover:text-text-primary transition-colors">{t('footer.terms')}</Link>
           <button type="button" onClick={reopenConsent} className="uppercase tracking-widest hover:text-text-primary transition-colors">
-            Cookie settings
+            {t('footer.cookies')}
           </button>
+          {/* The language toggle for everyone (signed out visitors have no account menu). */}
+          <LanguageToggle variant="footer" />
         </nav>
-        <p>© 2026 VYSVI. DESIGNED FOR THE FUTURE OF FASHION.</p>
+        <p>{t('footer.rights')}</p>
       </footer>
 
       <ConsentBanner />
+      <LanguageAnnouncer />
     </div>
   );
 };

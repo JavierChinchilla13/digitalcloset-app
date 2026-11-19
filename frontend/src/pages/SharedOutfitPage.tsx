@@ -7,6 +7,7 @@ import { publicOutfitService, type PublicOutfit } from '../api/publicOutfitServi
 import { buildOutfitPersona } from '../utils/personaEligibility';
 import { useAuthStore } from '../store/useAuthStore';
 import type { ClothingItem, Outfit } from '../types';
+import { useT } from '../i18n';
 
 type Status = 'loading' | 'ready' | 'gone' | 'error';
 
@@ -14,6 +15,7 @@ type Status = 'loading' | 'ready' | 'gone' | 'error';
 // It draws the outfit from the data in the link alone - never the visitor's own closet - and tells
 // search engines not to index it. A link that was turned off (or never existed) shows a friendly note.
 const SharedOutfitPage = () => {
+  const { t } = useT();
   const { token = '' } = useParams<{ token: string }>();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [status, setStatus] = useState<Status>('loading');
@@ -85,7 +87,7 @@ const SharedOutfitPage = () => {
 
   if (status === 'loading') {
     return (
-      <div className="flex justify-center py-32" role="status" aria-label="Loading the outfit">
+      <div className="flex justify-center py-32" role="status" aria-label={t('sharedPage.loading')}>
         <Loader2 className="animate-spin text-accent" size={32} />
       </div>
     );
@@ -94,12 +96,12 @@ const SharedOutfitPage = () => {
   if (status === 'gone') {
     return (
       <div className="min-h-[60dvh] flex flex-col items-center justify-center text-center px-6 gap-6">
-        <h1 className="text-xl font-light tracking-[0.2em] uppercase text-text-primary">This outfit is no longer shared</h1>
+        <h1 className="text-xl font-light tracking-[0.2em] uppercase text-text-primary">{t('sharedPage.goneTitle')}</h1>
         <p className="text-text-secondary text-sm max-w-sm">
-          The link was turned off by its owner, or it never existed.
+          {t('sharedPage.goneBody')}
         </p>
         <Link to="/" className="px-8 py-4 bg-ink text-background-main rounded-full text-[11px] tracking-[0.2em] uppercase">
-          Go to VYSVI
+          {t('sharedPage.goHome')}
         </Link>
       </div>
     );
@@ -108,8 +110,8 @@ const SharedOutfitPage = () => {
   if (status === 'error' || !data || !persona) {
     return (
       <ErrorState
-        title="We couldn't load this outfit"
-        message="Check your connection and try again."
+        title={t('sharedPage.errorTitle')}
+        message={t('saved.loadFailedBody')}
         onRetry={() => setAttempt((n) => n + 1)}
       />
     );
@@ -119,7 +121,7 @@ const SharedOutfitPage = () => {
     <div className="min-h-dvh flex flex-col items-center px-6 pb-16">
       <div className="text-center mb-6 mt-4">
         <span className="inline-block px-4 py-1 rounded-full border border-accent/30 text-accent text-[10px] font-medium tracking-[0.4em] mb-4 bg-accent/5 uppercase">
-          Shared outfit
+          {t('sharedPage.badge')}
         </span>
         <h1 className="text-2xl sm:text-3xl font-light tracking-[0.15em] uppercase text-text-primary">{data.name}</h1>
       </div>
@@ -129,13 +131,13 @@ const SharedOutfitPage = () => {
       </div>
 
       <div className="mt-8 text-center space-y-3">
-        <p className="text-text-secondary text-xs tracking-widest uppercase">Made with VYSVI</p>
+        <p className="text-text-secondary text-xs tracking-widest uppercase">{t('sharedPage.madeWith')}</p>
         <Link
           to={isAuthenticated ? '/showcase' : '/signup'}
           className="inline-flex items-center gap-3 px-8 py-4 bg-ink text-background-main rounded-full text-[11px] tracking-[0.2em] uppercase transition-all hover:scale-105 active:scale-95"
         >
           <Sparkles size={16} />
-          {isAuthenticated ? 'Open your closet' : 'Make your own outfits'}
+          {isAuthenticated ? t('sharedPage.openCloset') : t('sharedPage.makeOwn')}
         </Link>
       </div>
     </div>

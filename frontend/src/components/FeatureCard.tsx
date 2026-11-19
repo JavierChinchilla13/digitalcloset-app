@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
+import { useT } from '../i18n';
 
 interface FeatureCardProps {
   icon: LucideIcon;
@@ -17,6 +18,7 @@ interface FeatureCardProps {
 // Landing page feature tile. Hover (desktop) or tap (touch) swaps the tile's
 // text for a looping capture of the actual feature.
 const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardProps) => {
+  const { t } = useT();
   const [isActive, setIsActive] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
   // Task 100: the clip is requested the first time the card is hovered or tapped, not on page load
@@ -50,8 +52,8 @@ const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardP
       <p className="text-text-secondary text-sm leading-relaxed">{desc}</p>
       {hasPreview && (
         <p className="absolute bottom-5 left-6 sm:left-10 text-[9px] font-medium tracking-[0.3em] uppercase text-accent/70">
-          <span className="touch:hidden">Hover to preview</span>
-          <span className="hidden touch:inline">Tap to preview</span>
+          <span className="touch:hidden">{t('landing.card.hover')}</span>
+          <span className="hidden touch:inline">{t('landing.card.tap')}</span>
         </p>
       )}
 
@@ -62,7 +64,7 @@ const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardP
         >
           {wantsMedia && <img
             src={media}
-            alt={`${title.toLowerCase()} in action`}
+            alt={t('landing.card.alt', { title: title.toLowerCase() })}
             onError={() => setMediaFailed(true)}
             className="w-full h-full object-cover"
             decoding="async"

@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach, expect } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { useLanguageStore } from '../i18n';
 
 // Task 23: shared test setup. Unmount anything a test rendered and wipe
 // localStorage so persisted zustand stores (auth, closet, persona) never leak
@@ -8,6 +9,9 @@ import { cleanup } from '@testing-library/react';
 afterEach(() => {
   cleanup();
   localStorage.clear();
+  // The site's language is a module-wide store: every test starts in English (the default) whatever the previous one chose.
+  useLanguageStore.setState({ language: 'en' });
+  document.documentElement.lang = 'en';
   // RULE: no test may reach a real external host (Cloudinary, Stripe, Google, a mail provider...). A test that tried is failed here,
   // even if the code under test swallowed the error. Stand-ins must be explicit (vi.mock of the api modules, a stubbed fetch).
   const attempted = networkViolations.splice(0);
