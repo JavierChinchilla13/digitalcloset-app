@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 import { reportApiFailure } from '../monitoring/sentry';
+import { watchForSlowServer } from './wakingNotice';
 
 // Task 24: '/api' is right whenever the site and the API share an origin - the
 // Vite dev server proxies it, and in production the reverse proxy (Caddy, see
@@ -85,5 +86,8 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Audit H11: says so when the sleeping free-tier API is slow to wake (see wakingNotice.ts).
+watchForSlowServer(api);
 
 export default api;

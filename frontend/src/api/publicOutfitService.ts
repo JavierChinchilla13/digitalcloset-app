@@ -1,11 +1,13 @@
 import axios from 'axios';
 import { API_BASE_URL } from './axios';
 import type { ClothingCategory, PersonaStatus, PersonaType, ClothingTransform } from '../types';
+import { watchForSlowServer } from './wakingNotice';
 
 // Task 102: reads a shared outfit by its public token. Uses its own bare axios instance on purpose:
 // the app's main instance attaches the visitor's token and logs them out on a 401, and a public page
 // must do neither (a signed-in visitor with an expired session still just sees the outfit).
 const publicApi = axios.create({ baseURL: API_BASE_URL, timeout: 60000 });
+watchForSlowServer(publicApi);
 
 export interface PublicGarment {
   itemId: number;
