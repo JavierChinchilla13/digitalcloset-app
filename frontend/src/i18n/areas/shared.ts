@@ -17,6 +17,8 @@ export const shared = defineMessages(
     'storageModal.soon': 'Plans with more space are coming soon.',
     'storageModal.gotIt': 'Got it',
 
+    'waking.message': 'Waking the server, this can take up to a minute the first time…',
+
     'delete.title': 'Delete Garment?',
     'delete.body': 'Are you sure you want to remove <name>"{name}"</name>? This action is permanent and cannot be undone.',
     'delete.confirm': 'Confirm Deletion',
@@ -38,6 +40,8 @@ export const shared = defineMessages(
     'storageModal.title': 'Tu clóset está lleno',
     'storageModal.soon': 'Pronto habrá planes con más espacio.',
     'storageModal.gotIt': 'Entendido',
+
+    'waking.message': 'Despertando el servidor; la primera vez puede tardar hasta un minuto…',
 
     'delete.title': '¿Eliminar prenda?',
     'delete.body': '¿Seguro que quieres quitar <name>"{name}"</name>? Esta acción es permanente y no se puede deshacer.',

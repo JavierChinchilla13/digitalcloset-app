@@ -10,6 +10,7 @@ import { useConsentStore } from '../store/useConsentStore';
 import { useAuthStore } from '../store/useAuthStore';
 import LanguageToggle, { LanguageAnnouncer } from '../components/LanguageToggle';
 import { useT } from '../i18n';
+import WakingNotice from '../components/WakingNotice';
 
 // The frame of every page: navbar on top, the routed page in the middle, footer below.
 const MainLayout = () => {
@@ -22,6 +23,7 @@ const MainLayout = () => {
   return (
     <div className="min-h-dvh bg-background-main flex flex-col">
       <Navbar />
+      <WakingNotice />
       <main className="flex-grow pt-[calc(5.5rem+env(safe-area-inset-top))] md:pt-24">
         {/* Task 22: a page that crashes while rendering shows a recoverable
             error instead of a blank screen, and the navbar keeps working. It
