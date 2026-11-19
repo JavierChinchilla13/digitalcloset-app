@@ -6,7 +6,7 @@ import FeatureCard from '../components/FeatureCard';
 import { useT } from '../i18n';
 
 // Real, in-app captures used as marketing material (Task 80) - not stock
-// footage or mockups. See PROJECT_BLUEPRINT.md for how these were recorded.
+// footage or mockups. See the project history for how these were recorded.
 const OUTFIT_BUILDER_GIF = '/marketing/outfit-builder-demo.gif';
 const CLOSET_BROWSING_GIF = '/marketing/closet-browsing-demo.gif';
 const PERSONA_GIF = '/marketing/persona-demo.gif';
@@ -30,7 +30,7 @@ const LandingPage = () => {
               {t('landing.tag')}
             </span>
             {/* Task 74: the real logo (verified already-transparent, see
-                PROJECT_BLUEPRINT.md Phase 9.7) replaces Task 72's text
+                the project history) replaces Task 72's text
                 lockup here - confirmed with the user. An <h1> is kept,
                 visually hidden, so the page still has a real text
                 heading for accessibility/SEO. */}

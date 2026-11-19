@@ -4,10 +4,9 @@ A guide to how this repository is organised: what every directory and module is
 for, how the pieces talk to each other, and where to look when you want to change
 something. Read it top to bottom once; after that use it as a map.
 
-> **Two other documents matter.** `PROJECT_BLUEPRINT.md` is the history: every task,
-> why it was done, and what was verified (look up a "Task NN" mentioned in a code
-> comment there). `DEPLOYMENT.md` is how to put the app on a server. This file is
-> the *current shape* of the code.
+> **One other document matters.** `DEPLOYMENT.md` is how to put the app on a server.
+> This file is the *current shape* of the code. (A "Task NN" in a code comment refers to
+> the project's development history, which is kept outside the repository.)
 
 ## 1. What the app is
 
@@ -45,7 +44,6 @@ Digital-Closet/
 ├── scripts/backup-db.sh Database backup helper
 ├── .github/workflows/ci.yml  Tests + production-image smoke test on every push
 ├── DEPLOYMENT.md        How to deploy (Render + Supabase, or Docker on one machine)
-├── PROJECT_BLUEPRINT.md The roadmap / task history / decisions
 ├── PROJECT_STRUCTURE.md This file
 ├── CLAUDE.md            Working rules for the AI coding assistant
 └── README.md            Short intro
@@ -54,7 +52,7 @@ Digital-Closet/
 The root `README.md`'s feature list predates several features (it still mentions
 local-only outfit storage; outfits now live in the database). The old per-folder notes
 (`frontend/README.md`, `FRONTEND_CHANGES.md`, `backend/HELP.md`,
-`IMPLEMENTATION_SUMMARY.md`) were removed; `PROJECT_BLUEPRINT.md` has the history.
+`IMPLEMENTATION_SUMMARY.md`) were removed.
 
 ## 3. Frontend (`frontend/`)
 
@@ -346,7 +344,7 @@ use single-use, expiring tokens/codes whose **hashes** are stored.
 
 - **Comments.** Files and functions carry a short comment saying *why* (the
   reason, the trade-off, the task that introduced it). "Task NN" refers to
-  `PROJECT_BLUEPRINT.md`.
+  the project's development history (kept outside the repository).
   Every source file has a purpose comment.
 - **Don't duplicate; reuse.** Look for an existing component/util first (the
   persona rendering, thumbnails, eligibility and layer rules each have one home).
