@@ -7,7 +7,7 @@ import { ClothingCategory } from '../types';
 import CroppedThumbnail from '../components/CroppedThumbnail';
 import ClothingCategoryFilter from '../components/ClothingCategoryFilter';
 import DemoSignupModal from '../components/DemoSignupModal';
-import { SelectionCard } from '../components/OutfitSelectionCards';
+import { SelectionCard, ShoeSubRow } from '../components/OutfitSelectionCards';
 import { toggleWithShoeRule } from '../utils/shoeSelection';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useT, type MessageKey } from '../i18n';
@@ -97,8 +97,11 @@ const DemoPage = () => {
     [selectedItemIds, items]
   );
 
+  // Shoes are shown as the left/right pair row (ShoeSubRow), like the real builder; the other sections as cards.
+  const shoeItems = useMemo(() => selectedItems.filter((item) => item.category === ClothingCategory.SHOES), [selectedItems]);
   const selectionSections = useMemo(
     () => SECTIONS
+      .filter((s) => !s.categories.includes(ClothingCategory.SHOES))
       .map((s) => ({ labelKey: s.labelKey, items: groupByCategories(selectedItems, s.categories) }))
       .filter((s) => s.items.length > 0),
     [selectedItems]
@@ -333,6 +336,14 @@ const DemoPage = () => {
                     </div>
                   </div>
                 ))}
+                {shoeItems.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-medium text-text-secondary uppercase tracking-[0.3em] opacity-60">
+                      {t('builder.shoes')}
+                    </p>
+                    <ShoeSubRow items={shoeItems} onRemove={removeItem} showPersonaBadge={false} />
+                  </div>
+                )}
               </div>
             )}
           </main>
@@ -369,7 +380,7 @@ const DemoPage = () => {
                 />
               </div>
               <div className="flex flex-wrap justify-center gap-2">
-                {['ALL', ...Object.values(ClothingCategory)].map((cat) => (
+                {(['ALL', ...Object.values(ClothingCategory)] as Array<'ALL' | ClothingCategory>).map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
@@ -379,7 +390,7 @@ const DemoPage = () => {
                         : 'bg-ink/5 text-text-secondary border-ink/5 hover:border-ink/20'
                     }`}
                   >
-                    {cat}
+                    {t(`cat.${cat}`)}
                   </button>
                 ))}
               </div>
@@ -447,7 +458,8 @@ const DemoPage = () => {
                           {item.name}
                         </h3>
                         <p className="text-[10px] text-text-secondary font-medium tracking-widest uppercase opacity-40 mt-0.5">
-                          {item.category}
+                          {t(`cat.${item.category}`)}
+                          {item.category === ClothingCategory.SHOES && item.side && ` · ${t(`side.${item.side}`)}`}
                         </p>
                       </div>
                     </motion.div>

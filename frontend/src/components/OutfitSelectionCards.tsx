@@ -46,20 +46,20 @@ export const SelectionCard = ({ item, onRemove, showPersonaBadge = true }: CardP
 // pairShoesForDisplay) instead of the generic grid; any unpaired items (no
 // recorded side, or an extra pair) fall back to the same denser grid used
 // elsewhere, in a secondary row underneath.
-export const ShoeSubRow = ({ items, onRemove }: { items: ClothingItem[]; onRemove: (itemId: number) => void }) => {
+export const ShoeSubRow = ({ items, onRemove, showPersonaBadge = true }: { items: ClothingItem[]; onRemove: (itemId: number) => void; showPersonaBadge?: boolean }) => {
   const { left, right, unpaired } = pairShoesForDisplay(items);
   return (
     <div className="space-y-1.5">
       {(left || right) && (
         <div className="flex gap-4 justify-center">
-          {left && <SelectionCard item={left} onRemove={onRemove} />}
-          {right && <SelectionCard item={right} onRemove={onRemove} />}
+          {left && <SelectionCard item={left} onRemove={onRemove} showPersonaBadge={showPersonaBadge} />}
+          {right && <SelectionCard item={right} onRemove={onRemove} showPersonaBadge={showPersonaBadge} />}
         </div>
       )}
       {unpaired.length > 0 && (
         <div className="flex flex-wrap gap-4 justify-center">
           {unpaired.map((item) => (
-            <SelectionCard key={item.itemId} item={item} onRemove={onRemove} />
+            <SelectionCard key={item.itemId} item={item} onRemove={onRemove} showPersonaBadge={showPersonaBadge} />
           ))}
         </div>
       )}
