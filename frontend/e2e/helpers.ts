@@ -33,7 +33,7 @@ export async function registerAccount(request: APIRequestContext, prefix = 'e2e'
 }
 
 // A garment picture served by the site itself (no external image host is needed).
-const IMAGE = '/marketing/garments/shirt-white.png';
+const IMAGE = 'http://localhost:4173/marketing/garments/shirt-white.png';
 
 const TRANSFORM = { x: 375, y: 420, scaleX: 1, scaleY: 1, rotation: 0, width: 300, height: 300 };
 

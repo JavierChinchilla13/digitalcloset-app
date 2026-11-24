@@ -38,7 +38,7 @@ test('a free closet takes 15 garments through the upload flow, then says it is f
   // And the server holds the same line.
   const refused = await request.post('/api/clothing', {
     headers: { Authorization: `Bearer ${account.token}` },
-    data: { name: 'one too many', category: 'TOP', imageUrl: '/marketing/garments/shirt-white.png', personaType: 'MALE' },
+    data: { name: 'one too many', category: 'TOP', imageUrl: 'http://localhost:4173/marketing/garments/shirt-white.png', personaType: 'MALE' },
   });
   expect(refused.status()).toBe(403);
   expect((await refused.json()).code).toBe('GARMENT_LIMIT');
