@@ -205,7 +205,7 @@ const ClothingCard: React.FC<ClothingCardProps> = ({
               like an accidental duplicate rather than one matching pair.
               Still two independently equippable items on purpose (a
               mismatched pair is a legitimate choice), just labeled clearly. */}
-          {item.category === 'SHOES' && item.side && ` · ${item.side}`}
+          {item.category === 'SHOES' && item.side && ` · ${t(`side.${item.side}`)}`}
         </p>
       </div>
     </motion.div>

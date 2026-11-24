@@ -53,6 +53,9 @@ export const parts = defineMessages(
     'picker.new': 'New Category',
 
     'storage.limitMessage': "You've used {used} of {limit} garments. Delete a garment to add another.",
+
+    'side.left': 'left',
+    'side.right': 'right',
   },
   {
     'firstRun.label': 'Primeros pasos',
@@ -105,5 +108,8 @@ export const parts = defineMessages(
     'picker.new': 'Nueva categoría',
 
     'storage.limitMessage': 'Has usado {used} de {limit} prendas. Elimina una prenda para agregar otra.',
+
+    'side.left': 'izquierdo',
+    'side.right': 'derecho',
   },
 );

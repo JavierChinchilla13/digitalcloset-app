@@ -172,7 +172,7 @@ const LayerPanel: React.FC<LayerPanelProps> = ({ stack, items, selectedId, onSel
                 <p className="flex-1 min-w-0 text-[10px] font-bold uppercase tracking-wider text-text-primary line-clamp-2">
                   {item.name}
                   {item.category === ClothingCategory.SHOES && item.side && (
-                    <span className="text-accent"> · {item.side}</span>
+                    <span className="text-accent"> · {t(`side.${item.side}`)}</span>
                   )}
                 </p>
                 <div className="flex flex-col gap-1 touch:flex-row touch:gap-1.5" onClick={(e) => e.stopPropagation()}>

@@ -339,7 +339,7 @@ const FlatOutfitBuilderPage = () => {
     if (replaced.length > 0) {
       const incoming = items.find((item) => item.itemId === itemId);
       const label = (item: ClothingItem | undefined) =>
-        item ? `${item.name}${item.side ? ` (${item.side})` : ''}` : t('builder.shoe');
+        item ? `${item.name}${item.side ? ` (${t(`side.${item.side}`)})` : ''}` : t('builder.shoe');
       showToast(t('builder.replaced', { old: replaced.map(label).join(t('builder.and')), new: label(incoming) }), 'info');
     }
   };
@@ -683,7 +683,7 @@ const FlatOutfitBuilderPage = () => {
                                     as an accidental duplicate rather than one pair.
                                     Still independently equippable on purpose. */}
                                 {item.category === ClothingCategory.SHOES && item.side && (
-                                  <span className="text-accent"> · {item.side}</span>
+                                  <span className="text-accent"> · {t(`side.${item.side}`)}</span>
                                 )}
                               </p>
                             </div>

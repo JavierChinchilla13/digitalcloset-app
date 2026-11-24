@@ -66,7 +66,7 @@ local-only outfit storage; outfits now live in the database). The old per-folder
 | `tsconfig*.json`, `eslint.config.js`, `postcss.config.js` | Tooling. |
 | `Dockerfile`, `Caddyfile`, `.dockerignore` | Production image: builds the site, serves it with Caddy (automatic HTTPS, `/api` proxy, SPA fallback). |
 | `.env.example` | Environment variables (all `VITE_*`, i.e. **public**, baked in at build time): Cloudinary cloud name + unsigned preset, background-remover mode/URL, optional `VITE_API_URL`. |
-| `public/` | Static files served as-is: `personas/` (the two mannequin PNGs), `marketing/` (landing-page GIFs and the demo's sample garments), logos/favicons. |
+| `public/` | Static files served as-is: `personas/` (the two mannequin PNGs), `marketing/` (landing-page GIFs and the demo's sample garments: illustrative renders, no brands), logos/favicons. |
 | `dist/` | Build output (git-ignored). |
 
 ### 3.2 `src/` entry points

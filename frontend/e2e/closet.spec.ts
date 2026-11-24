@@ -14,7 +14,7 @@ test('a free closet takes 15 garments through the upload flow, then says it is f
 
   // The upload goes to Cloudinary; answer it with a picture the site serves itself.
   await page.route('https://api.cloudinary.com/**', (route) =>
-    route.fulfill({ json: { secure_url: 'http://localhost:4173/samples/black-tee.png' } })
+    route.fulfill({ json: { secure_url: 'http://localhost:4173/marketing/garments/shirt-white.png' } })
   );
 
   await signIn(page, account.email);
@@ -38,7 +38,7 @@ test('a free closet takes 15 garments through the upload flow, then says it is f
   // And the server holds the same line.
   const refused = await request.post('/api/clothing', {
     headers: { Authorization: `Bearer ${account.token}` },
-    data: { name: 'one too many', category: 'TOP', imageUrl: '/samples/black-tee.png', personaType: 'MALE' },
+    data: { name: 'one too many', category: 'TOP', imageUrl: '/marketing/garments/shirt-white.png', personaType: 'MALE' },
   });
   expect(refused.status()).toBe(403);
   expect((await refused.json()).code).toBe('GARMENT_LIMIT');
