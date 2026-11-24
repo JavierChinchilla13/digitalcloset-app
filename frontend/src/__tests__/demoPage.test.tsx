@@ -44,7 +44,7 @@ describe('DemoPage', () => {
     renderDemo();
 
     expect(screen.getByText('0 Items Selected')).toBeInTheDocument();
-    await user.click(cardFor('Black Tee'));
+    await user.click(cardFor('White Shirt'));
 
     expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
     expect(clothingService.getClothingItems).not.toHaveBeenCalled();
@@ -55,7 +55,7 @@ describe('DemoPage', () => {
   it('has no live persona: no preview toggle, no switcher, no badges', async () => {
     const user = userEvent.setup();
     renderDemo();
-    await user.click(cardFor('Black Tee'));
+    await user.click(cardFor('White Shirt'));
 
     expect(screen.queryByRole('button', { name: /preview on persona/i })).not.toBeInTheDocument();
     expect(screen.queryByAltText('Mannequin')).not.toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('DemoPage', () => {
     const button = screen.getByRole('button', { name: /view on persona/i });
     expect(button).toBeDisabled();
 
-    await user.click(cardFor('Black Tee'));
+    await user.click(cardFor('White Shirt'));
     expect(button).toBeEnabled();
     await user.click(button);
 
@@ -97,7 +97,7 @@ describe('DemoPage', () => {
     const user = userEvent.setup();
     renderDemo();
 
-    await user.click(cardFor('University Blue Sneaker'));
+    await user.click(cardFor('White Sneakers'));
     expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
   });
 
@@ -105,12 +105,12 @@ describe('DemoPage', () => {
     const user = userEvent.setup();
     renderDemo();
 
-    await user.click(cardFor('University Blue Sneaker'));
+    await user.click(cardFor('White Sneakers'));
     expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
 
-    await user.click(cardFor('Black Chukka Boot'));
+    await user.click(cardFor('Black & White Sneakers'));
     expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Replaced University Blue Sneaker with Black Chukka Boot');
+    expect(screen.getByRole('status')).toHaveTextContent('Replaced White Sneakers with Black & White Sneakers');
   });
 
   it('Save Outfit opens the sign-up gate instead of saving anything', async () => {
@@ -136,7 +136,7 @@ describe('DemoPage', () => {
     const user = userEvent.setup();
     renderDemo();
 
-    await user.click(within(cardFor('Black Tee')).getByTitle('Edit'));
+    await user.click(within(cardFor('White Shirt')).getByTitle('Edit'));
 
     expect(await screen.findByText(/create a free account to edit this item/i)).toBeInTheDocument();
     expect(clothingService.updateClothingItem).not.toHaveBeenCalled();
@@ -146,7 +146,7 @@ describe('DemoPage', () => {
     const user = userEvent.setup();
     renderDemo();
 
-    await user.click(within(cardFor('Black Tee')).getByTitle('Delete'));
+    await user.click(within(cardFor('White Shirt')).getByTitle('Delete'));
 
     expect(await screen.findByText(/create a free account to delete this item/i)).toBeInTheDocument();
     expect(clothingService.deleteClothingItem).not.toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe('DemoPage', () => {
     const user = userEvent.setup();
     renderDemo();
 
-    await user.click(cardFor('Black Tee'));
+    await user.click(cardFor('White Shirt'));
     expect(await screen.findByText('1 Item Selected')).toBeInTheDocument();
 
     await user.click(screen.getByTitle('Remove from outfit'));
