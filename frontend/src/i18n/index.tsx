@@ -7,6 +7,7 @@ import { settings } from './areas/settings';
 import { closet } from './areas/closet';
 import { shared } from './areas/shared';
 import { parts } from './areas/parts';
+import { serverErrors } from './areas/serverErrors';
 import { studio } from './areas/studio';
 import { categories } from './areas/categories';
 import { persona } from './areas/persona';
@@ -21,7 +22,7 @@ export type Language = 'en' | 'es';
 
 export const LANGUAGE_STORAGE_KEY = 'vysvi-language';
 
-const AREAS = [shell, auth, landing, settings, closet, shared, parts, garment, outfits, persona, categories, studio];
+const AREAS = [shell, auth, landing, settings, closet, shared, parts, garment, outfits, persona, categories, studio, serverErrors];
 
 // Every English text and every Spanish text, merged. (Exported for the parity test.)
 export const dictionaries: Record<Language, Record<string, string>> = {
@@ -41,7 +42,8 @@ export type MessageKey =
   | keyof typeof outfits.en
   | keyof typeof persona.en
   | keyof typeof categories.en
-  | keyof typeof studio.en;
+  | keyof typeof studio.en
+  | keyof typeof serverErrors.en;
 
 const readStoredLanguage = (): Language => {
   try {

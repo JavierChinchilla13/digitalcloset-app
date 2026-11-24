@@ -6,6 +6,7 @@
 //   - the stores showed axios's own text ("Request failed with status code 500").
 
 import { translate } from '../i18n';
+import { translateServerMessage } from './serverMessages';
 
 // (The English sentences below are the exported constants; the messages returned are looked up in the language on screen.)
 export const NETWORK_ERROR_MESSAGE =
@@ -63,7 +64,7 @@ export function getApiErrorMessage(err: unknown, fallback: string, options: { ow
     // A stable error code has its own translated sentence (the server's text is English only).
     if ((data as { code?: unknown } | undefined)?.code === 'AGE_NOT_ALLOWED') return translate('age.blocked');
     const reason = (status === 400 ? firstFieldError(data?.errors) : null) ?? asText(data?.message);
-    if (reason) return reason;
+    if (reason) return translateServerMessage(reason, data as { code?: unknown; limit?: unknown; plan?: unknown } | undefined);
     if (status === 429) return translate('error.rateLimit');
     return fallback;
   }

@@ -261,8 +261,8 @@ describe('error messages', () => {
     useLanguageStore.getState().setLanguage('es');
     const refusal = { response: { status: 403, data: { code: 'AGE_NOT_ALLOWED', message: "We can't create an account with this information." } } };
     expect(getApiErrorMessage(refusal, 'x')).toBe('No podemos crear una cuenta con esta información.');
-    expect(getApiErrorMessage({ response: { status: 409, data: { message: 'An account with this email already exists' } } }, 'x'))
-      .toBe('An account with this email already exists');
+    expect(getApiErrorMessage({ response: { status: 409, data: { message: 'This sentence is not in the table' } } }, 'x'))
+      .toBe('This sentence is not in the table');
     expect(getApiErrorMessage({ response: { status: 429, data: {} } }, 'x')).toBe('Demasiados intentos. Espera un minuto e inténtalo de nuevo.');
     expect(translate('error.generic')).toBe('Algo salió mal. Inténtalo de nuevo.');
 
