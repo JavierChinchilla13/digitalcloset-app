@@ -12,12 +12,14 @@ interface FeatureCardProps {
   // missing or fails to load simply has no preview, so a clip can be dropped
   // into public/marketing later with no code change.
   media?: string;
+  // Which part of a wide clip the narrow card shows (CSS object-position), for a clip whose action is off-centre.
+  mediaPosition?: string;
   delay?: number;
 }
 
 // Landing page feature tile. Hover (desktop) or tap (touch) swaps the tile's
 // text for a looping capture of the actual feature.
-const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardProps) => {
+const FeatureCard = ({ icon: Icon, title, desc, media, mediaPosition, delay = 0 }: FeatureCardProps) => {
   const { t } = useT();
   const [isActive, setIsActive] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
@@ -67,6 +69,7 @@ const FeatureCard = ({ icon: Icon, title, desc, media, delay = 0 }: FeatureCardP
             alt={t('landing.card.alt', { title: title.toLowerCase() })}
             onError={() => setMediaFailed(true)}
             className="w-full h-full object-cover"
+            style={mediaPosition ? { objectPosition: mediaPosition } : undefined}
             decoding="async"
           />}
           <div className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/85 to-transparent">
