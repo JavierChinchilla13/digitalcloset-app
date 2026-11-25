@@ -1,67 +1,66 @@
-# DigitalCloset - Virtual Wardrobe & Outfit Builder
+# VYSVI - Digital Wardrobe
 
-DigitalCloset is a premium full-stack web application designed to help users manage their personal wardrobe digitally and orchestrate professional outfits using a high-fidelity layered persona system.
+VYSVI is a web app for building outfits from your own clothes. You add photos of your garments, the app removes the background,
+and you combine them into outfits, either as a flat layout or layered on a 2D mannequin (the **persona**).
 
-## Features
+**Live site:** https://vysvi-web.onrender.com - try the [demo](https://vysvi-web.onrender.com/demo) without an account.
 
-- **PNG-Layered Persona System**: Replaced abstract silhouettes with high-quality mannequin bases. Visualize garments in real-time with precise Z-index layering (Tops, Bottoms, Shoes, Outerwear, Accessories).
-- **High-Density Virtual Closet**: Efficiently manage hundreds of garments with a compact, responsive grid. Features instant search, category filtering, and a personalized Favorites system.
-- **Advanced Modular Outerwear**: Redesigned jacket system with AI-powered segmentation, allowing independent sleeve manipulation and realistic "open-jacket" layering.
-- **Precision Footwear Engine**: Specialized shoe studio supporting symmetrical/asymmetrical pairs with independent left/right fitting.
-- **Style Orchestration**: Create, save, duplicate, edit and share outfit combinations. Outfits are stored in the database (PostgreSQL), per account.
-- **Cloudinary Integration**: Secure, direct-to-cloud image uploads with real-time previews and automatic metadata synchronization.
-- **Modern "Fashion-Tech" UI**: A dark luxury aesthetic built with Framer Motion for cinematic transitions, glass-morphic elements, and studio-grade lighting effects.
+![The landing page](docs/screenshots/landing.png)
 
-## Tech Stack
+> The garments in these screenshots and in the demo are illustrative renders made for this project, with no brands. They are not
+> photos of real clothing.
 
-### Backend
-- **Java 21** with **Spring Boot 3.3.0**
-- **Spring Security** & **JWT** for secure authentication
-- **PostgreSQL** for core data persistence
-- **Flyway** for database schema migrations
-- **RESTful API** architecture with feature-based modularity
+## What it does
 
-### Frontend
-- **React 19** with **TypeScript**
-- **Vite** for optimized development and bundling
-- **Zustand** for state management (Auth, Clothing, Outfits)
-- **Framer Motion** for layered rendering and UI orchestration
-- **Tailwind CSS** for professional-grade responsive styling
-- **Lucide React** for consistent minimalist iconography
+- **Closet.** Upload a garment photo; the background is removed in your browser. Browse by category, search, mark favorites.
+- **Outfit builder.** Pick a top, bottom, jacket and shoes. Shoes are one per foot, so a left and a right from different pairs can be mixed.
+- **Persona.** See the outfit layered on a male or female mannequin and change the layer order.
+- **Showcase and main outfit.** Flip through your saved outfits and pin a favorite as your main outfit.
+- **Sharing.** Share an outfit as an image or a public link that you can turn off.
+- **English and Spanish.** Switch the language from the navbar, the footer or the account menu.
+- **Accounts.** Email and password or Google sign-in, password reset by email, and account deletion from Settings.
 
-## Getting Started
+| Closet | Persona |
+|---|---|
+| ![The closet page](docs/screenshots/closet.png) | ![An outfit on the persona](docs/screenshots/persona.png) |
 
-### Backend Setup
-1. Navigate to the `backend` directory.
-2. Copy `src/main/resources/application-local.properties.example` to `application-local.properties` and fill in your local `DB_PASSWORD` and a generated `JWT_SECRET` (instructions in the file itself). This file is gitignored and never committed - `application.properties` no longer contains real secret values.
-3. Run `./mvnw spring-boot:run`. Schema is Flyway-managed: a fresh empty database is set up automatically on first run.
+![The showcase](docs/screenshots/showcase.png)
 
-### Frontend Setup
-1. Navigate to the `frontend` directory.
-2. Install dependencies: `npm install`.
-3. Set up `.env` with your Cloudinary credentials.
-4. Run development server: `npm run dev`.
+## Tech stack
 
-## Project Status
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS, Zustand, Fabric.js (garment editors), Framer Motion. Background removal
+  runs in the browser.
+- **Backend:** Java 21, Spring Boot 3.3, Spring Security with JWT, JPA, Flyway migrations.
+- **Data and services:** PostgreSQL (Supabase in production), Cloudinary for images, email through a small Google Apps Script relay.
+- **Optional:** `backend-ai/`, a FastAPI + rembg background-removal service. It is not deployed.
+- **Tests and CI:** Vitest, Playwright end-to-end tests, JUnit + MockMvc, pytest, and a Docker build with a smoke test on every push
+  (GitHub Actions).
 
-- **Phase 1: Backend Foundation**: Completed (Auth, User, Clothing APIs).
-- **Phase 2: Core Frontend**: Completed (Dashboard, Integration with APIs).
-- **Phase 3: Image Infrastructure**: Completed (Cloudinary integration, interactive uploads).
-- **Phase 4: Persona Evolution**: Completed (PNG-based layering, 2D mannequin system).
-- **Phase 5: Wardrobe Management**: Completed (High-density closet, Search, Favorites, Full Management Page).
-- **Phase 6: Style Orchestration**: Completed (Outfit store, Multi-page navigation flow).
-- **Phase 7: Fabric Studio Evolution**: Completed (Fabric.js 2D Editor, Absolute Virtual Engine, High-Precision Cropping).
-- **Phase 8: Multi-Item Architecture**: Completed (Layered Equipping, Array-based item slots, Independent Shoe Pairs).
-- **Phase 9: Modular Fashion AI**: Completed (Transformers.js Segmentation, Mesh Warping/Puppet Warp, Dynamic Center Opening Masks).
-- **Phase 10: Resilient AI & Pro-Cleanup**: Completed (Hugging Face Inference Integration, 100% Local SegFormer Fallback, Manual Magic Pen Cleanup Studio, Standardized Layer Centering).
-- **Phase 12: Stabilization & Security Hardening**: Completed (fixed a build-breaking regression and a TypeScript baseline of real bugs, removed dead code/dependencies, hardened sign-up and authorization rules, externalized all secrets, moved schema management to Flyway, added soft-delete for clothing items, proper 404/403 exception handling, request validation, explicit CORS configuration, and hardened the Python AI microservice).
+## Running it locally
+
+You need Java 21, Node.js and a local PostgreSQL.
+
+```bash
+# backend - http://localhost:8080
+cd backend
+cp src/main/resources/application-local.properties.example src/main/resources/application-local.properties
+# fill in the values described in that file (it is gitignored), then:
+./mvnw spring-boot:run
+
+# frontend - http://localhost:5173 (calls the API through Vite's proxy)
+cd frontend
+npm install
+npm run dev
+```
+
+The database schema is created by Flyway on the first run. Tests: `./mvnw test` in `backend/`; `npm test` and `npm run e2e` in
+`frontend/`.
 
 ## Deployment
 
-The live setup is Render (the API and the website) with PostgreSQL on Supabase, images on Cloudinary and email through a Google Apps Script relay; a single-machine
-`docker compose` stack (PostgreSQL + API + Caddy with automatic HTTPS) also exists. See [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step guide, the settings
-reference, backups and the maintenance scripts.
+The live site runs on Render (the API and the static website) with PostgreSQL on Supabase. A single-machine `docker compose` setup
+also exists. See [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Project structure
 
-See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for a map of every directory and module, the API, the database and how the main features work.
+See [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for a map of the code, the API, the database and how the main features work.
