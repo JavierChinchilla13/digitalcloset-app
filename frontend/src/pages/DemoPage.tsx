@@ -22,8 +22,9 @@ import { useT, type MessageKey } from '../i18n';
 // There is deliberately no live persona here (preview, switcher, badges):
 // dressing the mannequin never looked right for jackets, so it was pulled from
 // the demo. "View on Persona" instead opens the sign-up modal with a recorded
-// clip of garments being put on the persona (Task 87) - the real thing, one
-// account away - and its Create Free Account button.
+// clip of the real builder swapping a jacket (the file keeps its old
+// persona-demo name; the mannequin was left out of it) and its Create Free
+// Account button.
 type GateReason = 'saveOutfit' | 'addClothes' | 'editClothes' | 'deleteClothes' | 'persona';
 const PERSONA_GIF = '/marketing/persona-demo.gif';
 

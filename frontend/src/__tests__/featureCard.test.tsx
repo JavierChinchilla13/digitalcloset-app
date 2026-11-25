@@ -31,6 +31,18 @@ describe('FeatureCard', () => {
     expect(overlay()).toHaveClass('opacity-100');
   });
 
+  it('frames an off-centre clip where it is told to, and leaves other clips centred', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<FeatureCard icon={Shirt} title="QUICK SWAPS" desc="d" media="/marketing/x.gif" mediaPosition="87% 50%" />);
+    await user.hover(screen.getByTestId('feature-card'));
+    expect(screen.getByAltText(/in action/i)).toHaveStyle({ objectPosition: '87% 50%' });
+    unmount();
+
+    render(<FeatureCard icon={Shirt} title="OUTFIT BUILDER" desc="d" media="/marketing/x.gif" />);
+    await user.hover(screen.getByTestId('feature-card'));
+    expect(screen.getByAltText(/in action/i)).not.toHaveAttribute('style');
+  });
+
   it('has no preview and no hint when there is no clip', () => {
     render(<FeatureCard icon={Shirt} title="MAIN OUTFIT" desc="d" />);
 

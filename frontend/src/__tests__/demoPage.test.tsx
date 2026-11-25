@@ -75,7 +75,7 @@ describe('DemoPage', () => {
     await user.click(button);
 
     expect(await screen.findByText(/create a free account to see your outfit on your own persona/i)).toBeInTheDocument();
-    expect(screen.getByAltText(/put on the vysvi persona/i)).toHaveAttribute('src', '/marketing/persona-demo.gif');
+    expect(screen.getByAltText(/swapping the jacket of a saved outfit/i)).toHaveAttribute('src', '/marketing/persona-demo.gif');
     expect(screen.getByRole('link', { name: /create free account/i })).toHaveAttribute('href', '/signup');
     // A recorded clip, not the real thing: no mannequin, no API calls.
     expect(screen.queryByAltText('Mannequin')).not.toBeInTheDocument();

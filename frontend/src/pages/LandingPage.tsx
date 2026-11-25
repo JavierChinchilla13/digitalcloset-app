@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Shirt, LayoutPanelTop, UserCircle, Star } from 'lucide-react';
+import { Shirt, LayoutPanelTop, ArrowLeftRight, Star } from 'lucide-react';
 import SectionWrapper from '../components/SectionWrapper';
 import FeatureCard from '../components/FeatureCard';
 import { useT } from '../i18n';
@@ -88,7 +88,7 @@ const LandingPage = () => {
           {[
             { icon: Shirt, title: t('landing.f1.title'), desc: t('landing.f1.desc'), media: CLOSET_BROWSING_GIF },
             { icon: LayoutPanelTop, title: t('landing.f2.title'), desc: t('landing.f2.desc'), media: OUTFIT_BUILDER_GIF },
-            { icon: UserCircle, title: t('landing.f3.title'), desc: t('landing.f3.desc'), media: PERSONA_GIF },
+            { icon: ArrowLeftRight, title: t('landing.f3.title'), desc: t('landing.f3.desc'), media: PERSONA_GIF, mediaPosition: '87% 50%' },
             { icon: Star, title: t('landing.f4.title'), desc: t('landing.f4.desc'), media: MAIN_OUTFIT_GIF },
           ].map((feature, idx) => (
             <FeatureCard key={feature.title} {...feature} delay={idx * 0.1} />

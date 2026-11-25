@@ -30,7 +30,7 @@ export const parts = defineMessages(
     'demoSignup.reason.editClothes': 'to edit this item',
     'demoSignup.reason.deleteClothes': 'to delete this item',
     'demoSignup.reason.persona': 'to see your outfit on your own persona',
-    'demoSignup.personaAlt': 'Garments being put on the VYSVI persona one by one',
+    'demoSignup.personaAlt': 'Swapping the jacket of a saved outfit in the VYSVI builder',
 
     'personaSign.unassigned': 'Unassigned',
     'personaSign.unassignedTitle': 'Saved without a persona (original photo, no cutout)',
@@ -84,8 +84,8 @@ export const parts = defineMessages(
     'demoSignup.reason.addClothes': 'para agregar tu propia ropa',
     'demoSignup.reason.editClothes': 'para editar esta prenda',
     'demoSignup.reason.deleteClothes': 'para eliminar esta prenda',
-    'demoSignup.reason.persona': 'para ver tu atuendo en tu propio persona',
-    'demoSignup.personaAlt': 'Prendas puestas una a una en el persona de VYSVI',
+    'demoSignup.reason.persona': 'para ver tu atuendo en tu propia persona',
+    'demoSignup.personaAlt': 'Cambiando la chaqueta de un outfit guardado en el constructor de VYSVI',
 
     'personaSign.unassigned': 'Sin asignar',
     'personaSign.unassignedTitle': 'Guardada sin persona (foto original, sin recorte)',
