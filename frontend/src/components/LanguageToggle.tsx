@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Languages } from 'lucide-react';
 import { useLanguageStore, useT } from '../i18n';
 
-type Variant = 'menu' | 'row' | 'footer';
+type Variant = 'menu' | 'row' | 'footer' | 'nav';
 
 // The language button: shows the OTHER language ("Español" while the site is in English, "English" while it is in Spanish) and switches to it.
 // A real <button> (Tab to it, Enter or Space), with a visible focus ring; its name says what pressing it does, in the language on screen, and
@@ -16,6 +16,8 @@ const styles: Record<Variant, string> = {
   // The small toggle of the footer.
   footer:
     'inline-flex items-center gap-2 min-h-[44px] px-3 rounded-full text-[10px] uppercase tracking-widest hover:text-text-primary transition-colors',
+  // The signed-out navbar, next to the theme button: the icon plus the short code ("ES" / "EN"), so it fits a phone-wide pill.
+  nav: 'inline-flex items-center gap-1.5 p-2.5 sm:p-2 rounded-full text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:bg-ink/5 hover:text-text-primary transition-all',
 };
 
 const LanguageToggle = ({ variant = 'footer', onToggle }: { variant?: Variant; onToggle?: () => void }) => {
@@ -23,6 +25,7 @@ const LanguageToggle = ({ variant = 'footer', onToggle }: { variant?: Variant; o
   const toggle = useLanguageStore((state) => state.toggleLanguage);
   const otherLanguage = language === 'en' ? 'es' : 'en';
   const otherName = t('lang.otherName');
+  const label = variant === 'nav' ? t('lang.otherCode') : otherName;
 
   return (
     <button
@@ -36,7 +39,7 @@ const LanguageToggle = ({ variant = 'footer', onToggle }: { variant?: Variant; o
       className={`${styles[variant]} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60`}
     >
       <Languages size={variant === 'row' ? 18 : 14} aria-hidden />
-      <span lang={otherLanguage}>{otherName}</span>
+      <span lang={otherLanguage}>{label}</span>
     </button>
   );
 };

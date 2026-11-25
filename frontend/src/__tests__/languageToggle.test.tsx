@@ -75,6 +75,25 @@ describe('the language toggle', () => {
     }
   });
 
+  it('is also in the navbar for signed-out visitors, so the landing page can switch without scrolling to the footer', async () => {
+    const user = userEvent.setup();
+    renderApp('/');
+    const navToggle = screen.getByTestId('language-toggle-nav');
+    expect(navToggle).toHaveTextContent('ES');
+    expect(navToggle).toHaveAccessibleName('Switch the site to Español');
+
+    await user.click(navToggle);
+    expect(navToggle).toHaveTextContent('EN');
+    expect(navToggle).toHaveAccessibleName('Cambiar el sitio a English');
+    expect(footerToggle()).toHaveTextContent('English');
+  });
+
+  it('is not in the navbar once signed in (the account menu has it)', () => {
+    useAuthStore.setState({ isAuthenticated: true, token: 't', user: makeUser() });
+    renderApp('/login');
+    expect(screen.queryByTestId('language-toggle-nav')).not.toBeInTheDocument();
+  });
+
   it('switches the text of the page and goes back', async () => {
     const user = userEvent.setup();
     renderApp('/login');

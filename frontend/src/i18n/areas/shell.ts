@@ -5,6 +5,7 @@ export const shell = defineMessages(
   {
     'lang.name': 'English',
     'lang.otherName': 'Español',
+    'lang.otherCode': 'ES',
     'lang.switchLabel': 'Switch the site to {language}',
     'lang.changed': 'Language changed to English',
     'lang.groupLabel': 'Language',
@@ -70,6 +71,7 @@ export const shell = defineMessages(
   {
     'lang.name': 'Español',
     'lang.otherName': 'English',
+    'lang.otherCode': 'EN',
     'lang.switchLabel': 'Cambiar el sitio a {language}',
     'lang.changed': 'Idioma cambiado a español',
     'lang.groupLabel': 'Idioma',
