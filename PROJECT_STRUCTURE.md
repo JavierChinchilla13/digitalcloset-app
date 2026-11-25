@@ -46,11 +46,12 @@ Digital-Closet/
 ├── DEPLOYMENT.md        How to deploy (Render + Supabase, or Docker on one machine)
 ├── PROJECT_STRUCTURE.md This file
 ├── CLAUDE.md            Working rules for the AI coding assistant
+├── docs/screenshots/    Pictures used by README.md
 └── README.md            Short intro
 ```
 
-The root `README.md`'s feature list predates several features (it still mentions
-local-only outfit storage; outfits now live in the database). The old per-folder notes
+The root `README.md` is the short public intro, with screenshots in `docs/screenshots/` (taken from a local
+throwaway account with the illustrative demo garments). The old per-folder notes
 (`frontend/README.md`, `FRONTEND_CHANGES.md`, `backend/HELP.md`,
 `IMPLEMENTATION_SUMMARY.md`) were removed.
 
