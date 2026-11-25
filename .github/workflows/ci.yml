@@ -206,23 +206,52 @@ jobs:
       - name: Build and start
         run: docker compose up -d --build --wait --wait-timeout 420
 
+      # Every check says what it expects and what it got, runs even if an earlier one failed, and the step fails at the end if
+      # any did, so one run shows ALL the problems (a bare `test` under `set -e` stopped at the first one without saying which).
       - name: Smoke test
         run: |
-          set -eu
+          set -u
+          failed=0
+          body=$(mktemp)
+          check() { # name, expected, got
+            if [ "$2" = "$3" ]; then
+              echo "ok    $1: expected $2, got $3"
+            else
+              echo "FAIL  $1: expected $2, got $3"
+              echo "      response body: $(head -c 400 "$body")"
+              failed=1
+            fi
+          }
+          # Prints the HTTP status of a request and keeps the response body for check(). Arguments are curl's.
+          status() { curl -s -o "$body" -w '%{http_code}' "$@" || echo "curl-error"; }
+          # Whether the response body of the last request holds the React root element.
+          serves_app() { if grep -q 'id="root"' "$body"; then echo yes; else echo no; fi; }
+
           # The React app is served, including a deep link a refresh would hit.
-          curl -fsS http://localhost/ | grep -q 'id="root"'
-          curl -fsS http://localhost/closet | grep -q 'id="root"'
+          check "home page status" 200 "$(status http://localhost/)"
+          check "home page is the React app" yes "$(serves_app)"
+          check "deep link /closet status" 200 "$(status http://localhost/closet)"
+          check "deep link /closet is the React app" yes "$(serves_app)"
+
           # The backend's health endpoint is not exposed to the public.
-          test "$(curl -s -o /dev/null -w '%{http_code}' http://localhost/actuator/health)" = 404
-          # The API is reachable through the web tier: register a user...
-          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost/api/auth/register             -H 'Content-Type: application/json'             -d '{"email":"ci@example.com","password":"Sup3r-secret-pw","firstName":"C","lastName":"I"}')
-          test "$code" = 200
+          check "actuator hidden from the public" 404 "$(status http://localhost/actuator/health)"
+
+          # The API is reachable through the web tier: register a user. Since the age and consent rules (audit H12) a new account
+          # needs a birth month and year, both acceptances and the version of the texts it saw, so the body carries all of them:
+          # an obviously fake adult (born January 1990), the Terms and Privacy accepted, and the version the backend is built with.
+          legal_version=$(sed -n 's/.*CURRENT = "\([^"]*\)".*/\1/p' backend/src/main/java/com/javier/closetapp/legal/LegalVersion.java)
+          check "legal version found in the backend source" yes "$([ -n "$legal_version" ] && echo yes || echo no)"
+          register='{"email":"ci@example.com","password":"Sup3r-secret-pw","firstName":"C","lastName":"I","birthMonth":1,"birthYear":1990,"guardianAuthorized":false,"termsAccepted":true,"dataAuthorized":true,"legalVersion":"'"$legal_version"'"}'
+          check "register through the web tier" 200 "$(status -X POST http://localhost/api/auth/register -H 'Content-Type: application/json' -d "$register")"
+
           # ...broken JSON is a 400 (not a 500)...
-          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost/api/auth/register             -H 'Content-Type: application/json' -d '{bad')
-          test "$code" = 400
+          check "broken JSON is a 400" 400 "$(status -X POST http://localhost/api/auth/register -H 'Content-Type: application/json' -d '{bad')"
+
           # ...and a protected endpoint turns an anonymous caller away (401 since Task 95; it was an empty 403).
-          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost/api/clothing)
-          test "$code" = 401
+          check "anonymous protected endpoint is a 401" 401 "$(status http://localhost/api/clothing)"
+
+          if [ "$failed" -ne 0 ]; then echo "Smoke test FAILED: see the FAIL lines above."; exit 1; fi
+          echo "Smoke test passed."
 
       - name: Show logs on failure
         if: failure()
