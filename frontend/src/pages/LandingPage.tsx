@@ -10,7 +10,7 @@ import { useT } from '../i18n';
 const OUTFIT_BUILDER_GIF = '/marketing/outfit-builder-demo.gif';
 const CLOSET_BROWSING_GIF = '/marketing/closet-browsing-demo.gif';
 const PERSONA_GIF = '/marketing/persona-demo.gif';
-// Not recorded yet - the feature card skips the preview until this exists.
+// (The feature card skips a preview whose file fails to load.)
 const MAIN_OUTFIT_GIF = '/marketing/main-outfit-demo.gif';
 
 const LandingPage = () => {
@@ -83,9 +83,8 @@ const LandingPage = () => {
       {/* Features Section */}
       <SectionWrapper className="py-20 sm:py-40">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-          {/* Hover/tap a card to see that feature in action. The persona and
-              main-outfit clips don't exist yet - drop files with these names
-              into public/marketing and they light up with no code change. */}
+          {/* Hover/tap a card to see that feature in action. The four clips live in
+              public/marketing; a file with the same name replaces a clip with no code change. */}
           {[
             { icon: Shirt, title: t('landing.f1.title'), desc: t('landing.f1.desc'), media: CLOSET_BROWSING_GIF },
             { icon: LayoutPanelTop, title: t('landing.f2.title'), desc: t('landing.f2.desc'), media: OUTFIT_BUILDER_GIF },
