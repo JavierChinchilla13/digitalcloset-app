@@ -12,6 +12,12 @@ services:
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     healthCheckPath: /actuator/health
+    # Auto-deploy only when the API's own code changes (a website-only push does not restart it); its tests do not count.
+    buildFilter:
+      paths:
+        - backend/**
+      ignoredPaths:
+        - backend/src/test/**
     envVars:
       # Supabase: the SESSION pooler (not the direct host, not the transaction pooler), user postgres.<project-ref>:
       #   jdbc:postgresql://aws-0-REGION.pooler.supabase.com:5432/postgres?sslmode=require
@@ -72,6 +78,13 @@ services:
     runtime: static
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: ./frontend/dist
+    # Auto-deploy only when the website's files change; the unit and end-to-end tests do not count.
+    buildFilter:
+      paths:
+        - frontend/**
+      ignoredPaths:
+        - frontend/e2e/**
+        - frontend/src/__tests__/**
     envVars:
       # The API's address + /api, e.g. https://vysvi-api.onrender.com/api. Baked
       # into the site when it is built, so redeploy the site after changing it.
