@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../store/useAuthStore';
 import { cn } from '../utils/cn';
 import ThemeToggle from './ThemeToggle';
+import LanguageToggle from './LanguageToggle';
 import BrandMark from './BrandMark';
 import UserMenu from './UserMenu';
 import MobileMenu from './MobileMenu';
@@ -105,6 +106,8 @@ const Navbar = () => {
               {/* Task 67: light / dark toggle - shown logged out;
                   logged in, it moved into UserMenu's dropdown. */}
               <ThemeToggle />
+              {/* Signed out, the footer was the only way to switch language: a long scroll on the landing page. */}
+              <LanguageToggle variant="nav" />
               <Link
                 to="/login" 
                 className="text-[10px] font-medium uppercase tracking-widest text-text-secondary hover:text-text-primary transition-colors"
