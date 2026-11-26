@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { useT } from '../i18n';
@@ -28,6 +28,10 @@ const FeatureCard = ({ icon: Icon, title, desc, media, mediaPosition, delay = 0 
   const [wantsMedia, setWantsMedia] = useState(false);
   if (isActive && !wantsMedia) setWantsMedia(true);
   const hasPreview = !!media && !mediaFailed;
+  // The kind of pointer that last pressed the card. A tap also fires the browser's emulated
+  // mouseenter and a focus before the click; if those opened the card, the click's toggle shut it
+  // again, so the first tap seemed to do nothing. Only a real mouse hovers.
+  const lastPointer = useRef<string>('mouse');
 
   return (
     <motion.div
@@ -35,13 +39,14 @@ const FeatureCard = ({ icon: Icon, title, desc, media, mediaPosition, delay = 0 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay }}
-      onMouseEnter={() => setIsActive(true)}
-      onMouseLeave={() => setIsActive(false)}
+      onPointerDown={(e) => { lastPointer.current = e.pointerType; }}
+      onPointerEnter={(e) => { if (e.pointerType === 'mouse') setIsActive(true); }}
+      onPointerLeave={(e) => { if (e.pointerType === 'mouse') setIsActive(false); }}
       // With a mouse, hover already opened it and a click only ever opens (a toggle
-      // would close what the hover just opened). On a touch screen there is no
-      // hover, so a second tap closes the preview again.
-      onClick={() => setIsActive((open) => (window.matchMedia?.('(hover: none)').matches ? !open : true))}
-      onFocus={() => setIsActive(true)}
+      // would close what the hover just opened). A tap toggles: the first opens, the next closes.
+      onClick={() => setIsActive((open) => (lastPointer.current === 'mouse' ? true : !open))}
+      // Keyboard focus opens it; the focus a tap gives the card is left to the click.
+      onFocus={() => { if (lastPointer.current === 'mouse') setIsActive(true); }}
       onBlur={() => setIsActive(false)}
       tabIndex={hasPreview ? 0 : undefined}
       data-testid="feature-card"

@@ -31,6 +31,23 @@ describe('FeatureCard', () => {
     expect(overlay()).toHaveClass('opacity-100');
   });
 
+  it('a finger tap opens the clip on the first tap and closes it on the next', () => {
+    render(<FeatureCard icon={Shirt} title="OUTFIT BUILDER" desc="d" media="/marketing/x.gif" />);
+    const card = screen.getByTestId('feature-card');
+    // What a phone sends for one tap: the touch press, the enter and focus it causes, then the click.
+    const tap = () => {
+      fireEvent.pointerDown(card, { pointerType: 'touch' });
+      fireEvent.pointerEnter(card, { pointerType: 'touch' });
+      fireEvent.focus(card);
+      fireEvent.click(card);
+    };
+
+    tap();
+    expect(overlay()).toHaveClass('opacity-100');
+    tap();
+    expect(overlay()).toHaveClass('opacity-0');
+  });
+
   it('frames an off-centre clip where it is told to, and leaves other clips centred', async () => {
     const user = userEvent.setup();
     const { unmount } = render(<FeatureCard icon={Shirt} title="QUICK SWAPS" desc="d" media="/marketing/x.gif" mediaPosition="87% 50%" />);
