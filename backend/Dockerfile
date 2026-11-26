@@ -8,7 +8,15 @@ WORKDIR /app
 # Dependencies first, so editing source doesn't re-download them.
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
-RUN chmod +x mvnw && ./mvnw -B -ntp dependency:go-offline
+# The wrapper downloads Maven itself and that download sometimes fails at once (it broke CI several
+# times), so try up to 4 times with a pause before giving up. Later steps reuse what this one downloaded.
+RUN chmod +x mvnw \
+ && for attempt in 1 2 3 4; do \
+      ./mvnw -B -ntp dependency:go-offline && exit 0; \
+      echo "Maven download failed (attempt $attempt of 4), retrying in 15s"; \
+      sleep 15; \
+    done; \
+    exit 1
 
 COPY src src
 # Tests run in CI (and locally); the image build only packages.
