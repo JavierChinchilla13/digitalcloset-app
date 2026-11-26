@@ -185,8 +185,10 @@ const OutfitCard: React.FC<OutfitCardProps> = ({ outfit }) => {
         </div>
         
         {/* Actions Overlay */}
-        <div className="absolute inset-0 bg-background-main/60 opacity-0 group-hover:opacity-100 touch:hidden transition-all duration-300 flex flex-col justify-between p-6 backdrop-blur-[2px]">
-          <div className="flex justify-end gap-2">
+        <div className="absolute inset-0 bg-background-main/60 opacity-0 group-hover:opacity-100 touch:hidden transition-all duration-300 flex flex-col justify-between p-4 backdrop-blur-[2px]">
+          {/* Six buttons don't fit one row on a narrow card: they wrap instead of overflowing
+              (the card clips its overflow, which used to cut off the leftmost ones, the star included). */}
+          <div className="flex flex-wrap justify-end gap-2">
             <button 
               onClick={() => setShowPersona(!showPersona)}
               className={`p-2.5 rounded-xl transition-all border ${showPersona ? 'bg-accent text-on-accent border-accent' : 'bg-ink/5 hover:bg-ink/10 text-text-primary border-ink/5'}`}
