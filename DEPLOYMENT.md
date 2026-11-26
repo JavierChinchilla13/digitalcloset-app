@@ -191,9 +191,16 @@ a network. Set the variables on the **site** (baked in at build time, so rebuild
 
 ## 4. Updating
 
-Render rebuilds when the branch it follows changes (or on **Manual Deploy**), but only the service whose files changed: `render.yaml` gives each one a `buildFilter`
-(the API follows `backend/**`, the website `frontend/**`; test folders are ignored). A push that only touches docs or tests deploys nothing; use **Manual Deploy**
-if you need one anyway. The API and the website that depend on each other should be deployed together: deploy the API first,
+Each service rebuilds only when its own files change (or on **Manual Deploy**): the API follows `backend/**` (ignoring `backend/src/test/**`), the website
+`frontend/**` (ignoring `frontend/e2e/**` and `frontend/src/__tests__/**`). A push that only touches docs or tests deploys nothing; use **Manual Deploy** if you
+need one anyway. In the live setup the website deploys by hand (**Manual Deploy** after each push), by choice.
+
+**How the filters are set today:** `render.yaml` describes them as `buildFilter`, but the live services were made by hand, not from this Blueprint. The
+filters are set in each service's **Settings -> Build & Deploy -> Build Filters**; change them there.
+
+> **Do not sync the `digitalcloset` Blueprint** (Auto Sync is off on purpose). A sync matched the existing `vysvi-web`, but did not recognise the existing
+> `vysvi-api`: it created a second `vysvi-api` with only the variables written in `render.yaml` (no database, no `JWT_SECRET`), which failed to start and
+> was suspended. The real API (`vysvi-api.onrender.com`) was never touched. `render.yaml` stays as the recipe for a brand-new deployment (section 2). The API and the website that depend on each other should be deployed together: deploy the API first,
 wait for `/actuator/health`, then the website.
 
 Database changes ship as Flyway migrations (`backend/src/main/resources/db/migration`) and are applied automatically when the API starts. **They are not reversible, so take a

@@ -3,6 +3,8 @@
 # Step by step: DEPLOYMENT.md, section "2. First deployment".
 #
 # Values marked sync:false are asked for in the dashboard (never stored in git).
+# The live services were made by hand: do NOT sync this Blueprint against them (it creates a second vysvi-api).
+# See DEPLOYMENT.md, section "4. Updating".
 services:
   # ---- the API ----
   - type: web
